@@ -15,4 +15,5 @@ try {
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
-?>
+// End of file (no closing tag to prevent whitespace)
+

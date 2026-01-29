@@ -32,13 +32,16 @@ $stmt = $pdo->prepare("
     SELECT 
         so.*,
         c_contact.name as contact_name, c_contact.phone, c_contact.email, c_contact.tax_id, c_contact.address,
-        (SELECT c_o.name 
-         FROM service_orders so_o 
-         JOIN clients c_o ON so_o.client_id = c_o.id 
-         WHERE so_o.equipment_id = so.equipment_id 
-           AND (so_o.service_type = 'warranty' OR so_o.problem_reported = 'Garantía Registrada')
-         ORDER BY so_o.created_at ASC 
-         LIMIT 1) as owner_name,
+        COALESCE(
+            NULLIF(so.owner_name, ''),
+            (SELECT c_o.name 
+             FROM service_orders so_o 
+             JOIN clients c_o ON so_o.client_id = c_o.id 
+             WHERE so_o.equipment_id = so.equipment_id 
+               AND (so_o.service_type = 'warranty' OR so_o.problem_reported = 'Garantía Registrada')
+             ORDER BY so_o.created_at ASC 
+             LIMIT 1)
+        ) as owner_name_calc,
         e.brand, e.model, e.submodel, e.serial_number, e.type as equipment_type,
         u.username as received_by
     FROM service_orders so
@@ -52,11 +55,32 @@ $stmt = $pdo->prepare("
 $stmt->execute([$_SESSION['user_id'], $id]); 
 $order = $stmt->fetch();
 
-// Fallback if no specific warranty order found
-if (!$order['owner_name']) {
+// Fallback if no specific owner found
+if (!$order['owner_name_calc']) {
     $stmtFallback = $pdo->prepare("SELECT c.name FROM equipments e JOIN clients c ON e.client_id = c.id WHERE e.id = ?");
     $stmtFallback->execute([$order['equipment_id']]);
-    $order['owner_name'] = $stmtFallback->fetchColumn() ?: $order['contact_name'];
+    $order['owner_name'] = $stmtFallback->fetchColumn(); // Removed fallback to contact
+} else {
+    $order['owner_name'] = $order['owner_name_calc'];
+}
+
+// Display Logic
+$owner = trim($order['owner_name'] ?? '');
+$contact = trim($order['contact_name'] ?? '');
+
+// Primary Field (Left Col): "Cliente" should show the Equip Owner
+$client_label = 'Cliente:';
+$client_val = !empty($owner) ? $owner : $contact;
+
+// Secondary Field (Right Col): "Contacto" (if different)
+$show_secondary = false;
+$secondary_label = 'Contacto:';
+$secondary_val = $contact;
+
+if (!empty($owner) && !empty($contact)) {
+    if ($owner !== $contact) {
+        $show_secondary = true;
+    }
 }
 
 if (!$order) {
@@ -338,15 +362,17 @@ if (empty($order['entry_doc_number'])) {
                         <div class="info-val" style="font-weight: bold; color: #2563eb;"><?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></div>
                     </div>
                     <div class="info-row">
-                        <div class="info-label">Cliente:</div>
-                        <div class="info-val"><?php echo htmlspecialchars($order['owner_name']); ?></div>
+                        <div class="info-label"><?php echo $client_label; ?></div>
+                        <div class="info-val"><?php echo htmlspecialchars($client_val); ?></div>
                     </div>
                 </div>
                 <div>
+                    <?php if($show_secondary): ?>
                     <div class="info-row">
-                        <div class="info-label">Contacto:</div>
-                        <div class="info-val"><?php echo htmlspecialchars($order['contact_name']); ?></div>
+                        <div class="info-label"><?php echo $secondary_label; ?></div>
+                        <div class="info-val"><?php echo htmlspecialchars($secondary_val); ?></div>
                     </div>
+                    <?php endif; ?>
                     <div class="info-row">
                         <div class="info-label">RUC/Cédula:</div>
                         <div class="info-val"><?php echo htmlspecialchars($order['tax_id'] ?? '-'); ?></div>

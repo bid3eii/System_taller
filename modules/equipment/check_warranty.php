@@ -28,8 +28,12 @@ try {
         // Equipment found, now check for WARRANTY
         // We look for the MOST RECENT warranty record for this equipment
         $stmtW = $pdo->prepare("
-            SELECT w.id, w.status, w.end_date, w.supplier_name, w.sales_invoice_number, w.product_code 
+            SELECT 
+                w.id, w.status, w.end_date, w.supplier_name, w.sales_invoice_number, w.product_code,
+                c_orig.name as original_owner_name
             FROM warranties w 
+            LEFT JOIN service_orders so ON w.service_order_id = so.id
+            LEFT JOIN clients c_orig ON so.client_id = c_orig.id
             WHERE w.equipment_id = ? 
             ORDER BY w.created_at DESC 
             LIMIT 1
@@ -71,7 +75,8 @@ try {
                     'client_name' => $clientName,
                     'client_id' => $equipment['client_id'],
                     'supplier' => $warranty['supplier_name'],
-                    'invoice' => $warranty['sales_invoice_number']
+                    'invoice' => $warranty['sales_invoice_number'],
+                    'original_owner' => $warranty['original_owner_name']
                 ]
             ]);
         } else {

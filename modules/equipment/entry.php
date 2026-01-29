@@ -132,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $problem = clean($_POST['problem_reported'] ?? 'Garantía Registrada'); 
     $accessories = clean($_POST['accessories'] ?? '-');
     $notes = clean($_POST['entry_notes'] ?? '');
+    $owner_name = clean($_POST['owner_name'] ?? '');
     
     $order_id = isset($_POST['order_id']) ? clean($_POST['order_id']) : null;
 
@@ -184,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtEqCheck->execute([$order_id]);
                 $current_owner = $stmtEqCheck->fetchColumn();
 
-                if ($is_warranty_action || empty($current_owner)) {
+                if (empty($current_owner)) {
                     $stmtEq = $pdo->prepare("UPDATE equipments SET client_id = ?, brand = ?, model = ?, submodel = ?, serial_number = ?, type = ? WHERE id = (SELECT equipment_id FROM service_orders WHERE id = ?)");
                     $stmtEq->execute([$client_id, $brand, $model, $submodel, $serial_number, $type, $order_id]);
                 } else {
@@ -198,8 +199,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Let's use sales_invoice as the primary ref if provided
                 $main_ref = $is_warranty_mode ? $sales_invoice : $invoice_number;
                 
-                $stmtOrder = $pdo->prepare("UPDATE service_orders SET client_id = ?, invoice_number = ?, problem_reported = ?, accessories_received = ?, entry_notes = ? WHERE id = ?");
-                $stmtOrder->execute([$client_id, $main_ref, $problem, $accessories, $notes, $order_id]);
+                $stmtOrder = $pdo->prepare("UPDATE service_orders SET client_id = ?, owner_name = ?, invoice_number = ?, problem_reported = ?, accessories_received = ?, entry_notes = ? WHERE id = ?");
+                $stmtOrder->execute([$client_id, $owner_name, $main_ref, $problem, $accessories, $notes, $order_id]);
 
                 // Update Warranty Record
                 if ($is_warranty_mode) {
@@ -246,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $equipment_id = $existing_eq['id'];
                     $is_warranty_action = ($is_warranty_mode || $service_type === 'warranty');
                     
-                    if ($is_warranty_action || empty($existing_eq['client_id'])) {
+                    if (empty($existing_eq['client_id'])) {
                         $stmtEqUpd = $pdo->prepare("UPDATE equipments SET client_id = ?, brand = ?, model = ?, submodel = ?, type = ? WHERE id = ?");
                         $stmtEqUpd->execute([$client_id, $brand, $model, $submodel, $type, $equipment_id]);
                     } else {
@@ -268,8 +269,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtSig->execute([$_SESSION['user_id']]);
                 $currentUserSig = $stmtSig->fetchColumn();
 
-                $stmtOrder = $pdo->prepare("INSERT INTO service_orders (equipment_id, client_id, invoice_number, service_type, status, problem_reported, accessories_received, entry_notes, entry_date, entry_signature_path) VALUES (?, ?, ?, ?, 'received', ?, ?, ?, NOW(), ?)");
-                $stmtOrder->execute([$equipment_id, $client_id, $main_ref, $service_type, $problem, $accessories, $notes, $currentUserSig]);
+                $stmtOrder = $pdo->prepare("INSERT INTO service_orders (equipment_id, client_id, owner_name, invoice_number, service_type, status, problem_reported, accessories_received, entry_notes, entry_date, entry_signature_path) VALUES (?, ?, ?, ?, ?, 'received', ?, ?, ?, NOW(), ?)");
+                $stmtOrder->execute([$equipment_id, $client_id, $owner_name, $main_ref, $service_type, $problem, $accessories, $notes, $currentUserSig]);
                 $order_id = $pdo->lastInsertId();
 
                 if ($is_warranty_mode) {
@@ -603,6 +604,13 @@ require_once '../../includes/sidebar.php';
                             <input type="text" id="equipment_client_display" class="form-control" readonly placeholder="Se rellenará automáticamente" value="<?php echo $edit_order['client_name_display'] ?? ''; ?>">
                         </div>
                          <div class="form-group">
+                            <label class="form-label">Dueño del Equipo</label>
+                            <div class="input-group">
+                                <input type="text" name="owner_name" id="owner_name_std" class="form-control" placeholder="Nombre del propietario (si es diferente)" value="<?php echo $edit_order['owner_name'] ?? ''; ?>">
+                                <i class="ph ph-user-circle input-icon"></i>
+                            </div>
+                        </div>
+                         <div class="form-group">
                             <label class="form-label">Marca *</label>
                             <input type="text" name="brand" class="form-control" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
                         </div>
@@ -845,9 +853,23 @@ require_once '../../includes/sidebar.php';
                                      //     el.dispatchEvent(new Event('input'));
                                      // });
                                      
-                                     // Fill Display Field
+                                     // Fill Display Field ("Cliente") with Data (Original Owner)
                                      const displayField = document.getElementById('equipment_client_display');
-                                     if(displayField) displayField.value = data.data.client_name;
+                                     if(displayField) {
+                                         // Prefer original owner from warranty, then current equipment client
+                                         let ownerName = data.data.original_owner || data.data.client_name;
+                                         if(ownerName) displayField.value = ownerName;
+                                     }
+
+                                     // Update Owner Name Field ("Dueño del Equipo") - DO NOT FILL AUTOMATICALLY
+                                     // User requested that "Dueño" should not be filled, but "Cliente" should receive the data.
+                                     /*
+                                     const ownerField = document.getElementById('owner_name_std');
+                                     if(ownerField) {
+                                         let ownerName = data.data.original_owner || data.data.client_name;
+                                         if(ownerName) ownerField.value = ownerName;
+                                     }
+                                     */
 
                                      // Keep filling IDs if needed for backend, but USER REQUESTED NOT TO TOUCH CLIENT DATA
                                      // If we don't fill IDs, the main form might submit empty client_id if user doesn't manually pick one.

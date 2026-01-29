@@ -209,4 +209,4 @@ function update_service_status($pdo, $order_id, $new_status, $note, $user_id) {
         throw $e;
     }
 }
-?>
+

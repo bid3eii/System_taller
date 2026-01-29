@@ -36,13 +36,17 @@ if (!empty($search)) {
         e.brand LIKE ? OR 
         e.model LIKE ? OR 
         e.serial_number LIKE ? OR
-        so.id LIKE ?
+        so.id LIKE ? OR
+        so.invoice_number LIKE ? OR
+        u.username LIKE ?
     )";
-    $params[] = $term;
-    $params[] = $term;
-    $params[] = $term;
-    $params[] = $term;
-    $params[] = $term;
+    $params[] = $term; // c.name
+    $params[] = $term; // e.brand
+    $params[] = $term; // e.model
+    $params[] = $term; // e.serial_number
+    $params[] = $term; // so.id
+    $params[] = $term; // so.invoice_number
+    $params[] = $term; // u.username
 }
 
 $sql .= " ORDER BY so.exit_date DESC";
@@ -59,6 +63,7 @@ try {
 $filename = "historial_entregas_" . date('Y-m-d_H-i') . ".xls";
 
 // 4. Send Headers
+if (ob_get_length()) ob_end_clean();
 header("Content-Type: application/vnd.ms-excel; charset=utf-8");
 header("Content-Disposition: attachment; filename=\"$filename\"");
 header("Pragma: no-cache");
