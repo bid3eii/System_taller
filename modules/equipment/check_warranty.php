@@ -41,6 +41,44 @@ try {
         $stmtW->execute([$equipment['id']]);
         $warranty = $stmtW->fetch();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
         // Also fetch Client Name
         $clientName = '';
         if ($equipment['client_id']) {
