@@ -19,7 +19,9 @@ if (!isset($_SESSION['user_id'])) {
 // Handle Technician Assignment
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'assign_tech') {
     // Basic permission check: Only Admin (1) or Reception (4) or Supervisor (2) can likely assign
-    if (in_array($_SESSION['role_id'], [1, 2, 4])) {
+    // Verify that the one who has that module assigned can assign to technician
+    // We already checked can_access_module at the top of the file
+    if (true) {
         $order_id = $_POST['order_id'];
         $tech_id = !empty($_POST['tech_id']) ? $_POST['tech_id'] : null;
         
@@ -182,14 +184,14 @@ require_once '../../includes/sidebar.php';
                                         <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.5rem; background: var(--bg-hover); border-radius: 6px; font-size: 0.85rem;">
                                             <i class="ph ph-user-circle"></i> <?php echo htmlspecialchars($item['tech_name']); ?>
                                         </span>
-                                        <?php if(in_array($_SESSION['role_id'], [1, 2, 4])): ?>
+                                        <?php if(true): ?>
                                             <button type="button" class="btn-icon" style="padding: 2px;" title="Cambiar Técnico" onclick="openAssignModal('<?php echo $item['id']; ?>', '<?php echo $item['assigned_tech_id']; ?>')">
                                                 <i class="ph ph-pencil-simple" style="font-size: 0.9rem;"></i>
                                             </button>
                                         <?php endif; ?>
                                     </div>
                                 <?php else: ?>
-                                    <?php if(in_array($_SESSION['role_id'], [1, 2, 4])): ?>
+                                    <?php if(true): ?>
                                         <button type="button" class="btn btn-sm btn-secondary" onclick="openAssignModal('<?php echo $item['id']; ?>', '<?php echo $item['assigned_tech_id']; ?>')">
                                             <i class="ph ph-user-plus"></i> Asignar
                                         </button>

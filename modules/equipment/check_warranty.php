@@ -39,46 +39,8 @@ try {
             LIMIT 1
         ");
         $stmtW->execute([$equipment['id']]);
-        $warranty = $stmtW->fetch();
+        $warranty = $stmtW->fetch(PDO::FETCH_ASSOC);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
         // Also fetch Client Name
         $clientName = '';
         if ($equipment['client_id']) {
@@ -144,4 +106,3 @@ try {
 } catch (PDOException $e) {
     echo json_encode(['success' => false, 'message' => 'Error de BD: ' . $e->getMessage()]);
 }
-?>

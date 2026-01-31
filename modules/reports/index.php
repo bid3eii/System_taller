@@ -97,7 +97,7 @@ require_once '../../includes/sidebar.php';
             <i class="ph ph-caret-down select-caret"></i>
         </div>
 
-        <button onclick="exportToExcel()" class="premium-btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; white-space: nowrap;">
+        <button onclick="exportToExcel()" class="premium-btn-success" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; white-space: nowrap;">
             <i class="ph ph-microsoft-excel-logo" style="font-size: 1.2rem;"></i>
             <span>Exportar Excel</span>
         </button>
@@ -799,6 +799,25 @@ function exportToExcel() {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(var(--primary-rgb), 0.4);
     background: var(--primary-600);
+}
+
+.premium-btn-success {
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.premium-btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+    background: #059669;
 }
 </style>
 

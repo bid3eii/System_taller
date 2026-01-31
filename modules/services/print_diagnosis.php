@@ -45,9 +45,22 @@ if (!$order) {
     die("Orden no encontrada.");
 }
 
-// Fetch User who elaborated
-$elaborated_by = $_SESSION['username']; 
-$elaborated_role = $_SESSION['role_name'] ?? 'Técnico';
+// Fetch User who elaborated the diagnosis (From History)
+// We look for the last 'diagnosing' status change or update
+$stmtHistory = $pdo->prepare("
+    SELECT u.username, r.name as role_name
+    FROM service_order_history h
+    JOIN users u ON h.user_id = u.id
+    LEFT JOIN roles r ON u.role_id = r.id
+    WHERE h.service_order_id = ? AND (h.action = 'diagnosing' OR h.notes LIKE '%[Diagnóstico]%')
+    ORDER BY h.created_at DESC
+    LIMIT 1
+");
+$stmtHistory->execute([$id]);
+$diagnosis_author = $stmtHistory->fetch();
+
+$elaborated_by = $diagnosis_author['username'] ?? 'Desconocido'; 
+$elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
 
 ?>
 <!DOCTYPE html>
@@ -73,9 +86,6 @@ $elaborated_role = $_SESSION['role_name'] ?? 'Técnico';
             margin: 0;
             padding: 0;
             background-color: var(--bg-page);
-        }
-
-        body {
             font-family: 'Roboto', sans-serif;
             color: var(--text-color);
             font-size: 14px;
@@ -84,10 +94,9 @@ $elaborated_role = $_SESSION['role_name'] ?? 'Técnico';
         /* PAPER PREVIEW ON SCREEN */
         .page-container {
             width: 210mm;
-            height: 297mm;
+            min-height: 297mm;
             margin: 20px auto;
             background: white;
-            position: relative;
             padding: 2cm 1.5cm;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
         }
@@ -100,12 +109,19 @@ $elaborated_role = $_SESSION['role_name'] ?? 'Técnico';
         .btn-primary { background: #2563eb; color: white; }
         .btn-secondary { background: white; color: #333; border: 1px solid #ccc; }
 
-        /* HEADER */
-        .header {
+        /* TABLE STRUCTURE FOR PRINT REPEATING HEADERS */
+        table { width: 100%; border-collapse: collapse; }
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
+        tr { page-break-inside: auto; }
+        
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1.5cm;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
         }
 
         .header-logo img {
@@ -119,77 +135,126 @@ $elaborated_role = $_SESSION['role_name'] ?? 'Técnico';
         .header-info h2 { margin: 0; font-size: 14px; color: #666; font-weight: bold; }
         .header-info p { margin: 2px 0; }
 
-        /* CONTENT AREA */
+        /* DOC TITLE */
         .doc-title {
             text-align: center;
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin: 20px 0;
             text-transform: uppercase;
+        }
+        .client-subtitle {
+            font-size: 16px;
+            margin-top: 5px;
+            color: #444;
         }
 
         .date-line {
             text-align: right;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-size: 13px;
         }
 
-        .info-block {
+        /* INFO GRID */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 Columns */
+            gap: 15px;
             margin-bottom: 20px;
-            line-height: 1.4;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
         }
-        .info-row {
-            display: flex;
+
+        .info-item {
+            margin-bottom: 5px;
+        }
+        .info-label {
+            font-weight: bold;
+            display: block;
+            font-size: 12px;
+            color: #666;
             margin-bottom: 2px;
         }
-        .label {
-            font-weight: bold;
-            width: 140px; 
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
         }
-        .value {
-            flex: 1;
+        .full-width {
+            grid-column: 1 / -1;
         }
-        .uc-text { text-transform: uppercase; }
 
+        .diagnosis-text {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 10pt;
+            text-align: center; /* Centered Text */
+        }
+        
         .section-title {
-            text-align: center;
             font-size: 16px;
             font-weight: bold;
-            margin-top: 25px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
+            margin-top: 20px;
+            margin-bottom: 5px; /* Reduced margin */
+            border-bottom: 1px solid #ddd;
             padding-bottom: 5px;
+            color: #333;
+            text-align: center; /* Centered Title */
+            page-break-after: avoid;
+            break-after: avoid;
         }
 
         .text-content {
             font-size: 13px;
-            line-height: 1.4;
-            text-align: justify;
-            margin-bottom: 10px;
-            white-space: pre-line;
+            line-height: 1.5;
+            text-align: justify; /* Justified Content */
+            margin-bottom: 15px;
+            white-space: pre-wrap; /* Keeps line breaks */
+            orphans: 3;
+            widows: 3;
         }
 
-        /* FOOTER (SIGNATURE) - LOCKED TO BOTTOM */
-        .footer-signatures {
-            position: absolute;
-            bottom: 2cm;
-            left: 1.5cm;
-            right: 1.5cm;
-            border-top: 1px solid transparent; /* Just for spacing */
+        /* SIGNATURE SECTION (FLOWS NATURALLY) */
+        .signature-section {
+            margin-top: 40px;
+            page-break-inside: avoid;
         }
-        .elaborated-by {
+        .elaborated-by-label {
             font-weight: bold;
             margin-bottom: 5px;
+        }
+
+        .keep-together {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .footer-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 80px;
+            padding-top: 10px;
+            border-top: 2px solid #eee;
+            background: white;
+        }
+        .footer-logos img {
+            object-fit: contain;
+            /* Full color */
         }
 
         /* PRINT STYLES */
         @media print {
             html, body {
                 background: white !important;
+                height: 100%;
             }
             @page {
                 size: A4;
-                margin: 0;
+                margin: 1.5cm;
+                margin-bottom: 5.5cm; /* Further increased space for footer */
             }
             .actions {
                 display: none !important;
@@ -197,10 +262,24 @@ $elaborated_role = $_SESSION['role_name'] ?? 'Técnico';
             .page-container {
                 margin: 0 !important;
                 box-shadow: none !important;
-                width: 210mm !important;
-                height: 297mm !important;
-                padding: 2cm 1.5cm !important;
+                width: 100% !important;
+                padding: 0 !important;
                 border: none !important;
+            }
+            /* Fixed Footer for Print */
+            .footer-logos {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                z-index: 100;
+                border: none;
+            }
+            /* Ensure background colors print */
+            .info-grid {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
             }
         }
     </style>
@@ -214,16 +293,12 @@ $elaborated_role = $_SESSION['role_name'] ?? 'Técnico';
 
     <script>
         function goBack() {
-            // Check if we came from reports module
-            if (document.referrer.includes('/reports/')) {
+             if (document.referrer.includes('/reports/')) {
                 window.location.href = '../reports/index.php';
             } else {
                 window.location.href = 'view.php?id=<?php echo $id; ?>';
             }
         }
-    </script>
-
-    <script>
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('autoprint')) {
@@ -233,91 +308,124 @@ $elaborated_role = $_SESSION['role_name'] ?? 'Técnico';
     </script>
 
     <div class="page-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-logo">
-                <?php if($system_logo): ?>
-                    <img src="../../assets/uploads/<?php echo $system_logo; ?>" alt="Logo">
-                <?php else: ?>
-                    <h2><?php echo htmlspecialchars($company_name); ?></h2>
-                <?php endif; ?>
-            </div>
-            <div class="header-info">
-                <h2>SOPORTE TÉCNICO</h2>
-                <p>Telf: <?php echo htmlspecialchars($company_phone); ?></p>
-                <p><?php echo htmlspecialchars($company_email); ?></p>
-            </div>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <td>
+                        <div class="header-content">
+                            <div class="header-logo">
+                                <?php if($system_logo): ?>
+                                    <img src="../../assets/uploads/<?php echo $system_logo; ?>" alt="Logo">
+                                <?php else: ?>
+                                    <h2><?php echo htmlspecialchars($company_name); ?></h2>
+                                <?php endif; ?>
+                            </div>
+                            <div class="header-info">
+                                <h2>SOPORTE TÉCNICO</h2>
+                                <p>Telf: <?php echo htmlspecialchars($company_phone); ?></p>
+                                <p><?php echo htmlspecialchars($company_email); ?></p>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="date-line">
+                            <?php
+                            $months = [
+                                'January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo',
+                                'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio',
+                                'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre',
+                                'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'
+                            ];
+                            ?>
+                            Fecha: <?php echo date('d') . ' de ' . $months[date('F')] . ' de ' . date('Y'); ?>
+                        </div>
 
-        <div class="content">
-            <div class="date-line">
-                Fecha: <?php echo date('d \d\e F \d\e Y'); ?>
-            </div>
+                        <div class="doc-title">
+                            REPORTE DE DIAGNÓSTICO
+                            <div class="client-subtitle">Cliente: <?php echo htmlspecialchars($order['client_name']); ?></div>
+                        </div>
 
-            <div class="doc-title">
-                REPORTE DE DIAGNÓSTICO
-            </div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Tipo:</span>
+                                <span class="info-value"><?php echo ($order['service_type'] == 'warranty') ? 'Garantía' : 'Servicio'; ?></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">No. Caso:</span>
+                                <span class="info-value" style="color: #2563eb;"><?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">No. Diagnóstico:</span>
+                                <span class="info-value"><?php echo $order['diagnosis_number']; ?></span>
+                            </div>
+                            
+                            <div class="info-item">
+                                <span class="info-label">Dispositivo:</span>
+                                <span class="info-value"><?php echo htmlspecialchars($order['equipment_type']); ?></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Marca:</span>
+                                <span class="info-value"><?php echo htmlspecialchars($order['brand']); ?></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Modelo:</span>
+                                <span class="info-value"><?php echo htmlspecialchars($order['model']); ?></span>
+                            </div>
 
-            <div class="info-block">
-                <div class="info-row">
-                    <span class="label">Tipo:</span>
-                    <span class="value"><?php echo ($order['service_type'] == 'warranty') ? 'Garantía' : 'Servicio'; ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="label">No. Caso:</span>
-                    <span class="value" style="font-weight: bold; color: #2563eb;"><?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></span>
-                </div>
-                <?php if($order['invoice_number']): ?>
-                <div class="info-row">
-                    <span class="label">No. Factura:</span>
-                    <span class="value"><?php echo htmlspecialchars($order['invoice_number']); ?></span>
-                </div>
-                <?php endif; ?>
-                <?php if($order['diagnosis_number']): ?>
-                <div class="info-row">
-                    <span class="label">No. Diagnóstico:</span>
-                    <span class="value"><?php echo $order['diagnosis_number']; ?></span>
-                </div>
-                <?php endif; ?>
-                
-                <div class="info-row">
-                    <span class="label">Dispositivo:</span>
-                    <span class="value uc-text"><?php echo htmlspecialchars($order['equipment_type']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Marca:</span>
-                    <span class="value uc-text"><?php echo htmlspecialchars($order['brand']); ?></span>
-                </div>
-                 <div class="info-row">
-                    <span class="label">Modelo:</span>
-                    <span class="value"><?php echo htmlspecialchars($order['model']); ?></span>
-                </div>
-                <div class="info-row">
-                    <span class="label">No. Serie:</span>
-                    <span class="value"><?php echo htmlspecialchars($order['serial_number']); ?></span>
-                </div>
-                <div class="info-row" style="margin-top: 5px;">
-                    <span class="label">Falla Reportada:</span>
-                    <span class="value uc-text"><?php echo htmlspecialchars($order['problem_reported']); ?></span>
-                </div>
-            </div>
+                            <div class="info-item">
+                                <span class="info-label">No. Serie:</span>
+                                <span class="info-value"><?php echo htmlspecialchars($order['serial_number']); ?></span>
+                            </div>
 
-            <div class="section-title">Procedimiento:</div>
-            <div class="text-content">
-                <?php echo $order['diagnosis_procedure'] ? nl2br(htmlspecialchars($order['diagnosis_procedure'])) : 'No registrado.'; ?>
-            </div>
+                            <div class="info-item">
+                                <span class="info-label">Falla Reportada:</span>
+                                <span class="info-value"><?php echo htmlspecialchars($order['problem_reported']); ?></span>
+                            </div>
 
-            <div class="section-title">Conclusión/Solución</div>
-            <div class="text-content">
-                <?php echo $order['diagnosis_conclusion'] ? nl2br(htmlspecialchars($order['diagnosis_conclusion'])) : 'No registrado.'; ?>
-            </div>
-        </div>
+                            <?php if($order['invoice_number']): ?>
+                            <div class="info-item">
+                                <span class="info-label">No. Factura:</span>
+                                <span class="info-value"><?php echo htmlspecialchars($order['invoice_number']); ?></span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
 
-        <!-- Footer signatures anchored to bottom -->
-        <div class="footer-signatures">
-            <div class="elaborated-by">Elaborado por:</div>
-            <div style="font-size: 14px; font-weight: bold;"><?php echo htmlspecialchars($elaborated_by); ?></div>
-            <div style="font-size: 13px;"><?php echo htmlspecialchars($elaborated_role); ?> <?php echo htmlspecialchars($company_name); ?>.</div>
+                        <!-- Diagnosis Details Moved Up -->
+                        <div class="diagnosis-section">
+                            <div class="section-title">Procedimiento:</div>
+                            <div class="text-content">
+                                <?php echo $order['diagnosis_procedure'] ? nl2br(htmlspecialchars($order['diagnosis_procedure'])) : 'No registrado.'; ?>
+                            </div>
+                        </div>
+
+                        <div class="diagnosis-section">
+                            <div class="section-title">Conclusión/Solución:</div>
+                            <div class="text-content">
+                                <?php echo $order['diagnosis_conclusion'] ? nl2br(htmlspecialchars($order['diagnosis_conclusion'])) : 'No registrado.'; ?>
+                            </div>
+                        </div>
+
+                        <!-- Signature Section (Flows naturally, not absolute) -->
+                        <div class="signature-section">
+                            <div class="elaborated-by-label">Elaborado por:</div>
+                            <div style="font-size: 14px; font-weight: bold; margin-top: 5px;"><?php echo htmlspecialchars($elaborated_by); ?></div>
+                            <div style="font-size: 13px; color: #555;"><?php echo htmlspecialchars($elaborated_role); ?> - <?php echo htmlspecialchars($company_name); ?></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="footer-logos">
+            <!-- Logos -->
+            <img src="../../assets/img/hp_logo.png" alt="HP" style="height: 60px;">
+            <img src="../../assets/img/benq_logo.jpg" alt="BenQ" style="height: 50px;">
+            <img src="../../assets/img/aoc_logo.png" alt="AOC" style="height: 40px;">
+            <img src="../../assets/img/tripp_lite_logo.png" alt="Tripp Lite" style="height: 50px;">
         </div>
     </div>
 
