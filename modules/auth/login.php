@@ -53,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .login-card {
             width: 100%;
-            max-width: 420px;
-            padding: 3rem 2.5rem;
+            max-width: 480px;
+            padding: 3rem 2rem;
             border: 1px solid rgba(255, 255, 255, 0.1);
             background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(20px);
@@ -145,6 +145,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <div style="text-align: center; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
             <p class="text-muted text-sm">&copy; <?php echo date('Y'); ?> System Taller. Todos los derechos reservados.</p>
+            <!-- <p class="text-muted text-xs" style="margin-top: 0.25rem; opacity: 0.6;">Desarrollado por Bryan Rivas</p> -->
+            <p class="text-muted text-xs" style="margin-top: 0.5rem; opacity: 0.5; font-style: italic;">Nota: "Este producto es para uso interno, no puede ser comercializado"</p>
         </div>
     </div>
 

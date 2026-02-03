@@ -93,11 +93,13 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
         
         /* PAPER PREVIEW ON SCREEN */
         .page-container {
+            position: relative; /* Context for absolute footer */
             width: 210mm;
             min-height: 297mm;
             margin: 20px auto;
             background: white;
             padding: 2cm 1.5cm;
+            padding-bottom: 2cm;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
         }
 
@@ -231,30 +233,25 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
             break-inside: avoid;
         }
 
-        .footer-logos {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 80px;
-            padding-top: 10px;
-            border-top: 2px solid #eee;
-            background: white;
-        }
-        .footer-logos img {
-            object-fit: contain;
-            /* Full color */
+
+
+        .diagnosis-section {
+            /* page-break-inside removed to allow flow */
+            margin-bottom: 20px;
         }
 
         /* PRINT STYLES */
         @media print {
             html, body {
                 background: white !important;
-                height: 100%;
+                height: auto !important; /* Allow auto height */
+                margin: 0 !important;
+                padding: 0 !important;
             }
             @page {
                 size: A4;
-                margin: 1.5cm;
-                margin-bottom: 5.5cm; /* Further increased space for footer */
+                margin: 1cm; /* Base margin */
+                margin-top: 0.5cm; /* Reduced top margin specifically */
             }
             .actions {
                 display: none !important;
@@ -263,19 +260,12 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                 margin: 0 !important;
                 box-shadow: none !important;
                 width: 100% !important;
+                min-height: 0 !important; /* Prevent forced overflow */
                 padding: 0 !important;
+                padding-bottom: 0 !important;
                 border: none !important;
             }
-            /* Fixed Footer for Print */
-            .footer-logos {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                width: 100%;
-                z-index: 100;
-                border: none;
-            }
+
             /* Ensure background colors print */
             .info-grid {
                 background-color: #f8f9fa !important;
@@ -346,7 +336,10 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
 
                         <div class="doc-title">
                             REPORTE DE DIAGNÓSTICO
-                            <div class="client-subtitle">Cliente: <?php echo htmlspecialchars($order['client_name']); ?></div>
+                            <?php 
+                                $final_client_name = !empty($order['owner_name']) ? $order['owner_name'] : $order['client_name'];
+                            ?>
+                            <div class="client-subtitle">Cliente: <?php echo htmlspecialchars($final_client_name); ?></div>
                         </div>
 
                         <div class="info-grid">
@@ -398,14 +391,14 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                         <div class="diagnosis-section">
                             <div class="section-title">Procedimiento:</div>
                             <div class="text-content">
-                                <?php echo $order['diagnosis_procedure'] ? nl2br(htmlspecialchars($order['diagnosis_procedure'])) : 'No registrado.'; ?>
+                                <?php echo $order['diagnosis_procedure'] ? htmlspecialchars($order['diagnosis_procedure']) : 'No registrado.'; ?>
                             </div>
                         </div>
 
                         <div class="diagnosis-section">
                             <div class="section-title">Conclusión/Solución:</div>
                             <div class="text-content">
-                                <?php echo $order['diagnosis_conclusion'] ? nl2br(htmlspecialchars($order['diagnosis_conclusion'])) : 'No registrado.'; ?>
+                                <?php echo $order['diagnosis_conclusion'] ? htmlspecialchars($order['diagnosis_conclusion']) : 'No registrado.'; ?>
                             </div>
                         </div>
 
@@ -420,13 +413,7 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
             </tbody>
         </table>
         
-        <div class="footer-logos">
-            <!-- Logos -->
-            <img src="../../assets/img/hp_logo.png" alt="HP" style="height: 60px;">
-            <img src="../../assets/img/benq_logo.jpg" alt="BenQ" style="height: 50px;">
-            <img src="../../assets/img/aoc_logo.png" alt="AOC" style="height: 40px;">
-            <img src="../../assets/img/tripp_lite_logo.png" alt="Tripp Lite" style="height: 50px;">
-        </div>
+
     </div>
 
 </body>

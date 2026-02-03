@@ -14,6 +14,20 @@ $user_id = $_SESSION['user_id'];
 $success = '';
 $error = '';
 
+// Check/Add navbar_order column (Migration)
+try {
+    $pdo->query("SELECT navbar_order FROM users LIMIT 1");
+} catch (PDOException $e) {
+    // If column doesn't exist
+    if (strpos($e->getMessage(), 'Unknown column') !== false || $e->getCode() == '42S22') {
+        try {
+            $pdo->exec("ALTER TABLE users ADD COLUMN navbar_order TEXT DEFAULT NULL");
+        } catch(Exception $ex) {
+            // Ignore if fails (might be permissions), but user will see visual errors later if strict
+        }
+    }
+}
+
 // Handle Signature Deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_signature') {
     // Get current signature path
@@ -147,14 +161,55 @@ require_once '../../includes/sidebar.php';
                     </div>
                 <?php endif; ?>
             </div>
+
+            <!-- Navbar Customization -->
+            <div style="flex: 1; min-width: 300px; border-left: 1px solid var(--border-color); padding-left: 2rem;">
+                <h3 class="mb-3">Personalizar Menú</h3>
+                <p class="text-muted text-sm mb-3">Arrastra los elementos para cambiar el orden del menú.</p>
+                
+                <ul id="sortable-menu" style="list-style: none; padding: 0;">
+                    <!-- Items defined in JS or PHP -->
+                    <li data-id="clients" class="draggable-item"><i class="ph ph-users"></i> Clientes</li>
+                    <li data-id="equipment" class="draggable-item"><i class="ph ph-desktop"></i> Equipos</li>
+                    <li data-id="new_warranty" class="draggable-item"><i class="ph ph-plus-circle"></i> Registro de Garantía</li>
+                    <li data-id="tools" class="draggable-item"><i class="ph ph-wrench"></i> Herramientas</li>
+                    <li data-id="requests" class="draggable-item"><i class="ph ph-clipboard-text"></i> Solicitud</li>
+                    <li data-id="reports" class="draggable-item"><i class="ph ph-chart-bar"></i> Reportes</li>
+                </ul>
+                
+                <style>
+                    .draggable-item {
+                        padding: 10px;
+                        margin-bottom: 8px;
+                        background: var(--bg-card);
+                        border: 1px solid var(--border-color);
+                        border-radius: 6px;
+                        cursor: grab;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    .draggable-item:active { cursor: grabbing; }
+                    .draggable-item i { width: 20px; text-align: center; }
+                    .sortable-ghost { opacity: 0.4; background: #e2e8f0; }
+                </style>
+                
+                <button id="saveMenuOrder" class="btn btn-primary w-100 mt-3">
+                    <i class="ph ph-floppy-disk"></i> Guardar Orden
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- SortableJS -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // ... (Existing Signature Logic) ...
         const btnDelete = document.getElementById('btnDeleteSignature');
         if(btnDelete) {
             btnDelete.addEventListener('click', function() {
@@ -167,12 +222,52 @@ require_once '../../includes/sidebar.php';
                     cancelButtonColor: '#6b7280',
                     confirmButtonText: 'Sí, eliminar',
                     cancelButtonText: 'Cancelar',
-                    background: '#1e293b', // Matches dark mode better
+                    background: '#1e293b', 
                     color: '#fff'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         document.getElementById('deleteSignatureForm').submit();
                     }
+                });
+            });
+        }
+
+        // --- SORTABLE MENU LOGIC ---
+        const el = document.getElementById('sortable-menu');
+        // Simple check to ensure element exists before init
+        if(el) {
+            const sortable = Sortable.create(el, {
+                animation: 150,
+                ghostClass: 'sortable-ghost'
+            });
+
+            document.getElementById('saveMenuOrder').addEventListener('click', function() {
+                const order = sortable.toArray(); // Get array of data-ids
+                
+                fetch('save_navbar_order.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ order: order })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Orden Guardado',
+                            text: 'El menú se actualizará en la próxima recarga.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', 'No se pudo guardar el orden', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'Error de red', 'error');
                 });
             });
         }

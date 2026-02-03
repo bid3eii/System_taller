@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // (Permissions saving logic removed - centralized in Settings)
 
                 // Redirect to user list as requested
-                header("Location: ../settings/index.php?tab=users");
+                header("Location: ../settings/index.php?tab=users&success=1");
                 exit;
 
             } catch (PDOException $e) {

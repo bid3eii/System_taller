@@ -15,87 +15,167 @@
 
     <!-- Menu -->
     <nav class="navbar-menu">
-
-        
-        <?php if(can_access_module('clients', $pdo)): ?>
-        <a href="/System_Taller/modules/clients/index.php" class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], 'clients') !== false ? 'active' : ''; ?>">
-            <i class="ph ph-users"></i> Clientes
-        </a>
-        <?php endif; ?>
-        
-        <?php if(can_access_module('equipment', $pdo)): ?>
-        <div class="dropdown">
-            <a href="#" class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], 'equipment') !== false && strpos($_SERVER['REQUEST_URI'], 'type=warranty') === false) ? 'active' : ''; ?>">
-                <i class="ph ph-desktop"></i> Equipos <i class="ph-bold ph-caret-down" style="font-size: 0.8rem;"></i>
-            </a>
-            <div class="dropdown-content">
-                <a href="/System_Taller/modules/equipment/entry.php" class="dropdown-item">
-                    <i class="ph ph-arrow-right-in"></i> Entrada
-                </a>
-                <a href="/System_Taller/modules/equipment/exit.php" class="dropdown-item">
-                    <i class="ph ph-arrow-left-out"></i> Salida
-                </a>
-
-            </div>
-        </div>
-        <?php endif; ?>
-        
-        <?php if(can_access_module('new_warranty', $pdo)): ?>
-        <a href="/System_Taller/modules/equipment/entry.php?type=warranty" class="nav-link <?php echo ((strpos($_SERVER['REQUEST_URI'], 'entry.php') !== false && isset($_GET['type']) && $_GET['type'] === 'warranty') || (isset($_GET['return_to']) && $_GET['return_to'] === 'entry')) ? 'active' : ''; ?>">
-            <i class="ph ph-plus-circle"></i> Registro de Garantía
-        </a>
-        <?php endif; ?>
-
-
-        <?php if(can_access_module('tools', $pdo)): ?>
-        <a href="/System_Taller/modules/tools/index.php" class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], 'tools') !== false ? 'active' : ''; ?>">
-            <i class="ph ph-wrench"></i> Herramientas
-        </a>
-        <?php endif; ?>
-
-        <!-- Solicitud Dropdown (Services & Warranties) -->
         <?php 
+            // 1. Fetch User Order
+            $navbar_order = [];
+            if(isset($_SESSION['user_id'])){
+                try {
+                    $stmtO = $pdo->prepare("SELECT navbar_order FROM users WHERE id = ?");
+                    $stmtO->execute([$_SESSION['user_id']]);
+                    $storedOrder = $stmtO->fetchColumn();
+                    if($storedOrder) $navbar_order = json_decode($storedOrder, true);
+                } catch (PDOException $e) {
+                    // Check for invalid column error (1054 or 42S22)
+                    if (strpos($e->getMessage(), 'Unknown column') !== false || $e->getCode() == '42S22') {
+                        try {
+                            // Attempt to self-heal
+                            $pdo->exec("ALTER TABLE users ADD COLUMN navbar_order TEXT DEFAULT NULL");
+                            // Retry fetch
+                            $stmtO = $pdo->prepare("SELECT navbar_order FROM users WHERE id = ?");
+                            $stmtO->execute([$_SESSION['user_id']]);
+                            $storedOrder = $stmtO->fetchColumn();
+                            if($storedOrder) $navbar_order = json_decode($storedOrder, true);
+                        } catch (Exception $ex) {
+                            // Suppress further errors to keep site running
+                        }
+                    }
+                }
+            }
+
+            // 2. Define Menu Items
+            $menu_items = [];
+
+            // Clients
+            if(can_access_module('clients', $pdo)) {
+                $menu_items['clients'] = [
+                    'type' => 'link',
+                    'url' => '/System_Taller/modules/clients/index.php',
+                    'icon' => 'ph-users',
+                    'label' => 'Clientes',
+                    'active' => strpos($_SERVER['REQUEST_URI'], 'clients') !== false
+                ];
+            }
+
+            // Equipment
+            if(can_access_module('equipment', $pdo)) {
+                 $menu_items['equipment'] = [
+                    'type' => 'dropdown',
+                    'url' => '#',
+                    'icon' => 'ph-desktop',
+                    'label' => 'Equipos',
+                    'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment') !== false && strpos($_SERVER['REQUEST_URI'], 'type=warranty') === false),
+                    'children' => [
+                        ['url' => '/System_Taller/modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'],
+                        ['url' => '/System_Taller/modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida']
+                    ]
+                ];
+            }
+
+            // New Warranty
+            if(can_access_module('new_warranty', $pdo)) {
+                 $menu_items['new_warranty'] = [
+                    'type' => 'link',
+                    'url' => '/System_Taller/modules/equipment/entry.php?type=warranty',
+                    'icon' => 'ph-plus-circle',
+                    'label' => 'Registro de Garantía',
+                    'active' => ((strpos($_SERVER['REQUEST_URI'], 'entry.php') !== false && isset($_GET['type']) && $_GET['type'] === 'warranty') || (isset($_GET['return_to']) && $_GET['return_to'] === 'entry'))
+                ];
+            }
+
+            // Tools
+            if(can_access_module('tools', $pdo)) {
+                 $menu_items['tools'] = [
+                    'type' => 'link',
+                    'url' => '/System_Taller/modules/tools/index.php',
+                    'icon' => 'ph-wrench',
+                    'label' => 'Herramientas',
+                    'active' => strpos($_SERVER['REQUEST_URI'], 'tools') !== false
+                ];
+            }
+
+            // Requests (Solicitud)
             $can_services = can_access_module('services', $pdo);
             $can_warranties = can_access_module('warranties', $pdo);
             $can_history = can_access_module('history', $pdo);
             
-            if ($can_services || $can_warranties || $can_history):
-        ?>
-        <div class="dropdown">
-            <a href="#" class="nav-link <?php echo ((strpos($_SERVER['REQUEST_URI'], 'warranties') !== false || strpos($_SERVER['REQUEST_URI'], 'services') !== false) && (!isset($_GET['return_to']) || $_GET['return_to'] !== 'entry')) ? 'active' : ''; ?>">
-                <i class="ph ph-clipboard-text"></i> Solicitud <i class="ph-bold ph-caret-down" style="font-size: 0.8rem;"></i>
-            </a>
-            <div class="dropdown-content">
-                <?php if($can_services): ?>
-                <a href="/System_Taller/modules/services/index.php" class="dropdown-item">
-                    <i class="ph ph-wrench"></i> Servicios
-                </a>
-                <?php endif; ?>
+            if ($can_services || $can_warranties || $can_history) {
+                $children = [];
+                if($can_services) $children[] = ['url' => '/System_Taller/modules/services/index.php', 'icon' => 'ph-wrench', 'label' => 'Servicios'];
+                if($can_warranties) $children[] = ['url' => '/System_Taller/modules/warranties/index.php', 'icon' => 'ph-shield-check', 'label' => 'Garantías'];
+                if($can_history) $children[] = ['url' => '/System_Taller/modules/history/index.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial'];
+
+                $menu_items['requests'] = [
+                    'type' => 'dropdown',
+                    'url' => '#',
+                    'icon' => 'ph-clipboard-text',
+                    'label' => 'Solicitud',
+                    'active' => ((strpos($_SERVER['REQUEST_URI'], 'warranties') !== false || strpos($_SERVER['REQUEST_URI'], 'services') !== false) && (!isset($_GET['return_to']) || $_GET['return_to'] !== 'entry')),
+                    'children' => $children
+                ];
+            }
+
+            // Reports
+            if(can_access_module('reports', $pdo)) {
+                 $menu_items['reports'] = [
+                    'type' => 'link',
+                    'url' => '/System_Taller/modules/reports/index.php',
+                    'icon' => 'ph-chart-bar',
+                    'label' => 'Reportes',
+                    'active' => strpos($_SERVER['REQUEST_URI'], 'reports') !== false
+                ];
+            }
+
+            // 3. Determine Final Order
+            $default_keys = array_keys($menu_items);
+            // If user has saved order, prioritize it
+            $final_keys = [];
+            if (!empty($navbar_order) && is_array($navbar_order)) {
+                // Add saved keys if they exist in valid items
+                foreach($navbar_order as $key) {
+                    if(isset($menu_items[$key])) {
+                        $final_keys[] = $key;
+                    }
+                }
+                // Add any newly added modules that weren't in user's saved list
+                foreach($default_keys as $key) {
+                    if(!in_array($key, $final_keys)) {
+                        $final_keys[] = $key;
+                    }
+                }
+            } else {
+                $final_keys = $default_keys;
+            }
+
+            // 4. Render
+            foreach($final_keys as $key) {
+                $item = $menu_items[$key];
+                $activeClass = $item['active'] ? 'active' : '';
                 
-                <?php if($can_warranties): ?>
-                <a href="/System_Taller/modules/warranties/index.php" class="dropdown-item">
-                    <i class="ph ph-shield-check"></i> Garantías
-                </a>
-                <?php endif; ?>
+                if ($key === 'reports') {
+                    // Retain specific separator for reports if desired, or make it generic
+                    echo '<div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 0.5rem;"></div>';
+                }
 
-                <?php if($can_history): ?>
-                <a href="/System_Taller/modules/history/index.php" class="dropdown-item">
-                    <i class="ph ph-clock-counter-clockwise"></i> Historial
-                </a>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <?php if(can_access_module('reports', $pdo)): ?>
-        <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 0.5rem;"></div>
-        
-        <a href="/System_Taller/modules/reports/index.php" class="nav-link <?php echo strpos($_SERVER['REQUEST_URI'], 'reports') !== false ? 'active' : ''; ?>">
-            <i class="ph ph-chart-bar"></i> Reportes
-        </a>
-        <?php endif; ?>
-
-
+                if ($item['type'] === 'link') {
+                    echo "<a href=\"{$item['url']}\" class=\"nav-link {$activeClass}\">";
+                    echo "<i class=\"ph {$item['icon']}\"></i> {$item['label']}";
+                    echo "</a>";
+                } elseif ($item['type'] === 'dropdown') {
+                    echo "<div class=\"dropdown\">";
+                    echo "<a href=\"#\" class=\"nav-link {$activeClass}\">";
+                    echo "<i class=\"ph {$item['icon']}\"></i> {$item['label']} <i class=\"ph-bold ph-caret-down\" style=\"font-size: 0.8rem;\"></i>";
+                    echo "</a>";
+                    echo "<div class=\"dropdown-content\">";
+                    foreach($item['children'] as $child) {
+                        echo "<a href=\"{$child['url']}\" class=\"dropdown-item\">";
+                        echo "<i class=\"ph {$child['icon']}\"></i> {$child['label']}";
+                        echo "</a>";
+                    }
+                    echo "</div>";
+                    echo "</div>";
+                }
+            }
+        ?>
     </nav>
     
     <!-- User Profile & Dropdown -->

@@ -33,22 +33,20 @@ $sql = "
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN users u ON so.assigned_tech_id = u.id
-    WHERE so.status IN ('delivered', 'diagnosing', 'ready', 'pending_approval', 'in_repair', 'received', 'approved')
+    WHERE 1=1
 ";
 
 $params = [];
 
 // Apply Filters
-if ($type === 'service') {
-    $sql .= " AND so.service_type = 'service'";
-} elseif ($type === 'warranty') {
-    $sql .= " AND so.service_type = 'warranty'";
+if ($type !== 'all' && !empty($type)) {
+    $sql .= " AND so.service_type = ?";
+    $params[] = $type;
 }
 
-if ($status === 'delivered') {
-    $sql .= " AND so.status = 'delivered'";
-} elseif ($status === 'diagnosed') {
-    $sql .= " AND so.status != 'delivered'";
+if ($status !== 'all' && !empty($status)) {
+    $sql .= " AND so.status = ?";
+    $params[] = $status;
 }
 
 if (!empty($search)) {

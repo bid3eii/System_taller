@@ -530,20 +530,19 @@ require_once '../../includes/sidebar.php';
                             <div class="input-group">
                                 <input type="text" name="client_name_input" id="client_name_input_std" class="form-control" placeholder="Ej. Juan Pérez" value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" required autocomplete="off">
                                 <i class="ph ph-user input-icon"></i>
-                                <button type="button" id="btnClearClient_std" style="background:none; border:none; color:var(--text-secondary); position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; display:none;">
-                                    <i class="ph ph-x"></i>
-                                </button>
+                                <!-- Button Removed -->
                             </div>
                             <div class="search-results" id="client_autocomplete_results_std" style="width: 100%;"></div>
                         </div>
 
                         <!-- Tax ID -->
-                        <div class="form-group">
-                            <label class="form-label">DNI / RUC *</label>
+                        <div class="form-group" style="position: relative;">
+                            <label class="form-label">Cédula/RUC *</label>
                             <div class="input-group">
-                                <input type="text" name="client_tax_id" id="client_tax_id_std" class="form-control" placeholder="Número de identificación" required value="<?php echo $edit_order ? ($edit_order['tax_id'] ?? '') : ''; ?>">
+                                <input type="text" name="client_tax_id" id="client_tax_id_std" class="form-control" placeholder="Número de identificación" required value="<?php echo $edit_order ? ($edit_order['tax_id'] ?? '') : ''; ?>" autocomplete="off">
                                 <i class="ph ph-identification-card input-icon"></i>
                             </div>
+                            <div class="search-results" id="client_tax_results_std" style="width: 100%; position: absolute; z-index: 1000; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; display: none;"></div>
                         </div>
 
                         <!-- Phone -->
@@ -699,79 +698,200 @@ require_once '../../includes/sidebar.php';
                      </div>
                 </div>
 
-                <!-- JS Script (Consolidated) -->
+                <!-- DEBUG BANNER -->
+                <!-- Debug Banner Removed -->
+
+                <!-- JS Script (Consolidated & Fixed) -->
                 <script>
-                    (function() {
-                        const allClients = <?php echo json_encode($clients); ?>;
-                        const nameInput = document.getElementById('client_name_input_std');
-                        const idInput = document.getElementById('client_id_hidden_std');
-                        const resultsDiv = document.getElementById('client_autocomplete_results_std');
-                        const clearBtn = document.getElementById('btnClearClient_std');
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const banner = document.getElementById('debug_banner');
                         
-                        // Autofill Targets
-                        const taxInput = document.getElementById('client_tax_id_std');
-                        const phoneInput = document.getElementById('client_phone_std');
-                        const emailInput = document.getElementById('client_email_std');
-                        const addressInput = document.getElementById('client_address_std');
+                        function log(msg, color = null) {
+                            console.log(msg);
+                            if(banner) {
+                                banner.innerHTML += " | " + msg;
+                                if(color) banner.style.backgroundColor = color;
+                            }
+                        }
 
-                        if(nameInput) {
-                            nameInput.addEventListener('input', function() {
-                                const val = this.value.toLowerCase();
-                                idInput.value = ''; // Reset ID on edit
+                        try {
+                            log("Iniciando Script...");
+                            
+                            // 1. Load Clients securely
+                            const allClients = <?php echo json_encode($clients) ?: '[]'; ?>;
+                            log("Clientes: " + allClients.length);
+
+                            // 2. Identify Elements
+                            const taxInput = document.getElementById('client_tax_id_std');
+                            const taxResultsDiv = document.getElementById('client_tax_results_std');
+                            const nameInput = document.getElementById('client_name_input_std');
+                            const idInput = document.getElementById('client_id_hidden_std');
+                            const resultsDiv = document.getElementById('client_autocomplete_results_std');
+                            const clearBtn = document.getElementById('btnClearClient_std');
+
+                            // Other inputs for population
+                            const phoneInput = document.getElementById('client_phone_std');
+                            const emailInput = document.getElementById('client_email_std');
+                            const addressInput = document.getElementById('client_address_std');
+
+                            if (!taxInput) {
+                                throw new Error("Input Cédula NO encontrado");
+                            }
+                            
+                            
+                            log("Inputs OK");
+                            // taxInput.style.border = '3px solid blue'; // Ready state
+                            // taxInput.style.backgroundColor = '#e6f3ff';
+
+                            // 3. Define Helper Functions
+                            function fillClientData(client) {
+                                if(!client) return;
+                                if(nameInput) nameInput.value = client.name;
+                                if(idInput) idInput.value = client.id;
+                                if(taxInput) taxInput.value = client.tax_id || '';
+                                if(phoneInput) phoneInput.value = client.phone || '';
+                                if(emailInput) emailInput.value = client.email || '';
+                                if(addressInput) addressInput.value = client.address || '';
                                 
-                                if(val.length > 0) clearBtn.style.display = 'block';
-                                else clearBtn.style.display = 'none';
+                                if(clearBtn) clearBtn.style.display = 'block';
+                                
+                                // Hide all dropdowns
+                                if(resultsDiv) resultsDiv.classList.remove('show');
+                                if(taxResultsDiv) taxResultsDiv.style.display = 'none';
+                                
+                                log("CLIENTE: " + client.name, "#90EE90");
+                                // taxInput.style.borderColor = 'green';
+                            }
 
-                                if (val.length < 2) {
-                                    resultsDiv.classList.remove('show');
+                            function createOption(html, onClick) {
+                                const div = document.createElement('div');
+                                div.className = 'search-option';
+                                div.style.padding = '10px';
+                                div.style.cursor = 'pointer';
+                                div.style.borderBottom = '1px solid var(--border-color)';
+                                div.style.backgroundColor = 'var(--bg-card)';
+                                div.style.color = 'var(--text-primary)';
+                                div.innerHTML = html;
+                                div.onmouseover = function() { this.style.backgroundColor = 'var(--bg-body)'; };
+                                div.onmouseout = function() { this.style.backgroundColor = 'var(--bg-card)'; };
+                                div.addEventListener('click', onClick);
+                                return div;
+                            }
+
+                            // 4. Attach Listeners
+
+                            // --- A. Cédula Search ---
+                            taxInput.addEventListener('keydown', function(event) {
+                                if (event.key === 'Enter') event.preventDefault();
+                            });
+
+                            taxInput.addEventListener('input', function() {
+                                const val = this.value.trim(); 
+                                
+                                if(val.length === 0) {
+                                    taxResultsDiv.style.display = 'none';
                                     return;
                                 }
 
-                                const matches = allClients.filter(c => c.name.toLowerCase().includes(val));
+                                const matches = allClients.filter(c => {
+                                    const tax = c.tax_id ? c.tax_id.toString().toLowerCase() : '';
+                                    return tax.includes(val.toLowerCase());
+                                });
                                 
+                                taxResultsDiv.innerHTML = '';
                                 if (matches.length > 0) {
-                                    resultsDiv.innerHTML = '';
-                                    matches.slice(0, 10).forEach(c => {
-                                        const div = document.createElement('div');
-                                        div.className = 'search-option';
-                                        div.innerHTML = `<strong>${c.name}</strong> <span style='font-size:0.8em'>${c.tax_id || ''}</span>`;
-                                        div.addEventListener('click', () => {
-                                            nameInput.value = c.name;
-                                            idInput.value = c.id;
-                                            if(taxInput) taxInput.value = c.tax_id || '';
-                                            if(phoneInput) phoneInput.value = c.phone || '';
-                                            if(emailInput) emailInput.value = c.email || '';
-                                            if(addressInput) addressInput.value = c.address || '';
-                                            resultsDiv.classList.remove('show');
-                                        });
-                                        resultsDiv.appendChild(div);
+                                    // this.style.borderColor = 'green';
+                                    matches.slice(0, 5).forEach(c => { 
+                                        const html = `<strong>${c.tax_id || 'N/A'}</strong> - ${c.name}`;
+                                        const div = createOption(html, () => fillClientData(c));
+                                        taxResultsDiv.appendChild(div);
                                     });
-                                    resultsDiv.classList.add('show');
                                 } else {
-                                    resultsDiv.classList.remove('show');
+                                    // this.style.borderColor = 'red';
+                                    const div = document.createElement('div');
+                                    div.style.padding = '10px';
+                                    div.style.color = 'red';
+                                    div.innerHTML = `<em>Sin resultados</em>`;
+                                    taxResultsDiv.appendChild(div);
                                 }
+                                taxResultsDiv.style.display = 'block';
                             });
 
-                            clearBtn.addEventListener('click', () => {
-                                nameInput.value = '';
-                                idInput.value = '';
-                                if(taxInput) taxInput.value = '';
-                                if(phoneInput) phoneInput.value = '';
-                                if(emailInput) emailInput.value = '';
-                                if(addressInput) addressInput.value = '';
-                                clearBtn.style.display = 'none';
-                                nameInput.focus();
-                            });
-
+                            // Hide on click outside
                             document.addEventListener('click', (e) => {
-                                if (!resultsDiv.contains(e.target) && e.target !== nameInput) {
+                                if (taxResultsDiv && !taxResultsDiv.contains(e.target) && e.target !== taxInput) {
+                                    taxResultsDiv.style.display = 'none';
+                                }
+                                if (resultsDiv && !resultsDiv.contains(e.target) && e.target !== nameInput) {
                                     resultsDiv.classList.remove('show');
                                 }
                             });
-                        }
-                        }
 
-                <!-- Script moved to bottom -->
+
+                            // --- B. Name Search (Existing Logic Ported) ---
+                            if(nameInput) {
+                                nameInput.addEventListener('input', function() {
+                                    const val = this.value.toLowerCase();
+                                    
+                                    // Reset ID if user types anew, unless picking from list
+                                    if(idInput) idInput.value = ''; 
+                                    
+                                    if(val.length > 0) clearBtn.style.display = 'block';
+                                    else clearBtn.style.display = 'none';
+
+                                    if (val.length < 2) {
+                                        resultsDiv.classList.remove('show');
+                                        return;
+                                    }
+
+                                    const matches = allClients.filter(c => c.name.toLowerCase().includes(val));
+                                    
+                                    resultsDiv.innerHTML = '';
+                                    if (matches.length > 0) {
+                                        matches.slice(0, 10).forEach(c => {
+                                            const html = `<strong>${c.name}</strong> <span style='font-size:0.8em'>${c.tax_id || ''}</span>`;
+                                            const div = createOption(html, () => fillClientData(c));
+                                            resultsDiv.appendChild(div);
+                                        });
+                                        resultsDiv.classList.add('show');
+                                    } else {
+                                        resultsDiv.classList.remove('show');
+                                    }
+                                });
+
+                                if(clearBtn) {
+                                    clearBtn.addEventListener('click', () => {
+                                        nameInput.value = '';
+                                        if(idInput) idInput.value = '';
+                                        if(taxInput) taxInput.value = '';
+                                        if(phoneInput) phoneInput.value = '';
+                                        if(emailInput) emailInput.value = '';
+                                        if(addressInput) addressInput.value = '';
+                                        clearBtn.style.display = 'none';
+                                        
+                                        // Reset Debug visuals
+                                        // taxInput.style.borderColor = 'blue'; 
+                                        if(banner) {
+                                            banner.innerHTML = "MODO DEPURACIÓN: Limpiado";
+                                            banner.style.backgroundColor = "orange";
+                                        }
+
+                                        nameInput.focus();
+                                    });
+                                }
+                            }
+
+                            log("JS INTERACTIVO", "cyan");
+
+                        } catch (e) {
+                            console.error(e);
+                            if(banner) {
+                                banner.innerHTML += " | FATAL JS: " + e.message;
+                                banner.style.backgroundColor = "red";
+                                banner.style.color = "white";
+                            }
+                        }
+                    });
                 </script>
 
             <?php endif; ?>
@@ -785,45 +905,38 @@ require_once '../../includes/sidebar.php';
         </form>
     </div>
 
-
-
     <!-- GLOBAL SCRIPTS (Runs on both Standard and Warranty modes) -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("Global Warranty Checker Loaded");
-            
-            // Delegate event for robustness
-            const verifyButtons = document.querySelectorAll('.btn-verify-serial');
-            console.log("Verify Buttons Found:", verifyButtons.length);
+            console.log("Global Auto-fill Script Loaded");
 
+            // --- 1. WARRANTY / SERIAL CHECKER ---
+            const verifyButtons = document.querySelectorAll('.btn-verify-serial');
+            
             verifyButtons.forEach(btn => {
                 const inputId = btn.getAttribute('data-target');
                 const input = document.querySelector(inputId);
                 
-                if(!input) {
-                    console.warn("Input not found for button:", inputId);
-                    return;
-                }
+                if(!input) return;
                 
                 const statusDiv = input.closest('.form-group').querySelector('.warranty-status-msg');
 
-                function runCheck() {
-                    const serial = input.value.trim();
-                    console.log("Checking serial:", serial);
-                    
-                    if(serial.length < 2) {
-                         // alert("Ingrese número de serie");
+                // Define the Check Function
+                const runWarrantyCheck = () => {
+                     const serial = input.value.trim();
+                     if(serial.length < 2) {
+                         // Optional: alert("Por favor ingrese un número de serie.");
                          return;
-                    }
+                     }
 
-                    statusDiv.innerHTML = '<span style="color:var(--text-secondary);"><i class="ph ph-spinner ph-spin"></i> Verificando...</span>';
+                     statusDiv.innerHTML = '<span style="color:var(--text-secondary);"><i class="ph ph-spinner ph-spin"></i> Verificando...</span>';
 
-                    fetch('check_warranty.php?serial_number=' + encodeURIComponent(serial))
-                    .then(r => r.json())
-                    .then(data => {
-                        console.log("Data received:", data);
-                        if (data.success) {
-                             if (data.status === 'valid') {
+                     fetch('check_warranty.php?serial_number=' + encodeURIComponent(serial))
+                     .then(r => r.json())
+                     .then(data => {
+                         if(data.success) {
+                            // Status Feedback
+                            if (data.status === 'valid') {
                                 statusDiv.innerHTML = '<span style="color:var(--success); background:rgba(16, 185, 129, 0.1); padding:2px 6px; border-radius:4px;"><i class="ph ph-check-circle"></i> Garantía Activa</span>';
                             } else if (data.status === 'expired') {
                                 statusDiv.innerHTML = '<span style="color:var(--warning); background:rgba(245, 158, 11, 0.1); padding:2px 6px; border-radius:4px;"><i class="ph ph-warning"></i> Garantía Expirada</span>';
@@ -837,87 +950,65 @@ require_once '../../includes/sidebar.php';
 
                             // Auto-fill Logic
                             if (data.data) {
-                                // Try to fill ALL matching fields it can find
-                                document.querySelectorAll('input[name="brand"]').forEach(el => el.value = data.data.brand || el.value);
-                                document.querySelectorAll('input[name="model"]').forEach(el => el.value = data.data.model || el.value);
-                                document.querySelectorAll('input[name="submodel"]').forEach(el => el.value = data.data.submodel || el.value);
+                                console.log("Auto-filling data:", data.data);
                                 
-                                if(data.data.type) {
-                                    document.querySelectorAll('select[name="type"]').forEach(el => el.value = data.data.type);
+                                const fields = {
+                                    'brand': data.data.brand,
+                                    'model': data.data.model,
+                                    'submodel': data.data.submodel,
+                                    'type': data.data.type,
+                                    'sales_invoice_number': data.data.invoice,
+                                    'invoice_number': data.data.invoice
+                                };
+
+                                for (const [name, value] of Object.entries(fields)) {
+                                    const els = document.querySelectorAll(`input[name="${name}"], select[name="${name}"]`);
+                                    els.forEach(el => {
+                                        if(el && value) {
+                                            el.value = value;
+                                        }
+                                    });
                                 }
                                 
+                                // Special: Client Display
                                 if(data.data.client_name) {
-                                     // Special handling for autocomplete inputs
-                                     // document.querySelectorAll('input[name="client_name_input"]').forEach(el => {
-                                     //     el.value = data.data.client_name;
-                                     //     el.dispatchEvent(new Event('input'));
-                                     // });
-                                     
-                                     // Fill Display Field ("Cliente") with Data (Original Owner)
-                                     const displayField = document.getElementById('equipment_client_display');
-                                     if(displayField) {
-                                         // Prefer original owner from warranty, then current equipment client
-                                         let ownerName = data.data.original_owner || data.data.client_name;
-                                         if(ownerName) displayField.value = ownerName;
-                                     }
-
-                                     // Update Owner Name Field ("Dueño del Equipo") - DO NOT FILL AUTOMATICALLY
-                                     // User requested that "Dueño" should not be filled, but "Cliente" should receive the data.
-                                     /*
-                                     const ownerField = document.getElementById('owner_name_std');
-                                     if(ownerField) {
-                                         let ownerName = data.data.original_owner || data.data.client_name;
-                                         if(ownerName) ownerField.value = ownerName;
-                                     }
-                                     */
-
-                                     // Keep filling IDs if needed for backend, but USER REQUESTED NOT TO TOUCH CLIENT DATA
-                                     // If we don't fill IDs, the main form might submit empty client_id if user doesn't manually pick one.
-                                     // However, user said "Don't touch client data". 
-                                     // So we will NOT fill the main client inputs.
-                                     
-                                     // OPTIONAL: If we want to link the order to this client but NOT show it in the top box?
-                                     // No, user likely wants manual control of the top box.
-                                     // So we do nothing to the top box.
+                                    const display = document.getElementById('equipment_client_display');
+                                    let owner = data.data.original_owner || data.data.client_name;
+                                    if(display && owner) {
+                                        display.value = owner;
+                                    }
                                 }
-                                
-                                if(data.data.invoice) {
-                                    document.querySelectorAll('input[name="sales_invoice_number"]').forEach(el => el.value = data.data.invoice);
-                                    document.querySelectorAll('input[name="invoice_number"]').forEach(el => el.value = data.data.invoice);
-                                }
-                                
-                                // Explicit feedback
-                                // alert("Datos encontrados y rellenados.");
                             }
-                        } else {
-                            statusDiv.innerHTML = '<span style="color:var(--danger)">Error: ' + data.message + '</span>';
-                        }
-                    })
-                    .catch(e => {
-                        console.error(e);
-                        statusDiv.innerHTML = '<span style="color:var(--danger)">Error de conexión</span>';
-                    });
-                }
+                         } else {
+                            statusDiv.innerHTML = `<span style="color:var(--danger)">Error: ${data.message}</span>`;
+                         }
+                     })
+                     .catch(e => {
+                         console.error(e);
+                         statusDiv.innerHTML = '<span style="color:var(--danger)">Error de conexión</span>';
+                     });
+                };
 
-                btn.addEventListener('click', function(e) {
+                // Attach Listeners
+                btn.onclick = (e) => {
                     e.preventDefault();
-                    runCheck();
-                });
-                
-                input.addEventListener('blur', function() {
-                     if(this.value.length > 2) runCheck();
-                });
+                    runWarrantyCheck();
+                };
 
-                // Trigger on Enter key
                 input.addEventListener('keydown', function(event) {
                     if (event.key === 'Enter') {
-                        event.preventDefault(); // Prevent form submission
-                        runCheck();
+                        event.preventDefault();
+                        runWarrantyCheck();
                     }
+                });
+                
+                // Optional: Blur event
+                input.addEventListener('blur', function() {
+                     if(this.value.length > 3) runWarrantyCheck();
                 });
             });
 
-            // --- WARRANTY DATE CALCULATOR ---
+            // --- 2. WARRANTY DATE CALCULATOR ---
             const durationInput = document.getElementById('warranty_duration');
             const periodSelect = document.getElementById('warranty_period');
             const endInput = document.getElementById('warranty_end_date');

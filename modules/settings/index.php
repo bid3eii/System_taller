@@ -379,9 +379,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($currentUser && password_verify($admin_pass, $currentUser['password_hash'])) {
             try {
-                $pdo->beginTransaction();
-                
-                // Truncate Tables
+                // Truncate Tables (TRUNCATE causes implicit commit in MySQL, so no Transaction used)
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
                 $pdo->exec("TRUNCATE TABLE service_order_history");
                 $pdo->exec("TRUNCATE TABLE warranties");
@@ -393,10 +391,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->exec("TRUNCATE TABLE audit_logs");
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
                 
-                $pdo->commit();
                 $success_msg = "Sistema restaurado correctamente. Todos los datos han sido eliminados.";
             } catch (Exception $e) {
-                $pdo->rollBack();
+                // If checking FKs failed or connection error
                 $error_msg = "Error crítico al restaurar: " . $e->getMessage();
             }
         } else {
@@ -1299,7 +1296,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="text-muted" style="margin-bottom: auto; font-size: 0.9rem; line-height: 1.5;">
                             Importar archivo .sql (Sobrescribe datos)
                         </p>
-                        <form method="POST" enctype="multipart/form-data" onsubmit="return confirm('¿Estás seguro? Se sobrescribirá TODA la base de datos actual.');" style="margin-top: 1rem;">
+                        <form method="POST" id="restoreForm" enctype="multipart/form-data" onsubmit="confirmRestore(event)" style="margin-top: 1rem;">
                             <input type="hidden" name="action" value="restore_db">
                             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                                 <input type="file" name="backup_file" class="form-control" accept=".sql" required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
@@ -1324,10 +1321,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             Elimina clientes, equipos y órdenes.
                         </p>
                         
-                        <form method="POST" onsubmit="return confirm('¿ESTÁS SEGURO? Esta acción es irreversible.');" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <form method="POST" id="factoryResetForm" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
                             <input type="hidden" name="action" value="system_restore">
                             <input type="password" name="admin_password" class="form-control" placeholder="Pass de SuperAdmin" required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
-                            <button type="submit" class="btn btn-danger" style="background-color: var(--danger); color: white; width: 100%;">
+                            <button type="button" onclick="confirmFactoryReset()" class="btn btn-danger" style="background-color: var(--danger); color: white; width: 100%;">
                                 <i class="ph ph-trash"></i> Eliminar Todo
                             </button>
                         </form>
@@ -1336,6 +1333,54 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
         </div>
+        
+        <script>
+            function confirmRestore(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Restaurar Base de Datos?',
+                    text: 'Se sobrescribirá TODA la información actual con la del archivo seleccionado. Esta acción es irreversible.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#eab308',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Sí, restaurar',
+                    cancelButtonText: 'Cancelar',
+                    background: '#1e293b', 
+                    color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('restoreForm').submit();
+                    }
+                });
+            }
+
+            function confirmFactoryReset() {
+                 const pass = document.querySelector('input[name="admin_password"]').value;
+                 if(!pass) {
+                     Swal.fire('Error', 'Ingrese la contraseña de SuperAdmin', 'error');
+                     return;
+                 }
+
+                 Swal.fire({
+                    title: '¿RESET DE FÁBRICA?',
+                    text: '¡ESTA ACCIÓN ELIMINARÁ TODOS LOS DATOS! (Clientes, Equipos, Órdenes, etc). Solo quedarán los usuarios y configuraciones.',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'SÍ, BORRAR TODO',
+                    cancelButtonText: 'Cancelar',
+                    background: '#1e293b', 
+                    color: '#fff',
+                    focusCancel: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                         document.getElementById('factoryResetForm').submit();
+                    }
+                });
+            }
+        </script>
         <?php endif; ?>
     </div>
 </div>

@@ -313,19 +313,12 @@ if (empty($order['entry_doc_number'])) {
 <body>
 
     <div class="actions">
-        <button onclick="goBack()" class="btn btn-secondary">Volver</button>
+        <!-- Back button removed as requested -->
         <button onclick="window.print()" class="btn btn-primary">Imprimir</button>
     </div>
 
     <script>
-        function goBack() {
-            // Check if we came from reports module
-            if (document.referrer.includes('/reports/')) {
-                window.location.href = '../reports/index.php';
-            } else {
-                history.back();
-            }
-        }
+        // goBack function removed
     </script>
 
     <div class="paper">

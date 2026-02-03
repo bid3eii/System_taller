@@ -30,7 +30,7 @@ $sql = "
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN users u ON so.assigned_tech_id = u.id
-    WHERE so.status IN ('delivered', 'diagnosing', 'ready', 'pending_approval', 'in_repair')
+    WHERE 1=1
     ORDER BY so.entry_date DESC
 ";
 
@@ -82,14 +82,17 @@ require_once '../../includes/sidebar.php';
         <div class="select-wrapper">
             <select id="statusFilter" class="premium-select">
                 <option value="all">Todos los Estados</option>
-                <option value="diagnosed">Solo Diagnosticados</option>
-                <option value="delivered">Solo Entregados</option>
+                <option value="pending">Pendientes</option>
+                <option value="diagnosing">En Diagnóstico</option>
+                <option value="in_repair">En Reparación</option>
+                <option value="ready">Listos</option>
+                <option value="delivered">Entregados</option>
             </select>
             <i class="ph ph-caret-down select-caret"></i>
         </div>
 
         <div class="select-wrapper">
-             <select id="typeFilter" class="premium-select">
+            <select id="typeFilter" class="premium-select">
                 <option value="all">Todos los Tipos</option>
                 <option value="service">Servicio Técnico</option>
                 <option value="warranty">Garantía</option>
@@ -677,14 +680,17 @@ function filterTable() {
         const matchesSearch = rowText.includes(searchTerm);
         const matchesType = typeValue === 'all' || rowType === typeValue;
         
-        // Logical filter: 'diagnosed' covers everything not 'delivered'
+        // Logical filter
         let matchesStatus = false;
         if (statusValue === 'all') {
             matchesStatus = true;
-        } else if (statusValue === 'delivered') {
-            matchesStatus = (rowStatus === 'delivered');
-        } else if (statusValue === 'diagnosed') {
-            matchesStatus = (rowStatus !== 'delivered');
+        } else {
+            // Check for exact match or mapped status groups 
+            // The data-status attribute in the row contains the exact status from DB
+            if (rowStatus === statusValue) {
+                matchesStatus = true;
+            }
+            // Handle logical mapping if needed (e.g. 'diagnosing' in filter vs 'diagnosing' in DB)
         }
 
         if (matchesSearch && matchesStatus && matchesType) {

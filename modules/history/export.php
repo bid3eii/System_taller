@@ -12,11 +12,13 @@ if (!isset($_SESSION['user_id']) || !can_access_module('history', $pdo)) {
 
 // 1. Get Params
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$status = isset($_GET['status']) ? trim($_GET['status']) : '';
+$type = isset($_GET['type']) ? trim($_GET['type']) : '';
 
 // 2. Build Query
 $sql = "
     SELECT 
-        so.id, so.status, so.final_cost, so.exit_date, so.invoice_number, so.service_type, so.problem_reported,
+        so.id, so.status, so.final_cost, so.exit_date, so.entry_date, so.invoice_number, so.service_type, so.problem_reported,
         c.name as client_name, 
         e.brand, e.model, e.serial_number, e.type as equipment_type,
         u.username as delivered_by
@@ -24,10 +26,20 @@ $sql = "
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
-    WHERE so.status = 'delivered'
+    WHERE 1=1
 ";
 
 $params = [];
+
+if (!empty($status)) {
+    $sql .= " AND so.status = ?";
+    $params[] = $status;
+}
+
+if (!empty($type)) {
+    $sql .= " AND so.service_type = ?";
+    $params[] = $type;
+}
 
 if (!empty($search)) {
     $term = "%$search%";
@@ -49,7 +61,7 @@ if (!empty($search)) {
     $params[] = $term; // u.username
 }
 
-$sql .= " ORDER BY so.exit_date DESC";
+$sql .= " ORDER BY so.entry_date DESC";
 
 try {
     $stmt = $pdo->prepare($sql);
@@ -60,7 +72,7 @@ try {
 }
 
 // 3. Filename
-$filename = "historial_entregas_" . date('Y-m-d_H-i') . ".xls";
+$filename = "historial_equipos_" . date('Y-m-d_H-i') . ".xls";
 
 // 4. Send Headers
 if (ob_get_length()) ob_end_clean();
@@ -79,7 +91,7 @@ header("Expires: 0");
     <x:ExcelWorkbook>
         <x:ExcelWorksheets>
             <x:ExcelWorksheet>
-                <x:Name>Historial Entregas</x:Name>
+                <x:Name>Historial Equipos</x:Name>
                 <x:WorksheetOptions>
                     <x:DisplayGridlines/>
                 </x:WorksheetOptions>
@@ -96,6 +108,12 @@ header("Expires: 0");
         
         .type-warranty { color: #ea580c; font-weight: bold; }
         .type-service { color: #0ea5e9; font-weight: bold; }
+        
+        .status-pending { background-color: #fef3c7; color: #d97706; }
+        .status-diagnosing { background-color: #dbeafe; color: #2563eb; }
+        .status-repairing { background-color: #f3e8ff; color: #9333ea; }
+        .status-ready { background-color: #dcfce7; color: #16a34a; }
+        .status-delivered { background-color: #d1fae5; color: #059669; }
     </style>
 </head>
 <body>
@@ -103,11 +121,12 @@ header("Expires: 0");
         <thead>
             <tr>
                 <th style="width: 80px;">Orden #</th>
-                <th style="width: 100px;">Factura</th>
+                <th style="width: 120px;">Estado</th>
                 <th style="width: 100px;">Tipo</th>
                 <th style="width: 200px;">Cliente</th>
                 <th style="width: 200px;">Equipo</th>
                 <th style="width: 120px;">No. Serie</th>
+                <th style="width: 150px;">Fecha Entrada</th>
                 <th style="width: 150px;">Fecha Salida</th>
                 <th style="width: 150px;">Entregado Por</th>
             </tr>
@@ -119,15 +138,29 @@ header("Expires: 0");
                     $typeLabel = ($row['service_type'] === 'warranty') ? 'Garantía' : 'Servicio';
                     $invoice = $row['invoice_number'] ? $row['invoice_number'] : '-';
                     $deliveredBy = $row['delivered_by'] ? $row['delivered_by'] : '-';
+                    
+                    // Status Labels
+                    $status = $row['status'];
+                    $statusLabel = $status;
+                    $statusClass = '';
+                    switch($status) {
+                        case 'pending': $statusLabel='Pendiente'; $statusClass='status-pending'; break;
+                        case 'diagnosing': $statusLabel='Diagnóstico'; $statusClass='status-diagnosing'; break;
+                        case 'repairing': $statusLabel='En Reparación'; $statusClass='status-repairing'; break;
+                        case 'ready': $statusLabel='Listo'; $statusClass='status-ready'; break;
+                        case 'delivered': $statusLabel='Entregado'; $statusClass='status-delivered'; break;
+                        case 'cancelled': $statusLabel='Cancelado'; break;
+                    }
                 ?>
                 <tr>
                     <td class="bold">#<?php echo str_pad($row['id'], 6, '0', STR_PAD_LEFT); ?></td>
-                    <td><?php echo htmlspecialchars($invoice); ?></td>
+                    <td class="<?php echo $statusClass; ?>"><?php echo $statusLabel; ?></td>
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
                     <td class="text-left"><?php echo htmlspecialchars($row['client_name']); ?></td>
                     <td class="text-left"><?php echo htmlspecialchars($row['brand'] . ' ' . $row['model']); ?></td>
                     <td><?php echo htmlspecialchars($row['serial_number']); ?></td>
-                    <td><?php echo date('d/m/Y H:i', strtotime($row['exit_date'])); ?></td>
+                    <td><?php echo date('d/m/Y', strtotime($row['entry_date'])); ?></td>
+                    <td><?php echo $row['exit_date'] ? date('d/m/Y', strtotime($row['exit_date'])) : '-'; ?></td>
                     <td><?php echo htmlspecialchars($deliveredBy); ?></td>
                 </tr>
             <?php endforeach; ?>
