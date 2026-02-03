@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         .tool-icon {
             position: absolute;
-            color: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.06);
             font-size: 4rem;
             animation: float 20s infinite linear;
         }
@@ -137,6 +137,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             33% { transform: translate(30px, -50px) rotate(10deg); }
             66% { transform: translate(-20px, 20px) rotate(-5deg); }
             100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode.login-bg {
+            background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+        }
+        
+        body.light-mode .login-card {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.light-mode h1 {
+            color: #0f172a !important;
+        }
+        
+        body.light-mode .text-muted {
+            color: #64748b !important;
+        }
+
+        body.light-mode .form-control {
+            background: white;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+
+        body.light-mode .form-control:focus {
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        body.light-mode .tool-icon {
+            color: rgba(0,0,0, 0.1);
+        }
+        
+        body.light-mode .input-icon {
+            color: #94a3b8;
+        }
+
+        body.light-mode .form-control:focus + .input-icon {
+            color: var(--primary-500);
         }
     </style>
 </head>
@@ -195,5 +237,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" data-tooltip="Cambiar tema" aria-label="Toggle theme">
+        <i class="ph-fill ph-sun theme-toggle-icon sun"></i>
+        <i class="ph-fill ph-moon theme-toggle-icon moon"></i>
+    </button>
+
+    <script>
+    // Theme Toggle Functionality
+    (function() {
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        let hideTimeout;
+        
+        // Check for saved theme preference or default to dark mode
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        
+        // Apply saved theme on page load
+        if (currentTheme === 'light') {
+            body.classList.add('light-mode');
+        }
+        
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', function() {
+            // Add ripple effect
+            this.classList.add('ripple');
+            setTimeout(() => this.classList.remove('ripple'), 600);
+            
+            // Toggle light mode class
+            body.classList.toggle('light-mode');
+            
+            // Save preference to localStorage
+            const theme = body.classList.contains('light-mode') ? 'light' : 'dark';
+            localStorage.setItem('theme', theme);
+            
+            // Update tooltip
+            this.setAttribute('data-tooltip', 
+                theme === 'light' ? 'Modo oscuro' : 'Modo claro'
+            );
+        });
+        
+        // Set initial tooltip
+        themeToggle.setAttribute('data-tooltip', 
+            currentTheme === 'light' ? 'Modo oscuro' : 'Modo claro'
+        );
+        
+        // Proximity-based auto-hide functionality
+        const PROXIMITY_THRESHOLD = 200; // pixels from bottom-right corner
+        
+        function hideButton() {
+            themeToggle.classList.add('hidden');
+        }
+        
+        function showButton() {
+            themeToggle.classList.remove('hidden');
+        }
+        
+        function checkProximity(mouseX, mouseY) {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // Calculate distance from bottom-right corner
+            const distanceFromRight = windowWidth - mouseX;
+            const distanceFromBottom = windowHeight - mouseY;
+            
+            // Show button if mouse is within threshold of bottom-right corner
+            if (distanceFromRight <= PROXIMITY_THRESHOLD && distanceFromBottom <= PROXIMITY_THRESHOLD) {
+                clearTimeout(hideTimeout);
+                showButton();
+            } else {
+                // Hide after a short delay when mouse leaves the area
+                clearTimeout(hideTimeout);
+                hideTimeout = setTimeout(hideButton, 500);
+            }
+        }
+        
+        // Track mouse position
+        document.addEventListener('mousemove', function(e) {
+            checkProximity(e.clientX, e.clientY);
+        });
+        
+        // Keep button visible when hovering over it
+        themeToggle.addEventListener('mouseenter', function() {
+            clearTimeout(hideTimeout);
+            showButton();
+        });
+        
+        // Start hide timer when mouse leaves button
+        themeToggle.addEventListener('mouseleave', function(e) {
+            checkProximity(e.clientX, e.clientY);
+        });
+        
+        // Initially hide the button
+        hideButton();
+        
+        // Optional: Add pulse animation for first-time users
+        if (!localStorage.getItem('themeToggleSeen')) {
+            // Show button with pulse for first-time users
+            showButton();
+            themeToggle.classList.add('pulse');
+            setTimeout(() => {
+                themeToggle.classList.remove('pulse');
+                localStorage.setItem('themeToggleSeen', 'true');
+                // Hide after pulse animation
+                hideTimeout = setTimeout(hideButton, 2000);
+            }, 6000); // Pulse for 6 seconds
+        }
+    })();
+    </script>
 </body>
 </html>
