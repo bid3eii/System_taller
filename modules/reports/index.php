@@ -768,6 +768,32 @@ document.addEventListener('click', function(e) {
         });
     }
 });
+// Auto-Refresh Logic (10s)
+setInterval(function() {
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTbody = doc.querySelector('#reportsTable tbody');
+            const currentTbody = document.querySelector('#reportsTable tbody');
+            
+            // We also need to update originalRows since filtering depends on it
+            if(newTbody && currentTbody) {
+                currentTbody.innerHTML = newTbody.innerHTML;
+                
+                // Update implementation-specific variables
+                // In reports module, rows are stored in 'originalRows'
+                const newRows = Array.from(newTbody.querySelectorAll('tr'));
+                originalRows = newRows.filter(row => !row.querySelector('td[colspan]')); 
+                
+                // Re-apply current filters
+                filterTable();
+            }
+        })
+        .catch(err => console.error('Error refreshing reports:', err));
+}, 10000); // 10 seconds
+
 // Export to Excel Function
 function exportToExcel() {
     const search = document.getElementById('searchInput').value;

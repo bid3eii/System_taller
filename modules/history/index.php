@@ -392,6 +392,32 @@ function sortTable(n) {
     }
   }
 }
+
+// Auto-Refresh Logic (10s)
+setInterval(function() {
+    // Only refresh if not valid interaction
+    // Or just simple refresh of tbody
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTbody = doc.querySelector('#historyTable tbody');
+            const currentTbody = document.querySelector('#historyTable tbody');
+            
+            if(newTbody && currentTbody) {
+                currentTbody.innerHTML = newTbody.innerHTML;
+                
+                // Re-apply search filter if user typed something
+                const searchInput = document.getElementById('searchInput');
+                if(searchInput && searchInput.value.length > 0) {
+                    const event = new Event('keyup');
+                    searchInput.dispatchEvent(event);
+                }
+            }
+        })
+        .catch(err => console.error('Error refreshing table:', err));
+}, 10000); // 10 seconds
 </script>
 
 <?php
