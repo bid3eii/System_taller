@@ -1265,71 +1265,52 @@ document.addEventListener('DOMContentLoaded', function() {
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; align-items: stretch;">
             
             <!-- BACKUP SECTION -->
-            <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--primary-500); height: 100%; display: flex; flex-direction: column;">
-                <div style="display: flex; gap: 1rem; align-items: flex-start; flex: 1;">
-                    <div style="background: rgba(var(--primary-rgb), 0.1); padding: 0.75rem; border-radius: 10px; color: var(--primary-500); flex-shrink: 0;">
-                        <i class="ph ph-database" style="font-size: 1.5rem;"></i>
-                    </div>
-                    <div style="flex-grow: 1; display: flex; flex-direction: column; height: 100%;">
-                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Respaldo de BD</h3>
-                        <p class="text-muted" style="margin-bottom: auto; font-size: 0.9rem; line-height: 1.5;">
-                            Descarga una copia SQL de seguridad.
-                        </p>
-                        <form method="POST" style="margin-top: 1rem;">
-                            <input type="hidden" name="action" value="backup_db">
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                <i class="ph ph-download-simple"></i> Descargar (.sql)
-                            </button>
-                        </form>
-                    </div>
+            <div class="card card-premium purple">
+                <div class="icon-box">
+                    <i class="ph ph-database"></i>
                 </div>
+                <h3>Respaldo de BD</h3>
+                <p>Descarga una copia SQL de seguridad para proteger tu información.</p>
+                <form method="POST" style="margin-top: auto;">
+                    <input type="hidden" name="action" value="backup_db">
+                    <button type="submit" class="btn btn-premium btn-premium-purple">
+                        <i class="ph ph-download-simple"></i> Descargar (.sql)
+                    </button>
+                </form>
             </div>
 
             <!-- RESTORE SECTION -->
-            <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--warning); height: 100%; display: flex; flex-direction: column;">
-                <div style="display: flex; gap: 1rem; align-items: flex-start; flex: 1;">
-                    <div style="background: rgba(234, 179, 8, 0.1); padding: 0.75rem; border-radius: 10px; color: var(--warning); flex-shrink: 0;">
-                        <i class="ph ph-upload-simple" style="font-size: 1.5rem;"></i>
-                    </div>
-                    <div style="flex-grow: 1; display: flex; flex-direction: column; height: 100%;">
-                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Restaurar BD</h3>
-                        <p class="text-muted" style="margin-bottom: auto; font-size: 0.9rem; line-height: 1.5;">
-                            Importar archivo .sql (Sobrescribe datos)
-                        </p>
-                        <form method="POST" id="restoreForm" enctype="multipart/form-data" onsubmit="confirmRestore(event)" style="margin-top: 1rem;">
-                            <input type="hidden" name="action" value="restore_db">
-                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                <input type="file" name="backup_file" class="form-control" accept=".sql" required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
-                                <button type="submit" class="btn btn-secondary" style="width: 100%;">
-                                    <i class="ph ph-arrow-counter-clockwise"></i> Restaurar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+            <div class="card card-premium yellow">
+                <div class="icon-box">
+                    <i class="ph ph-upload-simple"></i>
                 </div>
+                <h3>Restaurar BD</h3>
+                <p>Importar archivo SQL. Esta acción sobrescribirá los datos actuales.</p>
+                <form method="POST" id="restoreForm" enctype="multipart/form-data" onsubmit="confirmRestore(event)" style="margin-top: auto;">
+                    <input type="hidden" name="action" value="restore_db">
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <input type="file" name="backup_file" class="form-control" accept=".sql" required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
+                        <button type="submit" class="btn btn-premium btn-premium-outline">
+                            <i class="ph ph-arrow-counter-clockwise"></i> Restaurar
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- DANGER ZONE (Factory Reset) -->
-            <div class="card" style="margin-bottom: 0; border: 1px solid var(--danger); height: 100%; display: flex; flex-direction: column;">
-                <div style="display: flex; gap: 1rem; align-items: flex-start; flex: 1;">
-                    <div style="background: rgba(239, 68, 68, 0.1); padding: 0.75rem; border-radius: 10px; color: var(--danger); flex-shrink: 0;">
-                        <i class="ph ph-warning-octagon" style="font-size: 1.5rem;"></i>
-                    </div>
-                    <div style="flex-grow: 1; display: flex; flex-direction: column; height: 100%;">
-                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--danger);">Reset de Fábrica</h3>
-                        <p class="text-muted" style="margin-bottom: auto; font-size: 0.9rem; line-height: 1.5;">
-                            Elimina clientes, equipos y órdenes.
-                        </p>
-                        
-                        <form method="POST" id="factoryResetForm" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                            <input type="hidden" name="action" value="system_restore">
-                            <input type="password" name="admin_password" class="form-control" placeholder="Pass de SuperAdmin" required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
-                            <button type="button" onclick="confirmFactoryReset()" class="btn btn-danger" style="background-color: var(--danger); color: white; width: 100%;">
-                                <i class="ph ph-trash"></i> Eliminar Todo
-                            </button>
-                        </form>
-                    </div>
+            <div class="card card-premium red">
+                <div class="icon-box">
+                    <i class="ph ph-warning-octagon"></i>
                 </div>
+                <h3>Reset de Fábrica</h3>
+                <p>Elimina clientes, equipos y órdenes. Mantiene usuarios y config.</p>
+                <form method="POST" id="factoryResetForm" style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <input type="hidden" name="action" value="system_restore">
+                    <input type="password" name="admin_password" class="form-control" placeholder="Pass de SuperAdmin" required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
+                    <button type="button" onclick="confirmFactoryReset()" class="btn btn-premium btn-premium-danger">
+                        <i class="ph ph-trash"></i> Eliminar Todo
+                    </button>
+                </form>
             </div>
 
         </div>

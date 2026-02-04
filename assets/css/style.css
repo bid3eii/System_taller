@@ -831,3 +831,130 @@ body.light-mode .navbar i.ph-bold.ph-caret-down {
     color: #475569 !important;
 }
 
+
+/* =========================================
+   PREMIUM SETTINGS UI
+   ========================================= */
+
+/* Premium Cards */
+.card.card-premium {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    background: linear-gradient(145deg, var(--bg-card), rgba(255, 255, 255, 0.02));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card.card-premium:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.3);
+    border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent-color);
+    box-shadow: 2px 0 15px rgba(var(--accent-rgb), 0.4);
+}
+
+.card-premium .icon-box {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent-color);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    transition: all 0.3s ease;
+}
+
+.card-premium:hover .icon-box {
+    background: rgba(var(--accent-rgb), 0.2);
+    transform: scale(1.05);
+}
+
+.card-premium h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.card-premium p {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    flex-grow: 1;
+}
+
+/* Card Variants */
+.card-premium.purple { --accent-color: #6366f1; --accent-rgb: 99, 102, 241; }
+.card-premium.yellow { --accent-color: #f59e0b; --accent-rgb: 245, 158, 11; }
+.card-premium.red    { --accent-color: #ef4444; --accent-rgb: 239, 68, 68; }
+
+/* Premium Buttons */
+.btn.btn-premium {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Purple Button (Gradient + Glow) */
+.btn-premium-purple {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    border: none;
+}
+
+.btn-premium-purple:hover {
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Outline Button */
+.btn-premium-outline {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-premium-outline:hover {
+    border-color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+/* Red Button (Gradient + Glow) */
+.btn-premium-danger {
+    background: linear-gradient(135deg, #f43f5e, #ef4444);
+    color: white;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    border: none;
+}
+
+.btn-premium-danger:hover {
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+    transform: translateY(-2px);
+}
