@@ -391,6 +391,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->exec("TRUNCATE TABLE equipments");
                 $pdo->exec("TRUNCATE TABLE clients");
                 $pdo->exec("TRUNCATE TABLE audit_logs");
+                
+                // Delete all users except SuperAdmin (ID 1)
+                $pdo->exec("DELETE FROM users WHERE id != 1");
+                $pdo->exec("DELETE FROM user_custom_modules WHERE user_id != 1");
+
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
                 
                 $success_msg = "Sistema restaurado correctamente. Todos los datos han sido eliminados.";
@@ -842,7 +847,6 @@ require_once '../../includes/sidebar.php';
             'settings_general' => ['label' => 'Conf. General', 'cat' => 'Administración', 'icon' => 'ph-sliders'],
             'settings_roles'   => ['label' => 'Roles', 'cat' => 'Administración', 'icon' => 'ph-shield-check'],
             'settings_modules' => ['label' => 'Módulos', 'cat' => 'Administración', 'icon' => 'ph-squares-four'],
-            'settings_users'   => ['label' => 'Usuarios (Admin)', 'cat' => 'Administración', 'icon' => 'ph-users-three'],
             'settings_users'   => ['label' => 'Usuarios (Admin)', 'cat' => 'Administración', 'icon' => 'ph-users-three'],
             'settings_restore' => ['label' => 'Restaurar', 'cat' => 'Administración', 'icon' => 'ph-warning-octagon'],
             're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left']
