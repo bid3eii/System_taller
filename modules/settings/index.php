@@ -571,7 +571,7 @@ require_once '../../includes/sidebar.php';
     <?php if (!can_access_module('settings_roles', $pdo) && !can_access_module('settings', $pdo)): ?>
          <div class="card"><div class="text-center p-4">Acceso denegado a Gestión de Roles.</div></div>
     <?php else: ?>
-    <div class="card" style="margin-bottom: 2rem;">
+    <div class="card" style="margin-bottom: 2rem; width: fit-content;">
             <h3><i class="ph ph-plus-circle"></i> Crear Nuevo Rol</h3>
             <p class="text-muted mb-4">Agregue nuevos roles al sistema para asignar permisos específicos.</p>
             <form method="POST" style="display: flex; gap: 1rem; align-items: flex-end;">
