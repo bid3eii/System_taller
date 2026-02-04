@@ -384,6 +384,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->exec("TRUNCATE TABLE service_order_history");
                 $pdo->exec("TRUNCATE TABLE warranties");
                 $pdo->exec("TRUNCATE TABLE service_orders");
+                $pdo->exec("TRUNCATE TABLE tool_assignments");
+                $pdo->exec("TRUNCATE TABLE tool_assignment_items");
                 $pdo->exec("TRUNCATE TABLE tool_loans");
                 $pdo->exec("TRUNCATE TABLE tools");
                 $pdo->exec("TRUNCATE TABLE equipments");

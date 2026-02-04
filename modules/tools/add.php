@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
     <?php endif; ?>
 
-    <div class="card" style="max-width: 800px;">
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
         <div style="padding: 1.5rem;">
             <form method="POST">
                 <div class="form-group box-input">
