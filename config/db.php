@@ -1,8 +1,21 @@
 <?php
-$host = 'localhost';
-$db_name = 'system_taller';
-$username = 'root';
-$password = '';
+// Detect environment based on server name
+$whitelist = ['127.0.0.1', '::1', 'localhost'];
+$is_local = in_array($_SERVER['SERVER_NAME'], $whitelist);
+
+if ($is_local) {
+    // Local Credentials (XAMPP)
+    $host = 'localhost';
+    $db_name = 'system_taller';
+    $username = 'root';
+    $password = '';
+} else {
+    // Production Credentials (InfinityFree)
+    $host = 'sql302.infinityfree.com';
+    $db_name = 'if0_41173876_system_taller'; 
+    $username = 'if0_41173876';
+    $password = 'KNLEPk9w40tci';
+}
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8", $username, $password);
