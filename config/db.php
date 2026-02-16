@@ -17,6 +17,13 @@ if ($is_local) {
     $password = 'KNLEPk9w40tci';
 }
 
+// Define Base URL
+if ($is_local) {
+    define('BASE_URL', '/System_Taller/');
+} else {
+    define('BASE_URL', '/'); // Assumes app is in root of public_html/htdocs
+}
+
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

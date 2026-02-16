@@ -10,10 +10,10 @@ if (!isset($page_title)) $page_title = 'System Taller';
     <title><?php echo htmlspecialchars($page_title); ?> - System Taller</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/System_Taller/assets/favicon.png?v=<?php echo time(); ?>">
+    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>assets/favicon.png?v=<?php echo time(); ?>">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="/System_Taller/assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/style.css?v=<?php echo time(); ?>">
     
     <!-- Icons (Phosphor Icons for a clean, modern look) -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
