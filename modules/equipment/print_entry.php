@@ -25,7 +25,7 @@ $company_name = $settings['company_name'] ?? 'SYSTEM TALLER';
 $company_email = $settings['company_email'] ?? 'contacto@taller.com';
 $company_address = $settings['company_address'] ?? 'Av. Principal 123, Ciudad';
 $company_phone = $settings['company_phone'] ?? '(555) 123-4567';
-$print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Servicio: La empresa no se hace responsable por pérdida de información...'; // Customize default for Entry
+$print_entry_text = $settings['print_entry_text'] ?? "1. No nos responsabilizamos por perdida de información en medios de almacenamiento como discos duros interno o externos al momento del ingreso o en el proceso de diagnóstico.\n2. Equipos deben ser retirados en un máximo de 30 días calendarios después de notificado trabajo finalizado. Después de este tiempo si el cliente no se presenta a retirar, autoriza a MASTERTEC a desechar el equipo.\n3. En caso de no reparar equipo, cliente deberá pagar el diagnóstico correspondiente.\n4. Para consulta del estado de su equipo favor escribenos a: soporte@mastertec.com.ni\n5. Tiempo de diagnóstico mínimo 48 horas.";
 
 // Fetch Order Details
 $stmt = $pdo->prepare("
@@ -435,7 +435,7 @@ if (empty($order['entry_doc_number'])) {
         
         <div class="bottom-section">
             <div class="legal-footer">
-                <?php echo nl2br(htmlspecialchars($print_footer_text)); ?>
+                <?php echo nl2br(htmlspecialchars($print_entry_text)); ?>
             </div>
 
             <!-- SIGNATURES -->

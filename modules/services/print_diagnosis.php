@@ -220,7 +220,10 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
 
         /* SIGNATURE SECTION (FLOWS NATURALLY) */
         .signature-section {
-            margin-top: 40px;
+            position: absolute;
+            bottom: 2cm;
+            left: 1.5cm;
+            right: 1.5cm;
             page-break-inside: avoid;
         }
         .elaborated-by-label {
@@ -260,10 +263,11 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                 margin: 0 !important;
                 box-shadow: none !important;
                 width: 100% !important;
-                min-height: 0 !important; /* Prevent forced overflow */
+                min-height: 270mm !important; /* Force A4 height */
                 padding: 0 !important;
-                padding-bottom: 0 !important;
+                padding-bottom: 5cm !important; /* Space for footer */
                 border: none !important;
+                position: relative !important;
             }
 
             /* Ensure background colors print */

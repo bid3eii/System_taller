@@ -1301,4 +1301,37 @@ require_once '../../includes/sidebar.php';
         </div>
     </div>
 </div>
+<script>
+    // System-wide back button fix for forms
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            // Page was restored from cache (User hit Back button)
+            const form = document.querySelector('form');
+            if(form) form.reset();
+            
+            // Clear specific fields (safer to clear explicit inputs too)
+            document.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => {
+                 if(!el.hasAttribute('readonly') || el.classList.contains('form-control')) {
+                     el.value = '';
+                 }
+            });
+
+            // Reset hidden inputs like client_id
+            document.querySelectorAll('input[type="hidden"]').forEach(el => {
+                 // Preserve action or token inputs if they exist (though usually they are fine to reset)
+                 // But specifically clear client_id and similar
+                 if(el.name === 'client_id' || el.name === 'order_id') {
+                     el.value = '';
+                 }
+            });
+            
+             // Clear visual states
+            document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
+            
+            // Hide clear button if present
+            const clearBtn = document.getElementById('btnClearClient_std');
+            if(clearBtn) clearBtn.style.display = 'none';
+        }
+    });
+</script>
 <?php require_once '../../includes/footer.php'; ?>

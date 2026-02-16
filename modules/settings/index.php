@@ -189,7 +189,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'company_email' => clean($_POST['company_email'] ?? ''),
             'company_address' => clean($_POST['company_address'] ?? ''),
             'company_phone' => clean($_POST['company_phone'] ?? ''),
-            'print_footer_text' => clean($_POST['print_footer_text'] ?? '')
+            'print_footer_text' => clean($_POST['print_footer_text'] ?? ''),
+            'print_entry_text' => clean($_POST['print_entry_text'] ?? '')
         ];
 
         foreach ($settings_to_update as $key => $val) {
@@ -392,6 +393,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->exec("TRUNCATE TABLE clients");
                 $pdo->exec("TRUNCATE TABLE audit_logs");
                 
+                // Reset Sequences
+                $pdo->exec("UPDATE system_sequences SET current_value = 0");
+                
                 // Delete all users except SuperAdmin (ID 1)
                 $pdo->exec("DELETE FROM users WHERE id != 1");
                 $pdo->exec("DELETE FROM user_custom_modules WHERE user_id != 1");
@@ -497,71 +501,163 @@ require_once '../../includes/sidebar.php';
         <?php if (!can_access_module('settings_general', $pdo) && !can_access_module('settings', $pdo)): ?>
              <div class="card"><div class="text-center p-4">Acceso denegado a Configuración General.</div></div>
         <?php else: ?>
-        <div class="card" style="max-width: 100%;">
-            <h3 class="mb-4">Configuración General</h3>
-            
+        <div class="card" style="max-width: 1200px; margin: 0 auto; overflow: visible;">
             <form method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="update_general_settings">
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
-                    <div>
-                        <h4 class="mb-3" style="color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Información de la Empresa</h4>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Nombre de la Empresa</label>
-                            <input type="text" name="company_name" class="form-control" value="<?php echo htmlspecialchars($company_name); ?>" placeholder="Ej. Mi Taller Pro">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Dirección</label>
-                            <input type="text" name="company_address" class="form-control" value="<?php echo htmlspecialchars($company_address); ?>" placeholder="Ej. Calle 123...">
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <div class="form-group">
-                                <label class="form-label">Teléfono</label>
-                                <input type="text" name="company_phone" class="form-control" value="<?php echo htmlspecialchars($company_phone); ?>" placeholder="Ej. (555) 000-0000">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Email de Contacto</label>
-                                <input type="email" name="company_email" class="form-control" value="<?php echo htmlspecialchars($company_email); ?>" placeholder="contacto@empresa.com">
-                            </div>
-                        </div>
-                    </div>
+                <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start;">
                     
+                    <!-- LEFT COLUMN: BRANDING -->
                     <div>
-                        <h4 class="mb-3" style="color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Personalización de Impresión</h4>
-                        <div class="form-group" style="margin-bottom: 1.5rem;">
-                            <label class="form-label" style="display: block; margin-bottom: 0.5rem;">Logo del Sistema</label>
+                        <div style="background: rgba(var(--primary-rgb), 0.03); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; text-align: center;">
+                            <h4 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-main);">Identidad Visual</h4>
                             
-                            <div style="display: flex; gap: 1rem; align-items: center;">
+                            <div style="position: relative; width: 100%; height: 180px; background: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; border: 2px dashed var(--border-color); overflow: hidden; transition: all 0.2s;">
                                 <?php if($system_logo && file_exists("../../assets/uploads/" . $system_logo)): ?>
-                                    <div style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 8px; background: #fff;">
-                                        <img src="../../assets/uploads/<?php echo $system_logo; ?>" alt="Logo Actual" style="max-height: 50px; display: block;">
+                                    <img src="../../assets/uploads/<?php echo $system_logo; ?>" id="logoPreview" alt="Logo" style="max-height: 140px; max-width: 90%; object-fit: contain;">
+                                <?php else: ?>
+                                    <div id="noLogoText" style="color: var(--text-muted); font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                        <i class="ph ph-image" style="font-size: 2rem;"></i>
+                                        <span>Sin Logo</span>
                                     </div>
                                 <?php endif; ?>
-                                <div style="flex-grow: 1;">
-                                    <input type="file" name="system_logo" class="form-control" accept="image/*">
-                                    <p class="text-muted" style="font-size: 0.8rem; margin-top: 0.25rem;">Recomendado: 300px ancho. PNG/JPG.</p>
-                                </div>
                             </div>
+
+                            <div style="position: relative;">
+                                <input type="file" name="system_logo" id="logoInput" class="form-control" accept="image/*" style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2;" onchange="previewLogo(this)">
+                                <button type="button" class="btn btn-secondary" style="width: 100%; position: relative; z-index: 1;">
+                                    <i class="ph ph-upload-simple"></i> Cambiar Logo
+                                </button>
+                            </div>
+                            <p class="text-muted" style="font-size: 0.75rem; margin-top: 0.75rem; margin-bottom: 0;">Recomendado: PNG/JPG, fondo transparente.</p>
                         </div>
 
-                         <div class="form-group">
-                            <label class="form-label">Texto Legal / Garantía (Pie de Página)</label>
-                            <textarea name="print_footer_text" class="form-control" rows="5" style="font-size: 0.85rem; resize: vertical;"><?php echo htmlspecialchars($print_footer_text); ?></textarea>
-                            <p class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem;">Aparecerá al final de los comprobantes impresos.</p>
+                        <!-- Organization Info moved here or keep simple -->
+                    </div>
+
+                    <!-- RIGHT COLUMN: DETAILS -->
+                    <div>
+                        <div style="background: rgba(var(--bg-card-rgb), 0.6); border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem;">
+                            
+                            <h3 class="mb-4" style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="ph-fill ph-buildings" style="color: var(--primary);"></i> Información de la Empresa
+                            </h3>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Nombre de la Empresa</label>
+                                    <input type="text" name="company_name" class="form-control premium-input" value="<?php echo htmlspecialchars($company_name); ?>" placeholder="Ej. Mastertec">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Dirección</label>
+                                    <input type="text" name="company_address" class="form-control premium-input" value="<?php echo htmlspecialchars($company_address); ?>" placeholder="Ej. Calle Principal #123">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Teléfono</label>
+                                    <div style="position: relative;">
+                                        <i class="ph ph-phone" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                                        <input type="text" name="company_phone" class="form-control premium-input" style="padding-left: 2.5rem;" value="<?php echo htmlspecialchars($company_phone); ?>" placeholder="Ej. +505 8888 8888">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Email de Contacto</label>
+                                    <div style="position: relative;">
+                                        <i class="ph ph-envelope" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                                        <input type="email" name="company_email" class="form-control premium-input" style="padding-left: 2.5rem;" value="<?php echo htmlspecialchars($company_email); ?>" placeholder="contacto@empresa.com">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr style="border-color: var(--border-color); opacity: 0.5; margin: 2rem 0;">
+
+                            <h3 class="mb-4" style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="ph-fill ph-file-text" style="color: #8b5cf6;"></i> Configuración de Documentos
+                            </h3>
+
+                            <div class="form-group" style="margin-bottom: 2rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Términos de Ingreso (Hoja de Recepción)</label>
+                                    <span class="badge" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary); font-size: 0.7rem;">Visible al cliente</span>
+                                </div>
+                                <textarea name="print_entry_text" class="form-control premium-input" rows="6" style="resize: vertical; white-space: pre-wrap; line-height: 1.5; font-size: 0.9rem;"><?php echo htmlspecialchars($settings['print_entry_text'] ?? ""); ?></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Garantía y Entrega (Pie de Página)</label>
+                                    <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; font-size: 0.7rem;">Visible en Salida</span>
+                                </div>
+                                <textarea name="print_footer_text" class="form-control premium-input" rows="4" style="resize: vertical; line-height: 1.5; font-size: 0.9rem;"><?php echo htmlspecialchars($print_footer_text); ?></textarea>
+                            </div>
+
+                            <div style="margin-top: 2rem; text-align: right;">
+                                <button type="submit" class="btn btn-primary" style="padding: 0.8rem 2rem; font-size: 1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);">
+                                    <i class="ph-bold ph-floppy-disk"></i> Guardar Cambios
+                                </button>
+                            </div>
+
                         </div>
                     </div>
-                </div>
-                
-                <div style="margin-top: 1rem; text-align: right;">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="ph ph-floppy-disk"></i> Guardar Configuración
-                    </button>
                 </div>
             </form>
         </div>
+
+        <script>
+        function previewLogo(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = document.getElementById('logoPreview');
+                    var noLogo = document.getElementById('noLogoText');
+                    
+                    if(img) {
+                        img.src = e.target.result;
+                        img.style.display = 'block';
+                    } else {
+                        // Create img if it doesn't exist
+                        img = document.createElement('img');
+                        img.id = 'logoPreview';
+                        img.src = e.target.result;
+                        img.style.maxHeight = '140px';
+                        img.style.maxWidth = '90%';
+                        img.style.objectFit = 'contain';
+                        
+                        var container = document.querySelector('#noLogoText').parentNode;
+                        container.innerHTML = '';
+                        container.appendChild(img);
+                    }
+                    
+                    if(noLogo) noLogo.style.display = 'none';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        </script>
+
+        <style>
+        .premium-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            transition: all 0.2s;
+        }
+        .premium-input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+        }
+        body.light-mode .premium-input {
+            background: white;
+            border-color: #e2e8f0;
+        }
+        body.light-mode .premium-input:focus {
+            border-color: var(--primary);
+        }
+        </style>
         <?php endif; ?>
     </div>
 </div>

@@ -349,7 +349,7 @@ body.light-mode .premium-select:hover {
 }
 
 .table {
-    overflow: hidden; /* Keep table content contained */
+    overflow: visible !important; /* Allow dropdowns to overflow */
     border-radius: 20px;
 }
 
@@ -512,7 +512,7 @@ body.light-mode .premium-action-btn:hover i {
 }
 
 .table {
-    overflow: hidden;
+    overflow: visible !important;
 }
 
 .report-dropdown {
