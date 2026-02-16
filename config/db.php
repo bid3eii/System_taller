@@ -44,8 +44,10 @@ try {
 }
 
 // Helper function to get current datetime in Mexico City timezone
+// Uses DateTime with explicit timezone to avoid relying on date_default_timezone_set()
 function get_local_datetime() {
-    return date('Y-m-d H:i:s');
+    $dt = new DateTime('now', new DateTimeZone('America/Mexico_City'));
+    return $dt->format('Y-m-d H:i:s');
 }
 // End of file (no closing tag to prevent whitespace)
 
