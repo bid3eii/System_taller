@@ -91,7 +91,7 @@ $clients = $stmt->fetchAll();
                             <td>
                                 <a href="edit.php?id=<?php echo $client['id']; ?>" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem;" title="Editar"><i class="ph ph-pencil-simple"></i></a>
                                 <a href="history.php?id=<?php echo $client['id']; ?>" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem;" title="Ver Historial"><i class="ph ph-clock-counter-clockwise"></i></a>
-                                <a href="delete.php?id=<?php echo $client['id']; ?>" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem; color: var(--danger);" title="Eliminar" onclick="return confirm('¿Estás seguro de eliminar este cliente?');"><i class="ph ph-trash"></i></a>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem; color: var(--danger);" title="Eliminar" onclick="openDeleteModal(<?php echo $client['id']; ?>, '<?php echo htmlspecialchars($client['name'], ENT_QUOTES); ?>')"><i class="ph ph-trash"></i></button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -112,7 +112,46 @@ $clients = $stmt->fetchAll();
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); padding: 2rem; border-radius: 16px; width: 450px; max-width: 90%; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); animation: modalSlideIn 0.3s ease-out;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 64px; height: 64px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <i class="ph-fill ph-warning-circle" style="font-size: 2.5rem; color: var(--danger);"></i>
+            </div>
+            <h3 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1.25rem;">¿Eliminar Cliente?</h3>
+            <p style="color: var(--text-secondary); margin: 0; line-height: 1.5;">Estás a punto de eliminar a <strong id="deleteClientName" style="color: var(--text-primary);"></strong>. Esta acción no se puede deshacer.</p>
+        </div>
+        
+        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 0.75rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: start; gap: 0.5rem;">
+                <i class="ph ph-warning" style="color: var(--danger); font-size: 1.1rem; margin-top: 0.1rem;"></i>
+                <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.4;">Se eliminarán todos los datos asociados a este cliente.</p>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 0.75rem;">
+            <button type="button" onclick="closeDeleteModal()" class="btn" style="flex: 1; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);">
+                Cancelar
+            </button>
+            <button type="button" id="confirmDeleteBtn" class="btn" style="flex: 1; background: var(--danger); color: white; border: none; font-weight: 600;">
+                <i class="ph ph-trash"></i> Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
 <style>
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
 /* Sortable Column Headers */
 .sortable {
     cursor: pointer;
@@ -275,6 +314,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
         searchInput.addEventListener('input', triggerSearch);
         searchInput.addEventListener('change', triggerSearch);
+    }
+});
+
+// Delete Modal Functions
+let deleteClientId = null;
+
+function openDeleteModal(clientId, clientName) {
+    deleteClientId = clientId;
+    document.getElementById('deleteClientName').textContent = clientName;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    deleteClientId = null;
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+// Confirm delete
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (deleteClientId) {
+        window.location.href = `delete.php?id=${deleteClientId}`;
+    }
+});
+
+// Close on outside click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('deleteModal').style.display === 'flex') {
+        closeDeleteModal();
     }
 });
 </script>
