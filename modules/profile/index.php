@@ -228,7 +228,7 @@ body.light-mode .profile-card {
 .avatar-circle {
     width: 100px;
     height: 100px;
-    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    background: linear-gradient(135deg, var(--primary-500), #8b5cf6);
     border-radius: 50%;
     margin: 0 auto 1.5rem;
     display: flex;
