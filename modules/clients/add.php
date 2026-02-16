@@ -24,8 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "El nombre es obligatorio.";
     } else {
         try {
-            $stmt = $pdo->prepare("INSERT INTO clients (name, tax_id, phone, email, address) VALUES (?, ?, ?, ?, ?)");
-            if ($stmt->execute([$name, $tax_id, $phone, $email, $address])) {
+            $stmt = $pdo->prepare("INSERT INTO clients (name, tax_id, phone, email, address, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+            if ($stmt->execute([$name, $tax_id, $phone, $email, $address, get_local_datetime()])) {
                 $new_id = $pdo->lastInsertId();
                 log_audit($pdo, 'clients', $new_id, 'INSERT', null, $_POST);
                 $success = "Cliente registrado correctamente.";

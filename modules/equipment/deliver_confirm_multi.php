@@ -79,8 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Log History
             $history_note = "Entregado a: $receiver_name ($receiver_id). Notas: $delivery_notes";
-            $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'delivered', ?, ?)");
-            $stmtH->execute([$order['id'], $history_note, $_SESSION['user_id']]);
+            $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'delivered', ?, ?, ?)");
+            $stmtH->execute([$order['id'], $history_note, $_SESSION['user_id'], get_local_datetime()]);
         }
 
         $pdo->commit();

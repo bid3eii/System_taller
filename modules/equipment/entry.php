@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
     }
 
     try {
-        $stmt = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$name, $phone, $email, $tax_id]);
+        $stmt = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, created_at) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$name, $phone, $email, $tax_id, get_local_datetime()]);
         $newId = $pdo->lastInsertId();
         echo json_encode(['success' => true, 'id' => $newId, 'name' => $name, 'tax_id' => $tax_id]);
     } catch (PDOException $e) {
@@ -158,8 +158,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $client_id = $existing['id'];
             // Optional: Update details if provided? For now, just link.
         } else {
-            $stmtC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address) VALUES (?, ?, ?, ?, ?)");
-            $stmtC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address]);
+            $stmtC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmtC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, get_local_datetime()]);
             $client_id = $pdo->lastInsertId();
         }
     } elseif (!empty($client_id)) {
@@ -216,12 +216,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Log
-                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'updated', 'Datos de garantía actualizados', ?)");
-                    $stmtHist->execute([$order_id, $_SESSION['user_id']]);
+                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', 'Datos de garantía actualizados', ?, ?)");
+                    $stmtHist->execute([$order_id, $_SESSION['user_id'], get_local_datetime()]);
                 } else {
                     // Standard service Update log...
-                     $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'updated', 'Orden actualizada', ?)");
-                     $stmtHist->execute([$order_id, $_SESSION['user_id']]);
+                     $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', 'Orden actualizada', ?, ?)");
+                     $stmtHist->execute([$order_id, $_SESSION['user_id'], get_local_datetime()]);
                 }
                 
                 $pdo->commit();
@@ -257,8 +257,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } else {
                     // Truly new equipment
-                    $stmtEq = $pdo->prepare("INSERT INTO equipments (client_id, brand, model, submodel, serial_number, type) VALUES (?, ?, ?, ?, ?, ?)");
-                    $stmtEq->execute([$client_id, $brand, $model, $submodel, $serial_number, $type]);
+                    $stmtEq = $pdo->prepare("INSERT INTO equipments (client_id, brand, model, submodel, serial_number, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $stmtEq->execute([$client_id, $brand, $model, $submodel, $serial_number, $type, get_local_datetime()]);
                     $equipment_id = $pdo->lastInsertId();
                 }
                 
@@ -269,20 +269,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtSig->execute([$_SESSION['user_id']]);
                 $currentUserSig = $stmtSig->fetchColumn();
 
-                $stmtOrder = $pdo->prepare("INSERT INTO service_orders (equipment_id, client_id, owner_name, invoice_number, service_type, status, problem_reported, accessories_received, entry_notes, entry_date, entry_signature_path) VALUES (?, ?, ?, ?, ?, 'received', ?, ?, ?, NOW(), ?)");
-                $stmtOrder->execute([$equipment_id, $client_id, $owner_name, $main_ref, $service_type, $problem, $accessories, $notes, $currentUserSig]);
+                $stmtOrder = $pdo->prepare("INSERT INTO service_orders (equipment_id, client_id, owner_name, invoice_number, service_type, status, problem_reported, accessories_received, entry_notes, entry_date, entry_signature_path, created_at) VALUES (?, ?, ?, ?, ?, 'received', ?, ?, ?, ?, ?, ?)");
+                $now = get_local_datetime();
+                $stmtOrder->execute([$equipment_id, $client_id, $owner_name, $main_ref, $service_type, $problem, $accessories, $notes, $now, $currentUserSig, $now]);
                 $order_id = $pdo->lastInsertId();
 
                 if ($is_warranty_mode) {
-                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, notes, status, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)");
-                    $stmtW->execute([$order_id, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $notes, $warranty_end_date]);
+                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, notes, status, end_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)");
+                    $stmtW->execute([$order_id, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $notes, $warranty_end_date, get_local_datetime()]);
                     
-                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'received', 'Garantía Registrada', ?)");
-                    $stmtHist->execute([$order_id, $_SESSION['user_id']]);
+                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', 'Garantía Registrada', ?, ?)");
+                    $stmtHist->execute([$order_id, $_SESSION['user_id'], get_local_datetime()]);
                     $success = "Garantía registrada correctamente.";
                 } else {
-                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'received', 'Equipo ingresado al taller', ?)");
-                    $stmtHist->execute([$order_id, $_SESSION['user_id']]);
+                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', 'Equipo ingresado al taller', ?, ?)");
+                    $stmtHist->execute([$order_id, $_SESSION['user_id'], get_local_datetime()]);
                     $success = "El equipo ha sido ingresado correctamente (Orden #$order_id).";
                 }
 

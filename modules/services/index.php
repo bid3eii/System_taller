@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $tech_name = $stmtT->fetchColumn();
             }
             
-            $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'updated', ?, ?)");
-            $stmtH->execute([$order_id, "Técnico asignado: " . $tech_name, $_SESSION['user_id']]);
+            $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");
+            $stmtH->execute([$order_id, "Técnico asignado: " . $tech_name, $_SESSION['user_id'], get_local_datetime()]);
             
             header("Location: index.php?msg=assigned");
             exit;

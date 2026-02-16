@@ -57,8 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Log History
                 $history_note = "REINGRESO A TALLER. Motivo: $reentry_reason";
-                $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'updated', ?, ?)");
-                $stmtH->execute([$id, $history_note, $_SESSION['user_id']]);
+                $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");
+                $stmtH->execute([$id, $history_note, $_SESSION['user_id'], get_local_datetime()]);
 
                 $pdo->commit();
                 
@@ -92,8 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Log History (with delivery details)
             $history_note = "Entregado a: $receiver_name ($receiver_id). Notas: $delivery_notes";
-            $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'delivered', ?, ?)");
-            $stmtH->execute([$id, $history_note, $_SESSION['user_id']]);
+            $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'delivered', ?, ?, ?)");
+            $stmtH->execute([$id, $history_note, $_SESSION['user_id'], get_local_datetime()]);
 
             $pdo->commit();
             header("Location: print_delivery.php?id=" . $id);

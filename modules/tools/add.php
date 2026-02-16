@@ -26,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'El nombre es obligatorio.';
     } else {
         try {
-            $stmt = $pdo->prepare("INSERT INTO tools (name, description, quantity, status) VALUES (?, ?, ?, ?)");
-            if ($stmt->execute([$name, $description, $quantity, $status])) {
+            $stmt = $pdo->prepare("INSERT INTO tools (name, description, quantity, status, created_at) VALUES (?, ?, ?, ?, ?)");
+            if ($stmt->execute([$name, $description, $quantity, $status, get_local_datetime()])) {
                 $success = 'Herramienta agregada correctamente.';
                 // Redirect after success
                 echo "<script>window.location.href = 'index.php';</script>";

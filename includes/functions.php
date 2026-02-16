@@ -95,8 +95,8 @@ function log_audit($pdo, $table, $record_id, $action, $old_val_arr, $new_val_arr
     $new_json = $new_val_arr ? json_encode($new_val_arr) : null;
     $ip = $_SERVER['REMOTE_ADDR'];
 
-    $stmt = $pdo->prepare("INSERT INTO audit_logs (table_name, record_id, action, old_value, new_value, user_id, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$table, $record_id, $action, $old_json, $new_json, $user_id, $ip]);
+    $stmt = $pdo->prepare("INSERT INTO audit_logs (table_name, record_id, action, old_value, new_value, user_id, ip_address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$table, $record_id, $action, $old_json, $new_json, $user_id, $ip, get_local_datetime()]);
 }
 
 /**
