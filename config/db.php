@@ -29,11 +29,23 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     
-    // Set Timezone
+    // Set PHP Timezone to Mexico City (GMT-6)
     date_default_timezone_set('America/Mexico_City');
-    $pdo->exec("SET time_zone = '-06:00'");
+    
+    // Try to set MySQL timezone (works locally, might fail on InfinityFree)
+    try {
+        $pdo->exec("SET time_zone = '-06:00'");
+    } catch (PDOException $e) {
+        // If it fails (InfinityFree), we'll handle it in PHP
+        // MySQL will use UTC, but we'll convert in queries
+    }
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
+}
+
+// Helper function to get current datetime in Mexico City timezone
+function get_local_datetime() {
+    return date('Y-m-d H:i:s');
 }
 // End of file (no closing tag to prevent whitespace)
 
