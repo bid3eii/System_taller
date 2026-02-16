@@ -49,7 +49,7 @@
             if(can_access_module('clients', $pdo)) {
                 $menu_items['clients'] = [
                     'type' => 'link',
-                    'url' => '<?php echo BASE_URL; ?>modules/clients/index.php',
+                    'url' => BASE_URL . 'modules/clients/index.php',
                     'icon' => 'ph-users',
                     'label' => 'Clientes',
                     'active' => strpos($_SERVER['REQUEST_URI'], 'clients') !== false
@@ -65,8 +65,8 @@
                     'label' => 'Equipos',
                     'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment') !== false && strpos($_SERVER['REQUEST_URI'], 'type=warranty') === false),
                     'children' => [
-                        ['url' => '<?php echo BASE_URL; ?>modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'],
-                        ['url' => '<?php echo BASE_URL; ?>modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida']
+                        ['url' => BASE_URL . 'modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'],
+                        ['url' => BASE_URL . 'modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida']
                     ]
                 ];
             }
@@ -75,7 +75,7 @@
             if(can_access_module('new_warranty', $pdo)) {
                  $menu_items['new_warranty'] = [
                     'type' => 'link',
-                    'url' => '<?php echo BASE_URL; ?>modules/equipment/entry.php?type=warranty',
+                    'url' => BASE_URL . 'modules/equipment/entry.php?type=warranty',
                     'icon' => 'ph-plus-circle',
                     'label' => 'Registro de Garantía',
                     'active' => ((strpos($_SERVER['REQUEST_URI'], 'entry.php') !== false && isset($_GET['type']) && $_GET['type'] === 'warranty') || (isset($_GET['return_to']) && $_GET['return_to'] === 'entry'))
@@ -86,7 +86,7 @@
             if(can_access_module('tools', $pdo)) {
                  $menu_items['tools'] = [
                     'type' => 'link',
-                    'url' => '<?php echo BASE_URL; ?>modules/tools/index.php',
+                    'url' => BASE_URL . 'modules/tools/index.php',
                     'icon' => 'ph-wrench',
                     'label' => 'Herramientas',
                     'active' => strpos($_SERVER['REQUEST_URI'], 'tools') !== false
@@ -100,9 +100,9 @@
             
             if ($can_services || $can_warranties || $can_history) {
                 $children = [];
-                if($can_services) $children[] = ['url' => '<?php echo BASE_URL; ?>modules/services/index.php', 'icon' => 'ph-wrench', 'label' => 'Servicios'];
-                if($can_warranties) $children[] = ['url' => '<?php echo BASE_URL; ?>modules/warranties/index.php', 'icon' => 'ph-shield-check', 'label' => 'Garantías'];
-                if($can_history) $children[] = ['url' => '<?php echo BASE_URL; ?>modules/history/index.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial'];
+                if($can_services) $children[] = ['url' => BASE_URL . 'modules/services/index.php', 'icon' => 'ph-wrench', 'label' => 'Servicios'];
+                if($can_warranties) $children[] = ['url' => BASE_URL . 'modules/warranties/index.php', 'icon' => 'ph-shield-check', 'label' => 'Garantías'];
+                if($can_history) $children[] = ['url' => BASE_URL . 'modules/history/index.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial'];
 
                 $menu_items['requests'] = [
                     'type' => 'dropdown',
@@ -118,7 +118,7 @@
             if(can_access_module('reports', $pdo)) {
                  $menu_items['reports'] = [
                     'type' => 'link',
-                    'url' => '<?php echo BASE_URL; ?>modules/reports/index.php',
+                    'url' => BASE_URL . 'modules/reports/index.php',
                     'icon' => 'ph-chart-bar',
                     'label' => 'Reportes',
                     'active' => strpos($_SERVER['REQUEST_URI'], 'reports') !== false
