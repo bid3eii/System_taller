@@ -6,6 +6,19 @@ require_once '../../includes/functions.php';
 
 $error = '';
 
+if (isset($_GET['error'])) {
+    switch ($_GET['error']) {
+        case 'timeout':
+            $error = 'Tu sesión ha expirado por inactividad. Por favor, ingresa nuevamente.';
+            break;
+        case 'account_issue':
+            $error = 'Tu cuenta ha sido desactivada o eliminada.';
+            break;
+        default:
+            $error = '';
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = clean($_POST['username']);
     $password = $_POST['password'];

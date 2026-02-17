@@ -30,9 +30,8 @@ if ($freshUser) {
     exit;
 }
 
-// Inactivity timeout disabled
-/*
-$timeout_duration = 1800; // 30 minutes
+// Inactivity timeout enabled
+$timeout_duration = 28800; // 8 hours
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) {
     session_unset();
     session_destroy();
@@ -40,6 +39,4 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
     exit;
 }
 $_SESSION['last_activity'] = time();
-
-*/
 
