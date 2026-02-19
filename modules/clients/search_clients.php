@@ -19,7 +19,14 @@ if ($search) {
     $params = ["%$search%", "%$search%", "%$search%", "%$search%"];
 }
 
-$stmt = $pdo->prepare("SELECT * FROM clients WHERE $where ORDER BY created_at DESC");
+$stmt = $pdo->prepare("
+    SELECT DISTINCT c.* 
+    FROM clients c 
+    JOIN service_orders so ON c.id = so.client_id 
+    WHERE $where 
+      AND (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
+    ORDER BY c.created_at DESC
+");
 $stmt->execute($params);
 $clients = $stmt->fetchAll();
 

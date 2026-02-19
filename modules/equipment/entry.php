@@ -427,9 +427,11 @@ require_once '../../includes/sidebar.php';
                     <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
                         
                         <!-- Row 1: Client & Basic Info -->
-                        <div class="form-group" style="grid-column: span 2;">
+                        <div class="form-group" style="grid-column: span 2; position: relative;">
                              <label class="form-label">Cliente *</label>
-                             <input type="text" name="client_name_input" class="form-control" placeholder="Nombre (Búsqueda inteligente)" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>">
+                             <input type="hidden" name="client_id" id="client_id_hidden_wry" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
+                             <input type="text" name="client_name_input" id="client_name_input_wry" class="form-control" placeholder="Nombre (Búsqueda inteligente)" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" autocomplete="off">
+                             <div class="search-results" id="client_autocomplete_results_wry" style="width: 100%;"></div>
                         </div>
 
                         <div class="form-group">
@@ -729,6 +731,11 @@ require_once '../../includes/sidebar.php';
                             const idInput = document.getElementById('client_id_hidden_std');
                             const resultsDiv = document.getElementById('client_autocomplete_results_std');
                             const clearBtn = document.getElementById('btnClearClient_std');
+                            
+                            // Warranty Elements
+                            const nameInputWry = document.getElementById('client_name_input_wry');
+                            const idInputWry = document.getElementById('client_id_hidden_wry');
+                            const resultsDivWry = document.getElementById('client_autocomplete_results_wry');
 
                             // Other inputs for population
                             const phoneInput = document.getElementById('client_phone_std');
@@ -745,20 +752,27 @@ require_once '../../includes/sidebar.php';
                             // taxInput.style.backgroundColor = '#e6f3ff';
 
                             // 3. Define Helper Functions
-                            function fillClientData(client) {
+                            function fillClientData(client, isWry = false) {
                                 if(!client) return;
-                                if(nameInput) nameInput.value = client.name;
-                                if(idInput) idInput.value = client.id;
-                                if(taxInput) taxInput.value = client.tax_id || '';
-                                if(phoneInput) phoneInput.value = client.phone || '';
-                                if(emailInput) emailInput.value = client.email || '';
-                                if(addressInput) addressInput.value = client.address || '';
                                 
-                                if(clearBtn) clearBtn.style.display = 'block';
-                                
-                                // Hide all dropdowns
-                                if(resultsDiv) resultsDiv.classList.remove('show');
-                                if(taxResultsDiv) taxResultsDiv.style.display = 'none';
+                                if(isWry) {
+                                    if(nameInputWry) nameInputWry.value = client.name;
+                                    if(idInputWry) idInputWry.value = client.id;
+                                    if(resultsDivWry) resultsDivWry.classList.remove('show');
+                                } else {
+                                    if(nameInput) nameInput.value = client.name;
+                                    if(idInput) idInput.value = client.id;
+                                    if(taxInput) taxInput.value = client.tax_id || '';
+                                    if(phoneInput) phoneInput.value = client.phone || '';
+                                    if(emailInput) emailInput.value = client.email || '';
+                                    if(addressInput) addressInput.value = client.address || '';
+                                    
+                                    if(clearBtn) clearBtn.style.display = 'block';
+                                    
+                                    // Hide all dropdowns
+                                    if(resultsDiv) resultsDiv.classList.remove('show');
+                                    if(taxResultsDiv) taxResultsDiv.style.display = 'none';
+                                }
                                 
                                 log("CLIENTE: " + client.name, "#90EE90");
                                 // taxInput.style.borderColor = 'green';
@@ -882,7 +896,31 @@ require_once '../../includes/sidebar.php';
                                 }
                             }
 
-                            log("JS INTERACTIVO", "cyan");
+                             // --- C. Warranty Name Search ---
+                            if(nameInputWry) {
+                                nameInputWry.addEventListener('input', function() {
+                                    const val = this.value.toLowerCase();
+                                    if(idInputWry) idInputWry.value = ''; 
+                                    
+                                    if (val.length < 2) {
+                                        resultsDivWry.classList.remove('show');
+                                        return;
+                                    }
+
+                                    const matches = allClients.filter(c => c.name.toLowerCase().includes(val));
+                                    resultsDivWry.innerHTML = '';
+                                    if (matches.length > 0) {
+                                        matches.slice(0, 10).forEach(c => {
+                                            const html = `<strong>${c.name}</strong> <span style='font-size:0.8em'>${c.tax_id || ''}</span>`;
+                                            const div = createOption(html, () => fillClientData(c, true));
+                                            resultsDivWry.appendChild(div);
+                                        });
+                                        resultsDivWry.classList.add('show');
+                                    } else {
+                                        resultsDivWry.classList.remove('show');
+                                    }
+                                });
+                            }
 
                         } catch (e) {
                             console.error(e);
