@@ -22,9 +22,9 @@ if ($search) {
 $stmt = $pdo->prepare("
     SELECT DISTINCT c.* 
     FROM clients c 
-    JOIN service_orders so ON c.id = so.client_id 
+    LEFT JOIN service_orders so ON c.id = so.client_id 
     WHERE $where 
-      AND (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
+      AND (so.id IS NULL OR so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
     ORDER BY c.created_at DESC
 ");
 $stmt->execute($params);

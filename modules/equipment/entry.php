@@ -14,8 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
     $email = clean($_POST['email']);
     $tax_id = clean($_POST['tax_id'] ?? '');
 
-    if (empty($name) || empty($phone)) {
-        echo json_encode(['success' => false, 'message' => 'Nombre y Teléfono son obligatorios']);
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => 'El nombre es obligatorio']);
         exit;
     }
 
