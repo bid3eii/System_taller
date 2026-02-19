@@ -26,7 +26,7 @@ $sql = "
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
-    WHERE 1=1
+    WHERE (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
 ";
 
 $params = [];
