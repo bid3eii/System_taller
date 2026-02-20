@@ -71,14 +71,18 @@
                 ];
             }
 
-            // New Warranty
+            // Registro de Garantía
             if(can_access_module('new_warranty', $pdo)) {
                  $menu_items['new_warranty'] = [
-                    'type' => 'link',
-                    'url' => BASE_URL . 'modules/equipment/entry.php?type=warranty',
-                    'icon' => 'ph-plus-circle',
+                    'type' => 'dropdown',
+                    'url' => '#',
+                    'icon' => 'ph-shield-check',
                     'label' => 'Registro de Garantía',
-                    'active' => ((strpos($_SERVER['REQUEST_URI'], 'entry.php') !== false && isset($_GET['type']) && $_GET['type'] === 'warranty') || (isset($_GET['return_to']) && $_GET['return_to'] === 'entry'))
+                    'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment/entry.php?type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false),
+                    'children' => [
+                        ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Registro'],
+                        ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros']
+                    ]
                 ];
             }
 
@@ -109,7 +113,7 @@
                     'url' => '#',
                     'icon' => 'ph-clipboard-text',
                     'label' => 'Solicitud',
-                    'active' => ((strpos($_SERVER['REQUEST_URI'], 'warranties') !== false || strpos($_SERVER['REQUEST_URI'], 'services') !== false) && (!isset($_GET['return_to']) || $_GET['return_to'] !== 'entry')),
+                    'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/services/') !== false || (strpos($_SERVER['REQUEST_URI'], 'modules/warranties/') !== false && strpos($_SERVER['REQUEST_URI'], 'database.php') === false)),
                     'children' => $children
                 ];
             }

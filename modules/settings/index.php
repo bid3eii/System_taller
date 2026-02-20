@@ -41,6 +41,7 @@ $defined_modules = [
     'settings_users'   => 'Gestión de Usuarios (Admin)',
     'settings_restore' => 'Restaurar Sistema',
     're_enter_workshop' => 'Reingresar a Taller',
+    'view_all_entries' => 'Ver todos los equipos ingresados (sin estar asignados)',
 ];
 
 foreach ($defined_modules as $key => $desc) {
@@ -63,6 +64,15 @@ foreach ($defined_modules as $key => $desc) {
     $stmtRP->execute([$perm_id]);
     if (!$stmtRP->fetch()) {
         $pdo->prepare("INSERT INTO role_permissions (role_id, permission_id) VALUES (1, ?)")->execute([$perm_id]);
+    }
+
+    // Auto-grant 'view_all_entries' to Reception (Role ID 4) by default
+    if ($key === 'view_all_entries') {
+        $stmtRP4 = $pdo->prepare("SELECT * FROM role_permissions WHERE role_id = 4 AND permission_id = ?");
+        $stmtRP4->execute([$perm_id]);
+        if (!$stmtRP4->fetch()) {
+            $pdo->prepare("INSERT INTO role_permissions (role_id, permission_id) VALUES (4, ?)")->execute([$perm_id]);
+        }
     }
 }
 
@@ -837,7 +847,8 @@ require_once '../../includes/sidebar.php';
             'settings_modules' => ['label' => 'Módulos', 'cat' => 'Administración', 'icon' => 'ph-squares-four'],
             'settings_users'   => ['label' => 'Usuarios (Admin)', 'cat' => 'Administración', 'icon' => 'ph-users-three'],
             'settings_restore' => ['label' => 'Restaurar', 'cat' => 'Administración', 'icon' => 'ph-warning-octagon'],
-            're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left']
+            're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left'],
+            'view_all_entries'  => ['label' => 'Ver equipos de todos', 'cat' => 'Gestión', 'icon' => 'ph-eye'],
         ];
 
         // Group by Category
@@ -948,7 +959,8 @@ require_once '../../includes/sidebar.php';
             'settings_modules' => ['label' => 'Módulos', 'cat' => 'Administración', 'icon' => 'ph-squares-four'],
             'settings_users'   => ['label' => 'Usuarios (Admin)', 'cat' => 'Administración', 'icon' => 'ph-users-three'],
             'settings_restore' => ['label' => 'Restaurar', 'cat' => 'Administración', 'icon' => 'ph-warning-octagon'],
-            're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left']
+            're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left'],
+            'view_all_entries'  => ['label' => 'Ver equipos de todos', 'cat' => 'Gestión', 'icon' => 'ph-eye'],
         ];
         
         // Group by Category (Reused Logic)
@@ -1402,6 +1414,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 </form>
             </div>
 
+                        <!-- IMPORT SECTION -->
+            <div class="card card-premium blue">
+                <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-400);">
+                    <i class="ph ph-file-csv"></i>
+                </div>
+                <h3>Importar Garantías</h3>
+                <p>Carga masiva de registros (CSV). Ideal para migraciones o cargas iniciales de datos.</p>
+                <div style="margin-top: auto;">
+                    <a href="import_warranties.php" class="btn btn-premium" style="background: var(--primary-500); color: white; border: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
+                        <i class="ph ph-rocket-launch"></i> Iniciar Importador
+                    </a>
+                </div>
+            </div>
             <!-- DANGER ZONE (Factory Reset) -->
             <div class="card card-premium red">
                 <div class="icon-box">

@@ -20,20 +20,31 @@ $filterStatus = isset($_GET['status']) ? clean($_GET['status']) : '';
 $filterType = isset($_GET['type']) ? clean($_GET['type']) : '';
 
 // 2. Build Query
+$can_view_all = has_permission('module_view_all_entries', $pdo);
+$user_id = $_SESSION['user_id'];
+
 $sql = "
     SELECT 
         so.id, so.status, so.final_cost, so.exit_date, so.invoice_number, so.service_type, so.problem_reported,
         c.name as client_name, 
         e.brand, e.model, e.serial_number, e.type,
-        u.username as delivered_by
+        u.username as delivered_by,
+        tech.username as assigned_tech_name
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
+    LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     WHERE (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
 ";
 
 $params = [];
+
+// Filter by assigned tech if user can't see all
+if (!$can_view_all) {
+    $sql .= " AND so.assigned_tech_id = ?";
+    $params[] = $user_id;
+}
 
 if (!empty($filterStatus)) {
     $sql .= " AND so.status = ?";
@@ -44,7 +55,7 @@ if (!empty($filterType)) {
     $params[] = $filterType;
 }
 
-$sql .= " ORDER BY so.entry_date DESC LIMIT 200"; // Show recent 200 by default
+$sql .= " ORDER BY so.entry_date DESC LIMIT 200";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -119,6 +130,7 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" onclick="sortTable(2)">Tipo <i class="ph ph-caret-up-down"></i></th>
                         <th class="sortable" onclick="sortTable(3)">Cliente <i class="ph ph-caret-up-down"></i></th>
                         <th class="sortable" onclick="sortTable(4)">Equipo <i class="ph ph-caret-up-down"></i></th>
+                        <th>Técnico Asignado</th>
                         <th>Fecha Salida</th>
                     </tr>
                 </thead>
@@ -162,6 +174,16 @@ require_once '../../includes/sidebar.php';
                                     <span><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
                                     <span class="text-sm text-muted">(<?php echo htmlspecialchars($item['serial_number']); ?>)</span>
                                 </div>
+                            </td>
+                            <td>
+                                <?php if(!empty($item['assigned_tech_name'])): ?>
+                                    <span style="display:inline-flex; align-items:center; gap:0.4rem;">
+                                        <i class="ph ph-user-circle" style="color: var(--primary);"></i>
+                                        <?php echo htmlspecialchars($item['assigned_tech_name']); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-muted">Sin asignar</span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php if($item['exit_date']): ?>

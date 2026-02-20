@@ -40,198 +40,129 @@ $recentType = 'services'; // 'services' or 'tools'
 
 // --- DATA FETCHING LOGIC ---
 
-if ($is_tech) {
-    // --- TECHNICIAN VIEW ---
-    // KPI 1: Equipos Asignados (Active orders assigned to tech)
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders WHERE assigned_tech_id = ? AND status NOT IN ('delivered', 'cancelled')");
-    $stmt->execute([$user_id]);
+if ($is_warehouse) {
+    // --- WAREHOUSE VIEW ---
+    $recentType = 'tools';
+    
+    // KPI 1: Herramientas Disponibles
+    $stmt = $pdo->query("SELECT COUNT(*) FROM tools WHERE status = 'available'");
     $kpi1_val = $stmt->fetchColumn();
-    $kpi1_label = "Equipos Asignados";
-    $kpi1_icon = "ph-user-focus";
+    $kpi1_label = "Herramientas Disponibles";
+    $kpi1_icon = "ph-wrench";
     $kpi1_color = "var(--primary-500)";
     $kpi1_bg = "rgba(99, 102, 241, 0.1)";
 
-    // KPI 2: Equipos en Taller (Global Active Orders context)
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status NOT IN ('delivered', 'cancelled')");
+    // KPI 2: Herramientas Prestadas
+    $stmt = $pdo->query("SELECT COUNT(*) FROM tools WHERE status = 'assigned'");
     $kpi2_val = $stmt->fetchColumn();
-    $kpi2_label = "Equipos en Taller";
-    $kpi2_icon = "ph-warehouse";
+    $kpi2_label = "Herramientas Prestadas";
+    $kpi2_icon = "ph-hand-pointing";
     $kpi2_color = "var(--warning)";
     $kpi2_bg = "rgba(234, 179, 8, 0.1)";
 
-    // KPI 3: Total Entregados (By this tech)
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders WHERE assigned_tech_id = ? AND status = 'delivered'");
-    $stmt->execute([$user_id]);
+    // KPI 3: Total Herramientas
+    $stmt = $pdo->query("SELECT COUNT(*) FROM tools");
     $kpi3_val = $stmt->fetchColumn();
-    $kpi3_label = "Total Entregados";
-    $kpi3_icon = "ph-check-circle";
+    $kpi3_label = "Total Herramientas";
+    $kpi3_icon = "ph-toolbox";
     $kpi3_color = "var(--success)";
     $kpi3_bg = "rgba(34, 197, 94, 0.1)";
 
-    // KPI 4: Hidden/Empty or Optional
-    $kpi4_val = 0; 
-    $kpi4_label = ""; 
-    $kpi4_icon = ""; 
-    $kpi4_color = "transparent"; 
-    $kpi4_bg = "transparent";
-
-    // Chart: My Status Distribution (Status of assigned orders)
-    $stmt = $pdo->prepare("SELECT status, COUNT(*) as count FROM service_orders WHERE assigned_tech_id = ? AND status NOT IN ('delivered', 'cancelled') GROUP BY status");
-    $stmt->execute([$user_id]);
+    // Chart: Tool Status
+    $stmt = $pdo->query("SELECT status, COUNT(*) as count FROM tools GROUP BY status");
     $statusData = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-    
-    // Recent Activity: My Orders
+
+    // Recent: Last Tool Assignments
+    $stmt = $pdo->query("
+        SELECT ta.id, ta.assignment_date as date, u.username as user_name, t.name as item_name, ta.status
+        FROM tool_assignments ta
+        JOIN users u ON ta.user_id = u.id
+        JOIN tool_assignment_items tai ON ta.id = tai.assignment_id
+        JOIN tools t ON tai.tool_id = t.id
+        ORDER BY ta.assignment_date DESC LIMIT 5
+    ");
+    $recentItems = $stmt->fetchAll();
+
+} else {
+    // --- WORKSHOP VIEW (Admin, Reception, Tech) ---
+    $recentType = 'services';
+    $can_view_all = has_permission('module_view_all_entries', $pdo);
+
+    // KPIs Logic
+    // Active Services
+    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE service_type = 'service' AND status NOT IN ('delivered', 'cancelled')");
+    $active_services = $stmt->fetchColumn();
+
+    // Active Warranties (Repairs)
+    $stmt = $pdo->query("
+        SELECT COUNT(*) 
+        FROM service_orders so 
+        LEFT JOIN warranties w ON so.id = w.service_order_id 
+        WHERE so.service_type = 'warranty' 
+        AND (w.product_code IS NULL OR w.product_code = '') AND so.problem_reported != 'Garantía Registrada'
+        AND so.status NOT IN ('delivered', 'cancelled')
+    ");
+    $active_warranties = $stmt->fetchColumn();
+
+    // Stats for Display
+    if ($is_tech && !$can_view_all) {
+        // Tech sees their own primary KPI
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders WHERE assigned_tech_id = ? AND status NOT IN ('delivered', 'cancelled')");
+        $stmt->execute([$user_id]);
+        $kpi1_val = $stmt->fetchColumn();
+        $kpi1_label = "Mis Equipos";
+        $kpi1_icon = "ph-user-focus";
+    } else {
+        $kpi1_val = $active_services;
+        $kpi1_label = "Servicios en Taller";
+        $kpi1_icon = "ph-wrench";
+    }
+    $kpi1_color = "var(--primary-500)";
+    $kpi1_bg = "rgba(99, 102, 241, 0.1)";
+
+    $kpi2_val = $active_warranties;
+    $kpi2_label = "Garantías en Taller";
+    $kpi2_icon = "ph-shield-warning";
+    $kpi2_color = "var(--warning)";
+    $kpi2_bg = "rgba(234, 179, 8, 0.1)";
+
+    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status = 'ready'");
+    $kpi3_val = $stmt->fetchColumn();
+    $kpi3_label = "Listos para Entrega";
+    $kpi3_icon = "ph-package";
+    $kpi3_color = "var(--success)";
+    $kpi3_bg = "rgba(34, 197, 94, 0.1)";
+
+    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status = 'delivered'");
+    $kpi4_val = $stmt->fetchColumn();
+    $kpi4_label = "Total Entregados";
+    $kpi4_icon = "ph-check-circle";
+    $kpi4_color = "var(--purple-500)";
+    $kpi4_bg = "rgba(168, 85, 247, 0.1)";
+
+    // Status Distribution Chart
+    $statusSql = "SELECT status, COUNT(*) as count FROM service_orders WHERE status NOT IN ('delivered', 'cancelled')";
+    if ($is_tech && !$can_view_all) {
+        $statusSql .= " AND assigned_tech_id = " . intval($user_id);
+    }
+    $statusSql .= " GROUP BY status";
+    $statusData = $pdo->query($statusSql)->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    // Recent Activity Table
     $recentSql = "
         SELECT so.id, so.entry_date, so.status, so.service_type, c.name as client_name, e.brand, e.model
         FROM service_orders so
         LEFT JOIN clients c ON so.client_id = c.id
         LEFT JOIN equipments e ON so.equipment_id = e.id
-        LEFT JOIN warranties w ON so.id = w.service_order_id
-        WHERE so.assigned_tech_id = ? 
-        AND ((so.service_type = 'service') OR (so.service_type = 'warranty' AND (w.product_code IS NULL OR w.product_code = '')))
-        ORDER BY so.entry_date DESC LIMIT 5
+        WHERE 1=1
     ";
-    $stmt = $pdo->prepare($recentSql);
-    $stmt->execute([$user_id]);
-    $recentItems = $stmt->fetchAll();
-
-} elseif ($is_reception) {
-    // ... (Reception logic unchanged for query part if already correct, but ensuring consistency)
-    // KPI 1...
-    // ...
-    // ... (Skipping unchanged KPI blocks for brevity in replace tool if possible, but simpler to just target the diff areas or specific blocks)
-    // Actually, I should target the Table HTML instead for the column addition, and the Tech Query separately if needed.
-    // But since I can do a large block replace or multiple calls.
-    // Let's do multiple small replaces for safety.
-    // 1. Tech Query Update is implemented here.
-    // 2. We will handle Table HTML in next call if this is too complex.
-    // Wait, the ReplacementContent must be the *new* content. 
-    // I will just update the query here in this block.
-    // And I will also update the Table HTML further down in the same file.
-    // Since they are far apart, I should use MULTI_REPLACE or separate calls. 
-    // I will use replace_file_content for the Table and another for the Query? 
-    // No, I'll use multi_replace.
     
-    // Oh, I am restricted to replace_file_content or multi_replace.
-    // Let's use multi_replace.
-
-
-} elseif ($is_reception) {
-    // --- RECEPTION VIEW ---
-
-    // KPI 1: Servicios en Taller (Active Services)
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE service_type = 'service' AND status NOT IN ('delivered', 'cancelled')");
-    $kpi1_val = $stmt->fetchColumn();
-    $kpi1_label = "Servicios en Taller";
-    $kpi1_icon = "ph-wrench";
-    $kpi1_color = "var(--primary-500)";
-    $kpi1_bg = "rgba(99, 102, 241, 0.1)";
-
-    // KPI 2: Garantías en Taller (Active Repair Warranties)
-    // Filter for repair warranties (no product_code)
-    $stmt = $pdo->query("
-        SELECT COUNT(*) 
-        FROM service_orders so 
-        LEFT JOIN warranties w ON so.id = w.service_order_id 
-        WHERE so.service_type = 'warranty' 
-        AND (w.product_code IS NULL OR w.product_code = '')
-        AND so.status NOT IN ('delivered', 'cancelled')
-    ");
-    $kpi2_val = $stmt->fetchColumn();
-    $kpi2_label = "Garantías en Taller";
-    $kpi2_icon = "ph-shield-warning";
-    $kpi2_color = "var(--warning)";
-    $kpi2_bg = "rgba(234, 179, 8, 0.1)";
-
-    // KPI 3: Listos para Entrega
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status = 'ready'");
-    $kpi3_val = $stmt->fetchColumn();
-    $kpi3_label = "Listos para Entrega";
-    $kpi3_icon = "ph-package";
-    $kpi3_color = "var(--success)";
-    $kpi3_bg = "rgba(34, 197, 94, 0.1)";
-
-    // KPI 4: Total Entregados
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status = 'delivered'");
-    $kpi4_val = $stmt->fetchColumn();
-    $kpi4_label = "Total Entregados";
-    $kpi4_icon = "ph-check-circle";
-    $kpi4_color = "var(--purple-500)";
-    $kpi4_bg = "rgba(168, 85, 247, 0.1)";
-
-    // Chart 1: Repair Status (Global Distribution)
-    $stmt = $pdo->query("SELECT status, COUNT(*) as count FROM service_orders WHERE status NOT IN ('delivered', 'cancelled') GROUP BY status");
-    $statusData = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-
-    // Recent Activity: Services + Warranties
-    $stmt = $pdo->query("
-        SELECT so.id, so.entry_date, so.status, so.service_type, c.name as client_name, e.brand, e.model
-        FROM service_orders so
-        LEFT JOIN clients c ON so.client_id = c.id
-        LEFT JOIN equipments e ON so.equipment_id = e.id
-        LEFT JOIN warranties w ON so.id = w.service_order_id
-        WHERE (so.service_type = 'service') OR (so.service_type = 'warranty' AND (w.product_code IS NULL OR w.product_code = ''))
-        ORDER BY so.entry_date DESC LIMIT 5
-    ");
-    $recentItems = $stmt->fetchAll();
-
-} else {
-    // --- ADMIN / SUPERADMIN VIEW ---
-
-    // KPI 1: Servicios en Taller (Active)
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE service_type = 'service' AND status NOT IN ('delivered', 'cancelled')");
-    $kpi1_val = $stmt->fetchColumn();
-    $kpi1_label = "Servicios en Taller";
-    $kpi1_icon = "ph-wrench";
-    $kpi1_color = "var(--primary-500)";
-    $kpi1_bg = "rgba(99, 102, 241, 0.1)";
-
-    // KPI 2: Garantías en Taller (Active Repair Warranties)
-    $stmt = $pdo->query("
-        SELECT COUNT(*) 
-        FROM service_orders so 
-        LEFT JOIN warranties w ON so.id = w.service_order_id 
-        WHERE so.service_type = 'warranty' 
-        AND (w.product_code IS NULL OR w.product_code = '')
-        AND so.status NOT IN ('delivered', 'cancelled')
-    ");
-    $kpi2_val = $stmt->fetchColumn();
-    $kpi2_label = "Garantías en Taller";
-    $kpi2_icon = "ph-shield-warning";
-    $kpi2_color = "var(--warning)";
-    $kpi2_bg = "rgba(234, 179, 8, 0.1)";
-
-    // KPI 3: Listos para Entrega
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status = 'ready'");
-    $kpi3_val = $stmt->fetchColumn();
-    $kpi3_label = "Listos para Entrega";
-    $kpi3_icon = "ph-package";
-    $kpi3_color = "var(--success)";
-    $kpi3_bg = "rgba(34, 197, 94, 0.1)";
-
-    // KPI 4: Total Entregados
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status = 'delivered'");
-    $kpi4_val = $stmt->fetchColumn();
-    $kpi4_label = "Total Entregados";
-    $kpi4_icon = "ph-check-circle";
-    $kpi4_color = "var(--purple-500)";
-    $kpi4_bg = "rgba(168, 85, 247, 0.1)";
-
-    // Chart 1: Repair Status (Global)
-    $stmt = $pdo->query("SELECT status, COUNT(*) as count FROM service_orders WHERE status NOT IN ('delivered', 'cancelled') GROUP BY status");
-    $statusData = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-
-    // Recent Activity: All
-    $stmt = $pdo->query("
-        SELECT so.id, so.entry_date, so.status, so.service_type, c.name as client_name, e.brand, e.model
-        FROM service_orders so
-        LEFT JOIN clients c ON so.client_id = c.id
-        LEFT JOIN equipments e ON so.equipment_id = e.id
-        LEFT JOIN warranties w ON so.id = w.service_order_id
-        WHERE (so.service_type = 'service') OR (so.service_type = 'warranty' AND (w.product_code IS NULL OR w.product_code = ''))
-        ORDER BY so.entry_date DESC LIMIT 5
-    ");
-    $recentItems = $stmt->fetchAll();
+    if ($is_tech && !$can_view_all) {
+        $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
+    }
+    
+    $recentSql .= " ORDER BY so.entry_date DESC LIMIT 5";
+    $recentItems = $pdo->query($recentSql)->fetchAll();
 }
 
 
@@ -275,10 +206,9 @@ if (!$is_warehouse) {
         $date = date('Y-m-d', strtotime("-$i days"));
         
         $wSql = "SELECT COUNT(*) FROM service_orders WHERE DATE(entry_date) = ?";
-        if ($is_tech) {
+        if ($is_tech && !$can_view_all) {
             $wSql .= " AND assigned_tech_id = " . intval($user_id);
         }
-        // Reception sees global intake
         
         $stmtDaily = $pdo->prepare($wSql);
         $stmtDaily->execute([$date]);
