@@ -819,6 +819,7 @@ require_once '../../includes/sidebar.php';
             'history'   => ['label' => 'Historial', 'cat' => 'Sistema', 'icon' => 'ph-clock-counter-clockwise'],
             
             'clients'   => ['label' => 'Clientes', 'cat' => 'Gestión', 'icon' => 'ph-users'],
+            'clients_delete' => ['label' => 'Eliminar Clientes', 'cat' => 'Gestión', 'icon' => 'ph-trash'],
             'equipment' => ['label' => 'Equipos', 'cat' => 'Gestión', 'icon' => 'ph-desktop'],
             'equipment_entry' => ['label' => 'Reg. Entrada', 'cat' => 'Gestión', 'icon' => 'ph-download-simple'],
             'equipment_exit' => ['label' => 'Reg. Salida', 'cat' => 'Gestión', 'icon' => 'ph-upload-simple'],
@@ -930,6 +931,7 @@ require_once '../../includes/sidebar.php';
             'history'   => ['label' => 'Historial', 'cat' => 'Sistema', 'icon' => 'ph-clock-counter-clockwise'],
             
             'clients'   => ['label' => 'Clientes', 'cat' => 'Gestión', 'icon' => 'ph-users'],
+            'clients_delete' => ['label' => 'Eliminar Clientes', 'cat' => 'Gestión', 'icon' => 'ph-trash'],
             'equipment' => ['label' => 'Equipos', 'cat' => 'Gestión', 'icon' => 'ph-desktop'],
             'equipment_entry' => ['label' => 'Reg. Entrada', 'cat' => 'Gestión', 'icon' => 'ph-download-simple'],
             'equipment_exit' => ['label' => 'Reg. Salida', 'cat' => 'Gestión', 'icon' => 'ph-upload-simple'],
