@@ -40,9 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "El nombre es obligatorio.";
     } else {
         try {
-            // Check for duplicate tax_id ONLY if it's not the same client (optional check, skipped for now or simple uniqueness)
-            
-            $stmt = $pdo->prepare("UPDATE clients SET name = ?, tax_id = ?, phone = ?, email = ?, address = ?, updated_at = NOW() WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE clients SET name = ?, tax_id = ?, phone = ?, email = ?, address = ? WHERE id = ?");
             if ($stmt->execute([$name, $tax_id, $phone, $email, $address, $id])) {
                 // Audit Log
                 log_audit($pdo, 'clients', $id, 'UPDATE', json_encode($client), $_POST);
