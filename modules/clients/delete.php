@@ -6,8 +6,8 @@ require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 
 // Check permission
-if (!can_access_module('clients', $pdo)) {
-    die("Acceso denegado.");
+if (!can_access_module('clients_delete', $pdo)) {
+    die("Acceso denegado. No tienes permiso para eliminar clientes.");
 }
 
 $id = $_GET['id'] ?? null;

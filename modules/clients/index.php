@@ -98,7 +98,9 @@ $clients = $stmt->fetchAll();
                             <td>
                                 <a href="edit.php?id=<?php echo $client['id']; ?>" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem;" title="Editar"><i class="ph ph-pencil-simple"></i></a>
                                 <a href="history.php?id=<?php echo $client['id']; ?>" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem;" title="Ver Historial"><i class="ph ph-clock-counter-clockwise"></i></a>
+                                <?php if (can_access_module('clients_delete', $pdo)): ?>
                                 <button type="button" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem; color: var(--danger);" title="Eliminar" onclick="openDeleteModal(<?php echo $client['id']; ?>, '<?php echo htmlspecialchars($client['name'], ENT_QUOTES); ?>')"><i class="ph ph-trash"></i></button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

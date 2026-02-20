@@ -22,6 +22,7 @@ if (!can_access_module('settings', $pdo)) {
 $defined_modules = [
     'dashboard' => 'Acceso al Dashboard',
     'clients'   => 'Gestión de Clientes',
+    'clients_delete' => 'Eliminar Clientes',
     'equipment' => 'Gestión de Equipos',
     'equipment_entry' => 'Registrar Entrada',
     'equipment_exit' => 'Registrar Salida',
