@@ -405,6 +405,40 @@ require_once '../../includes/sidebar.php';
             background-size: 16px 12px;
             padding-right: 2.5rem;
         }
+
+        /* Unified Search Results Style */
+        .search-results {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 100%;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 5px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+        }
+        .search-results.show {
+            display: block;
+        }
+        .search-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+        .search-option:last-child {
+            border-bottom: none;
+        }
+        .search-option:hover {
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary-light);
+        }
     </style>
 
     <div class="modern-form-container">
@@ -545,7 +579,7 @@ require_once '../../includes/sidebar.php';
                                 <input type="text" name="client_tax_id" id="client_tax_id_std" class="form-control" placeholder="Número de identificación" required value="<?php echo $edit_order ? ($edit_order['tax_id'] ?? '') : ''; ?>" autocomplete="off">
                                 <i class="ph ph-identification-card input-icon"></i>
                             </div>
-                            <div class="search-results" id="client_tax_results_std" style="width: 100%; position: absolute; z-index: 1000; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; display: none;"></div>
+                            <div class="search-results" id="client_tax_results_std"></div>
                         </div>
 
                         <!-- Phone -->
@@ -778,24 +812,16 @@ require_once '../../includes/sidebar.php';
                                     
                                     // Hide all dropdowns
                                     if(resultsDiv) resultsDiv.classList.remove('show');
-                                    if(taxResultsDiv) taxResultsDiv.style.display = 'none';
+                                    if(taxResultsDiv) taxResultsDiv.classList.remove('show');
                                 }
                                 
                                 log("CLIENTE: " + client.name, "#90EE90");
-                                // taxInput.style.borderColor = 'green';
                             }
 
                             function createOption(html, onClick) {
                                 const div = document.createElement('div');
                                 div.className = 'search-option';
-                                div.style.padding = '10px';
-                                div.style.cursor = 'pointer';
-                                div.style.borderBottom = '1px solid var(--border-color)';
-                                div.style.backgroundColor = 'var(--bg-card)';
-                                div.style.color = 'var(--text-primary)';
                                 div.innerHTML = html;
-                                div.onmouseover = function() { this.style.backgroundColor = 'var(--bg-body)'; };
-                                div.onmouseout = function() { this.style.backgroundColor = 'var(--bg-card)'; };
                                 div.addEventListener('click', onClick);
                                 return div;
                             }
@@ -803,49 +829,54 @@ require_once '../../includes/sidebar.php';
                             // 4. Attach Listeners
 
                             // --- A. Cédula Search ---
-                            taxInput.addEventListener('keydown', function(event) {
-                                if (event.key === 'Enter') event.preventDefault();
-                            });
-
-                            taxInput.addEventListener('input', function() {
-                                const val = this.value.trim(); 
-                                
-                                if(val.length === 0) {
-                                    taxResultsDiv.style.display = 'none';
-                                    return;
-                                }
-
-                                const matches = allClients.filter(c => {
-                                    const tax = c.tax_id ? c.tax_id.toString().toLowerCase() : '';
-                                    return tax.includes(val.toLowerCase());
+                            if (taxInput) {
+                                taxInput.addEventListener('keydown', function(event) {
+                                    if (event.key === 'Enter') event.preventDefault();
                                 });
-                                
-                                taxResultsDiv.innerHTML = '';
-                                if (matches.length > 0) {
-                                    // this.style.borderColor = 'green';
-                                    matches.slice(0, 5).forEach(c => { 
-                                        const html = `<strong>${c.tax_id || 'N/A'}</strong> - ${c.name}`;
-                                        const div = createOption(html, () => fillClientData(c));
-                                        taxResultsDiv.appendChild(div);
+
+                                taxInput.addEventListener('input', function() {
+                                    const val = this.value.trim(); 
+                                    
+                                    if(val.length === 0) {
+                                        if(taxResultsDiv) taxResultsDiv.classList.remove('show');
+                                        return;
+                                    }
+
+                                    const matches = allClients.filter(c => {
+                                        const tax = c.tax_id ? c.tax_id.toString().toLowerCase() : '';
+                                        return tax.includes(val.toLowerCase());
                                     });
-                                } else {
-                                    // this.style.borderColor = 'red';
-                                    const div = document.createElement('div');
-                                    div.style.padding = '10px';
-                                    div.style.color = 'red';
-                                    div.innerHTML = `<em>Sin resultados</em>`;
-                                    taxResultsDiv.appendChild(div);
-                                }
-                                taxResultsDiv.style.display = 'block';
-                            });
+                                    
+                                    if(taxResultsDiv) {
+                                        taxResultsDiv.innerHTML = '';
+                                        if (matches.length > 0) {
+                                            matches.slice(0, 5).forEach(c => { 
+                                                const html = `<strong>${c.tax_id || 'N/A'}</strong> - ${c.name}`;
+                                                const div = createOption(html, () => fillClientData(c));
+                                                taxResultsDiv.appendChild(div);
+                                            });
+                                        } else {
+                                            const div = document.createElement('div');
+                                            div.style.padding = '12px 16px';
+                                            div.style.color = 'var(--text-muted)';
+                                            div.innerHTML = `<em>Sin resultados</em>`;
+                                            taxResultsDiv.appendChild(div);
+                                        }
+                                        taxResultsDiv.classList.add('show');
+                                    }
+                                });
+                            }
 
                             // Hide on click outside
                             document.addEventListener('click', (e) => {
                                 if (taxResultsDiv && !taxResultsDiv.contains(e.target) && e.target !== taxInput) {
-                                    taxResultsDiv.style.display = 'none';
+                                    taxResultsDiv.classList.remove('show');
                                 }
                                 if (resultsDiv && !resultsDiv.contains(e.target) && e.target !== nameInput) {
                                     resultsDiv.classList.remove('show');
+                                }
+                                if (resultsDivWry && !resultsDivWry.contains(e.target) && e.target !== nameInputWry) {
+                                    resultsDivWry.classList.remove('show');
                                 }
                             });
 
@@ -853,31 +884,35 @@ require_once '../../includes/sidebar.php';
                             // --- B. Name Search (Existing Logic Ported) ---
                             if(nameInput) {
                                 nameInput.addEventListener('input', function() {
-                                    const val = this.value.toLowerCase();
+                                    const val = this.value.toLowerCase().trim();
                                     
                                     // Reset ID if user types anew, unless picking from list
                                     if(idInput) idInput.value = ''; 
                                     
-                                    if(val.length > 0) clearBtn.style.display = 'block';
-                                    else clearBtn.style.display = 'none';
+                                    if (clearBtn) {
+                                        if(val.length > 0) clearBtn.style.display = 'block';
+                                        else clearBtn.style.display = 'none';
+                                    }
 
-                                    if (val.length < 2) {
-                                        resultsDiv.classList.remove('show');
+                                    if (val.length === 0) {
+                                        if (resultsDiv) resultsDiv.classList.remove('show');
                                         return;
                                     }
 
                                     const matches = allClients.filter(c => c.name.toLowerCase().includes(val));
                                     
-                                    resultsDiv.innerHTML = '';
-                                    if (matches.length > 0) {
-                                        matches.slice(0, 10).forEach(c => {
-                                            const html = `<strong>${c.name}</strong> <span style='font-size:0.8em'>${c.tax_id || ''}</span>`;
-                                            const div = createOption(html, () => fillClientData(c));
-                                            resultsDiv.appendChild(div);
-                                        });
-                                        resultsDiv.classList.add('show');
-                                    } else {
-                                        resultsDiv.classList.remove('show');
+                                    if (resultsDiv) {
+                                        resultsDiv.innerHTML = '';
+                                        if (matches.length > 0) {
+                                            matches.slice(0, 10).forEach(c => {
+                                                const html = `<strong>${c.name}</strong> <span style='font-size:0.8em; opacity: 0.7;'>${c.tax_id || ''}</span>`;
+                                                const div = createOption(html, () => fillClientData(c));
+                                                resultsDiv.appendChild(div);
+                                            });
+                                            resultsDiv.classList.add('show');
+                                        } else {
+                                            resultsDiv.classList.remove('show');
+                                        }
                                     }
                                 });
 
@@ -892,7 +927,6 @@ require_once '../../includes/sidebar.php';
                                         clearBtn.style.display = 'none';
                                         
                                         // Reset Debug visuals
-                                        // taxInput.style.borderColor = 'blue'; 
                                         if(banner) {
                                             banner.innerHTML = "MODO DEPURACIÓN: Limpiado";
                                             banner.style.backgroundColor = "orange";
@@ -903,28 +937,30 @@ require_once '../../includes/sidebar.php';
                                 }
                             }
 
-                             // --- C. Warranty Name Search ---
+                            // --- C. Warranty Name Search ---
                             if(nameInputWry) {
                                 nameInputWry.addEventListener('input', function() {
-                                    const val = this.value.toLowerCase();
+                                    const val = this.value.toLowerCase().trim();
                                     if(idInputWry) idInputWry.value = ''; 
                                     
-                                    if (val.length < 2) {
-                                        resultsDivWry.classList.remove('show');
+                                    if (val.length === 0) {
+                                        if (resultsDivWry) resultsDivWry.classList.remove('show');
                                         return;
                                     }
 
                                     const matches = allClients.filter(c => c.name.toLowerCase().includes(val));
-                                    resultsDivWry.innerHTML = '';
-                                    if (matches.length > 0) {
-                                        matches.slice(0, 10).forEach(c => {
-                                            const html = `<strong>${c.name}</strong> <span style='font-size:0.8em'>${c.tax_id || ''}</span>`;
-                                            const div = createOption(html, () => fillClientData(c, true));
-                                            resultsDivWry.appendChild(div);
-                                        });
-                                        resultsDivWry.classList.add('show');
-                                    } else {
-                                        resultsDivWry.classList.remove('show');
+                                    if (resultsDivWry) {
+                                        resultsDivWry.innerHTML = '';
+                                        if (matches.length > 0) {
+                                            matches.slice(0, 10).forEach(c => {
+                                                const html = `<strong>${c.name}</strong> <span style='font-size:0.8em; opacity: 0.7;'>${c.tax_id || ''}</span>`;
+                                                const div = createOption(html, () => fillClientData(c, true));
+                                                resultsDivWry.appendChild(div);
+                                            });
+                                            resultsDivWry.classList.add('show');
+                                        } else {
+                                            resultsDivWry.classList.remove('show');
+                                        }
                                     }
                                 });
                             }
@@ -1099,100 +1135,6 @@ require_once '../../includes/sidebar.php';
         });
     </script>
 
-    <?php if ($is_warranty_mode && !$edit_order): ?>
-    <!-- RECENT WARRANTIES LOG -->
-    <?php
-    // Fetch last 50 warranties for reference/search
-    $stmtRecent = $pdo->query("
-        SELECT 
-            so.id, so.entry_date, 
-            w.product_code, w.sales_invoice_number, w.supplier_name,
-            w.master_entry_invoice, w.master_entry_date, w.end_date,
-            c.name as client_name,
-            e.brand, e.model, e.serial_number,
-            (SELECT u.username FROM service_order_history soh 
-             JOIN users u ON soh.user_id = u.id 
-             WHERE soh.service_order_id = so.id AND soh.action = 'received' 
-             ORDER BY soh.id ASC LIMIT 1) as created_by
-        FROM service_orders so
-        JOIN warranties w ON w.service_order_id = so.id
-        JOIN clients c ON so.client_id = c.id
-        JOIN equipments e ON so.equipment_id = e.id
-        WHERE so.service_type = 'warranty'
-        ORDER BY so.created_at DESC
-        LIMIT 50
-    ");
-    $recentWarranties = $stmtRecent->fetchAll();
-    ?>
-
-    <div class="card" style="margin-top: 2rem;">
-        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">Garantías Recientes</h3>
-            <div class="input-group" style="width: 300px;">
-                 <input type="text" id="recentSearch" class="form-control" placeholder="Buscar en registros..." style="font-size: 0.9rem;">
-                 <i class="ph ph-magnifying-glass input-icon"></i>
-            </div>
-        </div>
-        <div class="table-container">
-            <table id="recentTable">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Registrado Por</th>
-                        <th>Código</th>
-                        <th>Cliente</th>
-                        <th>Modelo / Serie</th>
-                        <th>Factura</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if(count($recentWarranties) > 0): ?>
-                        <?php foreach($recentWarranties as $rw): ?>
-                        <tr class="clickable-row" onclick='openWarrantyModal(<?php echo json_encode($rw); ?>)'>
-                            <td style="white-space: nowrap;"><?php echo date('d/m/Y H:i', strtotime($rw['entry_date'])); ?></td>
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                                    <i class="ph ph-user"></i>
-                                    <?php echo htmlspecialchars($rw['created_by'] ?? 'Desconocido'); ?>
-                                </div>
-                            </td>
-                            <td><span class="badge"><?php echo htmlspecialchars($rw['product_code']); ?></span></td>
-                            <td><?php echo htmlspecialchars($rw['client_name']); ?></td>
-                            <td>
-                                <div><?php echo htmlspecialchars($rw['brand'] . ' ' . $rw['model']); ?></div>
-                                <div class="text-sm text-muted"><?php echo htmlspecialchars($rw['serial_number']); ?></div>
-                            </td>
-                            <td><?php echo htmlspecialchars($rw['sales_invoice_number']); ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr class="no-results">
-                            <td colspan="7" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
-                                No hay registros recientes.
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        
-        <script>
-        document.getElementById('recentSearch').addEventListener('keyup', function() {
-            let filter = this.value.toLowerCase();
-            let rows = document.querySelectorAll('#recentTable tbody tr:not(.no-results)');
-            
-            rows.forEach(row => {
-               let text = row.innerText.toLowerCase();
-               if(text.includes(filter)) {
-                   row.style.display = '';
-               } else {
-                   row.style.display = 'none';
-               }
-            });
-        });
-        </script>
-    </div>
-    <?php endif; ?>
 
     <!-- EXPIRED WARRANTIES SECTION -->
     <?php if ($is_warranty_mode && !$edit_order): 

@@ -30,7 +30,7 @@ $sql = "
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN users u ON so.assigned_tech_id = u.id
-    WHERE 1=1
+    WHERE so.problem_reported != 'Garantía Registrada'
     ORDER BY so.entry_date DESC
 ";
 

@@ -237,7 +237,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
 
         @media print {
             @page {
-                margin: 0;
+                margin: 5mm;
                 size: auto;
             }
             body {
@@ -248,10 +248,12 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
             .page-container {
                 box-shadow: none;
                 margin: 0;
-                padding: 40px 40px 3cm 40px;
+                padding: 40px 40px 20mm 40px;
                 width: 100%;
                 max-width: none;
-                min-height: 100vh;
+                min-height: 280mm;
+                display: flex;
+                flex-direction: column;
             }
             .action-bar { display: none; }
         }

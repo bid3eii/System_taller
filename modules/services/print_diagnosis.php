@@ -220,12 +220,11 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
 
         /* SIGNATURE SECTION (FLOWS NATURALLY) */
         .signature-section {
-            position: absolute;
-            bottom: 2cm;
-            left: 1.5cm;
-            right: 1.5cm;
+            margin-top: 2cm;
+            padding-bottom: 1cm;
             page-break-inside: avoid;
         }
+
         .elaborated-by-label {
             font-weight: bold;
             margin-bottom: 5px;
@@ -236,10 +235,7 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
             break-inside: avoid;
         }
 
-
-
         .diagnosis-section {
-            /* page-break-inside removed to allow flow */
             margin-bottom: 20px;
         }
 
@@ -247,14 +243,13 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
         @media print {
             html, body {
                 background: white !important;
-                height: auto !important; /* Allow auto height */
+                height: auto !important; 
                 margin: 0 !important;
                 padding: 0 !important;
             }
             @page {
                 size: A4;
-                margin: 1cm; /* Base margin */
-                margin-top: 0.5cm; /* Reduced top margin specifically */
+                margin: 5mm; 
             }
             .actions {
                 display: none !important;
@@ -263,13 +258,14 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                 margin: 0 !important;
                 box-shadow: none !important;
                 width: 100% !important;
-                min-height: 270mm !important; /* Force A4 height */
-                padding: 0 !important;
-                padding-bottom: 5cm !important; /* Space for footer */
+                min-height: 280mm !important; 
+                padding: 1cm 1.5cm 2cm 1.5cm !important; 
                 border: none !important;
                 position: relative !important;
+                display: flex;
+                flex-direction: column;
             }
-
+            
             /* Ensure background colors print */
             .info-grid {
                 background-color: #f8f9fa !important;

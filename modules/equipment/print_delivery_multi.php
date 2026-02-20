@@ -332,14 +332,15 @@ if (empty($exit_doc_number)) {
         }
 
         @media print {
-            @page { margin: 0; size: auto; }
+            @page { margin: 5mm; size: auto; }
             .actions { display: none; }
             body { background: white; padding: 0; }
             .paper { 
                 box-shadow: none; 
                 margin: 0; 
                 width: 100%; 
-                padding: 10mm 15mm; 
+                min-height: 280mm; 
+                padding: 10mm 15mm 20mm 15mm; 
                 page-break-after: avoid; 
                 page-break-inside: avoid;
                 display: flex;
@@ -347,7 +348,6 @@ if (empty($exit_doc_number)) {
                 justify-content: flex-start;
                 overflow: visible; 
             }
-            body { overflow: hidden; }
             a[href]:after { content: none !important; }
         }
     </style>
@@ -467,19 +467,18 @@ if (empty($exit_doc_number)) {
             </tbody>
         </table>
 
-        <!-- COMMENTS -->
-        <div class="section-header">COMENTARIOS</div>
-        <div class="comments-box">
-            <?php 
-                if ($deliveryComments) {
-                    echo nl2br(htmlspecialchars($deliveryComments));
-                } else {
-                    echo "&nbsp;";
-                }
-            ?>
-        </div>
-        
         <div class="bottom-section">
+            <!-- COMENTARIOS -->
+            <div class="section-header">COMENTARIOS</div>
+            <div class="comments-box">
+                <?php 
+                    if ($deliveryComments) {
+                        echo nl2br(htmlspecialchars($deliveryComments));
+                    } else {
+                        echo "&nbsp;";
+                    }
+                ?>
+            </div>
             <div class="legal-footer">
                 <?php 
                     $footer_txt = htmlspecialchars($print_footer_text);

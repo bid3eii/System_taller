@@ -72,6 +72,7 @@ $sql = "
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     WHERE so.service_type = 'warranty'
       AND (w.product_code IS NULL OR w.product_code = '')
+      AND so.problem_reported != 'Garantía Registrada'
 ";
 
 // Filter for Technicians: They only see their own assignments

@@ -82,6 +82,10 @@ try {
 
         /* Print Override */
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 5mm;
+            }
             body { 
                 background: none; 
                 display: block; 
@@ -89,9 +93,11 @@ try {
             .page-container {
                 width: 100%;
                 margin: 0;
-                padding: 10mm;
+                padding: 10mm 15mm 20mm 15mm; 
                 box-shadow: none;
-                min-height: auto;
+                min-height: 280mm;
+                display: flex;
+                flex-direction: column;
             }
         }
 

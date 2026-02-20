@@ -342,15 +342,15 @@ if (empty($order['exit_doc_number'])) {
         }
 
         @media print {
-            @page { margin: 0; size: auto; }
+            @page { margin: 5mm; size: auto; }
             .actions { display: none; }
             body { background: white; padding: 0; }
             .paper { 
                 box-shadow: none; 
                 margin: 0; 
                 width: 100%; 
-                height: 270mm; /* Safe zone A4 */
-                padding: 10mm 15mm; 
+                min-height: 280mm; /* Safe zone A4 */
+                padding: 10mm 15mm 20mm 15mm; 
                 page-break-after: avoid; 
                 page-break-inside: avoid;
                 display: flex;
@@ -358,7 +358,6 @@ if (empty($order['exit_doc_number'])) {
                 justify-content: flex-start;
                 overflow: visible; 
             }
-            body { overflow: hidden; } /* Prevent accidental scroll/2nd page */
             a[href]:after { content: none !important; }
         }
     </style>
@@ -479,29 +478,28 @@ if (empty($order['exit_doc_number'])) {
             </tbody>
         </table>
 
-        <!-- COMMENTS -->
-        <div class="section-header">COMENTARIOS</div>
-        <div class="comments-box">
-            <?php 
-                $hasContent = false;
-                if ($deliveryComments) {
-                    echo nl2br(htmlspecialchars($deliveryComments));
-                    $hasContent = true;
-                }
-                
-                if ($order['parts_replaced']) {
-                    if ($hasContent) echo "<br><br>";
-                    echo "<strong>Repuestos:</strong> " . htmlspecialchars($order['parts_replaced']);
-                    $hasContent = true;
-                }
-                
-                if (!$hasContent) {
-                    echo "&nbsp;";
-                }
-            ?>
-        </div>
-        
         <div class="bottom-section">
+            <!-- COMENTARIOS -->
+            <div class="section-header">COMENTARIOS</div>
+            <div class="comments-box">
+                <?php 
+                    $hasContent = false;
+                    if ($deliveryComments) {
+                        echo nl2br(htmlspecialchars($deliveryComments));
+                        $hasContent = true;
+                    }
+                    
+                    if ($order['parts_replaced']) {
+                        if ($hasContent) echo "<br><br>";
+                        echo "<strong>Repuestos:</strong> " . htmlspecialchars($order['parts_replaced']);
+                        $hasContent = true;
+                    }
+                    
+                    if (!$hasContent) {
+                        echo "&nbsp;";
+                    }
+                ?>
+            </div>
             <div class="legal-footer">
                 <?php 
                     $footer_txt = htmlspecialchars($print_footer_text);

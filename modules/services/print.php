@@ -236,7 +236,7 @@ $statusLabels = [
 
         @media print {
             @page {
-                margin: 0;
+                margin: 5mm;
                 size: auto;
             }
             body {
@@ -247,10 +247,12 @@ $statusLabels = [
             .page-container {
                 box-shadow: none;
                 margin: 0;
-                padding: 40px 40px 3cm 40px;
+                padding: 40px 40px 20mm 40px;
                 width: 100%;
                 max-width: none;
-                min-height: 100vh;
+                min-height: 280mm;
+                display: flex;
+                flex-direction: column;
             }
             .action-bar { display: none; }
         }
@@ -365,18 +367,21 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                     </div>
                 </div>
 
-                <?php if($order['entry_notes']): ?>
-                <div class="service-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
-                    <span class="service-label">Notas de Ingreso:</span>
-                    <div class="service-content"><?php echo nl2br(htmlspecialchars($order['entry_notes'])); ?></div>
-                </div>
-                <?php endif; ?>
+
             </div>
         </div>
 
-        <!-- Signatures -->
-        <div class="signatures-area">
-            <div class="signature-block">
+        <!-- Signatures & Notes -->
+        <div class="signatures-area" style="display: block;">
+            <?php if($order['entry_notes']): ?>
+            <div class="service-row" style="margin-bottom: 30px; padding: 15px; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px;">
+                <span class="service-label">Notas de Ingreso:</span>
+                <div class="service-content"><?php echo nl2br(htmlspecialchars($order['entry_notes'])); ?></div>
+            </div>
+            <?php endif; ?>
+            
+            <div style="display: flex; justify-content: space-between; gap: 40px;">
+                <div class="signature-block">
                 <div class="signature-line"></div>
                 <div class="signature-name">
                     <?php echo htmlspecialchars($order['created_by'] ?? 'Taller'); ?>
