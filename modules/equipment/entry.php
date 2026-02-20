@@ -413,7 +413,7 @@ require_once '../../includes/sidebar.php';
                 <input type="hidden" name="order_id" value="<?php echo $edit_order['id']; ?>">
             <?php endif; ?>
             
-            <input type="hidden" name="type" value="<?php echo $edit_order ? $edit_order['type'] : 'Laptop'; // Default or hidden handler ?>"> 
+            <input type="hidden" name="type" value="<?php echo $edit_order ? $edit_order['type'] : ''; // Default or hidden handler ?>"> 
 
             <?php if ($is_warranty_mode): ?>
                 <!-- WARRANTY GRID LAYOUT -->
@@ -464,7 +464,7 @@ require_once '../../includes/sidebar.php';
                             <label class="form-label">Submodelo</label>
                             <input type="text" name="submodel" class="form-control" placeholder="Ej. cx0001la" value="<?php echo $edit_order['submodel'] ?? ''; ?>">
                              <!-- Defaults -->
-                            <input type="hidden" name="type" value="<?php echo $edit_order['type'] ?? 'Laptop'; ?>">
+                            <input type="hidden" name="type" value="<?php echo $edit_order['type'] ?? ''; ?>">
                         </div>
 
                         <!-- Row 3: Master Data & Supplier -->
@@ -622,9 +622,16 @@ require_once '../../includes/sidebar.php';
                         </div>
                         <div class="form-group">
                             <label class="form-label">Tipo *</label>
-                            <select name="type" class="form-control" required>
-                                <option>Laptop</option><option>PC</option><option>Celular</option><option>Otro</option>
-                            </select>
+                            <input list="type-options" name="type" class="form-control" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['type']) : ''; ?>" placeholder="Seleccione o escriba...">
+                            <datalist id="type-options">
+                                <option value="Laptop">
+                                <option value="PC">
+                                <option value="Celular">
+                                <option value="Tablet">
+                                <option value="Impresora">
+                                <option value="Monitor">
+                                <option value="Otro">
+                            </datalist>
                         </div>
                         
                          <div class="form-group">
