@@ -36,6 +36,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['role_id'] = $user['role_id'];
             $_SESSION['role_name'] = $user['role_name'];
             $_SESSION['last_activity'] = time();
+
+            // PRE-LOAD PERMISSIONS & MODULE ACCESS (PERFORMANCE OPTIMIZATION)
+            $_SESSION['permissions_codes'] = [];
+            $_SESSION['module_overrides'] = [];
+
+            if ($user['role_id'] != 1) { // Skip for Admin
+                // 1. Load Role Permissions
+                $stmtP = $pdo->prepare("
+                    SELECT p.code 
+                    FROM role_permissions rp 
+                    JOIN permissions p ON rp.permission_id = p.id 
+                    WHERE rp.role_id = ?
+                ");
+                $stmtP->execute([$user['role_id']]);
+                $_SESSION['permissions_codes'] = $stmtP->fetchAll(PDO::FETCH_COLUMN);
+
+                // 2. Load User Module Overrides
+                $stmtO = $pdo->prepare("SELECT module_name, is_enabled FROM user_custom_modules WHERE user_id = ?");
+                $stmtO->execute([$user['id']]);
+                $overrides = $stmtO->fetchAll();
+                foreach($overrides as $ov) {
+                    $_SESSION['module_overrides'][$ov['module_name']] = (bool)$ov['is_enabled'];
+                }
+            }
             
             log_audit($pdo, 'users', $user['id'], 'UPDATE', null, ['event' => 'login'], $user['id'], $_SERVER['REMOTE_ADDR']);
 
