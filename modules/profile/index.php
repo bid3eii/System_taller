@@ -185,16 +185,45 @@ require_once '../../includes/sidebar.php';
 
             <ul id="sortable-menu" class="menu-list">
                 <!-- Keep IDs consistent with original logic -->
-                <li data-id="dashboard" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-squares-four"></i> Dashboard</div></li>
-                <li data-id="clients" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-users"></i> Clientes</div></li>
-                <li data-id="equipment" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-desktop"></i> Equipos</div></li>
-                <li data-id="services" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-wrench"></i> Servicios</div></li>
-                <li data-id="warranties" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-shield-check"></i> Garantías</div></li>
-                <li data-id="new_warranty" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-plus-circle"></i> Nueva Garantía</div></li>
-                <li data-id="tools" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-wrench"></i> Herramientas</div></li>
-                <li data-id="requests" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-clipboard-text"></i> Solicitudes</div></li>
-                <li data-id="reports" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-chart-bar"></i> Reportes</div></li>
-                <li data-id="settings" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-gear"></i> Configuración</div></li>
+                <?php if (can_access_module('dashboard', $pdo)): ?>
+                    <li data-id="dashboard" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-squares-four"></i> Dashboard</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('clients', $pdo)): ?>
+                    <li data-id="clients" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-users"></i> Clientes</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('equipment', $pdo)): ?>
+                    <li data-id="equipment" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-desktop"></i> Equipos</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('services', $pdo)): ?>
+                    <li data-id="services" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-wrench"></i> Servicios</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('warranties', $pdo)): ?>
+                    <li data-id="warranties" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-shield-check"></i> Garantías</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('new_warranty', $pdo)): ?>
+                    <li data-id="new_warranty" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-plus-circle"></i> Nueva Garantía</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('tools', $pdo)): ?>
+                    <li data-id="tools" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-wrench"></i> Herramientas</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('services', $pdo) || can_access_module('warranties', $pdo) || can_access_module('history', $pdo)): ?>
+                    <li data-id="requests" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-clipboard-text"></i> Solicitudes</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('reports', $pdo)): ?>
+                    <li data-id="reports" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-chart-bar"></i> Reportes</div></li>
+                <?php endif; ?>
+
+                <?php if (can_access_module('settings', $pdo)): ?>
+                    <li data-id="settings" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-gear"></i> Configuración</div></li>
+                <?php endif; ?>
             </ul>
 
             <div style="margin-top: 2rem; text-align: right;">
