@@ -6,7 +6,7 @@ require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 
 // Check permission
-if (!can_access_module('clientes', $pdo)) {
+if (!can_access_module('clients', $pdo)) {
     die("Acceso denegado.");
 }
 
