@@ -105,8 +105,8 @@ if ($is_warehouse) {
     $active_warranties = $stmt->fetchColumn();
 
     // Stats for Display
-    if ($is_tech && !$can_view_all) {
-        // Tech sees their own primary KPI
+    if ($is_tech) {
+        // Tech ALWAYS sees their own primary KPI
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders WHERE assigned_tech_id = ? AND status NOT IN ('delivered', 'cancelled')");
         $stmt->execute([$user_id]);
         $kpi1_val = $stmt->fetchColumn();
@@ -142,13 +142,16 @@ if ($is_warehouse) {
 
     // Status Distribution Chart
     $statusSql = "SELECT status, COUNT(*) as count FROM service_orders WHERE status NOT IN ('delivered', 'cancelled')";
-    if ($is_tech && !$can_view_all) {
+    if ($is_tech) {
+        // Technicians ALWAYS filter by their assigned orders
         $statusSql .= " AND assigned_tech_id = " . intval($user_id);
     }
     $statusSql .= " GROUP BY status";
     $statusData = $pdo->query($statusSql)->fetchAll(PDO::FETCH_KEY_PAIR);
 
     // Recent Activity Table
+    // Techs ALWAYS see only their assigned orders
+    // For Admin/Reception, 'view_all_entries' permission controls visibility
     $recentSql = "
         SELECT so.id, so.entry_date, so.status, so.service_type, c.name as client_name, e.brand, e.model
         FROM service_orders so
@@ -157,7 +160,11 @@ if ($is_warehouse) {
         WHERE 1=1
     ";
     
-    if ($is_tech && !$can_view_all) {
+    if ($is_tech) {
+        // Tech: always filter by assigned
+        $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
+    } elseif (!$can_view_all) {
+        // Non-tech without global permission: filter by created_by or assigned
         $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
     

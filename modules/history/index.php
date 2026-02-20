@@ -22,6 +22,8 @@ $filterType = isset($_GET['type']) ? clean($_GET['type']) : '';
 // 2. Build Query
 $can_view_all = has_permission('module_view_all_entries', $pdo);
 $user_id = $_SESSION['user_id'];
+$role_id = $_SESSION['role_id'];
+$is_tech = ($role_id == 3);
 
 $sql = "
     SELECT 
@@ -40,8 +42,9 @@ $sql = "
 
 $params = [];
 
-// Filter by assigned tech if user can't see all
-if (!$can_view_all) {
+// Techs ALWAYS see only their assigned orders
+// For non-techs, 'view_all_entries' permission controls visibility
+if ($is_tech || !$can_view_all) {
     $sql .= " AND so.assigned_tech_id = ?";
     $params[] = $user_id;
 }
