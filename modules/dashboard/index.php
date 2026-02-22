@@ -121,7 +121,7 @@ if ($is_warehouse) {
     $active_warranties = $stmt->fetchColumn();
 
     // Stats for Display
-    if ($is_tech) {
+    if ($is_tech && !$can_view_all) {
         // Tech ALWAYS sees their own primary KPI
         $stmt = $pdo->prepare("
             SELECT COUNT(*) 
@@ -187,7 +187,7 @@ if ($is_warehouse) {
         AND (w.product_code IS NULL OR w.product_code = '') 
         AND so.problem_reported != 'Garantía Registrada'
     ";
-    if ($is_tech) {
+    if ($is_tech && !$can_view_all) {
         // Technicians ALWAYS filter by their assigned orders
         $statusSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
@@ -207,11 +207,7 @@ if ($is_warehouse) {
         AND so.problem_reported != 'Garantía Registrada'
     ";
 
-    if ($is_tech) {
-        // Tech: always filter by assigned
-        $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
-    } elseif (!$can_view_all) {
-        // Non-tech without global permission: filter by created_by or assigned
+    if (!$can_view_all) {
         $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
 
