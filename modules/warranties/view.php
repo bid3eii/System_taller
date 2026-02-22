@@ -93,6 +93,12 @@ if (!$order) {
     die("Orden no encontrada.");
 }
 
+// Check Access Permissions for this Specific Order
+$can_view_all = can_access_module('view_all_entries', $pdo);
+if (!$can_view_all && $order['assigned_tech_id'] != $_SESSION['user_id']) {
+    die("Acceso denegado. No tienes permiso para ver este caso.");
+}
+
 // Fetch History
 $stmtHist = $pdo->prepare("
     SELECT h.*, u.username as user_name 
