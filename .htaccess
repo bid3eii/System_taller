@@ -1,0 +1,28 @@
+# Enable PHP error display (only for debugging, disable in production)
+php_flag display_errors off
+php_flag log_errors on
+
+# Set default file
+DirectoryIndex index.php index.html
+
+# Enable URL rewriting
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Force HTTPS (optional, uncomment if you want to force SSL)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Protect sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to PHP files
+<FilesMatch "\.php$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
