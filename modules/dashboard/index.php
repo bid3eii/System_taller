@@ -110,19 +110,22 @@ if ($is_warehouse) {
     $active_services = $stmt->fetchColumn();
 
     // Active Warranties (Repairs)
-    $stmt = $pdo->query("
+    $awSql = "
         SELECT COUNT(*) 
         FROM service_orders so 
         LEFT JOIN warranties w ON so.id = w.service_order_id 
         WHERE so.service_type = 'warranty' 
         AND (w.product_code IS NULL OR w.product_code = '') AND so.problem_reported != 'Garantía Registrada'
         AND so.status NOT IN ('delivered', 'cancelled')
-    ");
+    ";
+    if (!$can_view_all)
+        $awSql .= " AND so.assigned_tech_id = " . intval($user_id);
+    $stmt = $pdo->query($awSql);
     $active_warranties = $stmt->fetchColumn();
 
     // Stats for Display
-    if ($is_tech && !$can_view_all) {
-        // Tech ALWAYS sees their own primary KPI
+    if (!$can_view_all) {
+        // Users without view_all_entries only see their assigned stats
         $stmt = $pdo->prepare("
             SELECT COUNT(*) 
             FROM service_orders so
@@ -150,28 +153,34 @@ if ($is_warehouse) {
     $kpi2_color = "var(--warning)";
     $kpi2_bg = "rgba(234, 179, 8, 0.1)";
 
-    $stmt = $pdo->query("
+    $k3Sql = "
         SELECT COUNT(*) 
         FROM service_orders so 
         LEFT JOIN warranties w ON so.id = w.service_order_id
         WHERE so.status = 'ready'
         AND (w.product_code IS NULL OR w.product_code = '') 
         AND so.problem_reported != 'Garantía Registrada'
-    ");
+    ";
+    if (!$can_view_all)
+        $k3Sql .= " AND so.assigned_tech_id = " . intval($user_id);
+    $stmt = $pdo->query($k3Sql);
     $kpi3_val = $stmt->fetchColumn();
     $kpi3_label = "Listos para Entrega";
     $kpi3_icon = "ph-package";
     $kpi3_color = "var(--success)";
     $kpi3_bg = "rgba(34, 197, 94, 0.1)";
 
-    $stmt = $pdo->query("
+    $k4Sql = "
         SELECT COUNT(*) 
         FROM service_orders so 
         LEFT JOIN warranties w ON so.id = w.service_order_id
         WHERE so.status = 'delivered'
         AND (w.product_code IS NULL OR w.product_code = '') 
         AND so.problem_reported != 'Garantía Registrada'
-    ");
+    ";
+    if (!$can_view_all)
+        $k4Sql .= " AND so.assigned_tech_id = " . intval($user_id);
+    $stmt = $pdo->query($k4Sql);
     $kpi4_val = $stmt->fetchColumn();
     $kpi4_label = "Total Entregados";
     $kpi4_icon = "ph-check-circle";
@@ -187,8 +196,8 @@ if ($is_warehouse) {
         AND (w.product_code IS NULL OR w.product_code = '') 
         AND so.problem_reported != 'Garantía Registrada'
     ";
-    if ($is_tech && !$can_view_all) {
-        // Technicians ALWAYS filter by their assigned orders
+    if (!$can_view_all) {
+        // Users without view_all_entries only see their assigned orders
         $statusSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
     $statusSql .= " GROUP BY so.status";
@@ -263,7 +272,7 @@ if (!$is_warehouse) {
             AND (w.product_code IS NULL OR w.product_code = '') 
             AND so.problem_reported != 'Garantía Registrada'
         ";
-        if ($is_tech && !$can_view_all) {
+        if (!$can_view_all) {
             $wSql .= " AND so.assigned_tech_id = " . intval($user_id);
         }
 

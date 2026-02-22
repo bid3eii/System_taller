@@ -69,9 +69,9 @@ $sql = "
     WHERE so.service_type = 'service'
 ";
 
-// Filter for Technicians (unless they have view_all_entries permission)
+// Filter by assignments if user doesn't have view_all_entries permission
 $can_view_all = can_access_module('view_all_entries', $pdo);
-if ($_SESSION['role_id'] == 3 && !$can_view_all) {
+if (!$can_view_all) {
     $sql .= " AND so.assigned_tech_id = " . intval($_SESSION['user_id']);
 }
 
