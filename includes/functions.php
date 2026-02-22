@@ -36,12 +36,7 @@ function has_permission($permission_code, $pdo)
         return (bool) $override['is_enabled'];
     }
 
-    // 2. Check Session Cache (Primary for Role Permissions)
-    if (isset($_SESSION['permissions_codes']) && in_array($permission_code, $_SESSION['permissions_codes'])) {
-        return true;
-    }
-
-    // 3. Real-time DB Check (Fallback for Role Permissions)
+    // 2. Real-time DB Check (Role Permissions)
     $stmt = $pdo->prepare("
         SELECT COUNT(*) 
         FROM role_permissions rp 
@@ -51,12 +46,6 @@ function has_permission($permission_code, $pdo)
     $stmt->execute([$_SESSION['role_id'], $permission_code]);
 
     if ($stmt->fetchColumn() > 0) {
-        // Update cache for current request cycle
-        if (!isset($_SESSION['permissions_codes']))
-            $_SESSION['permissions_codes'] = [];
-        if (!in_array($permission_code, $_SESSION['permissions_codes'])) {
-            $_SESSION['permissions_codes'][] = $permission_code;
-        }
         return true;
     }
 
@@ -74,35 +63,20 @@ function can_access_module($module_name, $pdo)
     if (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 1)
         return true;
 
-    // 1. Check Session Cache for Custom Overrides
-    if (isset($_SESSION['module_overrides']) && isset($_SESSION['module_overrides'][$module_name])) {
-        return (bool) $_SESSION['module_overrides'][$module_name];
-    }
-
-    // 2. Check Session Cache for Role Permissions
-    $permission_code = 'module_' . $module_name;
-    if (isset($_SESSION['permissions_codes']) && in_array($permission_code, $_SESSION['permissions_codes'])) {
-        return true;
-    }
-
-    // 3. Fallback to DB if not in session (or just logged in)
+    // 1. DB Check Overrides (Real-time DB check for exceptions)
     $user_id = $_SESSION['user_id'];
-
-    // DB Check Overrides
     $stmt = $pdo->prepare("SELECT is_enabled FROM user_custom_modules WHERE user_id = ? AND module_name = ?");
     $stmt->execute([$user_id, $module_name]);
     $override = $stmt->fetch();
 
     if ($override) {
-        // Update cache for this request
-        if (!isset($_SESSION['module_overrides']))
-            $_SESSION['module_overrides'] = [];
-        $_SESSION['module_overrides'][$module_name] = $override['is_enabled'];
         return (bool) $override['is_enabled'];
     }
 
-    // DB Check Role
+    // 2. DB Check Role (Real-time DB check for role defaults)
     $role_id = $_SESSION['role_id'];
+    $permission_code = 'module_' . $module_name;
+
     $stmt = $pdo->prepare("
         SELECT COUNT(*) 
         FROM role_permissions rp 
@@ -112,11 +86,6 @@ function can_access_module($module_name, $pdo)
     $stmt->execute([$role_id, $permission_code]);
 
     if ($stmt->fetchColumn() > 0) {
-        // Update cache
-        if (!isset($_SESSION['permissions_codes']))
-            $_SESSION['permissions_codes'] = [];
-        if (!in_array($permission_code, $_SESSION['permissions_codes']))
-            $_SESSION['permissions_codes'][] = $permission_code;
         return true;
     }
 
