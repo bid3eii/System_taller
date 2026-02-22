@@ -113,26 +113,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $filename = 'system_taller_backup_' . date('Y-m-d_H-i-s') . '.sql';
-        $dumpPath = tempnam(sys_get_temp_dir(), 'sql_dump');
         
-        // Command for XAMPP Windows Default
-        $command = 'C:\xampp\mysql\bin\mysqldump --user=root --host=localhost system_taller > "' . $dumpPath . '"';
+        $sqlDump = "-- Database Backup\n-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
+        $sqlDump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
         
-        // Execute
-        system($command, $returnVar);
+        try {
+            $tables = [];
+            $stmt = $pdo->query("SHOW TABLES");
+            while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
+                $tables[] = $row[0];
+            }
+            
+            foreach ($tables as $table) {
+                $stmt = $pdo->query("SHOW CREATE TABLE `$table`");
+                $row = $stmt->fetch(PDO::FETCH_NUM);
+                $sqlDump .= "DROP TABLE IF EXISTS `$table`;\n";
+                $sqlDump .= $row[1] . ";\n\n";
+                
+                $stmt = $pdo->query("SELECT * FROM `$table`");
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                if (count($rows) > 0) {
+                    $sqlDump .= "INSERT INTO `$table` VALUES \n";
+                    $values = [];
+                    foreach ($rows as $r) {
+                        $rowVals = [];
+                        foreach ($r as $key => $val) {
+                            if (is_null($val)) {
+                                $rowVals[] = "NULL";
+                            } else {
+                                $rowVals[] = $pdo->quote($val);
+                            }
+                        }
+                        $values[] = "(" . implode(", ", $rowVals) . ")";
+                    }
+                    $sqlDump .= implode(", \n", $values) . ";\n\n";
+                }
+            }
+            $sqlDump .= "SET FOREIGN_KEY_CHECKS=1;\n";
 
-        if ($returnVar === 0 && file_exists($dumpPath)) {
             header('Content-Description: File Transfer');
             header('Content-Type: application/octet-stream');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
             header('Expires: 0');
             header('Cache-Control: must-revalidate');
             header('Pragma: public');
-            header('Content-Length: ' . filesize($dumpPath));
-            readfile($dumpPath);
-            unlink($dumpPath);
+            header('Content-Length: ' . strlen($sqlDump));
+            echo $sqlDump;
             exit;
-        } else {
+        } catch (PDOException $e) {
             header("Location: index.php?tab=restore&error=backup_failed");
             exit;
         }
@@ -146,18 +174,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (isset($_FILES['backup_file']) && $_FILES['backup_file']['error'] == 0) {
             $tmpName = $_FILES['backup_file']['tmp_name'];
+            $sqlContent = file_get_contents($tmpName);
             
-            // Command for XAMPP Windows Default (Import)
-            $command = 'C:\xampp\mysql\bin\mysql --user=root --host=localhost system_taller < "' . $tmpName . '"';
-            
-            system($command, $returnVar);
-
-            if ($returnVar === 0) {
-                 header("Location: index.php?tab=restore&msg=restored");
-                 exit;
-            } else {
-                 header("Location: index.php?tab=restore&error=restore_failed");
-                 exit;
+            try {
+                $pdo->exec($sqlContent);
+                header("Location: index.php?tab=restore&msg=restored");
+                exit;
+            } catch (PDOException $e) {
+                header("Location: index.php?tab=restore&error=restore_failed");
+                exit;
             }
         } else {
              header("Location: index.php?tab=restore&error=upload_error");
