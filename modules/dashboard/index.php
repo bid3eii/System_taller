@@ -24,10 +24,26 @@ $is_tech = ($role_id == 3);
 $is_warehouse = ($role_id == 2);
 
 // KPI Variables Initialization
-$kpi1_val = 0; $kpi1_label = ''; $kpi1_icon = ''; $kpi1_bg = ''; $kpi1_color = '';
-$kpi2_val = 0; $kpi2_label = ''; $kpi2_icon = ''; $kpi2_bg = ''; $kpi2_color = '';
-$kpi3_val = 0; $kpi3_label = ''; $kpi3_icon = ''; $kpi3_bg = ''; $kpi3_color = '';
-$kpi4_val = 0; $kpi4_label = ''; $kpi4_icon = ''; $kpi4_bg = ''; $kpi4_color = '';
+$kpi1_val = 0;
+$kpi1_label = '';
+$kpi1_icon = '';
+$kpi1_bg = '';
+$kpi1_color = '';
+$kpi2_val = 0;
+$kpi2_label = '';
+$kpi2_icon = '';
+$kpi2_bg = '';
+$kpi2_color = '';
+$kpi3_val = 0;
+$kpi3_label = '';
+$kpi3_icon = '';
+$kpi3_bg = '';
+$kpi3_color = '';
+$kpi4_val = 0;
+$kpi4_label = '';
+$kpi4_icon = '';
+$kpi4_bg = '';
+$kpi4_color = '';
 
 $chartLabels = [];
 $chartCounts = [];
@@ -43,7 +59,7 @@ $recentType = 'services'; // 'services' or 'tools'
 if ($is_warehouse) {
     // --- WAREHOUSE VIEW ---
     $recentType = 'tools';
-    
+
     // KPI 1: Herramientas Disponibles
     $stmt = $pdo->query("SELECT COUNT(*) FROM tools WHERE status = 'available'");
     $kpi1_val = $stmt->fetchColumn();
@@ -107,7 +123,15 @@ if ($is_warehouse) {
     // Stats for Display
     if ($is_tech) {
         // Tech ALWAYS sees their own primary KPI
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders WHERE assigned_tech_id = ? AND status NOT IN ('delivered', 'cancelled')");
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) 
+            FROM service_orders so
+            LEFT JOIN warranties w ON so.id = w.service_order_id
+            WHERE so.assigned_tech_id = ? 
+            AND so.status NOT IN ('delivered', 'cancelled')
+            AND (w.product_code IS NULL OR w.product_code = '') 
+            AND so.problem_reported != 'Garantía Registrada'
+        ");
         $stmt->execute([$user_id]);
         $kpi1_val = $stmt->fetchColumn();
         $kpi1_label = "Mis Equipos";
@@ -126,14 +150,28 @@ if ($is_warehouse) {
     $kpi2_color = "var(--warning)";
     $kpi2_bg = "rgba(234, 179, 8, 0.1)";
 
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status = 'ready'");
+    $stmt = $pdo->query("
+        SELECT COUNT(*) 
+        FROM service_orders so 
+        LEFT JOIN warranties w ON so.id = w.service_order_id
+        WHERE so.status = 'ready'
+        AND (w.product_code IS NULL OR w.product_code = '') 
+        AND so.problem_reported != 'Garantía Registrada'
+    ");
     $kpi3_val = $stmt->fetchColumn();
     $kpi3_label = "Listos para Entrega";
     $kpi3_icon = "ph-package";
     $kpi3_color = "var(--success)";
     $kpi3_bg = "rgba(34, 197, 94, 0.1)";
 
-    $stmt = $pdo->query("SELECT COUNT(*) FROM service_orders WHERE status = 'delivered'");
+    $stmt = $pdo->query("
+        SELECT COUNT(*) 
+        FROM service_orders so 
+        LEFT JOIN warranties w ON so.id = w.service_order_id
+        WHERE so.status = 'delivered'
+        AND (w.product_code IS NULL OR w.product_code = '') 
+        AND so.problem_reported != 'Garantía Registrada'
+    ");
     $kpi4_val = $stmt->fetchColumn();
     $kpi4_label = "Total Entregados";
     $kpi4_icon = "ph-check-circle";
@@ -141,12 +179,19 @@ if ($is_warehouse) {
     $kpi4_bg = "rgba(168, 85, 247, 0.1)";
 
     // Status Distribution Chart
-    $statusSql = "SELECT status, COUNT(*) as count FROM service_orders WHERE status NOT IN ('delivered', 'cancelled')";
+    $statusSql = "
+        SELECT so.status, COUNT(*) as count 
+        FROM service_orders so
+        LEFT JOIN warranties w ON so.id = w.service_order_id
+        WHERE so.status NOT IN ('delivered', 'cancelled')
+        AND (w.product_code IS NULL OR w.product_code = '') 
+        AND so.problem_reported != 'Garantía Registrada'
+    ";
     if ($is_tech) {
         // Technicians ALWAYS filter by their assigned orders
-        $statusSql .= " AND assigned_tech_id = " . intval($user_id);
+        $statusSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
-    $statusSql .= " GROUP BY status";
+    $statusSql .= " GROUP BY so.status";
     $statusData = $pdo->query($statusSql)->fetchAll(PDO::FETCH_KEY_PAIR);
 
     // Recent Activity Table
@@ -157,9 +202,11 @@ if ($is_warehouse) {
         FROM service_orders so
         LEFT JOIN clients c ON so.client_id = c.id
         LEFT JOIN equipments e ON so.equipment_id = e.id
-        WHERE 1=1
+        LEFT JOIN warranties w ON so.id = w.service_order_id
+        WHERE (w.product_code IS NULL OR w.product_code = '') 
+        AND so.problem_reported != 'Garantía Registrada'
     ";
-    
+
     if ($is_tech) {
         // Tech: always filter by assigned
         $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
@@ -167,7 +214,7 @@ if ($is_warehouse) {
         // Non-tech without global permission: filter by created_by or assigned
         $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
-    
+
     $recentSql .= " ORDER BY so.entry_date DESC LIMIT 5";
     $recentItems = $pdo->query($recentSql)->fetchAll();
 }
@@ -176,7 +223,7 @@ if ($is_warehouse) {
 // --- COMPILE CHART DATA (Universal Logic) ---
 
 // Status Chart (Doughnut)
-if($is_warehouse) {
+if ($is_warehouse) {
     // Tool Status Mapping
     $labelsMap = [
         'available' => 'Disponible',
@@ -211,12 +258,19 @@ foreach ($labelsMap as $key => $label) {
 if (!$is_warehouse) {
     for ($i = 6; $i >= 0; $i--) {
         $date = date('Y-m-d', strtotime("-$i days"));
-        
-        $wSql = "SELECT COUNT(*) FROM service_orders WHERE DATE(entry_date) = ?";
+
+        $wSql = "
+            SELECT COUNT(*) 
+            FROM service_orders so
+            LEFT JOIN warranties w ON so.id = w.service_order_id
+            WHERE DATE(so.entry_date) = ?
+            AND (w.product_code IS NULL OR w.product_code = '') 
+            AND so.problem_reported != 'Garantía Registrada'
+        ";
         if ($is_tech && !$can_view_all) {
-            $wSql .= " AND assigned_tech_id = " . intval($user_id);
+            $wSql .= " AND so.assigned_tech_id = " . intval($user_id);
         }
-        
+
         $stmtDaily = $pdo->prepare($wSql);
         $stmtDaily->execute([$date]);
         $weeklyLabels[] = date('d/m', strtotime($date));
@@ -233,11 +287,15 @@ if (!$is_warehouse) {
     <div style="margin-bottom: 2rem;">
         <h1>Bienvenido, <?php echo htmlspecialchars($_SESSION['username']); ?></h1>
         <p class="text-muted">
-            <?php 
-                if($is_reception) echo 'Gestión de clientes y recepción de equipos.';
-                elseif($is_warehouse) echo 'Gestión de inventario y herramientas.';
-                elseif($is_tech) echo 'Resumen de asignaciones y reparaciones.';
-                else echo 'Resumen general de las operaciones del taller.';
+            <?php
+            if ($is_reception)
+                echo 'Gestión de clientes y recepción de equipos.';
+            elseif ($is_warehouse)
+                echo 'Gestión de inventario y herramientas.';
+            elseif ($is_tech)
+                echo 'Resumen de asignaciones y reparaciones.';
+            else
+                echo 'Resumen general de las operaciones del taller.';
             ?>
         </p>
     </div>
@@ -245,17 +303,18 @@ if (!$is_warehouse) {
     <!-- KPIS GRID -->
     <div class="stats-grid">
         <!-- Cards -->
-        <?php 
+        <?php
         $cards = [
             [$kpi1_val, $kpi1_label, $kpi1_icon, $kpi1_color, $kpi1_bg],
             [$kpi2_val, $kpi2_label, $kpi2_icon, $kpi2_color, $kpi2_bg],
             [$kpi3_val, $kpi3_label, $kpi3_icon, $kpi3_color, $kpi3_bg],
             [$kpi4_val, $kpi4_label, $kpi4_icon, $kpi4_color, $kpi4_bg]
         ];
-        
-        foreach($cards as $card): 
+
+        foreach ($cards as $card):
             list($val, $lbl, $icon, $col, $bg) = $card;
-            if (empty($lbl)) continue;
+            if (empty($lbl))
+                continue;
 
             // Determine URL based on Label
             $cardUrl = '#'; // Default
@@ -282,31 +341,33 @@ if (!$is_warehouse) {
                 default:
                     $isClickable = false;
             }
-        ?>
-        <?php if ($isClickable): ?>
-        <a href="<?php echo $cardUrl; ?>" class="card stat-card" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s;">
-        <?php else: ?>
-        <div class="card stat-card">
-        <?php endif; ?>
-            <div style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
-                <div class="stat-icon" style="background: <?php echo $bg; ?>; color: <?php echo $col; ?>;">
-                    <i class="ph <?php echo $icon; ?>"></i>
-                </div>
-                <div class="stat-value" style="color: var(--text-main);"><?php echo $val; ?></div>
-                <div class="stat-label" style="color: var(--text-muted);"><?php echo $lbl; ?></div>
+            ?>
+            <?php if ($isClickable): ?>
+                <a href="<?php echo $cardUrl; ?>" class="card stat-card"
+                    style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s;">
+                <?php else: ?>
+                    <div class="card stat-card">
+                    <?php endif; ?>
+                    <div style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="stat-icon" style="background: <?php echo $bg; ?>; color: <?php echo $col; ?>;">
+                            <i class="ph <?php echo $icon; ?>"></i>
+                        </div>
+                        <div class="stat-value" style="color: var(--text-main);"><?php echo $val; ?></div>
+                        <div class="stat-label" style="color: var(--text-muted);"><?php echo $lbl; ?></div>
+                    </div>
+                    <?php if ($isClickable): ?>
+                </a>
+            <?php else: ?>
             </div>
-        <?php if ($isClickable): ?>
-        </a>
-        <?php else: ?>
-        </div>
         <?php endif; ?>
-        <?php endforeach; ?>
-    </div>
+    <?php endforeach; ?>
+</div>
 
-    <!-- CHARTS ROW -->
-    <!-- CHARTS ROW -->
-    <?php if ($is_warehouse): ?>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+<!-- CHARTS ROW -->
+<!-- CHARTS ROW -->
+<?php if ($is_warehouse): ?>
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
         <!-- Status Chart (Everyone sees this or similar) -->
         <div class="card" style="min-height: 400px;">
             <h3 class="mb-4">Estado de Reparaciones</h3>
@@ -314,18 +375,18 @@ if (!$is_warehouse) {
                 <canvas id="statusChart"></canvas>
             </div>
         </div>
-        
+
         <!-- Weekly Chart (Reception & Admin only) -->
         <?php if ($is_reception || $is_admin): ?>
-        <div class="card" style="min-height: 400px;">
-            <h3 class="mb-4">Ingresos de la Semana</h3>
-            <div style="position: relative; height: 300px; width: 100%;">
-                <canvas id="weeklyChart"></canvas>
+            <div class="card" style="min-height: 400px;">
+                <h3 class="mb-4">Ingresos de la Semana</h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
             </div>
-        </div>
         <?php endif; ?>
     </div>
-    <?php elseif ($is_warehouse): ?>
+<?php elseif ($is_warehouse): ?>
     <!-- Warehouse Charts Row (Single Chart?) -->
     <div style="margin-bottom: 2rem;">
         <div class="card" style="min-height: 400px; max-width: 600px; margin: 0 auto;">
@@ -335,51 +396,52 @@ if (!$is_warehouse) {
             </div>
         </div>
     </div>
-    <?php endif; ?>
+<?php endif; ?>
 
 
-    <!-- RECENT ACTIVITY & QUICK ACTIONS -->
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-        
-        <!-- Recent Table -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h3 style="margin: 0;">
-                    <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente (Servicios y Garantías)'; ?>
-                </h3>
-                <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>" class="btn btn-sm btn-secondary">Ver Todo</a>
-            </div>
-            
-            <div class="table-container">
-                <table style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th style="padding: 0.75rem;">Fecha</th>
-                            <?php if($recentType == 'tools'): ?>
-                                <th style="padding: 0.75rem;">Usuario</th>
-                                <th style="padding: 0.75rem;">Herramienta</th>
-                                <th style="padding: 0.75rem;">Estado</th>
-                            <?php else: ?>
-                                <th style="padding: 0.75rem;">Tipo</th>
-                                <th style="padding: 0.75rem;">Cliente</th>
-                                <th style="padding: 0.75rem;">Equipo</th>
-                                <th style="padding: 0.75rem;">Estado</th>
-                                <th style="padding: 0.75rem;"></th>
-                            <?php endif; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if(count($recentItems) > 0): ?>
-                            <?php foreach($recentItems as $item): ?>
+<!-- RECENT ACTIVITY & QUICK ACTIONS -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+
+    <!-- Recent Table -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0;">
+                <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente (Servicios y Garantías)'; ?>
+            </h3>
+            <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>"
+                class="btn btn-sm btn-secondary">Ver Todo</a>
+        </div>
+
+        <div class="table-container">
+            <table style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="padding: 0.75rem;">Fecha</th>
+                        <?php if ($recentType == 'tools'): ?>
+                            <th style="padding: 0.75rem;">Usuario</th>
+                            <th style="padding: 0.75rem;">Herramienta</th>
+                            <th style="padding: 0.75rem;">Estado</th>
+                        <?php else: ?>
+                            <th style="padding: 0.75rem;">Tipo</th>
+                            <th style="padding: 0.75rem;">Cliente</th>
+                            <th style="padding: 0.75rem;">Equipo</th>
+                            <th style="padding: 0.75rem;">Estado</th>
+                            <th style="padding: 0.75rem;"></th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (count($recentItems) > 0): ?>
+                        <?php foreach ($recentItems as $item): ?>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <td style="padding: 0.75rem;">
-                                    <?php 
-                                        $d = $recentType == 'tools' ? $item['date'] : $item['entry_date'];
-                                        echo date('d/m', strtotime($d)); 
+                                    <?php
+                                    $d = $recentType == 'tools' ? $item['date'] : $item['entry_date'];
+                                    echo date('d/m', strtotime($d));
                                     ?>
                                 </td>
-                                
-                                <?php if($recentType == 'tools'): ?>
+
+                                <?php if ($recentType == 'tools'): ?>
                                     <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['user_name']); ?></td>
                                     <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['item_name']); ?></td>
                                     <td style="padding: 0.75rem;">
@@ -387,40 +449,44 @@ if (!$is_warehouse) {
                                     </td>
                                 <?php else: ?>
                                     <td style="padding: 0.75rem;">
-                                        <?php if(isset($item['service_type']) && $item['service_type'] == 'warranty'): ?>
-                                            <span style="background: rgba(249, 115, 22, 0.1); color: #f97316; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">GARANTÍA</span>
+                                        <?php if (isset($item['service_type']) && $item['service_type'] == 'warranty'): ?>
+                                            <span
+                                                style="background: rgba(249, 115, 22, 0.1); color: #f97316; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">GARANTÍA</span>
                                         <?php else: ?>
-                                            <span style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">SERVICIO</span>
+                                            <span
+                                                style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">SERVICIO</span>
                                         <?php endif; ?>
                                     </td>
                                     <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['client_name']); ?></td>
                                     <td style="padding: 0.75rem;">
-                                        <span class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
+                                        <span
+                                            class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
                                     </td>
                                     <td style="padding: 0.75rem;">
-                                        <?php 
-                                            $s = $item['status'];
-                                            $col = 'gray'; // default
-                                            $label2 = $s; // default
+                                        <?php
+                                        $s = $item['status'];
+                                        $col = 'gray'; // default
+                                        $label2 = $s; // default
+                            
+                                        $statusMapDA = [
+                                            'received' => ['Recibido', 'blue'],
+                                            'diagnosing' => ['Diagnóstico', 'yellow'],
+                                            'in_repair' => ['Reparación', 'purple'],
+                                            'ready' => ['Listo', 'green'],
+                                            'delivered' => ['Entregado', 'gray'],
+                                            'pending_approval' => ['En Espera', 'orange'],
+                                            'cancelled' => ['Cancelado', 'red']
+                                        ];
 
-                                            $statusMapDA = [
-                                                'received' => ['Recibido', 'blue'],
-                                                'diagnosing' => ['Diagnóstico', 'yellow'],
-                                                'in_repair' => ['Reparación', 'purple'],
-                                                'ready' => ['Listo', 'green'],
-                                                'delivered' => ['Entregado', 'gray'],
-                                                'pending_approval' => ['En Espera', 'orange'],
-                                                'cancelled' => ['Cancelado', 'red']
-                                            ];
-
-                                            if (isset($statusMapDA[$s])) {
-                                                $label2 = $statusMapDA[$s][0];
-                                                $col = $statusMapDA[$s][1];
-                                            } else {
-                                                $label2 = ucfirst($s);
-                                            }
+                                        if (isset($statusMapDA[$s])) {
+                                            $label2 = $statusMapDA[$s][0];
+                                            $col = $statusMapDA[$s][1];
+                                        } else {
+                                            $label2 = ucfirst($s);
+                                        }
                                         ?>
-                                        <span class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
+                                        <span
+                                            class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
                                     </td>
                                     <td style="padding: 0.75rem;">
                                         <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
@@ -429,50 +495,52 @@ if (!$is_warehouse) {
                                     </td>
                                 <?php endif; ?>
                             </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                             <tr>
-                                <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
-                                    Sin actividad reciente.
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                                Sin actividad reciente.
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
+    </div>
 
-        <!-- Right Column Wrapper -->
-        <div style="display: flex; flex-direction: column; gap: 2rem;">
-            
-            <?php if ($is_tech || $is_admin || $is_reception): ?>
+    <!-- Right Column Wrapper -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+        <?php if ($is_tech || $is_admin || $is_reception): ?>
             <!-- Status Chart (Tech, Admin, Reception) -->
             <div class="card">
-                 <h3 class="mb-4">Estado de Reparaciones</h3>
-                 <div style="position: relative; height: 250px; width: 100%;">
+                <h3 class="mb-4">Estado de Reparaciones</h3>
+                <div style="position: relative; height: 250px; width: 100%;">
                     <canvas id="statusChart"></canvas>
-                 </div>
+                </div>
             </div>
-            <?php endif; ?>
+        <?php endif; ?>
 
-            <?php if ($is_admin || $is_reception): ?>
+        <?php if ($is_admin || $is_reception): ?>
             <!-- Weekly Chart (Admin, Reception) -->
             <div class="card">
-                 <h3 class="mb-4">Ingresos de la Semana</h3>
-                 <div style="position: relative; height: 250px; width: 100%;">
+                <h3 class="mb-4">Ingresos de la Semana</h3>
+                <div style="position: relative; height: 250px; width: 100%;">
                     <canvas id="weeklyChart"></canvas>
-                 </div>
+                </div>
             </div>
-            <?php endif; ?>
+        <?php endif; ?>
 
-            <!-- Quick Actions -->
-            <div class="card">
-                <h3 class="mb-4">Accesos Rápidos</h3>
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    
-                    <?php if(!$is_tech && !$is_warehouse): ?>
-                    <a href="../clients/add.php" class="btn btn-secondary w-full" style="justify-content: flex-start; padding: 1rem;">
-                         <div style="background: rgba(34, 197, 94, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
+        <!-- Quick Actions -->
+        <div class="card">
+            <h3 class="mb-4">Accesos Rápidos</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+
+                <?php if (!$is_tech && !$is_warehouse): ?>
+                    <a href="../clients/add.php" class="btn btn-secondary w-full"
+                        style="justify-content: flex-start; padding: 1rem;">
+                        <div
+                            style="background: rgba(34, 197, 94, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
                             <i class="ph ph-user-plus" style="color: var(--success);"></i>
                         </div>
                         <div>
@@ -480,11 +548,13 @@ if (!$is_warehouse) {
                             <div class="text-xs text-muted">Agregar cliente</div>
                         </div>
                     </a>
-                    <?php endif; ?>
-                    
-                    <?php if($is_warehouse): ?>
-                    <a href="../tools/add.php" class="btn btn-secondary w-full" style="justify-content: flex-start; padding: 1rem;">
-                        <div style="background: rgba(99, 102, 241, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
+                <?php endif; ?>
+
+                <?php if ($is_warehouse): ?>
+                    <a href="../tools/add.php" class="btn btn-secondary w-full"
+                        style="justify-content: flex-start; padding: 1rem;">
+                        <div
+                            style="background: rgba(99, 102, 241, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
                             <i class="ph ph-plus" style="color: var(--primary-500);"></i>
                         </div>
                         <div>
@@ -492,8 +562,10 @@ if (!$is_warehouse) {
                             <div class="text-xs text-muted">Registrar item</div>
                         </div>
                     </a>
-                    <a href="../tools/assign.php" class="btn btn-secondary w-full" style="justify-content: flex-start; padding: 1rem;">
-                         <div style="background: rgba(234, 179, 8, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
+                    <a href="../tools/assign.php" class="btn btn-secondary w-full"
+                        style="justify-content: flex-start; padding: 1rem;">
+                        <div
+                            style="background: rgba(234, 179, 8, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
                             <i class="ph ph-hand-giving" style="color: var(--warning);"></i>
                         </div>
                         <div>
@@ -501,11 +573,13 @@ if (!$is_warehouse) {
                             <div class="text-xs text-muted">Registrar salida</div>
                         </div>
                     </a>
-                    <?php endif; ?>
+                <?php endif; ?>
 
-                    <?php if(!$is_warehouse && $is_tech): ?>
-                    <a href="../services/index.php" class="btn btn-secondary w-full" style="justify-content: flex-start; padding: 1rem;">
-                         <div style="background: rgba(234, 179, 8, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
+                <?php if (!$is_warehouse && $is_tech): ?>
+                    <a href="../services/index.php" class="btn btn-secondary w-full"
+                        style="justify-content: flex-start; padding: 1rem;">
+                        <div
+                            style="background: rgba(234, 179, 8, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
                             <i class="ph ph-list-checks" style="color: var(--warning);"></i>
                         </div>
                         <div>
@@ -513,11 +587,11 @@ if (!$is_warehouse) {
                             <div class="text-xs text-muted">Ver órdenes</div>
                         </div>
                     </a>
-                    <?php endif; ?>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <script>
@@ -559,39 +633,39 @@ if (!$is_warehouse) {
         }
     });
 
-    <?php if(!$is_warehouse && ($is_reception || $is_admin)): ?>
-    // Weekly Chart
-    const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
-    new Chart(ctxWeekly, {
-        type: 'bar',
-        data: {
-            labels: <?php echo json_encode($weeklyLabels); ?>,
-            datasets: [{
-                label: 'Equipos Recibidos',
-                data: <?php echo json_encode($weeklyCounts); ?>,
-                backgroundColor: '#6366f1',
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: gridColor },
-                    ticks: { color: textColor, precision: 0 }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: textColor }
-                }
+    <?php if (!$is_warehouse && ($is_reception || $is_admin)): ?>
+        // Weekly Chart
+        const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+        new Chart(ctxWeekly, {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode($weeklyLabels); ?>,
+                datasets: [{
+                    label: 'Equipos Recibidos',
+                    data: <?php echo json_encode($weeklyCounts); ?>,
+                    backgroundColor: '#6366f1',
+                    borderRadius: 4
+                }]
             },
-            plugins: {
-                legend: { display: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, precision: 0 }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
             }
-        }
-    });
+        });
     <?php endif; ?>
 </script>
 
