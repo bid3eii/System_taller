@@ -232,78 +232,6 @@ CREATE TABLE `audit_logs` (
   `created_at` timestamp DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `tool_assignments`
---
-
-CREATE TABLE `tool_assignments` (
-  `id` int(11) NOT NULL,
-  `project_name` varchar(255) DEFAULT NULL,
-  `assigned_to` varchar(150) NOT NULL COMMENT 'Nombre del encargado',
-  `technician_1` varchar(150) DEFAULT NULL,
-  `technician_2` varchar(150) DEFAULT NULL,
-  `technician_3` varchar(150) DEFAULT NULL,
-  `delivery_date` date DEFAULT NULL,
-  `return_date` datetime DEFAULT NULL,
-  `observations` text DEFAULT NULL,
-  `status` enum('pending','returned') DEFAULT 'pending',
-  `created_at` timestamp DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `tool_assignment_items`
---
-
-CREATE TABLE `tool_assignment_items` (
-  `id` int(11) NOT NULL,
-  `assignment_id` int(11) NOT NULL,
-  `tool_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 1,
-  `status` enum('assigned','returned') DEFAULT 'assigned',
-  `return_confirmed` tinyint(1) DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `site_settings`
---
-
-CREATE TABLE `site_settings` (
-  `id` int(11) NOT NULL,
-  `setting_key` varchar(50) NOT NULL,
-  `setting_value` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `diagnosis_images`
---
-
-CREATE TABLE `diagnosis_images` (
-  `id` int(11) NOT NULL,
-  `service_order_id` int(11) NOT NULL,
-  `image_path` varchar(255) NOT NULL,
-  `uploaded_at` timestamp DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `system_sequences`
---
-
-CREATE TABLE `system_sequences` (
-  `id` int(11) NOT NULL,
-  `sequence_name` varchar(50) NOT NULL,
-  `current_value` int(11) NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 --
 -- Indexes for dumped tables
 --
@@ -321,11 +249,6 @@ ALTER TABLE `user_custom_modules` ADD PRIMARY KEY (`id`), ADD KEY `user_id` (`us
 ALTER TABLE `permissions` ADD PRIMARY KEY (`id`);
 ALTER TABLE `role_permissions` ADD PRIMARY KEY (`role_id`,`permission_id`), ADD KEY `permission_id` (`permission_id`);
 ALTER TABLE `audit_logs` ADD PRIMARY KEY (`id`), ADD KEY `user_id` (`user_id`), ADD KEY `table_record` (`table_name`,`record_id`);
-ALTER TABLE `tool_assignments` ADD PRIMARY KEY (`id`);
-ALTER TABLE `tool_assignment_items` ADD PRIMARY KEY (`id`), ADD KEY `assignment_id` (`assignment_id`), ADD KEY `tool_id` (`tool_id`);
-ALTER TABLE `site_settings` ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `setting_key` (`setting_key`);
-ALTER TABLE `diagnosis_images` ADD PRIMARY KEY (`id`), ADD KEY `service_order_id` (`service_order_id`);
-ALTER TABLE `system_sequences` ADD PRIMARY KEY (`id`), ADD UNIQUE KEY `sequence_name` (`sequence_name`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -343,11 +266,6 @@ ALTER TABLE `warranties` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `user_custom_modules` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `permissions` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `audit_logs` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-ALTER TABLE `tool_assignments` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-ALTER TABLE `tool_assignment_items` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-ALTER TABLE `site_settings` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-ALTER TABLE `diagnosis_images` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-ALTER TABLE `system_sequences` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables
@@ -362,8 +280,6 @@ ALTER TABLE `warranties` ADD CONSTRAINT `warranties_ibfk_1` FOREIGN KEY (`servic
 ALTER TABLE `user_custom_modules` ADD CONSTRAINT `user_custom_modules_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 ALTER TABLE `role_permissions` ADD CONSTRAINT `role_permissions_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE, ADD CONSTRAINT `role_permissions_ibfk_2` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE;
 ALTER TABLE `audit_logs` ADD CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
-ALTER TABLE `tool_assignment_items` ADD CONSTRAINT `tool_assignment_items_ibfk_1` FOREIGN KEY (`assignment_id`) REFERENCES `tool_assignments` (`id`) ON DELETE CASCADE, ADD CONSTRAINT `tool_assignment_items_ibfk_2` FOREIGN KEY (`tool_id`) REFERENCES `tools` (`id`);
-ALTER TABLE `diagnosis_images` ADD CONSTRAINT `diagnosis_images_ibfk_1` FOREIGN KEY (`service_order_id`) REFERENCES `service_orders` (`id`) ON DELETE CASCADE;
 
 COMMIT;
 
