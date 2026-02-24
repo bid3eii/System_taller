@@ -439,10 +439,112 @@ require_once '../../includes/sidebar.php';
             background: rgba(var(--primary-rgb), 0.1);
             color: var(--primary-light);
         }
+
+        /* Wizard Styles */
+        .steps-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            position: relative;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .steps-indicator::before {
+            content: '';
+            position: absolute;
+            top: 1.25rem;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border-color);
+            z-index: 1;
+        }
+        .step-item {
+            position: relative;
+            z-index: 2;
+            background: var(--bg-body);
+            padding: 0 1rem;
+            text-align: center;
+            flex: 1;
+        }
+        .step-number {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: var(--text-muted);
+        }
+        .step-item.active .step-number {
+            background: var(--primary-500);
+            border-color: var(--primary-500);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+        .step-item.completed .step-number {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        .step-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .step-item.active .step-label {
+            color: var(--primary-500);
+        }
+        .step-container {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .step-container.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .wizard-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .is-invalid {
+            border-color: var(--danger) !important;
+            background-color: rgba(239, 68, 68, 0.05) !important;
+        }
     </style>
 
     <div class="modern-form-container">
-        <form method="POST" action="entry.php?<?php echo http_build_query($_GET); ?>">
+        <!-- Wizard Progress Indicator -->
+        <div class="steps-indicator">
+            <div class="step-item active" id="step-1-indicator">
+                <div class="step-number">1</div>
+                <div class="step-label">Cliente</div>
+            </div>
+            <div class="step-item" id="step-2-indicator">
+                <div class="step-number">2</div>
+                <div class="step-label">Equipo</div>
+            </div>
+            <div class="step-item" id="step-3-indicator">
+                <div class="step-number">3</div>
+                <div class="step-label">Detalles</div>
+            </div>
+        </div>
+
+        <form method="POST" id="entryForm" action="entry.php?<?php echo http_build_query($_GET); ?>">
             <?php if($edit_order): ?>
                 <input type="hidden" name="order_id" value="<?php echo $edit_order['id']; ?>">
             <?php endif; ?>
@@ -450,301 +552,389 @@ require_once '../../includes/sidebar.php';
             <input type="hidden" name="type" value="<?php echo $edit_order ? $edit_order['type'] : ''; // Default or hidden handler ?>"> 
 
             <?php if ($is_warranty_mode): ?>
-                <!-- WARRANTY GRID LAYOUT -->
-                
-                <!-- WARRANTY LAYOUT (Refined) -->
-                <div class="form-section">
-                    <div class="form-section-header">
-                        <i class="ph ph-shield-check"></i> Detalles de Garantía
-                    </div>
-                    
-                    <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
-                        
-                        <!-- Row 1: Client & Basic Info -->
-                        <div class="form-group" style="grid-column: span 2; position: relative;">
-                             <label class="form-label">Cliente *</label>
-                             <input type="hidden" name="client_id" id="client_id_hidden_wry" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
-                             <input type="text" name="client_name_input" id="client_name_input_wry" class="form-control" placeholder="Nombre (Búsqueda inteligente)" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" autocomplete="off">
-                             <div class="search-results" id="client_autocomplete_results_wry" style="width: 100%;"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Fecha</label>
-                            <input type="text" class="form-control" value="<?php echo date('d/m/Y'); ?>" readonly>
-                        </div>
-
-                        <div class="form-group">
-                             <label class="form-label">Factura Venta</label>
-                             <input type="text" name="sales_invoice_number" class="form-control" placeholder="No. Factura" value="<?php echo $edit_order['sales_invoice_number'] ?? ''; ?>">
-                        </div>
-
-                        <!-- Row 2: Equipment Identification -->
-                        <div class="form-group">
-                            <label class="form-label">Serie *</label>
-                            <input type="text" name="serial_number" id="serial_number_warranty" class="form-control" placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Marca</label>
-                            <input type="text" name="brand" class="form-control" placeholder="Ej. HP" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Modelo</label>
-                            <input type="text" name="model" class="form-control" placeholder="Ej. Pavilion 15" required value="<?php echo $edit_order['model'] ?? ''; ?>">
+                <!-- STEP 1: CLIENT & BASIC -->
+                <div class="step-container active" id="step-1">
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="ph ph-user"></i> Datos del Cliente y Factura
                         </div>
                         
-                         <div class="form-group">
-                            <label class="form-label">Submodelo</label>
-                            <input type="text" name="submodel" class="form-control" placeholder="Ej. cx0001la" value="<?php echo $edit_order['submodel'] ?? ''; ?>">
-                             <!-- Defaults -->
-                            <input type="hidden" name="type" value="<?php echo $edit_order['type'] ?? ''; ?>">
-                        </div>
+                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="form-group" style="position: relative;">
+                                <label class="form-label">Cliente *</label>
+                                <input type="hidden" name="client_id" id="client_id_hidden_wry" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
+                                <input type="text" name="client_name_input" id="client_name_input_wry" class="form-control" placeholder="Nombre (Búsqueda inteligente)" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" autocomplete="off">
+                                <div class="search-results" id="client_autocomplete_results_wry" style="width: 100%;"></div>
+                            </div>
 
-                        <!-- Row 3: Master Data & Supplier -->
-                        <div class="form-group">
-                            <label class="form-label">Código</label>
-                            <input type="text" name="product_code" class="form-control" placeholder="Cód. Producto" required value="<?php echo $edit_order['product_code'] ?? ''; ?>">
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label">Factura Venta</label>
+                                <input type="text" name="sales_invoice_number" class="form-control" placeholder="No. Factura" value="<?php echo $edit_order['sales_invoice_number'] ?? ''; ?>">
+                            </div>
 
-                         <div class="form-group">
-                            <label class="form-label">Fact. Ingreso Master</label>
-                            <input type="text" name="master_entry_invoice" class="form-control" required value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Fecha Master</label>
-                            <input type="date" name="master_entry_date" class="form-control" required value="<?php echo $edit_order['master_entry_date'] ?? ''; ?>" style="color-scheme: dark;">
-                        </div>
-                        
-                         <div class="form-group">
-                            <label class="form-label">Proveedor</label>
-                            <input type="text" name="supplier_name" class="form-control" placeholder="Proveedor Original" required value="<?php echo $edit_order['supplier_name'] ?? ''; ?>">
-                        </div>
+                            <div class="form-group">
+                                <label class="form-label">Proveedor</label>
+                                <input type="text" name="supplier_name" class="form-control" placeholder="Proveedor Original" required value="<?php echo $edit_order['supplier_name'] ?? ''; ?>">
+                            </div>
 
-                        <!-- Row 4: Warranty Duration & Expiration -->
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Tiempo de Garantía</label>
-                            <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
-                                <input type="number" name="warranty_duration" id="warranty_duration" class="form-control" placeholder="Cant." min="0" value="0" style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 0.5rem;">
-                                <select name="warranty_period" id="warranty_period" class="form-control" style="width: auto; flex: 0 0 130px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1;">
-                                    <option value="days">Días</option>
-                                    <option value="weeks">Semanas</option>
-                                    <option value="months" selected>Meses</option>
-                                    <option value="years">Años</option>
-                                </select>
+                            <div class="form-group">
+                                <label class="form-label">Fecha de Registro</label>
+                                <input type="text" class="form-control" value="<?php echo date('d/m/Y'); ?>" readonly style="background: var(--bg-body);">
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Fecha Vencimiento</label>
-                            <div class="input-group">
-                                <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control" readonly style="background-color: var(--bg-body); cursor: not-allowed; font-weight: 600; color: var(--primary-500); color-scheme: dark;">
-                                <i class="ph ph-calendar-check input-icon" style="color: var(--primary-500);"></i>
+                <!-- STEP 2: EQUIPMENT & MASTER -->
+                <div class="step-container" id="step-2">
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="ph ph-desktop"></i> Identificación del Equipo
+                        </div>
+                        
+                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="form-group">
+                                <label class="form-label">Serie (S/N) *</label>
+                                <input type="text" name="serial_number" id="serial_number_warranty" class="form-control" placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Código de Producto *</label>
+                                <input type="text" name="product_code" class="form-control" placeholder="Cód. Producto" required value="<?php echo $edit_order['product_code'] ?? ''; ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Marca *</label>
+                                <input type="text" name="brand" class="form-control" placeholder="Ej. HP" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Modelo *</label>
+                                <input type="text" name="model" class="form-control" placeholder="Ej. Pavilion 15" required value="<?php echo $edit_order['model'] ?? ''; ?>">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Submodelo</label>
+                                <input type="text" name="submodel" class="form-control" placeholder="Ej. cx0001la" value="<?php echo $edit_order['submodel'] ?? ''; ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Tipo</label>
+                                <input list="type-options" name="type" class="form-control" value="<?php echo $edit_order ? htmlspecialchars($edit_order['type']) : ''; ?>" placeholder="Laptop, PC, etc.">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="ph ph-database"></i> Datos Master
+                        </div>
+                        <div class="modern-grid">
+                            <div class="form-group">
+                                <label class="form-label">Fact. Ingreso Master *</label>
+                                <input type="text" name="master_entry_invoice" class="form-control" required value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Fecha Ingreso Master *</label>
+                                <input type="date" name="master_entry_date" class="form-control" required value="<?php echo $edit_order['master_entry_date'] ?? ''; ?>" style="color-scheme: dark;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: WARRANTY TERMS -->
+                <div class="step-container" id="step-3">
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="ph ph-calendar-check"></i> Términos de Garantía
+                        </div>
+                        
+                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="form-group">
+                                <label class="form-label">Tiempo de Garantía</label>
+                                <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
+                                    <input type="number" name="warranty_duration" id="warranty_duration" class="form-control" placeholder="Cant." min="0" value="0" style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2;">
+                                    <select name="warranty_period" id="warranty_period" class="form-control" style="width: auto; flex: 0 0 130px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1;">
+                                        <option value="days">Días</option>
+                                        <option value="weeks">Semanas</option>
+                                        <option value="months" selected>Meses</option>
+                                        <option value="years">Años</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Fecha Vencimiento</label>
+                                <div class="input-group">
+                                    <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control" readonly style="background-color: var(--bg-body); cursor: not-allowed; font-weight: 600; color: var(--primary-500); color-scheme: dark;">
+                                    <i class="ph ph-calendar-check input-icon" style="color: var(--primary-500);"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-span-2">
+                                <label class="form-label">Notas Adicionales</label>
+                                <textarea name="entry_notes" class="form-control" rows="3" placeholder="Información extra sobre la garantía..."><?php echo $edit_order['entry_notes'] ?? ''; ?></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
 
             <?php else: ?>
-                <!-- STANDARD SERVICE ENTRY VIEW (Original Form) -->
-                
-                <!-- STANDARD SERVICE LAYOUT (Refined) -->
-                
-                <!-- SECTION 1: CLIENTE -->
-                <div class="form-section">
-                    <div class="form-section-header">
-                        <i class="ph ph-user"></i> Datos del Cliente
-                    </div>
-                    
-                    <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
-                         <!-- Hidden ID -->
-                        <input type="hidden" name="client_id" id="client_id_hidden_std" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
-
-                        <!-- Name (Autocomplete) -->
-                        <div class="form-group col-span-2" style="position: relative;">
-                            <label class="form-label">Nombre Completo *</label>
-                            <div class="input-group">
-                                <input type="text" name="client_name_input" id="client_name_input_std" class="form-control" placeholder="Ej. Juan Pérez" value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" required autocomplete="off">
-                                <i class="ph ph-user input-icon"></i>
-                                <!-- Button Removed -->
-                            </div>
-                            <div class="search-results" id="client_autocomplete_results_std" style="width: 100%;"></div>
+                <!-- STEP 1: CLIENT DATA -->
+                <div class="step-container active" id="step-1">
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="ph ph-user"></i> Datos del Cliente
                         </div>
+                        
+                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <input type="hidden" name="client_id" id="client_id_hidden_std" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
 
-                        <!-- Tax ID -->
-                        <div class="form-group" style="position: relative;">
-                            <label class="form-label">Cédula/RUC *</label>
-                            <div class="input-group">
-                                <input type="text" name="client_tax_id" id="client_tax_id_std" class="form-control" placeholder="Número de identificación" required value="<?php echo $edit_order ? ($edit_order['tax_id'] ?? '') : ''; ?>" autocomplete="off">
-                                <i class="ph ph-identification-card input-icon"></i>
-                            </div>
-                            <div class="search-results" id="client_tax_results_std"></div>
-                        </div>
-
-                        <!-- Phone -->
-                        <div class="form-group">
-                            <label class="form-label">Teléfono *</label>
-                            <div class="input-group">
-                                <input type="text" name="client_phone" id="client_phone_std" class="form-control" placeholder="Ej. 5555-4444" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['phone'] ?? '') : ''; ?>">
-                                <i class="ph ph-phone input-icon"></i>
-                            </div>
-                        </div>
-
-                        <!-- Email -->
-                        <div class="form-group">
-                            <label class="form-label">Correo Electrónico</label>
-                            <div class="input-group">
-                                <input type="email" name="client_email" id="client_email_std" class="form-control" placeholder="cliente@ejemplo.com" value="<?php echo $edit_order ? ($edit_order['email'] ?? '') : ''; ?>">
-                                <i class="ph ph-envelope input-icon"></i>
-                            </div>
-                        </div>
-
-                        <!-- Address -->
-                        <div class="form-group">
-                            <label class="form-label">Dirección</label>
-                            <div class="input-group">
-                                <input type="text" name="client_address" id="client_address_std" class="form-control" placeholder="Dirección completa" value="<?php echo $edit_order ? ($edit_order['address'] ?? '') : ''; ?>">
-                                <i class="ph ph-map-pin input-icon"></i>
-                            </div>
-                        </div>
-
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 2: EQUIPO -->
-                <div class="form-section">
-                    <div class="form-section-header">
-                        <i class="ph ph-desktop"></i> Datos del Equipo
-                    </div>
-                    
-                    <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
-                         
-                        <!-- Serial Number (Moved to Top) -->
-                        <div class="form-group">
-                            <label class="form-label">Serie (S/N) *</label>
-                            <div style="display: flex; align-items: center; gap: 0;">
-                                <div class="input-group" style="flex: 1;">
-                                    <input type="text" name="serial_number" id="serial_number_std" class="form-control" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>" style="border-top-right-radius: 0; border-bottom-right-radius: 0; padding-left: 0.5rem;">
+                            <div class="form-group col-span-2" style="position: relative;">
+                                <label class="form-label">Nombre Completo *</label>
+                                <div class="input-group">
+                                    <input type="text" name="client_name_input" id="client_name_input_std" class="form-control" placeholder="Ej. Juan Pérez" value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" required autocomplete="off">
+                                    <i class="ph ph-user input-icon"></i>
                                 </div>
-                                <button type="button" class="btn-verify-serial" data-target="#serial_number_std" title="Verificar Garantía" style="border: 1px solid var(--border-color); border-left: none; background: var(--bg-card); cursor: pointer; color: var(--primary-500); display: flex; align-items: center; padding: 0.625rem 1rem; border-top-right-radius: 6px; border-bottom-right-radius: 6px; height: 100%;">
-                                    <i class="ph ph-magnifying-glass" style="font-size: 1.2rem;"></i>
-                                </button>
+                                <div class="search-results" id="client_autocomplete_results_std" style="width: 100%;"></div>
                             </div>
-                            <div class="warranty-status-msg" style="font-size:0.9rem; font-weight:500; margin-top:0.5rem; min-height:0;"></div>
-                        </div>
 
-                         <div class="form-group">
-                            <label class="form-label">Cliente (Búsqueda)</label>
-                            <input type="text" id="equipment_client_display" class="form-control" readonly placeholder="Se rellenará automáticamente" value="<?php echo $edit_order['client_name_display'] ?? ''; ?>">
-                        </div>
-                         <div class="form-group">
-                            <label class="form-label">Dueño del Equipo</label>
-                            <div class="input-group">
-                                <input type="text" name="owner_name" id="owner_name_std" class="form-control" placeholder="Nombre del propietario (si es diferente)" value="<?php echo $edit_order['owner_name'] ?? ''; ?>">
-                                <i class="ph ph-user-circle input-icon"></i>
+                            <div class="form-group" style="position: relative;">
+                                <label class="form-label">Cédula/RUC *</label>
+                                <div class="input-group">
+                                    <input type="text" name="client_tax_id" id="client_tax_id_std" class="form-control" placeholder="Número de identificación" required value="<?php echo $edit_order ? ($edit_order['tax_id'] ?? '') : ''; ?>" autocomplete="off">
+                                    <i class="ph ph-identification-card input-icon"></i>
+                                </div>
+                                <div class="search-results" id="client_tax_results_std"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Teléfono *</label>
+                                <div class="input-group">
+                                    <input type="text" name="client_phone" id="client_phone_std" class="form-control" placeholder="Ej. 5555-4444" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['phone'] ?? '') : ''; ?>">
+                                    <i class="ph ph-phone input-icon"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Correo Electrónico</label>
+                                <div class="input-group">
+                                    <input type="email" name="client_email" id="client_email_std" class="form-control" placeholder="cliente@ejemplo.com" value="<?php echo $edit_order ? ($edit_order['email'] ?? '') : ''; ?>">
+                                    <i class="ph ph-envelope input-icon"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Dirección</label>
+                                <div class="input-group">
+                                    <input type="text" name="client_address" id="client_address_std" class="form-control" placeholder="Dirección completa" value="<?php echo $edit_order ? ($edit_order['address'] ?? '') : ''; ?>">
+                                    <i class="ph ph-map-pin input-icon"></i>
+                                </div>
                             </div>
                         </div>
-                         <div class="form-group">
-                            <label class="form-label">Marca *</label>
-                            <input type="text" name="brand" class="form-control" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Modelo *</label>
-                            <input type="text" name="model" class="form-control" required value="<?php echo $edit_order['model'] ?? ''; ?>">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Tipo *</label>
-                            <input list="type-options" name="type" class="form-control" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['type']) : ''; ?>" placeholder="Seleccione o escriba...">
-                            <datalist id="type-options">
-                                <option value="Laptop">
-                                <option value="PC">
-                                <option value="Celular">
-                                <option value="Tablet">
-                                <option value="Impresora">
-                                <option value="Monitor">
-                                <option value="Otro">
-                            </datalist>
-                        </div>
-                        
-                         <div class="form-group">
-                            <label class="form-label">Submodelo</label>
-                            <input type="text" name="submodel" class="form-control" placeholder="Ej. Versión específica" value="<?php echo $edit_order['submodel'] ?? ''; ?>">
-                        </div>
-                        
-                         <div class="form-group col-span-2">
-                             <label class="form-label">Accesorios Recibidos *</label>
-                             <input type="text" name="accessories" class="form-control" placeholder="Ej. Cargador, Funda..." required value="<?php echo $edit_order['accessories_received'] ?? ''; ?>">
-                         </div>
                     </div>
                 </div>
 
-                <!-- SECTION 3: SERVICIO -->
-                <div class="form-section">
-                    <div class="form-section-header">
-                        <i class="ph ph-wrench"></i> Detalles del Servicio
+                <!-- STEP 2: EQUIPMENT DATA -->
+                <div class="step-container" id="step-2">
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="ph ph-desktop"></i> Datos del Equipo
+                        </div>
+                        
+                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="form-group">
+                                <label class="form-label">Serie (S/N) *</label>
+                                <div style="display: flex; align-items: center; gap: 0;">
+                                    <div class="input-group" style="flex: 1;">
+                                        <input type="text" name="serial_number" id="serial_number_std" class="form-control" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                                    </div>
+                                    <button type="button" class="btn-verify-serial" data-target="#serial_number_std" title="Verificar Garantía" style="border: 1px solid var(--border-color); border-left: none; background: var(--bg-card); cursor: pointer; color: var(--primary-500); display: flex; align-items: center; padding: 0.625rem 1rem; border-top-right-radius: 6px; border-bottom-right-radius: 6px; height: 100%;">
+                                        <i class="ph ph-magnifying-glass"></i>
+                                    </button>
+                                </div>
+                                <div class="warranty-status-msg" style="font-size:0.85rem; margin-top:0.4rem;"></div>
+                            </div>
+
+                             <div class="form-group">
+                                <label class="form-label">Cliente del Equipo</label>
+                                <input type="text" id="equipment_client_display" class="form-control" readonly placeholder="Se rrellenará solo" value="<?php echo $edit_order['client_name_display'] ?? ''; ?>" style="background: var(--bg-body);">
+                            </div>
+
+                             <div class="form-group">
+                                <label class="form-label">Dueño / Propietario</label>
+                                <div class="input-group">
+                                    <input type="text" name="owner_name" id="owner_name_std" class="form-control" placeholder="Si es diferente al cliente" value="<?php echo $edit_order['owner_name'] ?? ''; ?>">
+                                    <i class="ph ph-user-circle input-icon"></i>
+                                </div>
+                            </div>
+
+                             <div class="form-group">
+                                <label class="form-label">Marca *</label>
+                                <input type="text" name="brand" class="form-control" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Modelo *</label>
+                                <input type="text" name="model" class="form-control" required value="<?php echo $edit_order['model'] ?? ''; ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Tipo *</label>
+                                <input list="type-options" name="type" class="form-control" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['type']) : ''; ?>">
+                            </div>
+                            
+                             <div class="form-group col-span-2">
+                                 <label class="form-label">Accesorios Recibidos *</label>
+                                 <input type="text" name="accessories" class="form-control" placeholder="Cargador, cables, etc." required value="<?php echo $edit_order['accessories_received'] ?? ''; ?>">
+                             </div>
+                        </div>
                     </div>
+                </div>
+
+                <!-- STEP 3: SERVICE DETAILS -->
+                <div class="step-container" id="step-3">
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="ph ph-wrench"></i> Detalles del Servicio
+                        </div>
+                        
+                         <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
+                             <div class="form-group col-span-2">
+                                <label class="form-label">Tipo de Ingreso *</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <label class="selection-card" id="card-service" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
+                                        <input type="radio" name="service_type" value="service" required style="display: none;">
+                                        <i class="ph ph-wrench" style="font-size: 1.25rem;"></i>
+                                        <span style="font-weight: 500;">Servicio / Reparación</span>
+                                    </label>
+
+                                    <label class="selection-card" id="card-warranty" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
+                                        <input type="radio" name="service_type" value="warranty" required style="display: none;">
+                                        <i class="ph ph-shield-check" style="font-size: 1.25rem;"></i>
+                                        <span style="font-weight: 500;">Garantía</span>
+                                    </label>
+                                </div>
+                             </div>
+                             
+                              <div class="form-group col-span-2">
+                                 <label class="form-label">Problema Reportado *</label>
+                                 <textarea name="problem_reported" class="form-control" rows="3" placeholder="Describe la falla..." required><?php echo $edit_order['problem_reported'] ?? ''; ?></textarea>
+                             </div>
+                            
+                             <div class="form-group">
+                                <label class="form-label">Factura (Opcional)</label>
+                                <input type="text" name="invoice_number" class="form-control" value="<?php echo $edit_order['invoice_number'] ?? ''; ?>">
+                            </div>
+                            
+                            <div class="form-group col-span-2">
+                                <label class="form-label">Observaciones de Ingreso</label>
+                                <textarea name="entry_notes" class="form-control" rows="2" placeholder="Notas sobre el estado físico..."><?php echo $edit_order['entry_notes'] ?? ''; ?></textarea>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- NAVIGATION BUTTONS -->
+            <div class="wizard-buttons">
+                <button type="button" id="prevBtn" onclick="prevStep()" class="btn btn-secondary" style="display: none; padding: 0.75rem 1.5rem;">
+                    <i class="ph ph-arrow-left"></i> Anterior
+                </button>
+                <div style="flex-grow: 1;"></div>
+                <button type="button" id="nextBtn" onclick="nextStep()" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+                    Siguiente <i class="ph ph-arrow-right"></i>
+                </button>
+                <div id="submitBtnContainer" style="display: none;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; background: var(--success); border-color: var(--success);">
+                        <i class="ph ph-floppy-disk"></i> <?php echo $edit_order ? 'Guardar Cambios' : 'Finalizar Registro'; ?>
+                    </button>
+                </div>
+            </div>
+
+            <script>
+                let currentStep = 1;
+
+                function showStep(n) {
+                    const steps = document.querySelectorAll('.step-container');
+                    const indicators = document.querySelectorAll('.step-item');
                     
-                     <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
-                         <div class="form-group col-span-2">
-                            <label class="form-label">Tipo de Ingreso *</label>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <!-- Option 1 uses standard radio style or custom cards -->
-                                <label class="selection-card" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
-                                    <input type="radio" name="service_type" value="service" required style="display: none;">
-                                    <i class="ph ph-wrench" style="font-size: 1.25rem;"></i>
-                                    <span style="font-weight: 500;">Servicio / Reparación</span>
-                                </label>
+                    steps.forEach((step, i) => {
+                        step.classList.toggle('active', i + 1 === n);
+                    });
 
-                                <label class="selection-card" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
-                                    <input type="radio" name="service_type" value="warranty" required style="display: none;">
-                                    <i class="ph ph-shield-check" style="font-size: 1.25rem;"></i>
-                                    <span style="font-weight: 500;">Garantía</span>
-                                </label>
-                            </div>
-                            <script>
-                                // Simple active toggle
-                                document.querySelectorAll('input[name="service_type"]').forEach(r => {
-                                    r.addEventListener('change', e => {
-                                        document.querySelectorAll('.selection-card').forEach(c => {
-                                             c.style.borderColor = 'var(--border-color)';
-                                             c.style.backgroundColor = 'var(--bg-body)';
-                                             c.querySelector('i').style.color = 'inherit';
-                                        });
-                                        if(r.checked) {
-                                            const card = r.closest('.selection-card');
-                                            card.style.borderColor = 'var(--primary-500)';
-                                            card.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
-                                            card.querySelector('i').style.color = 'var(--primary-500)';
-                                        }
-                                    });
-                                    // Trigger once
-                                    if(r.checked) r.dispatchEvent(new Event('change'));
-                                });
-                            </script>
-                         </div>
-                         
-                          <div class="form-group col-span-2">
-                             <label class="form-label">Problema Reportado *</label>
-                             <textarea name="problem_reported" class="form-control" rows="3" placeholder="Describe la falla..." required><?php echo $edit_order['problem_reported'] ?? ''; ?></textarea>
-                         </div>
-                        
-                         <div class="form-group">
-                            <label class="form-label">Factura (Opcional)</label>
-                            <input type="text" name="invoice_number" class="form-control" value="<?php echo $edit_order['invoice_number'] ?? ''; ?>">
-                        </div>
-                        
-                        <div class="form-group col-span-2">
-                            <label class="form-label">Observaciones de Ingreso</label>
-                            <textarea name="entry_notes" class="form-control" rows="2" placeholder="Notas adicionales sobre el estado físico o condiciones de ingreso..."><?php echo $edit_order['entry_notes'] ?? ''; ?></textarea>
-                        </div>
-                     </div>
-                </div>
+                    indicators.forEach((indicator, i) => {
+                        indicator.classList.toggle('active', i + 1 === n);
+                        indicator.classList.toggle('completed', i + 1 < n);
+                    });
+
+                    // Update buttons
+                    document.getElementById('prevBtn').style.display = (n === 1) ? 'none' : 'inline-flex';
+                    
+                    if (n === 3) {
+                        document.getElementById('nextBtn').style.display = 'none';
+                        document.getElementById('submitBtnContainer').style.display = 'block';
+                    } else {
+                        document.getElementById('nextBtn').style.display = 'inline-flex';
+                        document.getElementById('submitBtnContainer').style.display = 'none';
+                    }
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+
+                function nextStep() {
+                    const currentStepContainer = document.querySelector(`.step-container#step-${currentStep}`);
+                    const inputs = currentStepContainer.querySelectorAll('[required]');
+                    let valid = true;
+
+                    inputs.forEach(input => {
+                        if (!input.value.trim()) {
+                            input.classList.add('is-invalid');
+                            valid = false;
+                        } else {
+                            input.classList.remove('is-invalid');
+                        }
+                    });
+
+                    if (valid) {
+                        currentStep++;
+                        showStep(currentStep);
+                    } else {
+                        // Optional: Notification or feedback
+                        const firstInvalid = currentStepContainer.querySelector('.is-invalid');
+                        if (firstInvalid) firstInvalid.focus();
+                    }
+                }
+
+                function prevStep() {
+                    currentStep--;
+                    showStep(currentStep);
+                }
+
+                // Selection Card Logic
+                document.querySelectorAll('input[name="service_type"]').forEach(r => {
+                    r.addEventListener('change', e => {
+                        document.querySelectorAll('.selection-card').forEach(c => {
+                             c.style.borderColor = 'var(--border-color)';
+                             c.style.backgroundColor = 'var(--bg-body)';
+                             c.querySelector('i').style.color = 'inherit';
+                        });
+                        if(r.checked) {
+                            const card = r.closest('.selection-card');
+                            card.style.borderColor = 'var(--primary-500)';
+                            card.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
+                            card.querySelector('i').style.color = 'var(--primary-500)';
+                        }
+                    });
+                    if(r.checked) r.dispatchEvent(new Event('change'));
+                });
+            </script>
 
                 <!-- DEBUG BANNER -->
                 <!-- Debug Banner Removed -->
 
+                <?php if (!$is_warranty_mode): ?>
                 <!-- JS Script (Consolidated & Fixed) -->
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
@@ -975,14 +1165,9 @@ require_once '../../includes/sidebar.php';
                         }
                     });
                 </script>
-
             <?php endif; ?>
 
-            <div style="text-align: right; margin-top: -4rem; position: relative; z-index: 10;">
-                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-weight: 600;">
-                    <i class="ph ph-floppy-disk"></i> <?php echo $edit_order ? 'Guardar Cambios' : 'Guardar Registro'; ?>
-                </button>
-            </div>
+            <!-- SUBMIT BUTTON (Hidden, managed by JS Wizard) -->
 
         </form>
     </div>
