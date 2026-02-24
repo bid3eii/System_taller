@@ -340,13 +340,13 @@ require_once '../../includes/sidebar.php';
         .modern-form-container form {
             display: flex;
             flex-direction: column;
-            gap: 2rem; /* Reduced from 5rem */
+            gap: 1rem; /* Reduced from 2rem */
         }
         .form-section {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            margin-bottom: 2rem; /* Extra buffer */
-            border-radius: 12px; /* Smoother radius */
+            margin-bottom: 1rem; /* Reduced from 2rem */
+            border-radius: 12px;
             padding: 1.5rem;
             position: relative;
         }
@@ -444,7 +444,7 @@ require_once '../../includes/sidebar.php';
         .steps-indicator {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 3rem;
+            margin-bottom: 1.5rem; /* Reduced from 3rem */
             position: relative;
             max-width: 600px;
             margin-left: auto;
@@ -517,8 +517,8 @@ require_once '../../includes/sidebar.php';
         .wizard-buttons {
             display: flex;
             justify-content: space-between;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
             border-top: 1px solid var(--border-color);
         }
         .is-invalid {
