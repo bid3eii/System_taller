@@ -154,16 +154,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $c_address = clean($_POST['client_address'] ?? '');
 
     if (empty($client_id) && !empty($c_name)) {
-        // Find Existing by Name
-        $stmtCheck = $pdo->prepare("SELECT id FROM clients WHERE name = ? LIMIT 1");
-        $stmtCheck->execute([$c_name]);
+        // Find Existing by Name or Tax ID to prevent duplicates
+        $stmtCheck = $pdo->prepare("SELECT id FROM clients WHERE name = ? OR (tax_id = ? AND tax_id != '') LIMIT 1");
+        $stmtCheck->execute([$c_name, $c_tax]);
         $existing = $stmtCheck->fetch();
 
         if ($existing) {
             $client_id = $existing['id'];
         } else {
-            // New client creation disabled per user request
-            $client_id = null;
+            // Create New Client
+            $stmtNewC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmtNewC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, get_local_datetime()]);
+            $client_id = $pdo->lastInsertId();
         }
     } elseif (!empty($client_id)) {
         // Update existing client info?
@@ -917,13 +919,14 @@ require_once '../../includes/sidebar.php';
                         }
                     });
 
-                    // Explicit validation for Client Step (Step 1)
+                    // Relaxed validation for Client Step (Step 1)
                     if (currentStep === 1) {
-                        const cid = document.getElementById('client_id_hidden_std') || document.getElementById('client_id_hidden_wry');
-                        if (cid && !cid.value) {
+                        const nameInp = document.getElementById('client_name_input_std') || document.getElementById('client_name_input_wry');
+                        const phoneInp = document.getElementById('client_phone_std') || (isWarrantyMode ? {value:'na'} : null);
+                        
+                        if (nameInp && !nameInp.value.trim()) {
                             valid = false;
-                            const nameInp = document.getElementById('client_name_input_std') || document.getElementById('client_name_input_wry');
-                            if(nameInp) nameInp.classList.add('is-invalid');
+                            nameInp.classList.add('is-invalid');
                         }
                     }
 
@@ -1156,18 +1159,7 @@ require_once '../../includes/sidebar.php';
                                     });
                                 }
 
-                                // Forced Selection: Clear if no ID on blur
-                                nameInput.addEventListener('blur', function() {
-                                    setTimeout(() => {
-                                        if(!idInput.value) {
-                                            nameInput.value = '';
-                                            if(taxInput) taxInput.value = '';
-                                            if(phoneInput) phoneInput.value = '';
-                                            if(emailInput) emailInput.value = '';
-                                            if(addressInput) addressInput.value = '';
-                                        }
-                                    }, 200);
-                                });
+                                // Removed aggressive blur clearing to allow new client entry
                             }
 
                             // --- C. Warranty Name Search ---
@@ -1197,14 +1189,7 @@ require_once '../../includes/sidebar.php';
                                     }
                                 });
 
-                                // Forced Selection: Clear if no ID on blur
-                                nameInputWry.addEventListener('blur', function() {
-                                    setTimeout(() => {
-                                        if(!idInputWry.value) {
-                                            nameInputWry.value = '';
-                                        }
-                                    }, 200);
-                                });
+                                // Removed aggressive blur clearing to allow new client entry
                             }
 
                         } catch (e) {

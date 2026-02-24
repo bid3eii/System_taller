@@ -221,6 +221,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="login-bg">
     
+    <!-- Tracking Button -->
+    <a href="track.php" style="position: fixed; top: 2rem; right: 2rem; display: flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.75rem 1.25rem; border-radius: 100px; color: white; text-decoration: none; font-size: 0.9rem; backdrop-filter: blur(10px); transition: all 0.3s; z-index: 100;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='var(--primary-500)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)';">
+        <i class="ph ph-magnifying-glass"></i>
+        <span>Seguimiento de Equipo</span>
+    </a>
+    
     <!-- Animated Background -->
     <div class="floating-tools">
         <i class="ph ph-wrench tool-icon"></i>
