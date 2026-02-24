@@ -340,7 +340,7 @@ require_once '../../includes/sidebar.php';
         .modern-form-container form {
             display: flex;
             flex-direction: column;
-            gap: 5rem; /* Large spacing */
+            gap: 2rem; /* Reduced from 5rem */
         }
         .form-section {
             background: var(--bg-card);
@@ -517,8 +517,8 @@ require_once '../../includes/sidebar.php';
         .wizard-buttons {
             display: flex;
             justify-content: space-between;
-            margin-top: 2rem;
-            padding-top: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
             border-top: 1px solid var(--border-color);
         }
         .is-invalid {
