@@ -148,19 +148,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $c_address = clean($_POST['client_address'] ?? '');
 
     if (empty($client_id) && !empty($c_name)) {
-        // Create New Client OR Find Existing by Name (Smart Manual)
-        // Check if name exists to avoid duplicates
+        // Find Existing by Name
         $stmtCheck = $pdo->prepare("SELECT id FROM clients WHERE name = ? LIMIT 1");
         $stmtCheck->execute([$c_name]);
         $existing = $stmtCheck->fetch();
 
         if ($existing) {
             $client_id = $existing['id'];
-            // Optional: Update details if provided? For now, just link.
         } else {
-            $stmtC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, created_at) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmtC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, get_local_datetime()]);
-            $client_id = $pdo->lastInsertId();
+            // New client creation disabled per user request
+            $client_id = null;
         }
     } elseif (!empty($client_id)) {
         // Update existing client info?
@@ -914,6 +911,16 @@ require_once '../../includes/sidebar.php';
                         }
                     });
 
+                    // Explicit validation for Client Step (Step 1)
+                    if (currentStep === 1) {
+                        const cid = document.getElementById('client_id_hidden_std') || document.getElementById('client_id_hidden_wry');
+                        if (cid && !cid.value) {
+                            valid = false;
+                            const nameInp = document.getElementById('client_name_input_std') || document.getElementById('client_name_input_wry');
+                            if(nameInp) nameInp.classList.add('is-invalid');
+                        }
+                    }
+
                     if (valid) {
                         currentStep++;
                         showStep(currentStep);
@@ -1140,9 +1147,21 @@ require_once '../../includes/sidebar.php';
                                             banner.style.backgroundColor = "orange";
                                         }
 
-                                        nameInput.focus();
                                     });
                                 }
+
+                                // Forced Selection: Clear if no ID on blur
+                                nameInput.addEventListener('blur', function() {
+                                    setTimeout(() => {
+                                        if(!idInput.value) {
+                                            nameInput.value = '';
+                                            if(taxInput) taxInput.value = '';
+                                            if(phoneInput) phoneInput.value = '';
+                                            if(emailInput) emailInput.value = '';
+                                            if(addressInput) addressInput.value = '';
+                                        }
+                                    }, 200);
+                                });
                             }
 
                             // --- C. Warranty Name Search ---
