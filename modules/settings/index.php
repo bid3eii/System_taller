@@ -65,15 +65,6 @@ foreach ($defined_modules as $key => $desc) {
     if (!$stmtRP->fetch()) {
         $pdo->prepare("INSERT INTO role_permissions (role_id, permission_id) VALUES (1, ?)")->execute([$perm_id]);
     }
-
-    // Auto-grant 'view_all_entries' to Reception (Role ID 4) by default
-    if ($key === 'view_all_entries') {
-        $stmtRP4 = $pdo->prepare("SELECT * FROM role_permissions WHERE role_id = 4 AND permission_id = ?");
-        $stmtRP4->execute([$perm_id]);
-        if (!$stmtRP4->fetch()) {
-            $pdo->prepare("INSERT INTO role_permissions (role_id, permission_id) VALUES (4, ?)")->execute([$perm_id]);
-        }
-    }
 }
 
 // Ensure site_settings table exists
