@@ -454,16 +454,25 @@ require_once '../../includes/sidebar.php';
             content: '';
             position: absolute;
             top: 1.25rem;
-            left: 0;
-            right: 0;
+            left: 16%;
+            right: 16%;
             height: 2px;
             background: var(--border-color);
             z-index: 1;
         }
+        .progress-line {
+            position: absolute;
+            top: 1.25rem;
+            left: 16%;
+            width: 0%;
+            height: 2px;
+            background: var(--primary-500);
+            z-index: 1;
+            transition: width 0.3s ease;
+        }
         .step-item {
             position: relative;
             z-index: 2;
-            background: var(--bg-body);
             padding: 0 1rem;
             text-align: center;
             flex: 1;
@@ -530,6 +539,7 @@ require_once '../../includes/sidebar.php';
     <div class="modern-form-container">
         <!-- Wizard Progress Indicator -->
         <div class="steps-indicator">
+            <div class="progress-line" id="wizard-progress"></div>
             <div class="step-item active" id="step-1-indicator">
                 <div class="step-number">1</div>
                 <div class="step-label">Cliente</div>
@@ -869,6 +879,13 @@ require_once '../../includes/sidebar.php';
                         indicator.classList.toggle('completed', i + 1 < n);
                     });
 
+                    // Update progress line
+                    const progressLine = document.getElementById('wizard-progress');
+                    if (progressLine) {
+                        const percent = ((n - 1) / (indicators.length - 1)) * 100;
+                        progressLine.style.width = `calc(${percent}% * 0.68)`; // 0.68 matches the 16% left/right gap (100 - 32 = 68)
+                    }
+
                     // Update buttons
                     document.getElementById('prevBtn').style.display = (n === 1) ? 'none' : 'inline-flex';
                     
@@ -929,6 +946,7 @@ require_once '../../includes/sidebar.php';
                     });
                     if(r.checked) r.dispatchEvent(new Event('change'));
                 });
+                showStep(currentStep);
             </script>
 
                 <!-- DEBUG BANNER -->
