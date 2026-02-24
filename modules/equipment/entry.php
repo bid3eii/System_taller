@@ -1190,6 +1190,15 @@ require_once '../../includes/sidebar.php';
                                         }
                                     }
                                 });
+
+                                // Forced Selection: Clear if no ID on blur
+                                nameInputWry.addEventListener('blur', function() {
+                                    setTimeout(() => {
+                                        if(!idInputWry.value) {
+                                            nameInputWry.value = '';
+                                        }
+                                    }, 200);
+                                });
                             }
 
                         } catch (e) {
