@@ -41,7 +41,13 @@ if (!can_access_module('equipment', $pdo) && !can_access_module('new_order', $pd
 // -----------------------------------
 
 // Fetch Clients for Autocomplete
-$stmt = $pdo->query("SELECT * FROM clients ORDER BY name ASC");
+$stmt = $pdo->query("
+    SELECT DISTINCT c.* 
+    FROM clients c 
+    LEFT JOIN service_orders so ON c.id = so.client_id 
+    WHERE (so.id IS NULL OR so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
+    ORDER BY c.name ASC
+");
 $clients = $stmt->fetchAll();
 
 
