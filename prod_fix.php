@@ -51,8 +51,12 @@ try {
     $pdo->exec("DELETE FROM warranties");
     $pdo->exec("DELETE FROM service_orders");
     
-    // Attempt cleanup of signatures if table exists
-    $pdo->exec("DELETE FROM service_order_signatures LIMIT 1000"); 
+    // Attempt cleanup of optional tables if they exist
+    try {
+        $pdo->exec("DELETE FROM service_order_signatures LIMIT 1000"); 
+    } catch (Exception $e) {
+        // Table probably doesn't exist, ignore
+    }
 
     // 3. RESTORE & RENUMBER (IDs 1-6)
     echo "<p>Restaurando y re-numerando registros...</p>";
