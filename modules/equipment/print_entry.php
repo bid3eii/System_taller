@@ -353,6 +353,12 @@ if (empty($order['entry_doc_number'])) {
                         <div class="info-label">Caso #:</div>
                         <div class="info-val" style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order); ?></div>
                     </div>
+                    <?php if(!empty($order['invoice_number'])): ?>
+                    <div class="info-row">
+                        <div class="info-label">Factura:</div>
+                        <div class="info-val" style="font-weight: bold;"><?php echo htmlspecialchars($order['invoice_number']); ?></div>
+                    </div>
+                    <?php endif; ?>
                     <div class="info-row">
                         <div class="info-label"><?php echo $client_label; ?></div>
                         <div class="info-val"><?php echo htmlspecialchars($client_val); ?></div>
