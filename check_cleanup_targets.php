@@ -10,15 +10,17 @@ echo "<p>Solo estos 6 registros se mantendrán. Todo lo demás será borrado.</p
 
 try {
     $in = implode(',', $targets);
-    $stmt = $pdo->query("SELECT id, problem_reported, entry_date, client_id, (SELECT name FROM clients WHERE id = so.client_id) as client_name FROM service_orders so WHERE id IN ($in) ORDER BY id ASC");
+    $stmt = $pdo->query("SELECT id, display_id, entry_doc_number, problem_reported, entry_date, client_id, (SELECT name FROM clients WHERE id = so.client_id) as client_name FROM service_orders so WHERE id IN ($in) ORDER BY id ASC");
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo "<table border='1' cellpadding='10'>
-          <tr style='background:#eee'><th>ID DB</th><th>Cliente</th><th>Problema</th><th>Ingreso</th></tr>";
+          <tr style='background:#eee'><th>ID DB</th><th>Visual ID</th><th>Doc. Entrada</th><th>Cliente</th><th>Problema</th><th>Ingreso</th></tr>";
     
     foreach ($rows as $row) {
         echo "<tr>
                 <td><b>{$row['id']}</b></td>
+                <td>" . ($row['display_id'] ?? 'NULL') . "</td>
+                <td>" . ($row['entry_doc_number'] ?? 'NULL') . "</td>
                 <td>{$row['client_name']}</td>
                 <td>{$row['problem_reported']}</td>
                 <td>{$row['entry_date']}</td>
