@@ -18,6 +18,9 @@ if (!isset($page_title)) $page_title = 'System Taller';
     <!-- Icons (Phosphor Icons for a clean, modern look) -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- Chart.js for Reports -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>

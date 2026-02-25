@@ -92,6 +92,22 @@ $error_msg = '';
 if (isset($_GET['success'])) {
     $success_msg = "Cambios guardados correctamente.";
 }
+if (isset($_GET['msg']) && $_GET['msg'] === 'restored') {
+    $success_msg = "✅ Base de datos restaurada correctamente.";
+}
+if (isset($_GET['error'])) {
+    $errType = $_GET['error'];
+    $errDetails = isset($_GET['details']) ? htmlspecialchars(urldecode($_GET['details'])) : '';
+    if ($errType === 'restore_failed') {
+        $error_msg = "❌ Error al restaurar: " . $errDetails;
+    } elseif ($errType === 'partial_restore') {
+        $error_msg = "⚠️ Restauración con errores parciales: " . $errDetails;
+    } elseif ($errType === 'upload_error') {
+        $error_msg = "❌ Error al subir el archivo. Verifica que sea un .sql válido.";
+    } else {
+        $error_msg = "❌ Error: " . $errDetails;
+    }
+}
 $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'general'; // Default to general
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -166,13 +182,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($_FILES['backup_file']) && $_FILES['backup_file']['error'] == 0) {
             $tmpName = $_FILES['backup_file']['tmp_name'];
             $sqlContent = file_get_contents($tmpName);
-            
+
             try {
-                $pdo->exec($sqlContent);
-                header("Location: index.php?tab=restore&msg=restored");
+                // Disable FK checks for the duration of the import
+                $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+                // Split SQL into individual statements, handling delimiter correctly
+                $delimiter = ';';
+                $statements = [];
+                $currentStatement = '';
+                $lines = explode("\n", $sqlContent);
+
+                foreach ($lines as $line) {
+                    $trimmed = trim($line);
+                    // Skip comments and empty lines
+                    if (empty($trimmed) || substr($trimmed, 0, 2) === '--' || substr($trimmed, 0, 2) === '/*') {
+                        continue;
+                    }
+                    $currentStatement .= $line . "\n";
+                    if (substr(rtrim($trimmed), -1) === $delimiter) {
+                        $statements[] = trim($currentStatement);
+                        $currentStatement = '';
+                    }
+                }
+
+                $errors = [];
+                foreach ($statements as $stmt) {
+                    $stmt = trim($stmt);
+                    if (empty($stmt)) continue;
+                    try {
+                        $pdo->exec($stmt);
+                    } catch (PDOException $stmtErr) {
+                        $errors[] = $stmtErr->getMessage();
+                    }
+                }
+
+                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+                if (empty($errors)) {
+                    header("Location: index.php?tab=restore&msg=restored");
+                } else {
+                    // Partial restore — report issues
+                    $errSummary = urlencode(implode(' | ', array_slice($errors, 0, 3)));
+                    header("Location: index.php?tab=restore&error=partial_restore&details=" . $errSummary);
+                }
                 exit;
             } catch (PDOException $e) {
-                header("Location: index.php?tab=restore&error=restore_failed");
+                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+                header("Location: index.php?tab=restore&error=restore_failed&details=" . urlencode($e->getMessage()));
                 exit;
             }
         } else {
