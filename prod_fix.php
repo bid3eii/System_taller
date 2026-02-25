@@ -1,26 +1,50 @@
 <?php
 /**
- * Production Migration Script - System_Taller
- * This script adds the missing 'display_id' column and cleans up order sequences.
+ * Production Migration & Deletion Script - System_Taller
+ * This script removes the unwanted Record #1 (vsvsdv) and adds the 'display_id' column.
  * 
  * INSTRUCTIONS:
- * 1. Upload this file to your public_html or htdocs directory.
- * 2. Access it via browser: http://your-domain.com/prod_fix.php
- * 3. Delete this file immediately after use.
+ * 1. Pull changes to your hosting (to update this file).
+ * 2. Access via browser: http://your-domain.com/prod_fix.php
+ * 3. Delete this file immediately after.
  */
 
-// Error reporting for debugging
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 require_once 'config/db.php';
 
-echo "<h1>Production Sync - System Taller</h1>";
+echo "<h1>Production Cleanup & Sync - System Taller</h1>";
 
 try {
-    // 1. Add display_id column if not exists
-    $check = $pdo->query("SHOW COLUMNS FROM service_orders LIKE 'display_id'");
-    if ($check->rowCount() == 0) {
+    $pdo->beginTransaction();
+
+    // 1. Delete unwanted Record #1 and its associated data
+    $id_to_delete = 1;
+
+    // Check if ID 1 exists
+    $stmtCheck = $pdo->prepare("SELECT id FROM service_orders WHERE id = ?");
+    $stmtCheck->execute([$id_to_delete]);
+    
+    if ($stmtCheck->fetch()) {
+        echo "Deleting Record #1 and associated data... ";
+        
+        // Delete from dependent tables first
+        $pdo->prepare("DELETE FROM service_order_history WHERE service_order_id = ?")->execute([$id_to_delete]);
+        $pdo->prepare("DELETE FROM diagnosis_images WHERE service_order_id = ?")->execute([$id_to_delete]);
+        $pdo->prepare("DELETE FROM warranties WHERE service_order_id = ?")->execute([$id_to_delete]);
+        
+        // Delete the service order itself
+        $pdo->prepare("DELETE FROM service_orders WHERE id = ?")->execute([$id_to_delete]);
+        
+        echo "<span style='color:green;'>SUCCESS</span><br>";
+    } else {
+        echo "Record #1 not found. <span style='color:blue;'>SKIPPED</span><br>";
+    }
+
+    // 2. Add display_id column if not exists
+    $checkCol = $pdo->query("SHOW COLUMNS FROM service_orders LIKE 'display_id'");
+    if ($checkCol->rowCount() == 0) {
         echo "Adding 'display_id' column... ";
         $pdo->exec("ALTER TABLE service_orders ADD COLUMN display_id INT NULL AFTER id");
         echo "<span style='color:green;'>SUCCESS</span><br>";
@@ -28,62 +52,40 @@ try {
         echo "Column 'display_id' already exists. <span style='color:blue;'>SKIPPED</span><br>";
     }
 
-    // 2. Perform renumbering and display_id preservation
-    // This part is specific to the user's request: renumber 3627->3, 3628->4
-    // We only do this if these specific IDs exist as high numbers
-    
-    $pdo->beginTransaction();
-
-    $reassigned = false;
-    
-    $targets = [
-        3627 => 3,
-        3628 => 4
-    ];
-
+    // 3. Perform renumbering for targets if they exist
+    $targets = [3627 => 3, 3628 => 4];
     foreach ($targets as $old_id => $new_id) {
-        $stmt = $pdo->prepare("SELECT id FROM service_orders WHERE id = ?");
-        $stmt->execute([$old_id]);
-        if ($stmt->fetch()) {
+        $stmtT = $pdo->prepare("SELECT id FROM service_orders WHERE id = ?");
+        $stmtT->execute([$old_id]);
+        if ($stmtT->fetch()) {
             echo "Renumbering #$old_id to #$new_id... ";
             
-            // Check if $new_id is occupied
-            $stmtN = $pdo->prepare("SELECT id FROM service_orders WHERE id = ?");
-            $stmtN->execute([$new_id]);
-            if ($stmtN->fetch()) {
+            // Final safety check for target occupancy
+            $stmtOccupied = $pdo->prepare("SELECT id FROM service_orders WHERE id = ?");
+            $stmtOccupied->execute([$new_id]);
+            if ($stmtOccupied->fetch()) {
                 echo "<span style='color:red;'>FAILED (ID $new_id already occupied)</span><br>";
                 continue;
             }
 
-            // Update Main Order
             $pdo->prepare("UPDATE service_orders SET id = ?, display_id = ? WHERE id = ?")->execute([$new_id, $old_id, $old_id]);
-            
-            // Update History
             $pdo->prepare("UPDATE service_order_history SET service_order_id = ? WHERE service_order_id = ?")->execute([$new_id, $old_id]);
-            
-            // Update Warranties
             $pdo->prepare("UPDATE warranties SET service_order_id = ? WHERE service_order_id = ?")->execute([$new_id, $old_id]);
-            
-            // Update Diagnosis Images
             $pdo->prepare("UPDATE diagnosis_images SET service_order_id = ? WHERE service_order_id = ?")->execute([$new_id, $old_id]);
 
             echo "<span style='color:green;'>SUCCESS</span><br>";
-            $reassigned = true;
         }
     }
 
-    // 3. Reset Auto-Increment safely
-    if ($reassigned) {
-        echo "Resetting AUTO_INCREMENT to 5... ";
-        $pdo->exec("ALTER TABLE service_orders AUTO_INCREMENT = 5");
-        echo "<span style='color:green;'>SUCCESS</span><br>";
-    }
+    // 4. Reset Auto-Increment safely
+    $pdo->exec("ALTER TABLE service_orders AUTO_INCREMENT = 5");
+    echo "Sequence reset to 5... <span style='color:green;'>SUCCESS</span><br>";
 
     $pdo->commit();
 
-    echo "<h2>Migration Complete!</h2>";
-    echo "<p style='color:red;'><strong>IMPORTANT: PLEASE DELETE THIS FILE (prod_fix.php) FROM THE SERVER NOW.</strong></p>";
-    echo "<a href='index.php'>Go to Dashboard</a>";
+    echo "<h2>Production Synchronization Complete!</h2>";
+    echo "<p style='color:red;'><strong>IMPORTANT: DELETE THIS FILE (prod_fix.php) NOW.</strong></p>";
+    echo "<a href='index.php'>Return to System</a>";
 
 } catch (Exception $e) {
     if ($pdo->inTransaction()) {
