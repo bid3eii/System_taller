@@ -117,7 +117,7 @@ $stmtHist = $pdo->prepare("
 $stmtHist->execute([$id]);
 $history = $stmtHist->fetchAll();
 
-$page_title = 'Detalle de Servicio #' . str_pad($order['id'], 6, '0', STR_PAD_LEFT);
+$page_title = 'Detalle de Servicio ' . get_order_number($order);
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 
@@ -357,7 +357,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                         style="font-size: 0.9rem; color: var(--p-text-muted);"><?php echo $statusLabels[$order['status']] ?? $order['status']; ?></span>
                 </div>
                 <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.25rem;">Caso
-                    #<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></h1>
+                    <?php echo get_order_number($order); ?></h1>
 
                 <div style="font-size: 0.9rem; margin-top: 0.25rem; margin-bottom: 0.5rem; display: flex; gap: 1rem;">
                     <?php if ($order['diagnosis_number']): ?>

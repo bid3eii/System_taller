@@ -115,6 +115,18 @@ function format_currency($amount)
 }
 
 /**
+ * Returns the formatted order number, preferring display_id if set.
+ * @param array $order The order record containing 'id' and optionally 'display_id'
+ * @param int $padding Number of leading zeros
+ * @return string
+ */
+function get_order_number($order, $padding = 6) {
+    if (!$order) return '-';
+    $num = !empty($order['display_id']) ? $order['display_id'] : $order['id'];
+    return '#' . str_pad($num, $padding, '0', STR_PAD_LEFT);
+}
+
+/**
  * Format date
  */
 function format_date($date)

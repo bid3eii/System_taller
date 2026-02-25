@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$page_title = 'Confirmar Entrega - Orden #' . str_pad($order['id'], 6, '0', STR_PAD_LEFT);
+$page_title = 'Confirmar Entrega - Orden ' . get_order_number($order);
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 ?>
@@ -160,7 +160,7 @@ require_once '../../includes/sidebar.php';
                     <i class="ph ph-warning"></i> Confirmar Reingreso
                 </h3>
                 <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.5;">
-                    Esta acción cancelará la salida y devolverá el equipo a estado <strong>"En Revisión"</strong> manteniendo el mismo número de caso (#<?php echo $id; ?>).
+                    Esta acción cancelará la salida y devolverá el equipo a estado <strong>"En Revisión"</strong> manteniendo el mismo número de caso (<?php echo get_order_number($order); ?>).
                 </p>
                 
                 <form method="POST">

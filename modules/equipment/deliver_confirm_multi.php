@@ -157,7 +157,7 @@ require_once '../../includes/sidebar.php';
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
                                 Serie: <?php echo htmlspecialchars($order['serial_number']); ?> | 
-                                Orden: #<?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?>
+                                Orden: <?php echo get_order_number($order, 5); ?>
                             </div>
                         </div>
                     </div>

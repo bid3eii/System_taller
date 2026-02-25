@@ -156,7 +156,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                     <?php if(count($orders) > 0): ?>
                         <?php foreach($orders as $order): ?>
                         <tr>
-                            <td><strong>#<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></strong></td>
+                            <td><strong><?php echo get_order_number($order); ?></strong></td>
                             <td>
                                 <?php if($order['invoice_number']): ?>
                                     <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);"><?php echo htmlspecialchars($order['invoice_number']); ?></span>
@@ -251,7 +251,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                         <?php if(count($deliveredOrders) > 0): ?>
                             <?php foreach($deliveredOrders as $dItem): ?>
                             <tr>
-                                <td><strong>#<?php echo str_pad($dItem['id'], 6, '0', STR_PAD_LEFT); ?></strong></td>
+                                <td><strong><?php echo get_order_number($dItem); ?></strong></td>
                                 <td>
                                     <?php if($dItem['invoice_number']): ?>
                                         <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);"><?php echo htmlspecialchars($dItem['invoice_number']); ?></span>

@@ -28,7 +28,7 @@ $company_phone = $settings['company_phone'] ?? '(555) 123-4567';
 // Fetch Order Details
 $stmt = $pdo->prepare("
     SELECT 
-        so.*,
+        so.*, so.display_id,
         c.name as client_name, c.phone, c.email,
         e.brand, e.model, e.serial_number, e.type as equipment_type,
         u_auth.username as authorized_by_name
@@ -68,7 +68,7 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnóstico #<?php echo str_pad($order['diagnosis_number'] ?? $order['id'], 6, '0', STR_PAD_LEFT); ?></title>
+    <title>Diagnóstico <?php echo get_order_number($order); ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -349,7 +349,7 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                             </div>
                             <div class="info-item">
                                 <span class="info-label">No. Caso:</span>
-                                <span class="info-value" style="color: #2563eb;"><?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></span>
+                                <span class="info-value" style="color: #2563eb;"><?php echo get_order_number($order); ?></span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">No. Diagnóstico:</span>

@@ -50,7 +50,7 @@ $statusLabels = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orden #<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></title>
+    <title>Orden <?php echo get_order_number($order); ?></title>
     <style>
         :root {
             --primary: #0f172a;
@@ -298,7 +298,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                 </div>
             </div>
             <div class="doc-meta">
-                <h2>ORDEN #<?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></h2>
+                <h2>ORDEN <?php echo get_order_number($order); ?></h2>
                 <p><?php echo date('d/m/Y'); ?></p>
             </div>
         </header>

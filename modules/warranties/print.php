@@ -51,7 +51,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garantía #<?php echo str_pad($warranty['id'], 6, '0', STR_PAD_LEFT); ?></title>
+    <title>Garantía <?php echo str_pad($warranty['id'], 6, '0', STR_PAD_LEFT); ?></title>
     <style>
         :root {
             --primary: #0f172a;
@@ -283,7 +283,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
                 <p><?php echo htmlspecialchars($company_phone); ?></p>
             </div>
             <div class="order-meta">
-                <div class="order-number">GARANTÍA<br>#<?php echo str_pad($warranty['id'], 6, '0', STR_PAD_LEFT); ?></div>
+                <div class="order-number">GARANTÍA<br><?php echo str_pad($warranty['id'], 6, '0', STR_PAD_LEFT); ?></div>
                 <div class="order-date">Inicio: <?php echo date('d/m/Y', strtotime($warranty['start_date'])); ?></div>
                 <div class="order-date"><strong>Fin: <?php echo date('d/m/Y', strtotime($warranty['end_date'])); ?></strong></div>
             </div>

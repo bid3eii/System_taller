@@ -22,18 +22,18 @@ if ($search) {
         LEFT JOIN clients c ON so.client_id = c.id
         LEFT JOIN equipments e ON so.equipment_id = e.id
         LEFT JOIN users u ON so.assigned_tech_id = u.id
-        WHERE so.id = ?
+        WHERE so.id = ? OR so.display_id = ?
     ");
-    $stmt->execute([$clean_id]);
+    $stmt->execute([$clean_id, $clean_id]);
     $order_data = $stmt->fetch();
 
     if ($order_data) {
         // Enforce strict digit matching
         // A case is #000001. We accept "1" or "000001", but NOT "01", "001", etc.
-        $padded_id = str_pad($order_data['id'], 6, '0', STR_PAD_LEFT);
-        $raw_id = (string)$order_data['id'];
+        $padded_id = get_order_number($order_data);
+        $raw_id = (string)(!empty($order_data['display_id']) ? $order_data['display_id'] : $order_data['id']);
 
-        if ($digits_only !== $padded_id && $digits_only !== $raw_id) {
+        if ($digits_only !== str_replace('#', '', $padded_id) && $digits_only !== str_replace('0', '', ltrim($digits_only, '0')) && $digits_only !== $raw_id) {
             $order_data = null;
             $error = "Número de caso inválido. Ingrese el número exacto (ej: $padded_id o $raw_id).";
         }

@@ -30,7 +30,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Declaración de Conformi
 // Fetch Order Details
 $stmt = $pdo->prepare("
     SELECT 
-        so.*,
+        so.*, so.display_id,
         c_contact.name as contact_name, c_contact.phone, c_contact.email, c_contact.tax_id, c_contact.address,
         COALESCE(
             NULLIF(so.owner_name, ''),
@@ -156,7 +156,7 @@ if (empty($order['exit_doc_number'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrega #<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></title>
+    <title>Entrega <?php echo get_order_number($order); ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -457,7 +457,7 @@ if (empty($order['exit_doc_number'])) {
                     <td><?php echo htmlspecialchars($order['problem_reported']); ?></td>
                 </tr>
                 <tr>
-                    <td colspan="2" style="font-weight: bold;"># CASO: <span style="color: #2563eb;"><?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></span></td>
+                    <td colspan="2" style="font-weight: bold;"># CASO: <span style="color: #2563eb;"><?php echo get_order_number($order); ?></span></td>
                     <td colspan="2" style="vertical-align: top;">
                         <div style="font-weight: bold;"># DIAGNOSTICO: <?php echo $order['diagnosis_number'] ? str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
                         <?php if($diagnosisNote): ?>

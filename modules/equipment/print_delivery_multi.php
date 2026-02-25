@@ -450,7 +450,7 @@ if (empty($exit_doc_number)) {
                     <td><?php echo htmlspecialchars($order['brand']); ?></td>
                     <td><?php echo htmlspecialchars($order['model']); ?></td>
                     <td><?php echo htmlspecialchars($order['serial_number']); ?></td>
-                    <td style="font-weight: bold; color: #2563eb;"><?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></td>
+                    <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order, 5); ?></td>
                     <td><?php echo $order['diagnosis_number'] ? str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></td>
                     <td><?php echo $order['repair_number'] ? str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></td>
                     <td style="font-size: 8px; text-align: left; padding: 2px 4px;">

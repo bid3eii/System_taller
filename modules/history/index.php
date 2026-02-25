@@ -27,7 +27,7 @@ $is_tech = ($role_id == 3);
 
 $sql = "
     SELECT 
-        so.id, so.status, so.final_cost, so.exit_date, so.invoice_number, so.service_type, so.problem_reported,
+        so.id, so.status, so.final_cost, so.exit_date, so.invoice_number, so.service_type, so.problem_reported, so.display_id,
         c.name as client_name, 
         e.brand, e.model, e.serial_number, e.type,
         u.username as delivered_by,
@@ -188,7 +188,7 @@ require_once '../../includes/sidebar.php';
                         }
                         ?>
                         <tr onclick="window.location.href='<?php echo $targetUrl; ?>'" class="clickable-row">
-                            <td><strong>#<?php echo str_pad($item['id'], 6, '0', STR_PAD_LEFT); ?></strong></td>
+                            <td><strong><?php echo get_order_number($item); ?></strong></td>
                             <td>
                                 <span class="badge <?php echo $badgeClass; ?>"><?php echo $statusLabel; ?></span>
                             </td>

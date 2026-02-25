@@ -61,7 +61,7 @@ try {
 // These are orders entered with service_type = 'warranty'
 $sql = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id,
+        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id,
         c.name as client_name, c.phone,
         e.brand, e.model, e.serial_number, e.type,
         tech.username as tech_name
@@ -136,7 +136,7 @@ require_once '../../includes/sidebar.php';
                 <thead>
                     <tr>
                         <th class="sortable" data-column="0">
-                            Factura <i class="ph ph-caret-up-down sort-icon"></i>
+                            Orden # <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
                         <th class="sortable" data-column="1">
                             Fecha Ingreso <i class="ph ph-caret-up-down sort-icon"></i>
@@ -163,12 +163,7 @@ require_once '../../includes/sidebar.php';
                             <tr class="clickable-row" style="cursor: pointer;"
                                 onclick="window.location.href='view.php?id=<?php echo $item['id']; ?>'">
                                 <td>
-                                    <?php if ($item['invoice_number']): ?>
-                                        <span class="badge"
-                                            style="background: var(--bg-hover); color: var(--text-primary);"><?php echo htmlspecialchars($item['invoice_number']); ?></span>
-                                    <?php else: ?>
-                                        <span class="text-muted">-</span>
-                                    <?php endif; ?>
+                                    <strong><?php echo get_order_number($item); ?></strong>
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>
@@ -276,7 +271,7 @@ require_once '../../includes/sidebar.php';
                 <thead>
                     <tr>
                         <th class="sortable" data-column="0">
-                            Factura <i class="ph ph-caret-up-down sort-icon"></i>
+                            Orden # <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
                         <th class="sortable" data-column="1">
                             Fecha Ingreso <i class="ph ph-caret-up-down sort-icon"></i>
@@ -302,12 +297,7 @@ require_once '../../includes/sidebar.php';
                             <tr class="clickable-row" style="opacity: 0.7; cursor: pointer;"
                                 onclick="window.location.href='view.php?id=<?php echo $item['id']; ?>'">
                                 <td>
-                                    <?php if ($item['invoice_number']): ?>
-                                        <span class="badge"
-                                            style="background: var(--bg-hover); color: var(--text-primary);"><?php echo htmlspecialchars($item['invoice_number']); ?></span>
-                                    <?php else: ?>
-                                        <span class="text-muted">-</span>
-                                    <?php endif; ?>
+                                    <strong><?php echo get_order_number($item); ?></strong>
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>

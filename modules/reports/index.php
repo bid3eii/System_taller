@@ -143,7 +143,7 @@ require_once '../../includes/sidebar.php';
                     <tbody>
                         <?php foreach ($orders as $order): ?>
                             <tr data-status="<?php echo strtolower($order['status']); ?>" data-type="<?php echo strtolower($order['service_type']); ?>">
-                                <td><span class="badge-tag">#<?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></span></td>
+                                <td><span class="badge-tag"><?php echo get_order_number($order, 5); ?></span></td>
                                 <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                                 <td>
                                     <div class="fw-medium"><?php echo htmlspecialchars($order['client_name']); ?></div>

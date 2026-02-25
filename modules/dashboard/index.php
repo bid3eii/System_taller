@@ -207,7 +207,7 @@ if ($is_warehouse) {
     // Techs ALWAYS see only their assigned orders
     // For Admin/Reception, 'view_all_entries' permission controls visibility
     $recentSql = "
-        SELECT so.id, so.entry_date, so.status, so.service_type, c.name as client_name, e.brand, e.model
+        SELECT so.id, so.entry_date, so.status, so.service_type, so.display_id, c.name as client_name, e.brand, e.model
         FROM service_orders so
         LEFT JOIN clients c ON so.client_id = c.id
         LEFT JOIN equipments e ON so.equipment_id = e.id
