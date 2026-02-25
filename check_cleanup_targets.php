@@ -9,9 +9,10 @@ echo "<h1>Confirmación de Datos a Conservar</h1>";
 echo "<p>Solo estos 6 registros se mantendrán. Todo lo demás será borrado.</p>";
 
 try {
-    $in = implode(',', $targets);
-    $stmt = $pdo->query("SELECT id, display_id, entry_doc_number, problem_reported, entry_date, client_id, (SELECT name FROM clients WHERE id = so.client_id) as client_name FROM service_orders so WHERE id IN ($in) ORDER BY id ASC");
+    $stmt = $pdo->query("SELECT id, display_id, entry_doc_number, problem_reported, entry_date, client_id, (SELECT name FROM clients WHERE id = so.client_id) as client_name FROM service_orders so ORDER BY id ASC");
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo "<p>Total de registros encontrados: " . count($rows) . "</p>";
 
     echo "<table border='1' cellpadding='10'>
           <tr style='background:#eee'><th>ID DB</th><th>Visual ID</th><th>Doc. Entrada</th><th>Cliente</th><th>Problema</th><th>Ingreso</th></tr>";
