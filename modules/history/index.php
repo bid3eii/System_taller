@@ -139,7 +139,7 @@ require_once '../../includes/sidebar.php';
         <table id="historyTable">
             <thead>
                 <tr>
-                    <th class="sortable" onclick="sortTable(0)">Orden # <i class="ph ph-caret-up-down"></i></th>
+                    <th class="sortable" onclick="sortTable(0)">Caso # <i class="ph ph-caret-up-down"></i></th>
                     <th class="sortable" onclick="sortTable(1)">Estado <i class="ph ph-caret-up-down"></i></th>
                     <th class="sortable" onclick="sortTable(2)">Tipo <i class="ph ph-caret-up-down"></i></th>
                     <th class="sortable" onclick="sortTable(3)">Cliente <i class="ph ph-caret-up-down"></i></th>

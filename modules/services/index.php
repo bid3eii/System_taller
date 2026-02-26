@@ -132,7 +132,7 @@ require_once '../../includes/sidebar.php';
                 <thead>
                     <tr>
                         <th class="sortable" data-column="0">
-                            Orden # <i class="ph ph-caret-up-down sort-icon"></i>
+                            Caso # <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
                         <th class="sortable" data-column="1">
                             Fecha <i class="ph ph-caret-up-down sort-icon"></i>
@@ -264,7 +264,7 @@ require_once '../../includes/sidebar.php';
                 <thead>
                     <tr>
                         <th class="sortable" data-column="0">
-                            Orden # <i class="ph ph-caret-up-down sort-icon"></i>
+                            Caso # <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
                         <th class="sortable" data-column="1">
                             Fecha <i class="ph ph-caret-up-down sort-icon"></i>

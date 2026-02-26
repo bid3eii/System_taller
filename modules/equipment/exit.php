@@ -143,7 +143,7 @@ require_once '../../includes/sidebar.php'; // Navbar
             <table id="readyTable">
                 <thead>
                     <tr>
-                        <th>Orden #</th>
+                        <th>Caso #</th>
                         <th>Factura</th>
                         <th>Cliente</th>
                         <th>Equipo</th>
@@ -216,7 +216,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                 <table id="historyTable">
                     <thead>
                         <tr>
-                            <th>Orden #</th>
+                            <th>Caso #</th>
                             <th>Factura</th>
                             <th>Cliente</th>
                             <th>Equipo</th>

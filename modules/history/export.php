@@ -120,7 +120,7 @@ header("Expires: 0");
     <table>
         <thead>
             <tr>
-                <th style="width: 80px;">Orden #</th>
+                <th style="width: 80px;">Caso #</th>
                 <th style="width: 120px;">Estado</th>
                 <th style="width: 100px;">Tipo</th>
                 <th style="width: 200px;">Cliente</th>

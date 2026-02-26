@@ -97,12 +97,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Fecha Ingreso Master -> master_entry_date (warranties)
     // Proveedor -> supplier_name (warranties)
     
-    $service_type = $is_warranty_mode ? 'warranty' : clean($_POST['service_type']);
-    $type = clean($_POST['type']);
-    $brand = clean($_POST['brand']);
-    $model = clean($_POST['model']);
-    $submodel = clean($_POST['submodel'] ?? '');
-    $serial_number = clean($_POST['serial_number']);
+    $is_multi = isset($_POST['serial_number']) && is_array($_POST['serial_number']);
+    
+    if (!$is_multi) {
+        $service_type = $is_warranty_mode ? 'warranty' : clean($_POST['service_type'] ?? 'service');
+        $type = clean($_POST['type'] ?? '');
+        $brand = clean($_POST['brand'] ?? '');
+        $model = clean($_POST['model'] ?? '');
+        $submodel = clean($_POST['submodel'] ?? '');
+        $serial_number = clean($_POST['serial_number'] ?? '');
+    }
     
     // Logic specific fields
     $product_code = clean($_POST['product_code'] ?? '');
@@ -135,10 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $terms = "$warranty_duration $warranty_period"; // Store as string e.g. "12 months" (Note: terms column removed from DB insert, but useful for logic if needed)
     
     // Standard fields (might be optional in warranty mode)
-    $problem = clean($_POST['problem_reported'] ?? 'Garantía Registrada'); 
-    $accessories = clean($_POST['accessories'] ?? '-');
+    if (!$is_multi) {
+        $problem = clean($_POST['problem_reported'] ?? 'Garantía Registrada'); 
+        $accessories = clean($_POST['accessories'] ?? '-');
+        $owner_name = clean($_POST['owner_name'] ?? '');
+    }
     $notes = clean($_POST['entry_notes'] ?? '');
-    $owner_name = clean($_POST['owner_name'] ?? '');
     
     $order_id = isset($_POST['order_id']) ? clean($_POST['order_id']) : null;
 
@@ -174,138 +180,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmtC->execute([$c_phone, $c_email, $c_tax, $c_address, $client_id]);
     }
 
-    if (empty($client_id) || empty($brand) || empty($model) || empty($serial_number)) {
-        $error = "Por favor complete los campos obligatorios del equipo.";
+    if (empty($client_id)) {
+        $error = "Por favor seleccione o registre un cliente.";
     } else {
         try {
             $pdo->beginTransaction();
 
-            if ($order_id) {
-                // Update Equipment - Define owner ONLY if it's warranty registration or a 'Garantía' type order
-                // OR if the equipment doesn't have an owner yet.
-                $is_warranty_action = ($is_warranty_mode || $service_type === 'warranty');
-                
-                // Get current equipment owner to check if it's empty
-                $stmtEqCheck = $pdo->prepare("SELECT client_id FROM equipments WHERE id = (SELECT equipment_id FROM service_orders WHERE id = ?)");
-                $stmtEqCheck->execute([$order_id]);
-                $current_owner = $stmtEqCheck->fetchColumn();
-
-                if (empty($current_owner)) {
-                    $stmtEq = $pdo->prepare("UPDATE equipments SET client_id = ?, brand = ?, model = ?, submodel = ?, serial_number = ?, type = ? WHERE id = (SELECT equipment_id FROM service_orders WHERE id = ?)");
-                    $stmtEq->execute([$client_id, $brand, $model, $submodel, $serial_number, $type, $order_id]);
-                } else {
-                    // Standard repair on existing equipment: preserve owner, just update details
-                    $stmtEq = $pdo->prepare("UPDATE equipments SET brand = ?, model = ?, submodel = ?, serial_number = ?, type = ? WHERE id = (SELECT equipment_id FROM service_orders WHERE id = ?)");
-                    $stmtEq->execute([$brand, $model, $submodel, $serial_number, $type, $order_id]);
-                }
-
-                // Update Order
-                // For warranties, we might strictly use sales_invoice as the main reference or user supplied 'invoice_number'
-                // Let's use sales_invoice as the primary ref if provided
-                $main_ref = $is_warranty_mode ? $sales_invoice : $invoice_number;
-                
-                $stmtOrder = $pdo->prepare("UPDATE service_orders SET client_id = ?, owner_name = ?, invoice_number = ?, problem_reported = ?, accessories_received = ?, entry_notes = ? WHERE id = ?");
-                $stmtOrder->execute([$client_id, $owner_name, $main_ref, $problem, $accessories, $notes, $order_id]);
-
-                // Update Warranty Record
-                if ($is_warranty_mode) {
-                    // Check if warranty record exists
-                    $stmtWCheck = $pdo->prepare("SELECT id FROM warranties WHERE service_order_id = ?");
-                    $stmtWCheck->execute([$order_id]);
-                    if($stmtWCheck->fetch()) {
-                        $stmtW = $pdo->prepare("UPDATE warranties SET product_code=?, sales_invoice_number=?, master_entry_invoice=?, master_entry_date=?, supplier_name=?, notes=?, end_date=?, duration_months=?, terms=? WHERE service_order_id=?");
-                        $stmtW->execute([$product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $notes, $warranty_end_date, $warranty_duration, $terms, $order_id]);
-                    } else {
-                        $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, notes, status, end_date, duration_months, terms) VALUES (?, (SELECT equipment_id FROM service_orders WHERE id=?), ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)");
-                        $stmtW->execute([$order_id, $order_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $notes, $warranty_end_date, $warranty_duration, $terms]);
-                    }
-                    
-                    // Log
-                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', 'Datos de garantía actualizados', ?, ?)");
-                    $stmtHist->execute([$order_id, $_SESSION['user_id'], get_local_datetime()]);
-                } else {
-                    // Standard service Update log...
-                     $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', 'Orden actualizada', ?, ?)");
-                     $stmtHist->execute([$order_id, $_SESSION['user_id'], get_local_datetime()]);
-                }
-                
-                $pdo->commit();
-                $pdo->commit();
-                
-                if ($is_warranty_mode) {
-                     // For warranty, stay on page
-                     $success = "Datos de garantía actualizados correctamente.";
-                } else {
-                     // For service, redirect to print entry
-                     header("Location: print_entry.php?id=" . $order_id);
-                     exit;
-                }
-
+            $serial_numbers = $_POST['serial_number'] ?? [];
+            if (!is_array($serial_numbers)) {
+                // Handle single entry or Edit mode (fallback)
+                $serial_numbers = [$serial_numbers];
+                $brands = [$_POST['brand'] ?? ''];
+                $models = [$_POST['model'] ?? ''];
+                $submodels = [$_POST['submodel'] ?? ''];
+                $types = [$_POST['type'] ?? ''];
+                $owners = [$_POST['owner_name'] ?? ''];
+                $accessories_list = [$_POST['accessories'] ?? ''];
+                $service_types = [$_POST['service_type'] ?? 'service'];
+                $problems = [$_POST['problem_reported'] ?? ''];
             } else {
-                // INSERT NEW
-                // First, check if equipment with this Serial Number already exists
+                $brands = $_POST['brand'] ?? [];
+                $models = $_POST['model'] ?? [];
+                $submodels = $_POST['submodel'] ?? [];
+                $types = $_POST['type'] ?? [];
+                $owners = $_POST['owner_name'] ?? [];
+                $accessories_list = $_POST['accessories'] ?? [];
+                $service_types = $_POST['service_type'] ?? [];
+                $problems = $_POST['problem_reported'] ?? [];
+            }
+
+            $order_ids = [];
+            $entry_doc_number = null;
+
+            // SNAPSHOT SIGNATURE
+            $stmtSig = $pdo->prepare("SELECT signature_path FROM users WHERE id = ?");
+            $stmtSig->execute([$_SESSION['user_id']]);
+            $currentUserSig = $stmtSig->fetchColumn();
+
+            foreach ($serial_numbers as $i => $serial_number) {
+                if (empty($serial_number) && empty($brands[$i])) continue;
+
+                $brand_item = clean($brands[$i] ?? '');
+                $model_item = clean($models[$i] ?? '');
+                $submodel_item = clean($submodels[$i] ?? '');
+                $type_item = clean($types[$i] ?? '');
+                $owner_item = clean($owners[$i] ?? '');
+                $accessories_item = clean($accessories_list[$i] ?? '');
+                $problem_item = clean($problems[$i] ?? '');
+                $service_type_item = clean($service_types[$i] ?? 'service');
+                
+                $notes = clean($_POST['entry_notes'] ?? '');
+                $invoice_num = clean($_POST['invoice_number'] ?? '');
+
+                // 1. Equipment Logic
                 $stmtEqCheck = $pdo->prepare("SELECT id, client_id FROM equipments WHERE serial_number = ? LIMIT 1");
                 $stmtEqCheck->execute([$serial_number]);
                 $existing_eq = $stmtEqCheck->fetch();
 
                 if ($existing_eq) {
                     $equipment_id = $existing_eq['id'];
-                    $is_warranty_action = ($is_warranty_mode || $service_type === 'warranty');
-                    
+                    // Update details
+                    $stmtEqUpd = $pdo->prepare("UPDATE equipments SET brand = ?, model = ?, submodel = ?, type = ? " . (empty($existing_eq['client_id']) ? ", client_id = ?" : "") . " WHERE id = ?");
                     if (empty($existing_eq['client_id'])) {
-                        $stmtEqUpd = $pdo->prepare("UPDATE equipments SET client_id = ?, brand = ?, model = ?, submodel = ?, type = ? WHERE id = ?");
-                        $stmtEqUpd->execute([$client_id, $brand, $model, $submodel, $type, $equipment_id]);
+                        $stmtEqUpd->execute([$brand_item, $model_item, $submodel_item, $type_item, $client_id, $equipment_id]);
                     } else {
-                        // Standard repair on existing equipment: preserve owner, just update details
-                        $stmtEqUpd = $pdo->prepare("UPDATE equipments SET brand = ?, model = ?, submodel = ?, type = ? WHERE id = ?");
-                        $stmtEqUpd->execute([$brand, $model, $submodel, $type, $equipment_id]);
+                        $stmtEqUpd->execute([$brand_item, $model_item, $submodel_item, $type_item, $equipment_id]);
                     }
                 } else {
-                    // Truly new equipment
                     $stmtEq = $pdo->prepare("INSERT INTO equipments (client_id, brand, model, submodel, serial_number, type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    $stmtEq->execute([$client_id, $brand, $model, $submodel, $serial_number, $type, get_local_datetime()]);
+                    $stmtEq->execute([$client_id, $brand_item, $model_item, $submodel_item, $serial_number, $type_item, get_local_datetime()]);
                     $equipment_id = $pdo->lastInsertId();
                 }
-                
-                $main_ref = $is_warranty_mode ? $sales_invoice : $invoice_number;
 
-                // SNAPSHOT SIGNATURE: Fetch current user's signature path
-                $stmtSig = $pdo->prepare("SELECT signature_path FROM users WHERE id = ?");
-                $stmtSig->execute([$_SESSION['user_id']]);
-                $currentUserSig = $stmtSig->fetchColumn();
-
+                // 2. Order Logic
                 $stmtOrder = $pdo->prepare("INSERT INTO service_orders (equipment_id, client_id, owner_name, invoice_number, service_type, status, problem_reported, accessories_received, entry_notes, entry_date, entry_signature_path, created_at) VALUES (?, ?, ?, ?, ?, 'received', ?, ?, ?, ?, ?, ?)");
                 $now = get_local_datetime();
-                $stmtOrder->execute([$equipment_id, $client_id, $owner_name, $main_ref, $service_type, $problem, $accessories, $notes, $now, $currentUserSig, $now]);
-                $order_id = $pdo->lastInsertId();
+                $stmtOrder->execute([$equipment_id, $client_id, $owner_item, $invoice_num, $service_type_item, $problem_item, $accessories_item, $notes, $now, $currentUserSig, $now]);
+                $order_id_new = $pdo->lastInsertId();
+                $order_ids[] = $order_id_new;
 
-                if ($is_warranty_mode) {
-                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, notes, status, end_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)");
-                    $stmtW->execute([$order_id, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $notes, $warranty_end_date, get_local_datetime()]);
-                    
-                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', 'Garantía Registrada', ?, ?)");
-                    $stmtHist->execute([$order_id, $_SESSION['user_id'], get_local_datetime()]);
-                    $success = "Garantía registrada correctamente.";
-                } else {
-                    $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', 'Equipo ingresado al taller', ?, ?)");
-                    $stmtHist->execute([$order_id, $_SESSION['user_id'], get_local_datetime()]);
-                    $success = "El equipo ha sido ingresado correctamente (Orden #$order_id).";
-                }
+                // 3. History
+                $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'received', 'Equipo ingresado al taller', ?)");
+                $stmtHist->execute([$order_id_new, $_SESSION['user_id']]);
 
-                $pdo->commit();
-                
-                // Redirect logic
-                if ($is_warranty_mode) {
-                    // Stay on page with success message
-                    // We already set $success variable which will be displayed
-                } else {
-                    // For standard service, redirect to Print Entry
-                    header("Location: print_entry.php?id=" . $order_id);
-                    exit;
+                // 4. Sequence/Doc Number
+                if ($entry_doc_number === null) {
+                    $entry_doc_number = get_next_sequence($pdo, 'entry_doc');
                 }
+                $pdo->prepare("UPDATE service_orders SET entry_doc_number = ? WHERE id = ?")->execute([$entry_doc_number, $order_id_new]);
             }
+
+            $pdo->commit();
+            
+            if (!empty($order_ids)) {
+                header("Location: print_entry.php?ids=" . implode(',', $order_ids));
+                exit;
+            } else {
+                $error = "No se ingresaron equipos validos.";
+            }
+
         } catch (Exception $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) $pdo->rollBack();
             $error = "Error al guardar: " . $e->getMessage();
         }
     }
@@ -543,6 +518,7 @@ require_once '../../includes/sidebar.php';
 
     <div class="modern-form-container">
         <!-- Wizard Progress Indicator -->
+        <?php if (!$is_warranty_mode): ?>
         <div class="steps-indicator">
             <div class="progress-line" id="wizard-progress"></div>
             <div class="step-item active" id="step-1-indicator">
@@ -555,9 +531,10 @@ require_once '../../includes/sidebar.php';
             </div>
             <div class="step-item" id="step-3-indicator">
                 <div class="step-number">3</div>
-                <div class="step-label">Detalles</div>
+                <div class="step-label">REVISIÓN</div>
             </div>
         </div>
+        <?php endif; ?>
 
         <form method="POST" id="entryForm" action="entry.php?<?php echo http_build_query($_GET); ?>">
             <?php if($edit_order): ?>
@@ -567,134 +544,103 @@ require_once '../../includes/sidebar.php';
             <input type="hidden" name="type" value="<?php echo $edit_order ? $edit_order['type'] : ''; // Default or hidden handler ?>"> 
 
             <?php if ($is_warranty_mode): ?>
-                <!-- STEP 1: CLIENT & BASIC -->
-                <div class="step-container active" id="step-1">
-                    <div class="form-section">
-                        <div class="form-section-header">
-                            <i class="ph ph-user"></i> Datos del Cliente y Factura
+                <!-- WARRANTY GRID LAYOUT (Restored) -->
+                <div class="form-section animate-enter" style="margin-top: 1rem;">
+                    <div class="form-section-header">
+                        <i class="ph ph-shield-check"></i> Detalles de Garantía
+                    </div>
+                    
+                    <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        
+                        <!-- Row 1: Client & Basic Info -->
+                        <div class="form-group" style="grid-column: span 2; position: relative;">
+                             <label class="form-label">Cliente *</label>
+                             <input type="hidden" name="client_id" id="client_id_hidden_wry" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
+                             <input type="text" name="client_name_input" id="client_name_input_wry" class="form-control" placeholder="Nombre (Búsqueda inteligente)" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" autocomplete="off">
+                             <div class="search-results" id="client_autocomplete_results_wry" style="width: 100%;"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Fecha</label>
+                            <input type="text" class="form-control" value="<?php echo date('d/m/Y'); ?>" readonly>
+                        </div>
+
+                        <div class="form-group">
+                             <label class="form-label">Factura Venta</label>
+                             <input type="text" name="sales_invoice_number" class="form-control" placeholder="No. Factura" value="<?php echo $edit_order['sales_invoice_number'] ?? ''; ?>">
+                        </div>
+
+                        <!-- Row 2: Equipment Identification -->
+                        <div class="form-group">
+                            <label class="form-label">Serie *</label>
+                            <input type="text" name="serial_number" id="serial_number_warranty" class="form-control" placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Marca</label>
+                            <input type="text" name="brand" class="form-control" placeholder="Ej. HP" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Modelo</label>
+                            <input type="text" name="model" class="form-control" placeholder="Ej. Pavilion 15" required value="<?php echo $edit_order['model'] ?? ''; ?>">
                         </div>
                         
-                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
-                            <div class="form-group" style="position: relative;">
-                                <label class="form-label">Cliente *</label>
-                                <input type="hidden" name="client_id" id="client_id_hidden_wry" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
-                                <input type="text" name="client_name_input" id="client_name_input_wry" class="form-control" placeholder="Nombre (Búsqueda inteligente)" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" autocomplete="off">
-                                <div class="search-results" id="client_autocomplete_results_wry" style="width: 100%;"></div>
-                            </div>
+                         <div class="form-group">
+                            <label class="form-label">Submodelo</label>
+                            <input type="text" name="submodel" class="form-control" placeholder="Ej. cx0001la" value="<?php echo $edit_order['submodel'] ?? ''; ?>">
+                        </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Factura Venta</label>
-                                <input type="text" name="sales_invoice_number" class="form-control" placeholder="No. Factura" value="<?php echo $edit_order['sales_invoice_number'] ?? ''; ?>">
-                            </div>
+                        <!-- Row 3: Master Data & Supplier -->
+                        <div class="form-group">
+                            <label class="form-label">Código</label>
+                            <input type="text" name="product_code" class="form-control" placeholder="Cód. Producto" required value="<?php echo $edit_order['product_code'] ?? ''; ?>">
+                        </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Proveedor</label>
-                                <input type="text" name="supplier_name" class="form-control" placeholder="Proveedor Original" required value="<?php echo $edit_order['supplier_name'] ?? ''; ?>">
-                            </div>
+                         <div class="form-group">
+                            <label class="form-label">Fact. Ingreso Master</label>
+                            <input type="text" name="master_entry_invoice" class="form-control" required value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Fecha Master</label>
+                            <input type="date" name="master_entry_date" class="form-control" required value="<?php echo $edit_order['master_entry_date'] ?? ''; ?>" style="color-scheme: dark;">
+                        </div>
+                        
+                         <div class="form-group">
+                            <label class="form-label">Proveedor</label>
+                            <input type="text" name="supplier_name" class="form-control" placeholder="Proveedor Original" required value="<?php echo $edit_order['supplier_name'] ?? ''; ?>">
+                        </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Fecha de Registro</label>
-                                <input type="text" class="form-control" value="<?php echo date('d/m/Y'); ?>" readonly style="background: var(--bg-body);">
+                        <!-- Row 4: Warranty Duration & Expiration -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Tiempo de Garantía</label>
+                            <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
+                                <input type="number" name="warranty_duration" id="warranty_duration" class="form-control" placeholder="Cant." min="0" value="0" style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 0.5rem;">
+                                <select name="warranty_period" id="warranty_period" class="form-control" style="width: auto; flex: 0 0 130px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1;">
+                                    <option value="days">Días</option>
+                                    <option value="weeks">Semanas</option>
+                                    <option value="months" selected>Meses</option>
+                                    <option value="years">Años</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Fecha Vencimiento</label>
+                            <div class="input-group">
+                                <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control" readonly style="background-color: var(--bg-body); cursor: not-allowed; font-weight: 600; color: var(--primary-500); color-scheme: dark;">
+                                <i class="ph ph-calendar-check input-icon" style="color: var(--primary-500);"></i>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- STEP 2: EQUIPMENT & MASTER -->
-                <div class="step-container" id="step-2">
-                    <div class="form-section">
-                        <div class="form-section-header">
-                            <i class="ph ph-desktop"></i> Identificación del Equipo
-                        </div>
-                        
-                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
-                            <div class="form-group">
-                                <label class="form-label">Serie (S/N) *</label>
-                                <input type="text" name="serial_number" id="serial_number_warranty" class="form-control" placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Código de Producto *</label>
-                                <input type="text" name="product_code" class="form-control" placeholder="Cód. Producto" required value="<?php echo $edit_order['product_code'] ?? ''; ?>">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Marca *</label>
-                                <input type="text" name="brand" class="form-control" placeholder="Ej. HP" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Modelo *</label>
-                                <input type="text" name="model" class="form-control" placeholder="Ej. Pavilion 15" required value="<?php echo $edit_order['model'] ?? ''; ?>">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Submodelo</label>
-                                <input type="text" name="submodel" class="form-control" placeholder="Ej. cx0001la" value="<?php echo $edit_order['submodel'] ?? ''; ?>">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Tipo</label>
-                                <input list="type-options" name="type" class="form-control" value="<?php echo $edit_order ? htmlspecialchars($edit_order['type']) : ''; ?>" placeholder="Laptop, PC, etc.">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <div class="form-section-header">
-                            <i class="ph ph-database"></i> Datos Master
-                        </div>
-                        <div class="modern-grid">
-                            <div class="form-group">
-                                <label class="form-label">Fact. Ingreso Master *</label>
-                                <input type="text" name="master_entry_invoice" class="form-control" required value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Fecha Ingreso Master *</label>
-                                <input type="date" name="master_entry_date" class="form-control" required value="<?php echo $edit_order['master_entry_date'] ?? ''; ?>" style="color-scheme: dark;">
-                            </div>
-                        </div>
-                    </div>
+                <div style="text-align: right; margin-top: 1.5rem; margin-bottom: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-weight: 600; border-radius: 8px;">
+                        <i class="ph ph-floppy-disk"></i> <?php echo $edit_order ? 'Guardar Cambios' : 'Guardar Registro'; ?>
+                    </button>
                 </div>
-
-                <!-- STEP 3: WARRANTY TERMS -->
-                <div class="step-container" id="step-3">
-                    <div class="form-section">
-                        <div class="form-section-header">
-                            <i class="ph ph-calendar-check"></i> Términos de Garantía
-                        </div>
-                        
-                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
-                            <div class="form-group">
-                                <label class="form-label">Tiempo de Garantía</label>
-                                <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
-                                    <input type="number" name="warranty_duration" id="warranty_duration" class="form-control" placeholder="Cant." min="0" value="0" style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2;">
-                                    <select name="warranty_period" id="warranty_period" class="form-control" style="width: auto; flex: 0 0 130px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1;">
-                                        <option value="days">Días</option>
-                                        <option value="weeks">Semanas</option>
-                                        <option value="months" selected>Meses</option>
-                                        <option value="years">Años</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Fecha Vencimiento</label>
-                                <div class="input-group">
-                                    <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control" readonly style="background-color: var(--bg-body); cursor: not-allowed; font-weight: 600; color: var(--primary-500); color-scheme: dark;">
-                                    <i class="ph ph-calendar-check input-icon" style="color: var(--primary-500);"></i>
-                                </div>
-                            </div>
-
-                            <div class="form-group col-span-2">
-                                <label class="form-label">Notas Adicionales</label>
-                                <textarea name="entry_notes" class="form-control" rows="3" placeholder="Información extra sobre la garantía..."><?php echo $edit_order['entry_notes'] ?? ''; ?></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             <?php else: ?>
                 <!-- STEP 1: CLIENT DATA -->
                 <div class="step-container active" id="step-1">
@@ -751,127 +697,213 @@ require_once '../../includes/sidebar.php';
                     </div>
                 </div>
 
-                <!-- STEP 2: EQUIPMENT DATA -->
+                <!-- STEP 2: EQUIPMENT DATA (REPEATER) -->
                 <div class="step-container" id="step-2">
-                    <div class="form-section">
-                        <div class="form-section-header">
-                            <i class="ph ph-desktop"></i> Datos del Equipo
-                        </div>
-                        
-                        <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
-                            <div class="form-group">
-                                <label class="form-label">Serie (S/N) *</label>
-                                <div style="display: flex; align-items: center; gap: 0;">
-                                    <div class="input-group" style="flex: 1;">
-                                        <input type="text" name="serial_number" id="serial_number_std" class="form-control" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
-                                    </div>
-                                    <button type="button" class="btn-verify-serial" data-target="#serial_number_std" title="Verificar Garantía" style="border: 1px solid var(--border-color); border-left: none; background: var(--bg-card); cursor: pointer; color: var(--primary-500); display: flex; align-items: center; padding: 0.625rem 1rem; border-top-right-radius: 6px; border-bottom-right-radius: 6px; height: 100%;">
-                                        <i class="ph ph-magnifying-glass"></i>
-                                    </button>
-                                </div>
-                                <div class="warranty-status-msg" style="font-size:0.85rem; margin-top:0.4rem;"></div>
-                            </div>
+                    <!-- Client selected info -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label class="form-label" style="color: var(--primary-500); font-weight: 600;"><i class="ph ph-user-check"></i> Cliente Seleccionado</label>
+                        <input type="text" id="display_client_name_std" class="form-control" readonly disabled style="background-color: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px dashed var(--border-color); cursor: not-allowed;" value="Seleccionado en el Paso 1">
+                    </div>
 
-                             <div class="form-group">
-                                <label class="form-label">Cliente del Equipo</label>
-                                <input type="text" id="equipment_client_display" class="form-control" readonly placeholder="Se rrellenará solo" value="<?php echo $edit_order['client_name_display'] ?? ''; ?>" style="background: var(--bg-body);">
-                            </div>
-
-                             <div class="form-group">
-                                <label class="form-label">Dueño / Propietario</label>
-                                <div class="input-group">
-                                    <input type="text" name="owner_name" id="owner_name_std" class="form-control" placeholder="Si es diferente al cliente" value="<?php echo $edit_order['owner_name'] ?? ''; ?>">
-                                    <i class="ph ph-user-circle input-icon"></i>
-                                </div>
-                            </div>
-
-                             <div class="form-group">
-                                <label class="form-label">Marca *</label>
-                                <input type="text" name="brand" class="form-control" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Modelo *</label>
-                                <input type="text" name="model" class="form-control" required value="<?php echo $edit_order['model'] ?? ''; ?>">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Tipo *</label>
-                                <input list="type-options" name="type" class="form-control" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['type']) : ''; ?>">
+                    <div id="equipment-container">
+                        <!-- Initial Equipment Block -->
+                        <div class="form-section equipment-block animate-enter" id="eq-block-0" style="border-left: 4px solid var(--primary-500);">
+                            <div class="form-section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span><i class="ph ph-desktop"></i> Datos del Equipo #1</span>
+                                <button type="button" class="btn btn-sm btn-danger remove-eq-btn" style="display: none; padding: 4px 12px; font-size: 0.8rem; border-radius: 4px;" onclick="removeEquipment(0)">
+                                    <i class="ph ph-trash"></i> Eliminar
+                                </button>
                             </div>
                             
-                             <div class="form-group col-span-2">
-                                 <label class="form-label">Accesorios Recibidos *</label>
-                                 <input type="text" name="accessories" class="form-control" placeholder="Cargador, cables, etc." required value="<?php echo $edit_order['accessories_received'] ?? ''; ?>">
-                             </div>
+                            <div class="modern-grid" style="grid-template-columns: repeat(6, 1fr);">
+                                <div class="form-group" style="grid-column: span 3;">
+                                    <label class="form-label">Serie (S/N) *</label>
+                                    <div class="input-group">
+                                        <input type="text" name="serial_number[]" class="form-control serial-input" required placeholder="Número de serie" onblur="validateSerial(this)">
+                                        <i class="ph ph-barcode input-icon"></i>
+                                    </div>
+                                    <div class="warranty-status-msg" style="font-size:0.85rem; margin-top:0.4rem; font-weight: 500;"></div>
+                                </div>
+
+                                <div class="form-group" style="grid-column: span 3;">
+                                    <label class="form-label">Cliente Registrado (S/N)</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control registered-client-input" readonly placeholder="Se autocompleta con S/N" style="background-color: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed; border-style: dashed;">
+                                        <i class="ph ph-user input-icon"></i>
+                                    </div>
+                                </div>
+
+                                 <div class="form-group" style="grid-column: span 2;">
+                                    <label class="form-label">Marca *</label>
+                                    <div class="input-group">
+                                        <input type="text" name="brand[]" class="form-control" required placeholder="Ej. HP, Dell, Apple">
+                                        <i class="ph ph-tag input-icon"></i>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="grid-column: span 2;">
+                                    <label class="form-label">Modelo *</label>
+                                    <div class="input-group">
+                                        <input type="text" name="model[]" class="form-control" required placeholder="Ej. Pavilion 15">
+                                        <i class="ph ph-laptop input-icon"></i>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="grid-column: span 2;">
+                                    <label class="form-label">Tipo *</label>
+                                    <div class="input-group">
+                                        <input list="type-options" name="type[]" class="form-control" required placeholder="Laptop, PC, Consola...">
+                                        <i class="ph ph-monitor input-icon"></i>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="grid-column: span 6;">
+                                     <label class="form-label">Accesorios Recibidos *</label>
+                                     <div class="input-group">
+                                        <input type="text" name="accessories[]" class="form-control" placeholder="Cargador, cables, bolso, etc." required>
+                                        <i class="ph ph-plug input-icon"></i>
+                                     </div>
+                                </div>
+
+                                <div class="form-group" style="grid-column: span 6;">
+                                    <label class="form-label">Tipo de Ingreso *</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <label class="selection-card active" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; border: 1.5px solid var(--primary-500); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: rgba(59, 130, 246, 0.05); color: var(--primary-500);">
+                                            <input type="radio" name="service_type_0" value="service" checked style="display: none;" onchange="updateRadioSync(this, 0)">
+                                            <input type="hidden" name="service_type[]" value="service" id="service_type_hidden_0">
+                                            <i class="ph ph-wrench" style="font-size: 1.1rem;"></i>
+                                            <span style="font-weight: 500;">Servicio / Reparación</span>
+                                        </label>
+
+                                        <label class="selection-card" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
+                                            <input type="radio" name="service_type_0" value="warranty" style="display: none;" onchange="updateRadioSync(this, 0)">
+                                            <i class="ph ph-shield-check" style="font-size: 1.1rem;"></i>
+                                            <span style="font-weight: 500;">Garantía</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="grid-column: span 6;">
+                                     <label class="form-label">Problema Reportado *</label>
+                                     <div class="input-group">
+                                        <textarea name="problem_reported[]" class="form-control" rows="2" placeholder="Describe detalladamente lo que el cliente reporta..." required style="padding-left: 2.5rem;"></textarea>
+                                        <i class="ph ph-warning-circle input-icon" style="top: 1rem;"></i>
+                                     </div>
+                                </div>
+
+                                <div class="form-group" style="grid-column: span 3;">
+                                    <label class="form-label">Dueño / Propietario (Si aplica)</label>
+                                    <div class="input-group">
+                                        <input type="text" name="owner_name[]" class="form-control" placeholder="Nombre del usuario final">
+                                        <i class="ph ph-user-circle input-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="grid-column: span 3;">
+                                    <label class="form-label">Submodelo / Variación</label>
+                                    <div class="input-group">
+                                        <input type="text" name="submodel[]" class="form-control" placeholder="Opcional">
+                                        <i class="ph ph-info input-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" onclick="addEquipment()" style="border-style: dashed; background: rgba(59, 130, 246, 0.05); width: 100%; padding: 1rem; color: var(--primary-600); border: 2px dashed var(--primary-300);">
+                            <i class="ph ph-plus-circle"></i> <strong>Añadir otro equipo a esta recepción</strong>
+                        </button>
                     </div>
                 </div>
 
-                <!-- STEP 3: SERVICE DETAILS -->
+                <!-- STEP 3: SUMMARY & FINAL DETAILS -->
                 <div class="step-container" id="step-3">
                     <div class="form-section">
                         <div class="form-section-header">
-                            <i class="ph ph-wrench"></i> Detalles del Servicio
+                            <i class="ph ph-check-square-offset"></i> Revisión Final de Datos
                         </div>
                         
-                         <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
-                             <div class="form-group col-span-2">
-                                <label class="form-label">Tipo de Ingreso *</label>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                    <label class="selection-card" id="card-service" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
-                                        <input type="radio" name="service_type" value="service" required style="display: none;">
-                                        <i class="ph ph-wrench" style="font-size: 1.25rem;"></i>
-                                        <span style="font-weight: 500;">Servicio / Reparación</span>
-                                    </label>
-
-                                    <label class="selection-card" id="card-warranty" style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
-                                        <input type="radio" name="service_type" value="warranty" required style="display: none;">
-                                        <i class="ph ph-shield-check" style="font-size: 1.25rem;"></i>
-                                        <span style="font-weight: 500;">Garantía</span>
-                                    </label>
+                        <!-- Summary Grid -->
+                        <div class="modern-grid" style="grid-template-columns: 1fr; margin-bottom: 1.5rem; gap: 1.5rem;">
+                            <!-- Client Summary Card -->
+                            <div style="background: var(--bg-body); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color);">
+                                <h4 style="margin: 0 0 1rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary-600);">
+                                    <i class="ph ph-user-circle" style="font-size: 1.2rem;"></i> Datos del Cliente
+                                </h4>
+                                <div id="summary-client-info" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+                                    <!-- Populated by JS -->
                                 </div>
-                             </div>
-                             
-                              <div class="form-group col-span-2">
-                                 <label class="form-label">Problema Reportado *</label>
-                                 <textarea name="problem_reported" class="form-control" rows="3" placeholder="Describe la falla..." required><?php echo $edit_order['problem_reported'] ?? ''; ?></textarea>
-                             </div>
-                            
-                             <div class="form-group">
-                                <label class="form-label">Factura (Opcional)</label>
-                                <input type="text" name="invoice_number" class="form-control" value="<?php echo $edit_order['invoice_number'] ?? ''; ?>">
                             </div>
-                            
-                            <div class="form-group col-span-2">
-                                <label class="form-label">Observaciones de Ingreso</label>
-                                <textarea name="entry_notes" class="form-control" rows="2" placeholder="Notas sobre el estado físico..."><?php echo $edit_order['entry_notes'] ?? ''; ?></textarea>
+
+                            <!-- Equipments Summary Card -->
+                            <div style="background: var(--bg-body); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color);">
+                                <h4 style="margin: 0 0 1rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary-600);">
+                                    <i class="ph ph-desktop" style="font-size: 1.2rem;"></i> Equipos a Ingresar
+                                </h4>
+                                <div id="summary-equipments-list" style="overflow-x: auto;">
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                                        <thead>
+                                            <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                                <th style="padding: 0.5rem;">#</th>
+                                                <th style="padding: 0.5rem;">Equipo / Serie</th>
+                                                <th style="padding: 0.5rem;">Problema</th>
+                                                <th style="padding: 0.5rem;">Tipo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="summary-equipments-tbody">
+                                            <!-- Populated by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                         </div>
+                        </div>
+
+                        <div class="modern-grid" style="grid-template-columns: 1fr 1fr; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
+                            <div class="form-group">
+                                <label class="form-label">Número de Factura (Opcional)</label>
+                                <div class="input-group">
+                                    <input type="text" name="invoice_number" class="form-control" placeholder="Factura de referencia">
+                                    <i class="ph ph-file-text input-icon"></i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Observaciones Generales</label>
+                                <div class="input-group">
+                                    <input type="text" name="entry_notes" class="form-control" placeholder="Notas sobre el estado físico general...">
+                                    <i class="ph ph-note-pencil input-icon"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
 
             <!-- NAVIGATION BUTTONS -->
+            <?php if (!$is_warranty_mode): ?>
             <div class="wizard-buttons">
-                <button type="button" id="prevBtn" onclick="prevStep()" class="btn btn-secondary" style="display: none; padding: 0.75rem 1.5rem;">
+                <button type="button" id="prevBtn" onclick="prevStep()" class="btn btn-secondary" style="display: none; padding: 0.75rem 1.5rem; border-radius: 8px;">
                     <i class="ph ph-arrow-left"></i> Anterior
                 </button>
                 <div style="flex-grow: 1;"></div>
-                <button type="button" id="nextBtn" onclick="nextStep()" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+                <button type="button" id="nextBtn" onclick="nextStep()" class="btn btn-primary" style="padding: 0.75rem 2.5rem; border-radius: 8px;">
                     Siguiente <i class="ph ph-arrow-right"></i>
                 </button>
                 <div id="submitBtnContainer" style="display: none;">
-                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; background: var(--success); border-color: var(--success);">
-                        <i class="ph ph-floppy-disk"></i> <?php echo $edit_order ? 'Guardar Cambios' : 'Finalizar Registro'; ?>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2.5rem; background: var(--success); border-color: var(--success); border-radius: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                        <i class="ph ph-check-circle"></i> Confirmar y Guardar Recepción
                     </button>
                 </div>
             </div>
+            <?php endif; ?>
 
             <script>
                 let currentStep = 1;
+                const isWarrantyMode = <?php echo $is_warranty_mode ? 'true' : 'false'; ?>;
+                let equipmentCount = 1;
 
                 function showStep(n) {
+                    if (isWarrantyMode) return;
+                    
                     const steps = document.querySelectorAll('.step-container');
                     const indicators = document.querySelectorAll('.step-item');
                     
@@ -887,16 +919,33 @@ require_once '../../includes/sidebar.php';
                     // Update progress line
                     const progressLine = document.getElementById('wizard-progress');
                     if (progressLine) {
-                        const percent = ((n - 1) / (indicators.length - 1)) * 100;
-                        progressLine.style.width = `calc(${percent}% * 0.68)`; // 0.68 matches the 16% left/right gap (100 - 32 = 68)
+                        const totalSteps = indicators.length;
+                        const percent = ((n - 1) / (totalSteps - 1)) * 100;
+                        progressLine.style.width = `calc(${percent}% * 0.68)`; 
+                    }
+
+                    // Update Client Display when entering step 2
+                    if (n === 2) {
+                        if (isWarrantyMode) {
+                            const nameWry = document.getElementById('client_name_input_wry') ? document.getElementById('client_name_input_wry').value : '';
+                            const displayWry = document.getElementById('display_client_name_wry');
+                            if (displayWry) displayWry.value = nameWry || 'No seleccionado';
+                        } else {
+                            const nameStd = document.getElementById('client_name_input_std') ? document.getElementById('client_name_input_std').value : '';
+                            const taxStd = document.getElementById('client_tax_id_std') ? document.getElementById('client_tax_id_std').value : '';
+                            const displayStd = document.getElementById('display_client_name_std');
+                            if (displayStd) displayStd.value = nameStd ? `${nameStd} ${taxStd ? ' - ' + taxStd : ''}` : 'No seleccionado';
+                        }
                     }
 
                     // Update buttons
                     document.getElementById('prevBtn').style.display = (n === 1) ? 'none' : 'inline-flex';
                     
-                    if (n === 3) {
+                    const lastStep = 3; 
+                    if (n === lastStep) {
                         document.getElementById('nextBtn').style.display = 'none';
                         document.getElementById('submitBtnContainer').style.display = 'block';
+                        updateSummary();
                     } else {
                         document.getElementById('nextBtn').style.display = 'inline-flex';
                         document.getElementById('submitBtnContainer').style.display = 'none';
@@ -919,24 +968,21 @@ require_once '../../includes/sidebar.php';
                         }
                     });
 
-                    // Relaxed validation for Client Step (Step 1)
-                    if (currentStep === 1) {
-                        const nameInp = document.getElementById('client_name_input_std') || document.getElementById('client_name_input_wry');
-                        const phoneInp = document.getElementById('client_phone_std') || (isWarrantyMode ? {value:'na'} : null);
-                        
-                        if (nameInp && !nameInp.value.trim()) {
-                            valid = false;
-                            nameInp.classList.add('is-invalid');
-                        }
-                    }
-
                     if (valid) {
                         currentStep++;
                         showStep(currentStep);
                     } else {
-                        // Optional: Notification or feedback
                         const firstInvalid = currentStepContainer.querySelector('.is-invalid');
                         if (firstInvalid) firstInvalid.focus();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Campos requeridos',
+                            text: 'Por favor complete todos los campos marcados con *',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
                     }
                 }
 
@@ -945,24 +991,237 @@ require_once '../../includes/sidebar.php';
                     showStep(currentStep);
                 }
 
-                // Selection Card Logic
-                document.querySelectorAll('input[name="service_type"]').forEach(r => {
-                    r.addEventListener('change', e => {
-                        document.querySelectorAll('.selection-card').forEach(c => {
-                             c.style.borderColor = 'var(--border-color)';
-                             c.style.backgroundColor = 'var(--bg-body)';
-                             c.querySelector('i').style.color = 'inherit';
-                        });
-                        if(r.checked) {
-                            const card = r.closest('.selection-card');
-                            card.style.borderColor = 'var(--primary-500)';
-                            card.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
-                            card.querySelector('i').style.color = 'var(--primary-500)';
+                // --- REPEATER LOGIC ---
+                function addEquipment() {
+                    const container = document.getElementById('equipment-container');
+                    const index = equipmentCount++;
+                    const template = document.getElementById('eq-block-0').cloneNode(true);
+                    
+                    template.id = `eq-block-${index}`;
+                    template.classList.remove('animate-enter');
+                    template.style.opacity = '0';
+                    template.style.marginTop = '1.5rem';
+                    template.querySelector('.form-section-header span').innerHTML = `<i class="ph ph-desktop"></i> Datos del Equipo #${index + 1}`;
+                    
+                    // Reset inputs
+                    template.querySelectorAll('input, textarea').forEach(inp => {
+                        if (inp.type !== 'radio' && inp.type !== 'hidden') inp.value = '';
+                        inp.classList.remove('is-invalid');
+                    });
+                    
+                    // Reset status msg
+                    template.querySelector('.warranty-status-msg').innerHTML = '';
+
+                    // Handle Radio Groups sync for the new block
+                    const radios = template.querySelectorAll('input[type="radio"]');
+                    radios.forEach(r => {
+                        r.name = `service_type_${index}`;
+                        r.setAttribute('onchange', `updateRadioSync(this, ${index})`);
+                        if (r.value === 'service') {
+                            r.checked = true;
+                        } else {
+                            r.checked = false;
                         }
                     });
-                    if(r.checked) r.dispatchEvent(new Event('change'));
-                });
+                    
+                    // Reset selection cards visuals
+                    const cards = template.querySelectorAll('.selection-card');
+                    cards.forEach(c => {
+                        const r = c.querySelector('input[type="radio"]');
+                        if (r.value === 'service') {
+                            c.classList.add('active');
+                            c.style.borderColor = 'var(--primary-500)';
+                            c.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
+                            c.style.color = 'var(--primary-500)';
+                        } else {
+                            c.classList.remove('active');
+                            c.style.borderColor = 'var(--border-color)';
+                            c.style.backgroundColor = 'var(--bg-body)';
+                            c.style.color = 'inherit';
+                        }
+                    });
+
+                    const hiddenType = template.querySelector('input[name="service_type[]"]');
+                    hiddenType.id = `service_type_hidden_${index}`;
+                    hiddenType.value = 'service';
+                    
+                    container.appendChild(template);
+                    
+                    // Animate entry
+                    setTimeout(() => {
+                        template.style.transition = 'opacity 0.3s ease';
+                        template.style.opacity = '1';
+                    }, 10);
+
+                    updateRemoveButtons();
+                    updateEquipmentNumbers();
+                }
+
+                function removeEquipment(index) {
+                    const block = document.getElementById(`eq-block-${index}`);
+                    if (block) {
+                        block.style.opacity = '0';
+                        setTimeout(() => {
+                            block.remove();
+                            updateEquipmentNumbers();
+                            updateRemoveButtons();
+                        }, 300);
+                    }
+                }
+
+                function updateEquipmentNumbers() {
+                    const blocks = document.querySelectorAll('.equipment-block');
+                    blocks.forEach((block, i) => {
+                        // Update block ID
+                        block.id = `eq-block-${i}`;
+                        
+                        // Update title
+                        block.querySelector('.form-section-header span').innerHTML = `<i class="ph ph-desktop"></i> Datos del Equipo #${i + 1}`;
+                        
+                        // Update remove button onclick
+                        const removeBtn = block.querySelector('.remove-eq-btn');
+                        if (removeBtn) {
+                            removeBtn.setAttribute('onclick', `removeEquipment(${i})`);
+                        }
+                        
+                        // Update radio groups for service type
+                        const radios = block.querySelectorAll('input[type="radio"]');
+                        radios.forEach(r => {
+                            r.name = `service_type_${i}`;
+                            r.setAttribute('onchange', `updateRadioSync(this, ${i})`);
+                        });
+                        
+                        // Update hidden service type input
+                        const hiddenType = block.querySelector('input[name="service_type[]"]');
+                        if (hiddenType) {
+                            hiddenType.id = `service_type_hidden_${i}`;
+                        }
+                    });
+                    
+                    // Sync the global counter to the new length to avoid ID collisions on next add
+                    equipmentCount = blocks.length;
+                }
+
+                function updateRemoveButtons() {
+                    const blocks = document.querySelectorAll('.equipment-block');
+                    blocks.forEach((block, i) => {
+                        const btn = block.querySelector('.remove-eq-btn');
+                        if (blocks.length > 1) {
+                            btn.style.display = 'inline-flex';
+                        } else {
+                            btn.style.display = 'none';
+                        }
+                    });
+                }
+
+                function updateRadioSync(radio, index) {
+                    const block = radio.closest('.equipment-block');
+                    const hidden = block.querySelector('input[name="service_type[]"]');
+                    if (hidden) hidden.value = radio.value;
+                    
+                    // Update visual cards inside this block only
+                    const cards = block.querySelectorAll('.selection-card');
+                    cards.forEach(c => {
+                        c.classList.remove('active');
+                        c.style.borderColor = 'var(--border-color)';
+                        c.style.backgroundColor = 'var(--bg-body)';
+                        c.style.color = 'inherit';
+                    });
+                    
+                    const card = radio.closest('.selection-card');
+                    card.classList.add('active');
+                    card.style.borderColor = 'var(--primary-500)';
+                    card.style.backgroundColor = 'rgba(59, 130, 246, 0.05)';
+                    card.style.color = 'var(--primary-500)';
+                }
+
+                function validateSerial(input) {
+                    const serial = input.value.trim();
+                    if (serial.length < 3) return;
+                    
+                    const block = input.closest('.equipment-block');
+                    const statusDiv = block.querySelector('.warranty-status-msg');
+                    
+                    statusDiv.innerHTML = '<span style="color:var(--text-secondary);"><i class="ph ph-spinner ph-spin"></i> Verificando...</span>';
+
+                    fetch('check_warranty.php?serial_number=' + encodeURIComponent(serial))
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success && data.data) {
+                            if (!block.querySelector('[name="brand[]"]').value) block.querySelector('[name="brand[]"]').value = data.data.brand || '';
+                            if (!block.querySelector('[name="model[]"]').value) block.querySelector('[name="model[]"]').value = data.data.model || '';
+                            if (!block.querySelector('[name="type[]"]').value) block.querySelector('[name="type[]"]').value = data.data.type || '';
+                            
+                            const clientInput = block.querySelector('.registered-client-input');
+                            if (clientInput) {
+                                clientInput.value = data.data.client_name || 'Sin cliente registrado';
+                                clientInput.style.color = data.data.client_name ? 'var(--primary-light)' : 'var(--text-muted)';
+                            }
+                            
+                            if (data.status === 'valid') {
+                                statusDiv.innerHTML = '<span style="color:var(--success);"><i class="ph ph-check-circle"></i> Garantía Activa</span>';
+                            } else if (data.status === 'expired') {
+                                statusDiv.innerHTML = '<span style="color:var(--warning);"><i class="ph ph-warning"></i> Garantía Expirada</span>';
+                            } else {
+                                statusDiv.innerHTML = '<span style="color:var(--text-secondary);"><i class="ph ph-info"></i> Registrado previamente</span>';
+                            }
+                        } else {
+                            statusDiv.innerHTML = '<span style="color:var(--primary-500);"><i class="ph ph-sparkle"></i> Equipo nuevo en taller</span>';
+                            const clientInput = block.querySelector('.registered-client-input');
+                            if (clientInput) clientInput.value = '';
+                        }
+                    })
+                    .catch(e => {
+                        statusDiv.innerHTML = '';
+                    });
+                }
+
+                function updateSummary() {
+                    // Update Client Info
+                    const clientName = document.getElementById('client_name_input_std').value;
+                    const clientTax = document.getElementById('client_tax_id_std').value;
+                    const clientPhone = document.getElementById('client_phone_std').value;
+                    const clientEmail = document.getElementById('client_email_std').value;
+
+                    const clientInfoDiv = document.getElementById('summary-client-info');
+                    clientInfoDiv.innerHTML = `
+                        <div><strong>Nombre:</strong> ${clientName}</div>
+                        <div><strong>ID/RUC:</strong> ${clientTax || '-'}</div>
+                        <div><strong>Teléfono:</strong> ${clientPhone}</div>
+                        <div><strong>Email:</strong> ${clientEmail || '-'}</div>
+                    `;
+
+                    // Update Equipments List
+                    const equipmentBlocks = document.querySelectorAll('.equipment-block');
+                    const tbody = document.getElementById('summary-equipments-tbody');
+                    tbody.innerHTML = '';
+
+                    equipmentBlocks.forEach((block, i) => {
+                        const serial = block.querySelector('[name="serial_number[]"]').value;
+                        const brand = block.querySelector('[name="brand[]"]').value;
+                        const model = block.querySelector('[name="model[]"]').value;
+                        const problem = block.querySelector('[name="problem_reported[]"]').value;
+                        const type = block.querySelector('[name="service_type[]"]').value;
+                        const typeLabel = type === 'warranty' ? '<span class="badge badge-warning">Garantía</span>' : '<span class="badge badge-info">Servicio</span>';
+
+                        const row = document.createElement('tr');
+                        row.style.borderBottom = '1px solid var(--border-color)';
+                        row.innerHTML = `
+                            <td style="padding: 0.75rem;">${i + 1}</td>
+                            <td style="padding: 0.75rem;">
+                                <strong>${brand} ${model}</strong><br>
+                                <span class="text-muted" style="font-size: 0.75rem;">S/N: ${serial}</span>
+                            </td>
+                            <td style="padding: 0.75rem;">${problem}</td>
+                            <td style="padding: 0.75rem;">${typeLabel}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+                
+                <?php if (!$is_warranty_mode): ?>
                 showStep(currentStep);
+                <?php endif; ?>
             </script>
 
                 <!-- DEBUG BANNER -->

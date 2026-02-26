@@ -95,7 +95,7 @@ if ($is_warehouse) {
         JOIN users u ON ta.user_id = u.id
         JOIN tool_assignment_items tai ON ta.id = tai.assignment_id
         JOIN tools t ON tai.tool_id = t.id
-        ORDER BY ta.assignment_date DESC LIMIT 5
+        ORDER BY ta.assignment_date DESC LIMIT 12
     ");
     $recentItems = $stmt->fetchAll();
 
@@ -220,7 +220,7 @@ if ($is_warehouse) {
         $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
 
-    $recentSql .= " ORDER BY so.entry_date DESC LIMIT 5";
+    $recentSql .= " ORDER BY so.entry_date DESC LIMIT 12";
     $recentItems = $pdo->query($recentSql)->fetchAll();
 }
 
@@ -418,7 +418,7 @@ if (!$is_warehouse) {
         </div>
 
         <div class="table-container">
-            <table style="width: 100%;">
+            <table>
                 <thead>
                     <tr>
                         <th style="padding: 0.75rem;">Fecha</th>
@@ -431,7 +431,7 @@ if (!$is_warehouse) {
                             <th style="padding: 0.75rem;">Cliente</th>
                             <th style="padding: 0.75rem;">Equipo</th>
                             <th style="padding: 0.75rem;">Estado</th>
-                            <th style="padding: 0.75rem;"></th>
+                            <th style="padding: 0.75rem; width: 1%; text-align: right;"></th>
                         <?php endif; ?>
                     </tr>
                 </thead>
@@ -493,7 +493,7 @@ if (!$is_warehouse) {
                                         <span
                                             class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
                                     </td>
-                                    <td style="padding: 0.75rem;">
+                                    <td style="padding: 0.75rem; width: 1%; white-space: nowrap; text-align: right;">
                                         <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
                                             <i class="ph ph-caret-right"></i>
                                         </a>

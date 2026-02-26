@@ -1,6 +1,6 @@
 <?php
 // Detect environment based on server name
-$whitelist = ['127.0.0.1', '::1', 'localhost'];
+$whitelist = ['127.0.0.1', '::1', 'localhost','10.4.4.48'];
 $is_local = in_array($_SERVER['SERVER_NAME'], $whitelist);
 
 if ($is_local) {
