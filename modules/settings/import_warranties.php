@@ -30,28 +30,70 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
         exit;
     }
 
-    // Skip to offset
-    $headers = fgetcsv($handle); // Read headers
-    for ($i = 0; $i < $offset; $i++) {
-        if (fgetcsv($handle) === false) break;
+    // Read all lines manually (avoid fgetcsv which breaks on unescaped quotes like 15.6")
+    $all_lines = [];
+    while (($line = fgets($handle)) !== false) {
+        $line = trim($line, "\r\n");
+        if ($line !== '') $all_lines[] = $line;
     }
+    fclose($handle);
+
+    if (count($all_lines) < 2) {
+        echo json_encode(['success' => false, 'message' => 'Archivo vacío o sin datos.']);
+        exit;
+    }
+
+    // Auto-detect delimiter from header line
+    $header_line = $all_lines[0];
+    $tab_count = substr_count($header_line, "\t");
+    $semi_count = substr_count($header_line, ';');
+    $comma_count = substr_count($header_line, ',');
+    if ($tab_count >= $semi_count && $tab_count >= $comma_count && $tab_count > 0) {
+        $delimiter = "\t";
+    } elseif ($semi_count > $comma_count) {
+        $delimiter = ';';
+    } else {
+        $delimiter = ',';
+    }
+
+    // Parse headers
+    $raw_headers = explode($delimiter, $header_line);
+    $headers = [];
+    foreach ($raw_headers as $h) {
+        $h = trim($h, " \t\n\r\0\x0B\"");
+        $h = preg_replace('/^\x{FEFF}/u', '', $h); // Remove BOM
+        $headers[] = $h;
+    }
+
+    // Build header map
+    $header_map = [];
+    foreach ($headers as $idx => $h) {
+        $header_map[$h] = $idx;
+    }
+
+    // Data lines (skip header)
+    $data_lines = array_slice($all_lines, 1);
+    $total_data = count($data_lines);
+
+    // Apply offset and limit
+    $chunk_lines = array_slice($data_lines, $offset, $limit);
 
     $processed = 0;
     $errors = [];
 
-    // Map Headers (Case Insensitive)
-    $header_map = [];
-    foreach($headers as $idx => $h) {
-        $header_map[trim($h)] = $idx;
-    }
-
     $count = 0;
-    while (($row = fgetcsv($handle)) !== false && $count < $limit) {
+    foreach ($chunk_lines as $line) {
         $count++;
-        
+        $cols = explode($delimiter, $line);
+        // Clean up quotes from each value
+        foreach ($cols as &$val) {
+            $val = trim($val, " \t\n\r\0\x0B\"");
+        }
+        unset($val);
+
         $data = [];
-        foreach($header_map as $key => $idx) {
-            $data[$key] = $row[$idx] ?? '';
+        foreach ($header_map as $key => $idx) {
+            $data[$key] = $cols[$idx] ?? '';
         }
 
         try {
@@ -77,31 +119,36 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
 
             $pdo->beginTransaction();
 
-            // 2. Client Handling
+            // 2. Client Handling — keep empty if not provided
             $client_name = trim($data['CLIENTE'] ?? '');
-            if (empty($client_name)) {
-                throw new Exception("Nombre de cliente vacío en fila " . ($offset + $count));
-            }
 
             $stmt = $pdo->prepare("SELECT id FROM clients WHERE name = ? LIMIT 1");
             $stmt->execute([$client_name]);
             $client_id = $stmt->fetchColumn();
 
             if (!$client_id) {
-                $stmt = $pdo->prepare("INSERT INTO clients (name, created_at) VALUES (?, ?)");
-                $stmt->execute([$client_name, get_local_datetime()]);
+                $c_phone = trim($data['CONTACTO'] ?? '');
+                $c_tax = trim($data['RUC'] ?? '');
+                $c_address = trim($data['DIRECCIÓN'] ?? $data['DIRECCION'] ?? '');
+                $is_tp = empty($client_name) ? 1 : 0;
+                $stmt = $pdo->prepare("INSERT INTO clients (name, phone, tax_id, address, is_third_party, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$client_name, $c_phone, $c_tax, $c_address, $is_tp, get_local_datetime()]);
                 $client_id = $pdo->lastInsertId();
+            } else {
+                // If client existed as third_party, promote to real client since it's a warranty/bodega import
+                $c_phone = trim($data['CONTACTO'] ?? '');
+                $c_tax = trim($data['RUC'] ?? '');
+                $c_address = trim($data['DIRECCIÓN'] ?? $data['DIRECCION'] ?? '');
+                $pdo->prepare("UPDATE clients SET phone = IF(phone IS NULL OR phone = '', ?, phone), tax_id = IF(tax_id IS NULL OR tax_id = '', ?, tax_id), address = IF(address IS NULL OR address = '', ?, address), is_third_party = 0 WHERE id = ?")->execute([$c_phone, $c_tax, $c_address, $client_id]);
             }
 
             // 2. Equipment Handling
             $serial = trim($data['Serie'] ?? '');
-            $desc = trim($data['Descripcion'] ?? '');
+            $desc = trim($data['Equipo'] ?? $data['Descripcion'] ?? '');
             
-            // Split description: Marca Modelo Submodelo
-            $parts = explode(' ', $desc);
-            $brand = !empty($parts[0]) ? $parts[0] : 'Genérica';
-            $model = count($parts) > 1 ? $parts[1] : 'Modelo';
-            $submodel = count($parts) > 2 ? implode(' ', array_slice($parts, 2)) : '';
+            $brand = !empty($desc) ? $desc : 'Desconocido';
+            $model = '';
+            $submodel = '';
 
             if (empty($serial)) {
                 throw new Exception("Serie vacía para el cliente $client_name");
@@ -116,9 +163,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
                 $stmt->execute([$client_id, $brand, $model, $submodel, $serial, get_local_datetime()]);
                 $equipment_id = $pdo->lastInsertId();
             } else {
-                // Update submodel if it was empty
-                $stmt = $pdo->prepare("UPDATE equipments SET submodel = IF(submodel IS NULL OR submodel = '', ?, submodel) WHERE id = ?");
-                $stmt->execute([$submodel, $equipment_id]);
+                // Update brand if it was empty
+                $stmt = $pdo->prepare("UPDATE equipments SET brand = IF(brand IS NULL OR brand = '', ?, brand) WHERE id = ?");
+                $stmt->execute([$brand, $equipment_id]);
             }
 
             // 3. Service Order Handling
@@ -147,8 +194,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
 
             // 4. Warranty Handling
             $product_code = trim($data['Codigo'] ?? '');
-            $master_invoice = trim($data['Factura'] ?? '');
-            $master_date_raw = trim($data['Fecha2'] ?? '');
+            $master_invoice = trim($data['Factura Proveedor'] ?? $data['Factura'] ?? '');
+            $master_date_raw = trim($data['Fecha Proveedor'] ?? $data['Fecha2'] ?? '');
             $master_date = $parse_date($master_date_raw);
             $supplier = trim($data['Proveedor'] ?? '');
 
@@ -164,9 +211,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
         }
     }
 
-    fclose($handle);
 
-    $is_done = ($count < $limit);
+    $is_done = ($offset + $count >= $total_data);
     if ($is_done && file_exists($file_path)) {
         // unlink($file_path); // Optionally delete file when done
     }
@@ -187,18 +233,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         move_uploaded_file($_FILES['csv_file']['tmp_name'], '../../temp_import.csv');
         $success = "Archivo subido correctamente. Listo para procesar.";
         
-        // Peek at count
-        $line_count = 0;
-        $handle = fopen('../../temp_import.csv', 'r');
-        while (fgetcsv($handle) !== false) $line_count++;
-        fclose($handle);
-        $total_records = $line_count - 1; // Minus headers
+        // Peek at count - simple line count
+        $file_lines = file('../../temp_import.csv', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $total_records = count($file_lines) - 1; // Minus headers
     } else {
         $error = "Error al subir el archivo.";
     }
 }
 
-$page_title = "Importación Masiva de Garantías";
+$page_title = "Importación Masiva de Bodega";
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 ?>
@@ -206,7 +249,7 @@ require_once '../../includes/sidebar.php';
 <div class="animate-enter" style="max-width: 800px; margin: 0 auto;">
     <div style="margin-bottom: 2rem;">
         <h1><i class="ph ph-file-csv" style="color: var(--primary-500);"></i> Importación Masiva</h1>
-        <p class="text-muted">Sube tu archivo CSV con el formato especificado para registrar garantías en lote.</p>
+        <p class="text-muted">Sube tu archivo CSV con el formato especificado para registrar equipos en lote a la bodega.</p>
     </div>
 
     <?php if ($error): ?>
@@ -307,12 +350,33 @@ require_once '../../includes/sidebar.php';
                 btn.style.borderColor = 'var(--success)';
                 
                 setTimeout(() => {
-                    if(confirm("¿Deseas ir a ver los registros de garantía ahora?")) {
-                        window.location.href = '../warranties/index.php';
-                    }
-                }, 1000);
+                    document.getElementById('importSuccessModal').style.display = 'flex';
+                }, 800);
             }
         </script>
+
+        <!-- Modal de éxito personalizado -->
+        <div id="importSuccessModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px); animation: fadeIn 0.3s ease;">
+            <div style="background:var(--bg-card, #1a2332); border:1px solid var(--border-color, #2d3748); border-radius:16px; padding:2.5rem; max-width:420px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.4s ease;">
+                <div style="width:72px; height:72px; background:linear-gradient(135deg, #22c55e, #16a34a); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem; box-shadow:0 8px 24px rgba(34,197,94,0.3);">
+                    <i class="ph ph-check-fat" style="font-size:2.2rem; color:white;"></i>
+                </div>
+                <h3 style="margin:0 0 0.5rem; font-size:1.35rem; color:var(--text-primary, #fff);">¡Importación Exitosa!</h3>
+                <p style="margin:0 0 2rem; color:var(--text-muted, #94a3b8); font-size:0.95rem; line-height:1.5;">Todos los registros han sido procesados correctamente.</p>
+                <div style="display:flex; gap:0.75rem; justify-content:center;">
+                    <a href="../warranties/database.php" class="btn btn-primary" style="padding:0.75rem 1.5rem; font-weight:600; border-radius:10px;">
+                        <i class="ph ph-database"></i> Ver Registros
+                    </a>
+                    <button onclick="document.getElementById('importSuccessModal').style.display='none'" class="btn btn-secondary" style="padding:0.75rem 1.5rem; border-radius:10px;">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <style>
+            @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+            @keyframes slideUp { from { opacity:0; transform:translateY(30px) } to { opacity:1; transform:translateY(0) } }
+        </style>
 
     <?php else: ?>
         <div class="card">
@@ -321,7 +385,7 @@ require_once '../../includes/sidebar.php';
                     <i class="ph ph-cloud-arrow-up" style="font-size: 3rem; color: var(--primary-500); margin-bottom: 1rem; display: block;"></i>
                     <label class="form-label" style="font-size: 1.1rem;">Selecciona tu archivo CSV</label>
                     <input type="file" name="csv_file" accept=".csv" required style="display: block; margin: 1.5rem auto;">
-                    <p class="text-muted" style="font-size: 0.85rem;">Asegúrate de que las columnas coincidan: Codigo, Descripcion, FECHA, CLIENTE, FACTURA DE VENTA, Serie, Factura, Fecha2, Proveedor.</p>
+                    <p class="text-muted" style="font-size: 0.85rem;">Columnas esperadas: Codigo, Descripcion, FECHA, CLIENTE, CONTACTO, RUC, DIRECCIÓN, FACTURA DE VENTA, Serie, Factura Proveedor, Fecha Proveedor, Proveedor.</p>
                 </div>
                 <div style="margin-top: 1.5rem; text-align: right;">
                     <button type="submit" class="btn btn-primary">
@@ -337,7 +401,7 @@ require_once '../../includes/sidebar.php';
         <ul style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted);">
             <li>El sistema buscará clientes por nombre para no duplicarlos.</li>
             <li>El sistema buscará equipos por número de serie para no duplicarlos.</li>
-            <li>La **Descripción** se dividirá: 1ª palabra (Marca), 2ª palabra (Modelo), resto (Submodelo).</li>
+            <li>La columna **Equipo** (o Descripcion) se guardará de forma unificada.</li>
             <li>Los campos de fecha (FECHA, Fecha2) deben tener un formato válido (ej. 2026-02-20 o 20/02/2026).</li>
         </ul>
     </div>

@@ -27,9 +27,9 @@ if ($search) {
 $stmt = $pdo->prepare("
     SELECT DISTINCT c.* 
     FROM clients c 
-    LEFT JOIN service_orders so ON c.id = so.client_id 
     WHERE $where 
-      AND (so.id IS NULL OR so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
+      AND c.is_third_party = 0
+      AND c.name IS NOT NULL AND c.name != ''
     ORDER BY c.created_at DESC
 ");
 $stmt->execute($params);

@@ -159,6 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $c_tax = clean($_POST['client_tax_id'] ?? '');
     $c_address = clean($_POST['client_address'] ?? '');
 
+    $is_third = $is_warranty_mode ? 0 : 1;
+
     if (empty($client_id) && !empty($c_name)) {
         // Find Existing by Name or Tax ID to prevent duplicates
         $stmtCheck = $pdo->prepare("SELECT id FROM clients WHERE name = ? OR (tax_id = ? AND tax_id != '') LIMIT 1");
@@ -167,17 +169,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($existing) {
             $client_id = $existing['id'];
+            // Opcional: Si el existente era tercero y ahora es garantía, actualizarlo a cliente normal
+            if ($is_warranty_mode) {
+                $stmtC = $pdo->prepare("UPDATE clients SET is_third_party = 0 WHERE id = ?");
+                $stmtC->execute([$client_id]);
+            }
         } else {
-            // Create New Client
-            $stmtNewC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, created_at) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmtNewC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, get_local_datetime()]);
+            // Create New Client / Third Party
+            $stmtNewC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, is_third_party, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtNewC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, $is_third, get_local_datetime()]);
             $client_id = $pdo->lastInsertId();
         }
     } elseif (!empty($client_id)) {
-        // Update existing client info?
+        // Update existing client info
         // User might have edited the phone number. Let's update it to keep data fresh.
-        $stmtC = $pdo->prepare("UPDATE clients SET phone=?, email=?, tax_id=?, address=? WHERE id=?");
-        $stmtC->execute([$c_phone, $c_email, $c_tax, $c_address, $client_id]);
+        if ($is_warranty_mode) {
+             // Al editar como garantía, asegurar que sea cliente real
+             $stmtC = $pdo->prepare("UPDATE clients SET phone=?, email=?, tax_id=?, address=?, is_third_party=0 WHERE id=?");
+             $stmtC->execute([$c_phone, $c_email, $c_tax, $c_address, $client_id]);
+        } else {
+             $stmtC = $pdo->prepare("UPDATE clients SET phone=?, email=?, tax_id=?, address=? WHERE id=?");
+             $stmtC->execute([$c_phone, $c_email, $c_tax, $c_address, $client_id]);
+        }
     }
 
     if (empty($client_id)) {
@@ -286,7 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$page_title = $is_warranty_mode ? 'Registro de Garantía' : 'Recepción de Equipos';
+$page_title = $is_warranty_mode ? 'Registro de Bodega' : 'Recepción de Equipos';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 ?>
@@ -297,7 +310,7 @@ require_once '../../includes/sidebar.php';
             <h1><?php echo $page_title; ?></h1>
             <p class="text-muted">
                 <?php echo $is_warranty_mode 
-                    ? 'Complete los datos requeridos para el control de garantías.' 
+                    ? 'Complete los datos requeridos para el control de la bodega.' 
                     : 'Registra el ingreso de nuevos dispositivos para servicio técnico.'; ?>
             </p>
         </div>
@@ -544,77 +557,139 @@ require_once '../../includes/sidebar.php';
             <input type="hidden" name="type" value="<?php echo $edit_order ? $edit_order['type'] : ''; // Default or hidden handler ?>"> 
 
             <?php if ($is_warranty_mode): ?>
-                <!-- WARRANTY GRID LAYOUT (Restored) -->
-                <div class="form-section animate-enter" style="margin-top: 1rem;">
-                    <div class="form-section-header">
-                        <i class="ph ph-shield-check"></i> Detalles de Garantía
+                <!-- SECCIÓN 1: DATOS DEL CLIENTE -->
+                <div class="form-section animate-enter" style="margin-top: 1rem; margin-bottom: 2rem; border-left: 4px solid var(--primary-500);">
+                    <div class="form-section-header" style="color: var(--primary-400); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+                        <i class="ph ph-user"></i> Datos del Cliente
                     </div>
                     
-                    <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
-                        
-                        <!-- Row 1: Client & Basic Info -->
-                        <div class="form-group" style="grid-column: span 2; position: relative;">
-                             <label class="form-label">Cliente *</label>
-                             <input type="hidden" name="client_id" id="client_id_hidden_wry" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
-                             <input type="text" name="client_name_input" id="client_name_input_wry" class="form-control" placeholder="Nombre (Búsqueda inteligente)" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" autocomplete="off">
-                             <div class="search-results" id="client_autocomplete_results_wry" style="width: 100%;"></div>
+                    <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
+                        <!-- Fila 1 -->
+                        <div class="form-group" style="grid-column: span 2;">
+                             <label class="form-label">Nombre Completo *</label>
+                             <div class="input-group">
+                                 <input type="hidden" name="client_id" value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
+                                 <input type="text" name="client_name_input" class="form-control" placeholder="Nombre completo del cliente" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>" autocomplete="off">
+                                 <i class="ph ph-user input-icon" style="color: var(--primary-500);"></i>
+                             </div>
+                        </div>
+
+                        <!-- Fila 2 -->
+                        <div class="form-group">
+                            <label class="form-label">Cédula/RUC *</label>
+                            <div class="input-group">
+                                <input type="text" name="client_tax_id" class="form-control" placeholder="Número de identificación" required value="<?php echo $edit_order ? ($edit_order['tax_id'] ?? '') : ''; ?>" autocomplete="off">
+                                <i class="ph ph-address-book input-icon"></i>
+                            </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Fecha</label>
-                            <input type="text" class="form-control" value="<?php echo date('d/m/Y'); ?>" readonly>
+                            <label class="form-label">Teléfono *</label>
+                            <div class="input-group">
+                                <input type="text" name="client_phone" class="form-control" placeholder="Ej. 5555-4444" required value="<?php echo $edit_order ? htmlspecialchars($edit_order['phone'] ?? '') : ''; ?>">
+                                <i class="ph ph-phone input-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Fila 3 -->
+                        <div class="form-group">
+                            <label class="form-label">Correo Electrónico</label>
+                            <div class="input-group">
+                                <input type="email" name="client_email" class="form-control" placeholder="cliente@ejemplo.com" value="<?php echo $edit_order ? htmlspecialchars($edit_order['email'] ?? '') : ''; ?>">
+                                <i class="ph ph-envelope input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Dirección</label>
+                            <div class="input-group">
+                                <input type="text" name="client_address" class="form-control" placeholder="Dirección completa" value="<?php echo $edit_order ? htmlspecialchars($edit_order['address'] ?? '') : ''; ?>">
+                                <i class="ph ph-map-pin input-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 2: DETALLES DEL EQUIPO -->
+                <div class="form-section animate-enter" style="margin-bottom: 2rem; border-left: 4px solid var(--accent);">
+                    <div class="form-section-header" style="color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+                        <i class="ph ph-desktop"></i> Detalles del Equipo
+                    </div>
+                    
+                    <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="form-group" style="grid-column: span 1;">
+                            <label class="form-label">Código</label>
+                            <div class="input-group">
+                                <input type="text" name="product_code" class="form-control" placeholder="Cód. Producto" required value="<?php echo $edit_order['product_code'] ?? ''; ?>">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 1;">
+                            <label class="form-label">Serie (S/N) *</label>
+                            <div class="input-group">
+                                <input type="text" name="serial_number" id="serial_number_warranty" class="form-control" placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>">
+                                <i class="ph ph-barcode input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Equipo *</label>
+                            <div class="input-group">
+                                <input type="text" name="brand" class="form-control" placeholder="Ej. Lápiz HP Pavilion 15" required value="<?php echo trim(($edit_order['brand'] ?? '') . ' ' . ($edit_order['model'] ?? '') . ' ' . ($edit_order['submodel'] ?? '')); ?>">
+                                <input type="hidden" name="model" value="">
+                                <input type="hidden" name="submodel" value="">
+                                <i class="ph ph-laptop input-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 3: CONTROL DE BODEGA / GARANTÍA -->
+                <div class="form-section animate-enter" style="margin-bottom: 1.5rem; border-left: 4px solid var(--success);">
+                    <div class="form-section-header" style="color: var(--success); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
+                        <i class="ph ph-shield-check"></i> Ingreso a Bodega
+                    </div>
+                    
+                    <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <!-- Fila 1 -->
+                        <div class="form-group">
+                            <label class="form-label">Fecha de Ingreso</label>
+                            <div class="input-group">
+                                <input type="date" name="entry_date" class="form-control" value="<?php echo $edit_order ? date('Y-m-d', strtotime($edit_order['created_at'])) : date('Y-m-d'); ?>" style="color-scheme: dark;">
+                                <i class="ph ph-calendar input-icon"></i>
+                            </div>
                         </div>
 
                         <div class="form-group">
                              <label class="form-label">Factura Venta</label>
-                             <input type="text" name="sales_invoice_number" class="form-control" placeholder="No. Factura" value="<?php echo $edit_order['sales_invoice_number'] ?? ''; ?>">
-                        </div>
-
-                        <!-- Row 2: Equipment Identification -->
-                        <div class="form-group">
-                            <label class="form-label">Serie *</label>
-                            <input type="text" name="serial_number" id="serial_number_warranty" class="form-control" placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Marca</label>
-                            <input type="text" name="brand" class="form-control" placeholder="Ej. HP" required value="<?php echo $edit_order['brand'] ?? ''; ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Modelo</label>
-                            <input type="text" name="model" class="form-control" placeholder="Ej. Pavilion 15" required value="<?php echo $edit_order['model'] ?? ''; ?>">
-                        </div>
-                        
-                         <div class="form-group">
-                            <label class="form-label">Submodelo</label>
-                            <input type="text" name="submodel" class="form-control" placeholder="Ej. cx0001la" value="<?php echo $edit_order['submodel'] ?? ''; ?>">
-                        </div>
-
-                        <!-- Row 3: Master Data & Supplier -->
-                        <div class="form-group">
-                            <label class="form-label">Código</label>
-                            <input type="text" name="product_code" class="form-control" placeholder="Cód. Producto" required value="<?php echo $edit_order['product_code'] ?? ''; ?>">
-                        </div>
-
-                         <div class="form-group">
-                            <label class="form-label">Fact. Ingreso Master</label>
-                            <input type="text" name="master_entry_invoice" class="form-control" required value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
+                             <div class="input-group">
+                                <input type="text" name="sales_invoice_number" class="form-control" placeholder="No. Factura" value="<?php echo $edit_order['sales_invoice_number'] ?? ''; ?>">
+                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label class="form-label">Fecha Master</label>
+                            <label class="form-label">Factura Proveedor</label>
+                            <div class="input-group">
+                                <input type="text" name="master_entry_invoice" class="form-control" required value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Fecha Proveedor</label>
                             <input type="date" name="master_entry_date" class="form-control" required value="<?php echo $edit_order['master_entry_date'] ?? ''; ?>" style="color-scheme: dark;">
                         </div>
-                        
-                         <div class="form-group">
+
+                        <!-- Fila 2 -->
+                        <div class="form-group" style="grid-column: span 4;">
                             <label class="form-label">Proveedor</label>
-                            <input type="text" name="supplier_name" class="form-control" placeholder="Proveedor Original" required value="<?php echo $edit_order['supplier_name'] ?? ''; ?>">
+                            <div class="input-group">
+                                <input type="text" name="supplier_name" class="form-control" placeholder="Proveedor Original" required value="<?php echo $edit_order['supplier_name'] ?? ''; ?>">
+                            </div>
                         </div>
 
-                        <!-- Row 4: Warranty Duration & Expiration -->
+                        <!-- Fila 3 -->
                         <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Tiempo de Garantía</label>
+                            <label class="form-label">Tiempo de Garantía Ofrecida</label>
                             <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
                                 <input type="number" name="warranty_duration" id="warranty_duration" class="form-control" placeholder="Cant." min="0" value="0" style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 0.5rem;">
                                 <select name="warranty_period" id="warranty_period" class="form-control" style="width: auto; flex: 0 0 130px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1;">
@@ -627,18 +702,18 @@ require_once '../../includes/sidebar.php';
                         </div>
 
                         <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Fecha Vencimiento</label>
+                            <label class="form-label">Fecha Vencimiento Estimada</label>
                             <div class="input-group">
-                                <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control" readonly style="background-color: var(--bg-body); cursor: not-allowed; font-weight: 600; color: var(--primary-500); color-scheme: dark;">
-                                <i class="ph ph-calendar-check input-icon" style="color: var(--primary-500);"></i>
+                                <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control" readonly style="background-color: rgba(255,255,255,0.03); cursor: not-allowed; font-weight: 600; color: var(--success); color-scheme: dark;">
+                                <i class="ph ph-calendar-check input-icon" style="color: var(--success);"></i>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div style="text-align: right; margin-top: 1.5rem; margin-bottom: 2rem;">
-                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-weight: 600; border-radius: 8px;">
-                        <i class="ph ph-floppy-disk"></i> <?php echo $edit_order ? 'Guardar Cambios' : 'Guardar Registro'; ?>
+                <div style="text-align: right; margin-top: 2rem; margin-bottom: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                        <i class="ph ph-floppy-disk"></i> <?php echo $edit_order ? 'Guardar Cambios' : 'Registrar en Bodega'; ?>
                     </button>
                 </div>
             <?php else: ?>
@@ -646,7 +721,7 @@ require_once '../../includes/sidebar.php';
                 <div class="step-container active" id="step-1">
                     <div class="form-section">
                         <div class="form-section-header">
-                            <i class="ph ph-user"></i> Datos del Cliente
+                            <i class="ph ph-user"></i> Recepción por Tercero
                         </div>
                         
                         <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
@@ -662,7 +737,7 @@ require_once '../../includes/sidebar.php';
                             </div>
 
                             <div class="form-group" style="position: relative;">
-                                <label class="form-label">Cédula/RUC *</label>
+                                <label class="form-label">Cédula *</label>
                                 <div class="input-group">
                                     <input type="text" name="client_tax_id" id="client_tax_id_std" class="form-control" placeholder="Número de identificación" required value="<?php echo $edit_order ? ($edit_order['tax_id'] ?? '') : ''; ?>" autocomplete="off">
                                     <i class="ph ph-identification-card input-icon"></i>
@@ -733,27 +808,13 @@ require_once '../../includes/sidebar.php';
                                     </div>
                                 </div>
 
-                                 <div class="form-group" style="grid-column: span 2;">
-                                    <label class="form-label">Marca *</label>
+                                 <div class="form-group" style="grid-column: span 6;">
+                                    <label class="form-label">Equipo *</label>
                                     <div class="input-group">
-                                        <input type="text" name="brand[]" class="form-control" required placeholder="Ej. HP, Dell, Apple">
-                                        <i class="ph ph-tag input-icon"></i>
-                                    </div>
-                                </div>
-
-                                <div class="form-group" style="grid-column: span 2;">
-                                    <label class="form-label">Modelo *</label>
-                                    <div class="input-group">
-                                        <input type="text" name="model[]" class="form-control" required placeholder="Ej. Pavilion 15">
-                                        <i class="ph ph-laptop input-icon"></i>
-                                    </div>
-                                </div>
-
-                                <div class="form-group" style="grid-column: span 2;">
-                                    <label class="form-label">Tipo *</label>
-                                    <div class="input-group">
-                                        <input list="type-options" name="type[]" class="form-control" required placeholder="Laptop, PC, Consola...">
-                                        <i class="ph ph-monitor input-icon"></i>
+                                        <input type="text" name="brand[]" class="form-control" required placeholder="Ej. NOTEBOOK DELL LATITUDE 5540, PC HP PRODESK 400...">
+                                        <input type="hidden" name="model[]" value="">
+                                        <input type="hidden" name="type[]" value="PC">
+                                        <i class="ph ph-desktop input-icon"></i>
                                     </div>
                                 </div>
 
@@ -798,13 +859,7 @@ require_once '../../includes/sidebar.php';
                                         <i class="ph ph-user-circle input-icon"></i>
                                     </div>
                                 </div>
-                                <div class="form-group" style="grid-column: span 3;">
-                                    <label class="form-label">Submodelo / Variación</label>
-                                    <div class="input-group">
-                                        <input type="text" name="submodel[]" class="form-control" placeholder="Opcional">
-                                        <i class="ph ph-info input-icon"></i>
-                                    </div>
-                                </div>
+                                <input type="hidden" name="submodel[]" value="">
                             </div>
                         </div>
                     </div>
@@ -847,7 +902,6 @@ require_once '../../includes/sidebar.php';
                                                 <th style="padding: 0.5rem;">#</th>
                                                 <th style="padding: 0.5rem;">Equipo / Serie</th>
                                                 <th style="padding: 0.5rem;">Problema</th>
-                                                <th style="padding: 0.5rem;">Tipo</th>
                                             </tr>
                                         </thead>
                                         <tbody id="summary-equipments-tbody">
@@ -1149,8 +1203,6 @@ require_once '../../includes/sidebar.php';
                     .then(data => {
                         if (data.success && data.data) {
                             if (!block.querySelector('[name="brand[]"]').value) block.querySelector('[name="brand[]"]').value = data.data.brand || '';
-                            if (!block.querySelector('[name="model[]"]').value) block.querySelector('[name="model[]"]').value = data.data.model || '';
-                            if (!block.querySelector('[name="type[]"]').value) block.querySelector('[name="type[]"]').value = data.data.type || '';
                             
                             const clientInput = block.querySelector('.registered-client-input');
                             if (clientInput) {
@@ -1198,22 +1250,18 @@ require_once '../../includes/sidebar.php';
 
                     equipmentBlocks.forEach((block, i) => {
                         const serial = block.querySelector('[name="serial_number[]"]').value;
-                        const brand = block.querySelector('[name="brand[]"]').value;
-                        const model = block.querySelector('[name="model[]"]').value;
+                        const equipo = block.querySelector('[name="brand[]"]').value;
                         const problem = block.querySelector('[name="problem_reported[]"]').value;
-                        const type = block.querySelector('[name="service_type[]"]').value;
-                        const typeLabel = type === 'warranty' ? '<span class="badge badge-warning">Garantía</span>' : '<span class="badge badge-info">Servicio</span>';
 
                         const row = document.createElement('tr');
                         row.style.borderBottom = '1px solid var(--border-color)';
                         row.innerHTML = `
                             <td style="padding: 0.75rem;">${i + 1}</td>
                             <td style="padding: 0.75rem;">
-                                <strong>${brand} ${model}</strong><br>
+                                <strong>${equipo}</strong><br>
                                 <span class="text-muted" style="font-size: 0.75rem;">S/N: ${serial}</span>
                             </td>
                             <td style="padding: 0.75rem;">${problem}</td>
-                            <td style="padding: 0.75rem;">${typeLabel}</td>
                         `;
                         tbody.appendChild(row);
                     });
@@ -1260,6 +1308,9 @@ require_once '../../includes/sidebar.php';
                             const nameInputWry = document.getElementById('client_name_input_wry');
                             const idInputWry = document.getElementById('client_id_hidden_wry');
                             const resultsDivWry = document.getElementById('client_autocomplete_results_wry');
+                            const taxInputWry = document.getElementById('client_tax_id_wry');
+                            const phoneInputWry = document.getElementById('client_phone_wry');
+                            const addressInputWry = document.getElementById('client_address_wry');
 
                             // Other inputs for population
                             const phoneInput = document.getElementById('client_phone_std');
@@ -1282,6 +1333,9 @@ require_once '../../includes/sidebar.php';
                                 if(isWry) {
                                     if(nameInputWry) nameInputWry.value = client.name;
                                     if(idInputWry) idInputWry.value = client.id;
+                                    if(taxInputWry) taxInputWry.value = client.tax_id || '';
+                                    if(phoneInputWry) phoneInputWry.value = client.phone || '';
+                                    if(addressInputWry) addressInputWry.value = client.address || '';
                                     if(resultsDivWry) resultsDivWry.classList.remove('show');
                                 } else {
                                     if(nameInput) nameInput.value = client.name;
@@ -1312,43 +1366,7 @@ require_once '../../includes/sidebar.php';
                             // 4. Attach Listeners
 
                             // --- A. Cédula Search ---
-                            if (taxInput) {
-                                taxInput.addEventListener('keydown', function(event) {
-                                    if (event.key === 'Enter') event.preventDefault();
-                                });
-
-                                taxInput.addEventListener('input', function() {
-                                    const val = this.value.trim(); 
-                                    
-                                    if(val.length === 0) {
-                                        if(taxResultsDiv) taxResultsDiv.classList.remove('show');
-                                        return;
-                                    }
-
-                                    const matches = allClients.filter(c => {
-                                        const tax = c.tax_id ? c.tax_id.toString().toLowerCase() : '';
-                                        return tax.includes(val.toLowerCase());
-                                    });
-                                    
-                                    if(taxResultsDiv) {
-                                        taxResultsDiv.innerHTML = '';
-                                        if (matches.length > 0) {
-                                            matches.slice(0, 5).forEach(c => { 
-                                                const html = `<strong>${c.tax_id || 'N/A'}</strong> - ${c.name}`;
-                                                const div = createOption(html, () => fillClientData(c));
-                                                taxResultsDiv.appendChild(div);
-                                            });
-                                        } else {
-                                            const div = document.createElement('div');
-                                            div.style.padding = '12px 16px';
-                                            div.style.color = 'var(--text-muted)';
-                                            div.innerHTML = `<em>Sin resultados</em>`;
-                                            taxResultsDiv.appendChild(div);
-                                        }
-                                        taxResultsDiv.classList.add('show');
-                                    }
-                                });
-                            }
+                            // [El buscador de cédulas ha sido desactivado a petición del usuario. Era una funcionalidad exclusiva para Recepción]
 
                             // Hide on click outside
                             document.addEventListener('click', (e) => {
@@ -1358,41 +1376,23 @@ require_once '../../includes/sidebar.php';
                                 if (resultsDiv && !resultsDiv.contains(e.target) && e.target !== nameInput) {
                                     resultsDiv.classList.remove('show');
                                 }
-                                if (resultsDivWry && !resultsDivWry.contains(e.target) && e.target !== nameInputWry) {
-                                    resultsDivWry.classList.remove('show');
-                                }
                             });
 
 
                             // --- B. Name Search (Existing Logic Ported) ---
-                            if(nameInput) {
-                                nameInput.addEventListener('input', function() {
-                                    const val = this.value.toLowerCase().trim();
-                                    
-                                    // Reset ID if user types anew, unless picking from list
-                                    if(idInput) idInput.value = ''; 
-                                    
-                                    if (clearBtn) {
-                                        if(val.length > 0) clearBtn.style.display = 'block';
-                                        else clearBtn.style.display = 'none';
-                                    }
+                            // [El buscador de nombres ha sido desactivado a petición del usuario. Era una funcionalidad exclusiva para Recepción]
 
-                                    if (val.length === 0) {
-                                        if (resultsDiv) resultsDiv.classList.remove('show');
-                                        return;
-                                    }
-
-                                    const matches = allClients.filter(c => c.name.toLowerCase().includes(val));
-                                    
-                                    if (resultsDiv) {
-                                        resultsDiv.innerHTML = '';
-                                        if (matches.length > 0) {
-                                            matches.slice(0, 10).forEach(c => {
-                                                const html = `<strong>${c.name}</strong> <span style='font-size:0.8em; opacity: 0.7;'>${c.tax_id || ''}</span>`;
-                                                const div = createOption(html, () => fillClientData(c));
-                                                resultsDiv.appendChild(div);
-                                            });
-                                            resultsDiv.classList.add('show');
+                            if(clearBtn) {
+                                clearBtn.addEventListener('click', () => {
+                                    nameInput.value = '';
+                                    if(idInput) idInput.value = '';
+                                    taxInput.value = '';
+                                    phoneInput.value = '';
+                                    emailInput.value = '';
+                                    addressInput.value = '';
+                                    clearBtn.style.display = 'none';
+                                });
+                            }
                                         } else {
                                             resultsDiv.classList.remove('show');
                                         }
@@ -1421,35 +1421,8 @@ require_once '../../includes/sidebar.php';
                                 // Removed aggressive blur clearing to allow new client entry
                             }
 
-                            // --- C. Warranty Name Search ---
-                            if(nameInputWry) {
-                                nameInputWry.addEventListener('input', function() {
-                                    const val = this.value.toLowerCase().trim();
-                                    if(idInputWry) idInputWry.value = ''; 
-                                    
-                                    if (val.length === 0) {
-                                        if (resultsDivWry) resultsDivWry.classList.remove('show');
-                                        return;
-                                    }
-
-                                    const matches = allClients.filter(c => c.name.toLowerCase().includes(val));
-                                    if (resultsDivWry) {
-                                        resultsDivWry.innerHTML = '';
-                                        if (matches.length > 0) {
-                                            matches.slice(0, 10).forEach(c => {
-                                                const html = `<strong>${c.name}</strong> <span style='font-size:0.8em; opacity: 0.7;'>${c.tax_id || ''}</span>`;
-                                                const div = createOption(html, () => fillClientData(c, true));
-                                                resultsDivWry.appendChild(div);
-                                            });
-                                            resultsDivWry.classList.add('show');
-                                        } else {
-                                            resultsDivWry.classList.remove('show');
-                                        }
-                                    }
-                                });
-
-                                // Removed aggressive blur clearing to allow new client entry
-                            }
+                                // Warranty Name Search was removed
+                            // }
 
                         } catch (e) {
                             console.error(e);
@@ -1515,10 +1488,11 @@ require_once '../../includes/sidebar.php';
                             if (data.data) {
                                 console.log("Auto-filling data:", data.data);
                                 
+                                const combinedEquipo = [data.data.brand, data.data.model, data.data.submodel].filter(Boolean).join(' ');
                                 const fields = {
-                                    'brand': data.data.brand,
-                                    'model': data.data.model,
-                                    'submodel': data.data.submodel,
+                                    'brand': combinedEquipo,
+                                    'model': '',
+                                    'submodel': '',
                                     'type': data.data.type,
                                     'sales_invoice_number': data.data.invoice,
                                     'invoice_number': data.data.invoice
@@ -1695,7 +1669,7 @@ require_once '../../includes/sidebar.php';
     <script>
     function openWarrantyModal(data) {
         document.getElementById('modal_code').value = data.product_code || '';
-        document.getElementById('modal_model').value = (data.brand || '') + ' ' + (data.model || '');
+        document.getElementById('modal_model').value = data.brand || '';
         document.getElementById('modal_date').value = data.end_date || ''; 
         document.getElementById('modal_client').value = data.client_name || '';
         document.getElementById('modal_invoice').value = data.sales_invoice_number || '';

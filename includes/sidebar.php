@@ -71,13 +71,13 @@
                 ];
             }
 
-            // Registro de Garantía
+            // Registro de Bodega
             if(can_access_module('new_warranty', $pdo)) {
                  $menu_items['new_warranty'] = [
                     'type' => 'dropdown',
                     'url' => '#',
                     'icon' => 'ph-shield-check',
-                    'label' => 'Registro de Garantía',
+                    'label' => 'Registro de Bodega',
                     'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment/entry.php?type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false),
                     'children' => [
                         ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Registro'],

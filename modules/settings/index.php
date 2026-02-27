@@ -1492,7 +1492,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-400);">
                     <i class="ph ph-file-csv"></i>
                 </div>
-                <h3>Importar Garantías</h3>
+                <h3>Importar Bodega</h3>
                 <p>Carga masiva de registros (CSV). Ideal para migraciones o cargas iniciales de datos.</p>
                 <div style="margin-top: auto;">
                     <a href="import_warranties.php" class="btn btn-premium" style="background: var(--primary-500); color: white; border: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">

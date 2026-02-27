@@ -37,10 +37,12 @@ $stmt = $pdo->prepare("
     SELECT 
         so.*, so.display_id,
         c.name as contact_name, c.phone, c.email, c.tax_id, c.address,
-        e.brand, e.model, e.submodel, e.serial_number, e.type as equipment_type
+        e.brand, e.model, e.submodel, e.serial_number, e.type as equipment_type,
+        co.name as owner_name
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients co ON e.client_id = co.id
     WHERE so.id IN ($placeholders)
     ORDER BY so.id ASC
 ");
@@ -82,26 +84,27 @@ if (empty($doc_number)) {
         .btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; text-decoration: none; }
         .btn-primary { background: #2563eb; color: white; }
         
-        .header-grid { display: grid; grid-template-columns: 25% 55% 20%; border: 1px solid var(--border-color); margin-bottom: 10px; }
-        .header-col { padding: 8px; display: flex; flex-direction: column; justify-content: center; }
-        .header-logo { text-align: center; border-right: 1px solid var(--border-color); }
+        .header-grid { display: grid; grid-template-columns: 25% 55% 20%; border: 1.5px solid var(--border-color); margin-bottom: 8px; }
+        .header-col { padding: 4px; display: flex; flex-direction: column; justify-content: center; }
+        .header-logo { text-align: center; border-right: 1.5px solid var(--border-color); }
         .logo-img { max-width: 140px; max-height: 50px; object-fit: contain; margin: 0 auto; }
-        .header-center { text-align: center; border-right: 1px solid var(--border-color); }
+        .header-center { text-align: center; border-right: 1.5px solid var(--border-color); }
         .header-center h2 { margin: 0; font-size: 15px; font-weight: 700; }
+        .header-center h3 { margin: 0; font-size: 13px; font-weight: 700; }
         .header-right { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .doc-box { border: 2px solid var(--border-color); padding: 5px 15px; font-size: 16px; font-weight: bold; margin-bottom: 3px; }
+        .doc-box { border: 1.5px solid var(--border-color); padding: 5px 15px; font-size: 16px; font-weight: bold; margin-bottom: 3px; }
 
-        .section-header { background: #eee; border: 1px solid var(--border-color); border-bottom: none; text-align: center; font-weight: bold; padding: 4px; font-size: 11px; }
-        .section-box { border: 1px solid var(--border-color); padding: 8px; margin-bottom: 10px; }
-        
-        .client-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 15px; }
+        .section-header { background: #fff; border: 1.5px solid var(--border-color); border-bottom: none; text-align: center; font-weight: bold; padding: 4px; font-size: 11px; margin-top: 8px; }
+        .section-box { border: 1.5px solid var(--border-color); padding: 5px; margin-bottom: 8px; }
+        .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
         .info-row { margin-bottom: 3px; display: flex; }
-        .info-label { font-weight: bold; width: 90px; text-align: right; margin-right: 10px; }
+        .info-label { font-weight: bold; width: 80px; text-align: right; margin-right: 10px; }
+        .info-label { font-weight: bold; width: 80px; text-align: right; margin-right: 10px; }
         .info-val { flex: 1; }
 
-        .equip_table { width: 100%; border-collapse: collapse; border: 1px solid var(--border-color); margin-bottom: 10px; }
-        .equip_table th, .equip_table td { border: 1px solid var(--border-color); padding: 6px; text-align: left; font-size: 11px; }
-        .equip_table th { background: #f0f0f0; font-weight: bold; text-align: center; }
+        .equip_table { width: 100%; border-collapse: collapse; border: 1.5px solid var(--border-color); margin-top: 8px; margin-bottom: 8px;}
+        .equip_table th, .equip_table td { border: 1.5px solid var(--border-color); padding: 4px; text-align: center; font-size: 11px; }
+        .equip_table th { background: #fff; font-weight: bold; }
         
         .legal-footer { font-size: 10px; text-align: justify; border: 1px solid var(--border-color); padding: 8px; margin-bottom: 10px; line-height: 1.3; }
         .signatures-area { display: flex; justify-content: space-around; margin-top: 10px; }
@@ -109,7 +112,7 @@ if (empty($doc_number)) {
         .sig-box { width: 40%; text-align: center; }
         .sig-line { border-bottom: 1px solid black; height: 50px; margin-bottom: 5px; }
 
-        @media print { .actions { display: none; } body { background: white; padding: 0; } .paper { box-shadow: none; margin: 0; width: 100%; padding: 10mm; } }
+        @media print { .actions { display: none; } body { background: white; } .paper { box-shadow: none; margin: 0; width: 100%; padding: 10mm; } }
     </style>
 </head>
 <body>
@@ -125,6 +128,7 @@ if (empty($doc_number)) {
             </div>
             <div class="header-col header-center">
                 <h2>RECEPCIÓN DE EQUIPOS</h2>
+                <h3>SOPORTE TÉCNICO</h3>
                 <p style="margin:4px 0; font-size: 10px;">Tel: <?php echo htmlspecialchars($company_phone); ?> | Email: <?php echo htmlspecialchars($company_email); ?></p>
             </div>
             <div class="header-col header-right">
@@ -137,50 +141,64 @@ if (empty($doc_number)) {
         <div class="section-box">
             <div class="client-grid">
                 <div>
-                    <div class="info-row"><div class="info-label">Cliente:</div><div class="info-val"><?php echo htmlspecialchars($first_order['contact_name']); ?></div></div>
-                    <div class="info-row"><div class="info-label">RUC/Cédula:</div><div class="info-val"><?php echo htmlspecialchars($first_order['tax_id'] ?: '-'); ?></div></div>
-                    <div class="info-row"><div class="info-label">Dirección:</div><div class="info-val"><?php echo htmlspecialchars($first_order['address'] ?: 'N/D'); ?></div></div>
+                    <div class="info-row"><div class="info-label">Fecha:</div><div class="info-val"><?php echo date('d/m/Y h:i:s A', strtotime($first_order['entry_date'])); ?></div></div>
+                    <?php if(count($orders) === 1): ?>
+                        <div class="info-row"><div class="info-label">Caso #:</div><div class="info-val" style="color: #2563eb; font-weight: bold;"><?php echo get_order_number($orders[0]); ?></div></div>
+                    <?php endif; ?>
+                    <div class="info-row"><div class="info-label">Cliente:</div><div class="info-val"><?php echo htmlspecialchars(!empty($first_order['owner_name']) ? $first_order['owner_name'] : $first_order['contact_name']); ?></div></div>
                 </div>
                 <div>
-                    <div class="info-row"><div class="info-label">Fecha:</div><div class="info-val"><?php echo date('d/m/Y h:i A', strtotime($first_order['entry_date'])); ?></div></div>
-                    <div class="info-row"><div class="info-label">Teléfono:</div><div class="info-val"><?php echo htmlspecialchars($first_order['phone']); ?></div></div>
+                    <div class="info-row"><div class="info-label">Contacto:</div><div class="info-val"><?php echo htmlspecialchars($first_order['contact_name']); ?></div></div>
+                    <?php $tax_label_print = ($first_order['service_type'] == 'warranty') ? 'Cédula/RUC:' : 'Cédula:'; ?>
+                    <div class="info-row"><div class="info-label"><?php echo $tax_label_print; ?></div><div class="info-val"><?php echo htmlspecialchars($first_order['tax_id'] ?: '-'); ?></div></div>
+                    <div class="info-row"><div class="info-label">Celular:</div><div class="info-val"><?php echo htmlspecialchars($first_order['phone']); ?></div></div>
                     <div class="info-row"><div class="info-label">Correo:</div><div class="info-val"><?php echo htmlspecialchars($first_order['email'] ?: '-'); ?></div></div>
                 </div>
             </div>
         </div>
 
-        <div class="section-header">DETALLE DE EQUIPOS E INGRESOS</div>
-        <table class="equip_table">
+        <div class="section-header" style="margin-bottom: 0; border-bottom: none;">INGRESO DE EQUIPO</div>
+        <table class="equip_table" style="margin-top: 0; margin-bottom: 8px;">
             <thead>
                 <tr>
-                    <th style="width: 80px;">CASO #</th>
-                    <th>EQUIPO / SERIE</th>
-                    <th>PROBLEMA REPORTADO</th>
-                    <th>ACCESORIOS</th>
+                    <th style="width: 60%;">EQUIPO</th>
+                    <th style="width: 20%;"># SERIE</th>
+                    <th style="width: 20%;">TIPO DE SERVICIO</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach($orders as $o): ?>
                 <tr>
-                    <td style="text-align: center; font-weight: bold; color: #2563eb;"><?php echo get_order_number($o); ?></td>
-                    <td>
-                        <strong><?php echo htmlspecialchars($o['brand'] . ' ' . $o['model']); ?></strong><br>
-                        S/N: <?php echo htmlspecialchars($o['serial_number']); ?><br>
-                        <small>Tipo: <?php echo htmlspecialchars($o['equipment_type']); ?> | Modo: <?php echo $o['service_type'] == 'warranty' ? 'GARANTÍA' : 'SERVICIO'; ?></small>
+                    <td style="text-align: center; text-transform: uppercase;"><?php echo htmlspecialchars(trim($o['brand'] . ' ' . $o['model'])); ?></td>
+                    <td style="text-align: center; text-transform: uppercase;"><?php echo htmlspecialchars($o['serial_number']); ?></td>
+                    <td style="text-align: center;"><?php echo $o['service_type'] == 'warranty' ? 'GARANTÍA' : 'SERVICIO'; ?></td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="padding: 0; background: #fff;">
+                        <div style="font-weight: bold; text-align: center; border-bottom: 1.5px solid var(--border-color); padding: 4px; font-size: 11px;">ACCESORIOS RECIBIDOS</div>
+                        <div style="padding: 6px; font-size: 11px; text-align: left;">
+                            <?php echo htmlspecialchars($o['accessories_received'] ?: 'N/A'); ?>
+                        </div>
                     </td>
-                    <td><?php echo nl2br(htmlspecialchars($o['problem_reported'])); ?></td>
-                    <td><?php echo htmlspecialchars($o['accessories_received']); ?></td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="padding: 0; background: #fff;">
+                        <div style="font-weight: bold; text-align: center; border-bottom: 1.5px solid var(--border-color); padding: 4px; font-size: 11px;">PROBLEMA REPORTADO / SERVICIO SOLICITADO</div>
+                        <div style="padding: 6px; font-size: 11px; text-align: left;">
+                            <?php echo nl2br(htmlspecialchars($o['problem_reported'])); ?>
+                        </div>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
 
-        <?php if(!empty($first_order['entry_notes'])): ?>
-        <div class="section-header">OBSERVACIONES GENERALES</div>
-        <div class="section-box" style="font-size: 11px;"><?php echo nl2br(htmlspecialchars($first_order['entry_notes'])); ?></div>
-        <?php endif; ?>
-
         <div class="bottom-section">
+            <?php if(!empty($first_order['entry_notes'])): ?>
+            <div class="section-header" style="margin-bottom: 0;">OBSERVACIONES GENERALES</div>
+            <div class="section-box" style="font-size: 11px; margin-bottom: 10px;"><?php echo nl2br(htmlspecialchars($first_order['entry_notes'])); ?></div>
+            <?php endif; ?>
+
             <div class="legal-footer"><?php echo nl2br(htmlspecialchars($print_entry_text)); ?></div>
 
             <div class="signatures-area">

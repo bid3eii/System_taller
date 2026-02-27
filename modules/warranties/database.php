@@ -9,7 +9,7 @@ if (!can_access_module('warranties', $pdo) && !can_access_module('new_warranty',
     die("Acceso denegado.");
 }
 
-$page_title = 'Registros de Garantías';
+$page_title = 'Registros de Bodega';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 
@@ -67,8 +67,8 @@ $records = $stmt->fetchAll();
 <div class="animate-enter">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <div>
-            <h1><i class="ph ph-database" style="color: var(--primary-500);"></i> Registros de Garantías</h1>
-            <p class="text-muted">Consulta el historial completo de hardware vendido y sus periodos de garantía.</p>
+            <h1><i class="ph ph-database" style="color: var(--primary-500);"></i> Registros de Bodega</h1>
+            <p class="text-muted">Consulta el historial completo de hardware registrado en bodega.</p>
         </div>
         <a href="../equipment/entry.php?type=warranty" class="btn btn-primary">
             <i class="ph ph-plus-circle"></i> Nuevo Registro

@@ -33,7 +33,7 @@ $stmt = $pdo->prepare("
     SELECT so.*, e.brand, e.model, e.type as equipment_type 
     FROM service_orders so
     LEFT JOIN equipments e ON so.equipment_id = e.id
-    WHERE so.client_id = ? 
+    WHERE so.client_id = ? AND so.service_type != 'warranty'
     ORDER BY so.created_at DESC
 ");
 $stmt->execute([$id]);
