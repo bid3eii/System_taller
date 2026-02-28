@@ -166,8 +166,7 @@ $anexos = $stmt->fetchAll();
                                             style="color: var(--primary-500) !important;" title="Imprimir PDF"><i
                                                 class="ph ph-file-pdf"></i></a>
                                         <?php if (has_role(['Super Admin', 'Administrador'], $pdo)): ?>
-                                            <form method="POST" style="display:inline;"
-                                                onsubmit="return confirm('¿Estás seguro de eliminar este anexo?');">
+                                            <form method="POST" style="display:inline;" class="form-delete">
                                                 <input type="hidden" name="delete_id" value="<?php echo $item['id']; ?>">
                                                 <button type="submit" class="btn-icon"
                                                     style="color: var(--danger) !important; background: transparent; border: 1px solid var(--border-color); cursor: pointer;"
@@ -195,5 +194,32 @@ $anexos = $stmt->fetchAll();
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteForms = document.querySelectorAll('.form-delete');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Eliminar Anexo?',
+                    text: 'Esta acción no se puede deshacer',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    });
+</script>
 
 <?php require_once '../../includes/footer.php'; ?>
