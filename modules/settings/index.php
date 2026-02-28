@@ -482,6 +482,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Delete all users except SuperAdmin (ID 1)
                 $pdo->exec("DELETE FROM users WHERE id != 1");
+                $pdo->exec("ALTER TABLE users AUTO_INCREMENT = 2");
                 $pdo->exec("DELETE FROM user_custom_modules WHERE user_id != 1");
 
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
@@ -1362,7 +1363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 $onclick = $is_super_user ? "" : "window.location.href='../users/edit.php?id={$user['id']}'";
                             ?>
                             <tr onclick="<?php echo $onclick; ?>" style="<?php echo $row_style; ?>" class="<?php echo $is_super_user ? '' : 'hover-row'; ?>">
-                                <td><strong>#<?php echo str_pad($user['id'], 4, '0', STR_PAD_LEFT); ?></strong></td>
+                                <td><strong>#<?php echo str_pad($user['id'], 2, '0', STR_PAD_LEFT); ?></strong></td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                                         <div class="user-avatar-sm" style="width: 32px; height: 32px; font-size: 0.9rem;">

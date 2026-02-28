@@ -120,7 +120,7 @@ function format_currency($amount)
  * @param int $padding Number of leading zeros
  * @return string
  */
-function get_order_number($order, $padding = 6) {
+function get_order_number($order, $padding = 4) {
     if (!$order) return '-';
     $num = !empty($order['display_id']) ? $order['display_id'] : $order['id'];
     return '#' . str_pad($num, $padding, '0', STR_PAD_LEFT);
