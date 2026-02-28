@@ -160,6 +160,11 @@ $anexos = $stmt->fetchAll();
                                 </td>
                                 <td>
                                     <div class="table-actions">
+                                        <?php if (has_role(['Super Admin', 'Administrador', 'Supervisor', 'Técnico'], $pdo)): ?>
+                                            <a href="edit.php?id=<?php echo $item['id']; ?>" class="btn-icon"
+                                                style="color: var(--primary-500) !important;" title="Editar Anexo"><i
+                                                    class="ph ph-pencil-simple"></i></a>
+                                        <?php endif; ?>
                                         <a href="view.php?id=<?php echo $item['id']; ?>" class="btn-icon"
                                             title="Ver Detalles"><i class="ph ph-eye"></i></a>
                                         <a href="print.php?id=<?php echo $item['id']; ?>" target="_blank" class="btn-icon"
@@ -203,9 +208,11 @@ $anexos = $stmt->fetchAll();
         box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5) !important;
         background-color: var(--bg-secondary) !important;
     }
+
     h2.swal2-title {
         color: var(--text-primary) !important;
     }
+
     div.swal2-html-container {
         color: var(--text-secondary) !important;
     }
