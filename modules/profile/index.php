@@ -155,383 +155,505 @@ require_once '../../includes/sidebar.php';
         </div>
     <?php endif; ?>
 
-    <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start;">
-        
-        <!-- LEFT COLUMN: IDENTITY -->
-        <div class="profile-card">
-            <div class="text-center mb-4">
-                <div class="avatar-circle">
-                    <?php echo strtoupper(substr($user['username'], 0, 1)); ?>
-                </div>
-                <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($user['username']); ?></h2>
-                <div class="badge badge-role"><?php echo htmlspecialchars($user['role_name']); ?></div>
-            </div>
-
-            <div class="info-group">
-                <label>Email</label>
-                <div class="info-value">
-                    <i class="ph ph-envelope"></i> <?php echo htmlspecialchars($user['email']); ?>
-                </div>
-            </div>
-
-            <hr style="border-color: var(--border-color); opacity: 0.5; margin: 1.5rem 0;">
-
-            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
-                <i class="ph-fill ph-pen-nib" style="color: var(--primary);"></i> Firma Digital
-            </h3>
-            
-            <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 1rem;">
-                Aparecerá en los documentos que generes (Diagnósticos, Entradas, Salidas).
-            </p>
-
-            <?php if (!empty($user['signature_path'])): ?>
-                <div class="signature-preview mb-3">
-                    <img src="../../assets/uploads/signatures/<?php echo $user['signature_path']; ?>?v=<?php echo time(); ?>" alt="Firma">
-                </div>
-                <form id="deleteSignatureForm" method="POST">
-                    <input type="hidden" name="action" value="delete_signature">
-                    <button type="button" id="btnDeleteSignature" class="btn btn-outline-danger w-100 btn-sm-custom">
-                        <i class="ph ph-trash"></i> Eliminar Firma
-                    </button>
-                </form>
-            <?php else: ?>
-                <form method="POST" enctype="multipart/form-data">
-                    <div style="position: relative; margin-bottom: 1rem;">
-                        <input type="file" name="signature" id="sigInput" class="form-control" accept="image/png" required style="display: none;" onchange="this.form.submit()">
-                        <label for="sigInput" class="btn btn-secondary w-100 btn-sm-custom" style="cursor: pointer;">
-                            <i class="ph ph-upload-simple"></i> Subir Firma (PNG)
-                        </label>
+    <div class="profile-grid">
+        <!-- LEFT COLUMN: IDENTITY & QUICK ACTIONS -->
+        <div class="profile-sidebar">
+            <div class="profile-card identity-card">
+                <div class="avatar-container">
+                    <div class="avatar-circle">
+                        <?php echo strtoupper(substr($user['username'], 0, 1)); ?>
                     </div>
-                </form>
-                <div class="text-xs text-center text-muted">Fondo transparente recomendado</div>
-            <?php endif; ?>
-        </div>
-
-        <!-- LEFT COLUMN: PASSWORD CHANGE -->
-        <div class="profile-card" style="margin-top: 2rem;">
-            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px;">
-                <i class="ph-fill ph-lock-key" style="color: #ef4444;"></i> Seguridad
-            </h3>
-            
-            <form method="POST" id="changePasswordForm">
-                <input type="hidden" name="action" value="change_password">
+                    <div class="avatar-ring"></div>
+                </div>
                 
-                <div class="form-group mb-3">
-                    <label class="form-label-custom">Contraseña Actual</label>
-                    <div class="input-with-icon">
-                        <i class="ph ph-key"></i>
-                        <input type="password" name="current_password" class="form-control-custom" required placeholder="••••••••">
-                    </div>
+                <div class="identity-info">
+                    <h2 class="user-name"><?php echo htmlspecialchars($user['username']); ?></h2>
+                    <span class="user-role-badge"><?php echo htmlspecialchars($user['role_name']); ?></span>
+                    <p class="user-email">
+                        <i class="ph ph-envelope"></i> <?php echo htmlspecialchars($user['email']); ?>
+                    </p>
                 </div>
 
-                <div class="form-group mb-3">
-                    <label class="form-label-custom">Nueva Contraseña</label>
-                    <div class="input-with-icon">
-                        <i class="ph ph-lock"></i>
-                        <input type="password" name="new_password" id="new_password" class="form-control-custom" required placeholder="Mín. 6 caracteres">
-                    </div>
+                <div class="sidebar-divider"></div>
+
+                <!-- SIGNATURE SECTION -->
+                <div class="signature-section">
+                    <h3 class="section-title-sm">
+                        <i class="ph-fill ph-pen-nib"></i> Firma Digital
+                    </h3>
+                    
+                    <?php if (!empty($user['signature_path'])): ?>
+                        <div class="signature-display">
+                            <img src="../../assets/uploads/signatures/<?php echo $user['signature_path']; ?>?v=<?php echo time(); ?>" alt="Firma">
+                            <form id="deleteSignatureForm" method="POST">
+                                <input type="hidden" name="action" value="delete_signature">
+                                <button type="button" id="btnDeleteSignature" class="btn-icon-delete" title="Eliminar Firma">
+                                    <i class="ph ph-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    <?php else: ?>
+                        <div class="signature-upload-placeholder">
+                            <form method="POST" enctype="multipart/form-data">
+                                <input type="file" name="signature" id="sigInput" class="hidden-input" accept="image/png" onchange="this.form.submit()">
+                                <label for="sigInput" class="upload-zone">
+                                    <i class="ph ph-cloud-arrow-up"></i>
+                                    <span>Subir Firma PNG</span>
+                                </label>
+                            </form>
+                        </div>
+                    <?php endif; ?>
                 </div>
-
-                <div class="form-group mb-4">
-                    <label class="form-label-custom">Confirmar Nueva Contraseña</label>
-                    <div class="input-with-icon">
-                        <i class="ph ph-shield-check"></i>
-                        <input type="password" name="confirm_password" id="confirm_password" class="form-control-custom" required placeholder="Repite la contraseña">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100 btn-sm-custom">
-                    <i class="ph-bold ph-check"></i> Actualizar Contraseña
-                </button>
-            </form>
-        </div>
-    </div>
-
-        <!-- RIGHT COLUMN: INTERFACE -->
-        <div style="display: flex; flex-direction: column; gap: 2rem;">
-            <div class="profile-card">
-                <h3 class="mb-4" style="font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
-                    <i class="ph-fill ph-layout" style="color: #8b5cf6;"></i> Personalización del Sistema
-                </h3>
-
-            <div class="mb-4">
-                <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">Orden del Menú Lateral</h4>
-                <p class="text-muted" style="font-size: 0.9rem;">Arrastra y suelta los elementos para organizar tu menú de navegación según tu flujo de trabajo.</p>
             </div>
 
-            <ul id="sortable-menu" class="menu-list">
-                <!-- Keep IDs consistent with original logic -->
-                <?php if (can_access_module('dashboard', $pdo)): ?>
-                    <li data-id="dashboard" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-squares-four"></i> Dashboard</div></li>
-                <?php endif; ?>
+        </div>
 
-                <?php if (can_access_module('clients', $pdo)): ?>
-                    <li data-id="clients" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-users"></i> Clientes</div></li>
-                <?php endif; ?>
-
-                <?php if (can_access_module('equipment', $pdo)): ?>
-                    <li data-id="equipment" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-desktop"></i> Equipos</div></li>
-                <?php endif; ?>
-
-                <?php if (can_access_module('services', $pdo)): ?>
-                    <li data-id="services" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-wrench"></i> Servicios</div></li>
-                <?php endif; ?>
-
-                <?php if (can_access_module('warranties', $pdo)): ?>
-                    <li data-id="warranties" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-shield-check"></i> Garantías</div></li>
-                <?php endif; ?>
-
-                <?php if (can_access_module('new_warranty', $pdo)): ?>
-                    <li data-id="new_warranty" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-plus-circle"></i> Nueva Garantía</div></li>
-                <?php endif; ?>
-
-                <?php if (can_access_module('tools', $pdo)): ?>
-                    <li data-id="tools" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-wrench"></i> Herramientas</div></li>
-                <?php endif; ?>
-
-                <?php if (can_access_module('services', $pdo) || can_access_module('warranties', $pdo) || can_access_module('history', $pdo)): ?>
-                    <li data-id="requests" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-clipboard-text"></i> Solicitudes</div></li>
-                <?php endif; ?>
-
-                <?php if (can_access_module('reports', $pdo)): ?>
-                    <li data-id="reports" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-chart-bar"></i> Reportes</div></li>
-                <?php endif; ?>
-
-                <?php if (can_access_module('settings', $pdo)): ?>
-                    <li data-id="settings" class="draggable-item"><div class="drag-handle"><i class="ph-fill ph-dots-six-vertical"></i></div> <div class="item-content"><i class="ph ph-gear"></i> Configuración</div></li>
-                <?php endif; ?>
-            </ul>
-
-            <div style="margin-top: 2rem; text-align: right;">
-                <button id="saveMenuOrder" class="btn btn-primary btn-lg-custom">
-                    <i class="ph-bold ph-floppy-disk"></i> Guardar Orden
+        <!-- RIGHT COLUMN: CONTENT BLOCKS -->
+        <div class="profile-main">
+            <!-- TABS NAVIGATION -->
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-target="tab-customization">
+                    <i class="ph ph-layout"></i> Personalización
+                </button>
+                <button class="tab-btn" data-target="tab-security">
+                    <i class="ph ph-lock-key"></i> Seguridad
                 </button>
             </div>
-        </div>
-    </div>
 
+            <!-- TAB CONTENT: CUSTOMIZATION -->
+            <div id="tab-customization" class="tab-content active">
+                <div class="profile-card main-content-card">
+                    <div class="section-header">
+                        <div class="header-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+                            <i class="ph ph-list-numbers"></i>
+                        </div>
+                        <div>
+                            <h3 class="section-title">Orden del Menú Lateral</h3>
+                            <p class="section-desc">Arrastra los módulos para personalizar tu barra de navegación.</p>
+                        </div>
+                    </div>
+
+                    <ul id="sortable-menu" class="modern-menu-list">
+                        <?php if (can_access_module('dashboard', $pdo)): ?>
+                            <li data-id="dashboard" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-squares-four"></i> Dashboard</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('clients', $pdo)): ?>
+                            <li data-id="clients" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-users"></i> Clientes</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('equipment', $pdo)): ?>
+                            <li data-id="equipment" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-desktop"></i> Equipos</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('services', $pdo)): ?>
+                            <li data-id="services" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-wrench"></i> Servicios</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('warranties', $pdo)): ?>
+                            <li data-id="warranties" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-shield-check"></i> Garantías</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('new_warranty', $pdo)): ?>
+                            <li data-id="new_warranty" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-plus-circle"></i> Nueva Garantía</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('tools', $pdo)): ?>
+                            <li data-id="tools" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-toolbox"></i> Herramientas</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('services', $pdo) || can_access_module('warranties', $pdo) || can_access_module('history', $pdo)): ?>
+                            <li data-id="requests" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-clipboard-text"></i> Solicitudes</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('reports', $pdo)): ?>
+                            <li data-id="reports" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-chart-bar"></i> Reportes</div></li>
+                        <?php endif; ?>
+                        <?php if (can_access_module('settings', $pdo)): ?>
+                            <li data-id="settings" class="modern-drag-item"><div class="drag-handle"><i class="ph ph-dots-six-vertical"></i></div> <div class="item-body"><i class="ph ph-gear"></i> Configuración</div></li>
+                        <?php endif; ?>
+                    </ul>
+
+                    <div class="action-footer">
+                        <button id="saveMenuOrder" class="btn-premium">
+                            <i class="ph ph-floppy-disk"></i> Guardar Configuración
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: SECURITY -->
+            <div id="tab-security" class="tab-content">
+                <div class="profile-card main-content-card">
+                    <div class="section-header">
+                        <div class="header-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                            <i class="ph ph-shield-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="section-title">Seguridad de la Cuenta</h3>
+                            <p class="section-desc">Actualiza tu contraseña para mantener tu cuenta protegida.</p>
+                        </div>
+                    </div>
+
+                    <form method="POST" id="changePasswordForm" class="modern-form">
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="form-row">
+                            <div class="form-group-modern">
+                                <label>Contraseña Actual</label>
+                                <div class="input-wrapper">
+                                    <i class="ph ph-key"></i>
+                                    <input type="password" name="current_password" required placeholder="Ingresa tu clave actual">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="form-group-modern">
+                                <label>Nueva Contraseña</label>
+                                <div class="input-wrapper">
+                                    <i class="ph ph-lock"></i>
+                                    <input type="password" name="new_password" id="new_password" required placeholder="Mínimo 6 caracteres">
+                                </div>
+                            </div>
+                            <div class="form-group-modern">
+                                <label>Confirmar Nueva Contraseña</label>
+                                <div class="input-wrapper">
+                                    <i class="ph ph-shield-check"></i>
+                                    <input type="password" name="confirm_password" id="confirm_password" required placeholder="Repite la contraseña">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-footer">
+                            <button type="submit" class="btn-premium btn-danger-gradient">
+                                <i class="ph ph-arrows-counter-clockwise"></i> Actualizar Credenciales
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <style>
-/* PROFILE STYLES */
+/* MODERN PROFILE ARCHITECTURE */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.profile-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
 .profile-card {
-    background: var(--bg-card); /* Use defined variable */
-    backdrop-filter: blur(10px);
+    background: var(--bg-card);
+    backdrop-filter: blur(15px);
     border: 1px solid var(--border-color);
     border-radius: 24px;
     padding: 2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-/* Light Mode Overrides for Profile Card */
-body.light-mode .profile-card {
-    background: #ffffff;
-    border: 1px solid var(--slate-300); /* Stronger border */
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Stronger shadow */
+/* IDENTITY CARD */
+.identity-card {
+    padding-top: 3rem;
+    text-align: center;
+}
+
+.avatar-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1.5rem;
 }
 
 .avatar-circle {
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, var(--primary-500), #8b5cf6);
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     border-radius: 50%;
-    margin: 0 auto 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3rem;
-    font-weight: 700;
+    font-size: 3.5rem;
+    font-weight: 800;
     color: white;
-    box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.3);
+    position: relative;
+    z-index: 2;
 }
 
-.badge-role {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border-color);
-    padding: 0.35rem 1rem;
+.avatar-ring {
+    position: absolute;
+    inset: -6px;
+    border: 2px solid #6366f1;
+    border-radius: 50%;
+    opacity: 0.3;
+}
+
+.user-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--text-main);
+}
+
+.user-role-badge {
+    display: inline-block;
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    padding: 0.3rem 0.8rem;
     border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-body.light-mode .badge-role {
-    background: var(--slate-100);
-    border-color: var(--slate-300);
-    color: var(--slate-700);
-}
-
-.info-group {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     margin-bottom: 1rem;
 }
 
-.info-group label {
-    display: block;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.user-email {
     color: var(--text-muted);
-    margin-bottom: 0.25rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
-.info-value {
-    font-size: 0.95rem;
-    color: var(--text-main);
+.sidebar-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
+    margin: 2rem 0;
+}
+
+/* SIGNATURE SECTION */
+.section-title-sm {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.signature-preview {
+.signature-display {
+    position: relative;
     background: white;
-    border: 2px dashed var(--border-color);
     border-radius: 12px;
     padding: 1rem;
+    min-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100px;
 }
 
-body.light-mode .signature-preview {
-    border-color: var(--slate-300);
-    background: var(--slate-50);
-}
-
-.signature-preview img {
+.signature-display img {
     max-width: 100%;
     max-height: 80px;
-    object-fit: contain;
 }
 
-/* MENU LIST STYLES */
-.menu-list {
-    list-style: none; 
+.btn-icon-delete {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 30px;
+    height: 30px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+    transition: transform 0.2s;
+}
+
+.btn-icon-delete:hover { transform: scale(1.1); }
+
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.upload-zone:hover {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.05);
+}
+ 
+.upload-zone i { font-size: 2rem; color: #6366f1; }
+.upload-zone span { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+
+/* TABS NAVIGATION */
+.profile-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    background: rgba(255,255,255,0.02);
+    padding: 0.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s;
+}
+
+.tab-btn i { font-size: 1.2rem; }
+
+.tab-btn.active {
+    background: var(--bg-card);
+    color: #6366f1;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* TAB CONTENT */
+.tab-content { display: none; width: 100%; animation: fadeIn 0.4s easeOut; }
+.tab-content.active { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* MAIN CONTENT CARD */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.section-title { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+.section-desc { font-size: 0.9rem; color: var(--text-muted); }
+
+/* MODERN MENU LIST */
+.modern-menu-list {
+    list-style: none;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
+    margin-bottom: 2rem;
 }
 
-.draggable-item {
-    background: rgba(255, 255, 255, 0.03);
+.modern-drag-item {
+    background: rgba(255,255,255,0.03);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    padding: 1rem;
     display: flex;
     align-items: center;
     gap: 1rem;
     cursor: grab;
-    transition: all 0.2s ease;
-    user-select: none;
-}
-
-/* Light Mode Overrides for Draggable Items */
-body.light-mode .draggable-item {
-    background: #f8fafc; /* Slate 50 */
-    border: 1px solid var(--slate-300); /* Visible border */
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.draggable-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-body.light-mode .draggable-item:hover {
-    background: white;
-    border-color: var(--primary-500);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.draggable-item:active {
-    cursor: grabbing;
-    transform: scale(0.98);
-}
-
-.drag-handle {
-    color: var(--text-muted);
-    cursor: grab;
-}
-
-.item-content {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-weight: 500;
-    font-size: 0.95rem;
-}
-
-.item-content i {
-    font-size: 1.2rem;
-    color: var(--primary);
-}
-
-.sortable-ghost {
-    opacity: 0.4;
-    background: rgba(var(--primary-rgb), 0.1);
-    border-style: dashed;
-}
-
-.btn-lg-custom {
-    padding: 0.8rem 2rem;
-    font-size: 1rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
-}
-
-.btn-sm-custom {
-    padding: 0.6rem 1rem;
-    border-radius: 10px;
-    font-size: 0.9rem;
-}
-
-/* CUSTOM FORM STYLES FOR PROFILE */
-.form-label-custom {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-}
-
-.form-control-custom {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 0.6rem 0.75rem 0.6rem 2.5rem;
-    color: var(--text-main);
-    font-size: 0.9rem;
     transition: all 0.2s;
 }
 
-body.light-mode .form-control-custom {
-    background: #fff;
-    border-color: var(--slate-300);
+.modern-drag-item:hover {
+    border-color: #6366f1;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
-.form-control-custom:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: rgba(var(--primary-rgb), 0.05);
+.item-body { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; font-size: 0.9rem; }
+.item-body i { font-size: 1.2rem; color: #6366f1; }
+
+/* MODERN FORM */
+.modern-form { display: flex; flex-direction: column; gap: 1.5rem; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+.form-group-modern label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.input-with-icon {
-    position: relative;
-}
-
-.input-with-icon i {
+.input-wrapper { position: relative; }
+.input-wrapper i {
     position: absolute;
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
-    font-size: 1.1rem;
+    font-size: 1.2rem;
 }
+
+.input-wrapper input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.8rem 1rem 0.8rem 3rem;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+}
+
+/* BUTTONS */
+.btn-premium {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: white !important;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+}
+
+.btn-premium:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4); }
+
+.btn-danger-gradient { background: linear-gradient(135deg, #ef4444, #f87171); box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3); }
+.btn-danger-gradient:hover { box-shadow: 0 12px 25px rgba(239, 68, 68, 0.4); }
+
+.action-footer { text-align: right; margin-top: 1rem; }
+
+.hidden-input { display: none; }
 </style>
 
 <!-- SortableJS -->
@@ -539,7 +661,23 @@ body.light-mode .form-control-custom {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // ... (Existing Signature Logic) ...
+        // --- TABS LOGIC ---
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.getAttribute('data-target');
+
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(target).classList.add('active');
+            });
+        });
+
+        // --- SIGNATURE LOGIC ---
         const btnDelete = document.getElementById('btnDeleteSignature');
         if(btnDelete) {
             btnDelete.addEventListener('click', function() {
@@ -564,21 +702,19 @@ body.light-mode .form-control-custom {
 
         // --- SORTABLE MENU LOGIC ---
         const el = document.getElementById('sortable-menu');
-        // Simple check to ensure element exists before init
         if(el) {
             const sortable = Sortable.create(el, {
-                animation: 150,
-                ghostClass: 'sortable-ghost'
+                animation: 250,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag'
             });
 
             document.getElementById('saveMenuOrder').addEventListener('click', function() {
-                const order = sortable.toArray(); // Get array of data-ids
+                const order = sortable.toArray(); 
                 
                 fetch('save_navbar_order.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ order: order })
                 })
                 .then(response => response.json())
@@ -586,18 +722,16 @@ body.light-mode .form-control-custom {
                     if(data.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Orden Guardado',
-                            text: 'El menú se actualizará en la próxima recarga.',
-                            timer: 1500,
-                            showConfirmButton: false
+                            title: '¡Configuración Guardada!',
+                            text: 'El nuevo orden del menú se aplicará en tu próxima sesión.',
+                            timer: 2000,
+                            showConfirmButton: false,
+                            background: '#1e293b',
+                            color: '#fff'
                         }).then(() => location.reload());
                     } else {
                         Swal.fire('Error', 'No se pudo guardar el orden', 'error');
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'Error de red', 'error');
                 });
             });
         }
@@ -614,7 +748,7 @@ body.light-mode .form-control-custom {
                     Swal.fire({
                         icon: 'error',
                         title: 'Contraseña muy corta',
-                        text: 'La nueva contraseña debe tener al menos 6 caracteres.',
+                        text: 'La nueva contraseña debe tener al menos 6 caracteres para mayor seguridad.',
                         background: '#1e293b',
                         color: '#fff'
                     });
@@ -626,7 +760,7 @@ body.light-mode .form-control-custom {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error de coincidencia',
-                        text: 'La nueva contraseña y su confirmación no coinciden.',
+                        text: 'La nueva contraseña y su confirmación no coinciden. Por favor verifícalas.',
                         background: '#1e293b',
                         color: '#fff'
                     });
