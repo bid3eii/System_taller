@@ -195,6 +195,22 @@ $anexos = $stmt->fetchAll();
     </div>
 </div>
 
+<style>
+    /* Estilo del recuadro de confirmación SweetAlert2 para contraste */
+    div.swal2-popup {
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5) !important;
+        background-color: var(--bg-secondary) !important;
+    }
+    h2.swal2-title {
+        color: var(--text-primary) !important;
+    }
+    div.swal2-html-container {
+        color: var(--text-secondary) !important;
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const deleteForms = document.querySelectorAll('.form-delete');
@@ -207,7 +223,7 @@ $anexos = $stmt->fetchAll();
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444',
-                    cancelButtonColor: '#64748b',
+                    cancelButtonColor: '#475569',
                     confirmButtonText: 'Sí, eliminar',
                     cancelButtonText: 'Cancelar',
                     background: 'var(--bg-secondary)',
