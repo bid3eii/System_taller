@@ -124,13 +124,13 @@ $deliveryComments = '';
 $receiverId = '';
 
 if ($fullDeliveryNote) {
-    if (preg_match('/Entregado a: (.*?) \((.*?)\)\. Notas: (.*)/', $fullDeliveryNote, $matches)) {
-        $receiverName = $matches[1];
-        $receiverId = $matches[2];
-        $deliveryComments = $matches[3];
-    } elseif (preg_match('/Entregado a: (.*?) \((.*?)\)/', $fullDeliveryNote, $matches)) {
-        $receiverName = $matches[1];
-        $receiverId = $matches[2];
+    if (preg_match('/Entregado a: (.*?) \((.*?)\)\. Notas: (.*)/s', $fullDeliveryNote, $matches)) {
+        $receiverName = trim($matches[1]);
+        $receiverId = trim($matches[2]);
+        $deliveryComments = trim($matches[3]);
+    } elseif (preg_match('/Entregado a: (.*?) \((.*?)\)/s', $fullDeliveryNote, $matches)) {
+        $receiverName = trim($matches[1]);
+        $receiverId = trim($matches[2]);
     }
 }
 
@@ -176,8 +176,8 @@ if (empty($order['exit_doc_number'])) {
         
         .paper {
             background: white;
-            width: 210mm;
-            min-height: 297mm;
+            width: 216mm;
+            min-height: 279mm;
             margin: 0 auto;
             padding: 15mm;
             position: relative;
@@ -294,11 +294,11 @@ if (empty($order['exit_doc_number'])) {
         /* COMMENTS */
         .comments-box {
             border: 1px solid var(--border-color);
-            padding: 5px;
-            min-height: 40px;
+            padding: 8px;
+            min-height: 80px;
             margin-bottom: 5px;
             font-size: 10px;
-            line-height: 1.2;
+            line-height: 1.4;
         }
 
         /* SIGNATURES */
@@ -342,14 +342,14 @@ if (empty($order['exit_doc_number'])) {
         }
 
         @media print {
-            @page { margin: 5mm; size: auto; }
+            @page { margin: 5mm; size: letter; }
             .actions { display: none; }
             body { background: white; padding: 0; }
             .paper { 
                 box-shadow: none; 
                 margin: 0; 
                 width: 100%; 
-                min-height: 280mm; /* Safe zone A4 */
+                min-height: 260mm; /* Safe zone Letter */
                 padding: 10mm 15mm 20mm 15mm; 
                 page-break-after: avoid; 
                 page-break-inside: avoid;

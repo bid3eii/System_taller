@@ -94,8 +94,8 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
         /* PAPER PREVIEW ON SCREEN */
         .page-container {
             position: relative; /* Context for absolute footer */
-            width: 210mm;
-            min-height: 297mm;
+            width: 216mm;
+            min-height: 279mm;
             margin: 20px auto;
             background: white;
             padding: 2cm 1.5cm;
@@ -248,7 +248,7 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                 padding: 0 !important;
             }
             @page {
-                size: A4;
+                size: letter;
                 margin: 5mm; 
             }
             .actions {
@@ -258,7 +258,7 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                 margin: 0 !important;
                 box-shadow: none !important;
                 width: 100% !important;
-                min-height: 280mm !important; 
+                min-height: 260mm !important; 
                 padding: 1cm 1.5cm 2cm 1.5cm !important; 
                 border: none !important;
                 position: relative !important;

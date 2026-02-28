@@ -153,7 +153,7 @@ header("Expires: 0");
                     }
                 ?>
                 <tr>
-                    <td class="bold">#<?php echo str_pad($row['id'], 6, '0', STR_PAD_LEFT); ?></td>
+                    <td class="bold">#<?php echo str_pad($row['id'], 4, '0', STR_PAD_LEFT); ?></td>
                     <td class="<?php echo $statusClass; ?>"><?php echo $statusLabel; ?></td>
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
                     <td class="text-left"><?php echo htmlspecialchars($row['client_name']); ?></td>

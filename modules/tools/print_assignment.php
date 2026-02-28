@@ -55,7 +55,7 @@ try {
     <style>
         /* Print Settings */
         @page {
-            size: A4 portrait;
+            size: letter portrait;
             margin: 0;
         }
 
@@ -71,8 +71,8 @@ try {
         }
 
         .page-container {
-            width: 210mm;
-            min-height: 297mm;
+            width: 216mm;
+            min-height: 279mm;
             background: white;
             padding: 10mm 20mm;
             box-sizing: border-box;
@@ -83,7 +83,7 @@ try {
         /* Print Override */
         @media print {
             @page {
-                size: A4 portrait;
+                size: letter portrait;
                 margin: 5mm;
             }
             body { 
@@ -95,7 +95,7 @@ try {
                 margin: 0;
                 padding: 10mm 15mm 20mm 15mm; 
                 box-shadow: none;
-                min-height: 280mm;
+                min-height: 260mm;
                 display: flex;
                 flex-direction: column;
             }
@@ -179,9 +179,10 @@ try {
         .observations {
             margin-top: 5px;
             border: 1px solid #000;
-            padding: 5px;
-            min-height: 40px;
+            padding: 8px;
+            min-height: 80px;
             border-radius: 4px;
+            line-height: 1.4;
         }
         
         .legal-text {
@@ -305,7 +306,7 @@ try {
         </table>
 
         <div style="font-weight: bold; font-size: 10px; margin-bottom: 2px;">OBSERVACIÓN:</div>
-        <div class="observations"><?php echo htmlspecialchars($assignment['observations']); ?></div>
+        <div class="observations"><?php echo nl2br(htmlspecialchars($assignment['observations'])); ?></div>
 
         <div class="legal-text">
             El encargado del proyecto es responsable del cuido de las herramientas, cualquier perdida de alguna de ellas se evaluará cobro de la misma. De igual forma si sobrase material y el encargado no realiza devolución se evaluará sanción para todo el equipo de trabajo.<br>

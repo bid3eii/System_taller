@@ -44,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
             try {
-                $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role_id, status) VALUES (?, ?, ?, ?, ?)");
-                if ($stmt->execute([$username, $email, $password_hash, $role_id, $status])) {
+                $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+                if ($stmt->execute([$username, $email, $password_hash, $role_id, $status, get_local_datetime()])) {
                     $success = "Usuario creado exitosamente.";
                 } else {
                     $error = "Error al crear el usuario.";

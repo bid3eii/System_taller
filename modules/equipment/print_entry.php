@@ -79,7 +79,7 @@ if (empty($doc_number)) {
         :root { --border-color: #000; --header-bg: #f8fafc; }
         * { box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; font-size: 12px; }
-        .paper { background: white; width: 210mm; min-height: 297mm; margin: 0 auto; padding: 15mm; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .paper { background: white; width: 216mm; min-height: 279mm; margin: 0 auto; padding: 15mm; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .actions { position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 999; }
         .btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; text-decoration: none; }
         .btn-primary { background: #2563eb; color: white; }
@@ -95,7 +95,7 @@ if (empty($doc_number)) {
         .doc-box { border: 1.5px solid var(--border-color); padding: 5px 15px; font-size: 16px; font-weight: bold; margin-bottom: 3px; }
 
         .section-header { background: #fff; border: 1.5px solid var(--border-color); border-bottom: none; text-align: center; font-weight: bold; padding: 4px; font-size: 11px; margin-top: 8px; }
-        .section-box { border: 1.5px solid var(--border-color); padding: 5px; margin-bottom: 8px; }
+        .section-box { border: 1.5px solid var(--border-color); padding: 8px; margin-bottom: 8px; line-height: 1.4; }
         .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
         .info-row { margin-bottom: 3px; display: flex; }
         .info-label { font-weight: bold; width: 80px; text-align: right; margin-right: 10px; }

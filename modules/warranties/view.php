@@ -508,7 +508,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                             <!-- Readonly Info -->
                                             <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
                                                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
-                                                    <span style="font-weight: bold; color: var(--p-primary);">Caso #<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></span>
+                                                    <span style="font-weight: bold; color: var(--p-primary);">Caso #<?php echo str_pad($order['id'], 4, '0', STR_PAD_LEFT); ?></span>
                                                     <?php if($order['diagnosis_number']): ?>
                                                         <span style="color: #fbbf24;">Diag #<?php echo str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT); ?></span>
                                                     <?php endif; ?>
@@ -553,7 +553,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                             <!-- Readonly Info (Client/Device) -->
                                             <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
                                                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
-                                                    <span style="font-weight: bold; color: var(--p-primary);">Caso #<?php echo str_pad($order['id'], 6, '0', STR_PAD_LEFT); ?></span>
+                                                    <span style="font-weight: bold; color: var(--p-primary);">Caso #<?php echo str_pad($order['id'], 4, '0', STR_PAD_LEFT); ?></span>
                                                     <!-- Repair number is generated AFTER saving, so we don't show it here yet unless it already exists -->
                                                     <?php if($order['repair_number']): ?>
                                                         <span style="color: #34d399;">Rep #<?php echo str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT); ?></span>
