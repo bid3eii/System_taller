@@ -91,6 +91,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['signature'])) {
     }
 }
 
+// Handle Password Change
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+    $current_pass = $_POST['current_password'] ?? '';
+    $new_pass = $_POST['new_password'] ?? '';
+    $confirm_pass = $_POST['confirm_password'] ?? '';
+
+    // Basic Validations
+    if (empty($current_pass) || empty($new_pass) || empty($confirm_pass)) {
+        $error = "Todos los campos de contraseña son obligatorios.";
+    } elseif ($new_pass !== $confirm_pass) {
+        $error = "La nueva contraseña y su confirmación no coinciden.";
+    } elseif (strlen($new_pass) < 6) {
+        $error = "La nueva contraseña debe tener al menos 6 caracteres.";
+    } else {
+        // Verify current password
+        $stmtPass = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");
+        $stmtPass->execute([$user_id]);
+        $stored_hash = $stmtPass->fetchColumn();
+
+        if (password_verify($current_pass, $stored_hash)) {
+            // Update password
+            $new_hash = password_hash($new_pass, PASSWORD_DEFAULT);
+            $stmtUpdate = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+            if ($stmtUpdate->execute([$new_hash, $user_id])) {
+                $success = "Contraseña actualizada correctamente.";
+                log_audit($pdo, 'users', $user_id, 'UPDATE_PASSWORD', null, ['event' => 'password_changed'], $user_id, $_SERVER['REMOTE_ADDR']);
+            } else {
+                $error = "Error al actualizar la contraseña en la base de datos.";
+            }
+        } else {
+            $error = "La contraseña actual es incorrecta.";
+        }
+    }
+}
+
 // Fetch User Data
 $stmt = $pdo->prepare("SELECT u.username, u.email, r.name as role_name, u.signature_path FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?");
 $stmt->execute([$user_id]);
@@ -172,11 +207,52 @@ require_once '../../includes/sidebar.php';
             <?php endif; ?>
         </div>
 
-        <!-- RIGHT COLUMN: INTERFACE -->
-        <div class="profile-card">
-            <h3 class="mb-4" style="font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
-                <i class="ph-fill ph-layout" style="color: #8b5cf6;"></i> Personalización del Sistema
+        <!-- LEFT COLUMN: PASSWORD CHANGE -->
+        <div class="profile-card" style="margin-top: 2rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px;">
+                <i class="ph-fill ph-lock-key" style="color: #ef4444;"></i> Seguridad
             </h3>
+            
+            <form method="POST" id="changePasswordForm">
+                <input type="hidden" name="action" value="change_password">
+                
+                <div class="form-group mb-3">
+                    <label class="form-label-custom">Contraseña Actual</label>
+                    <div class="input-with-icon">
+                        <i class="ph ph-key"></i>
+                        <input type="password" name="current_password" class="form-control-custom" required placeholder="••••••••">
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label-custom">Nueva Contraseña</label>
+                    <div class="input-with-icon">
+                        <i class="ph ph-lock"></i>
+                        <input type="password" name="new_password" id="new_password" class="form-control-custom" required placeholder="Mín. 6 caracteres">
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label-custom">Confirmar Nueva Contraseña</label>
+                    <div class="input-with-icon">
+                        <i class="ph ph-shield-check"></i>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control-custom" required placeholder="Repite la contraseña">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 btn-sm-custom">
+                    <i class="ph-bold ph-check"></i> Actualizar Contraseña
+                </button>
+            </form>
+        </div>
+    </div>
+
+        <!-- RIGHT COLUMN: INTERFACE -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+            <div class="profile-card">
+                <h3 class="mb-4" style="font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="ph-fill ph-layout" style="color: #8b5cf6;"></i> Personalización del Sistema
+                </h3>
 
             <div class="mb-4">
                 <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">Orden del Menú Lateral</h4>
@@ -232,6 +308,7 @@ require_once '../../includes/sidebar.php';
                 </button>
             </div>
         </div>
+    </div>
 
     </div>
 </div>
@@ -411,6 +488,50 @@ body.light-mode .draggable-item:hover {
     border-radius: 10px;
     font-size: 0.9rem;
 }
+
+/* CUSTOM FORM STYLES FOR PROFILE */
+.form-label-custom {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.form-control-custom {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.6rem 0.75rem 0.6rem 2.5rem;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+body.light-mode .form-control-custom {
+    background: #fff;
+    border-color: var(--slate-300);
+}
+
+.form-control-custom:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
 </style>
 
 <!-- SortableJS -->
@@ -478,6 +599,39 @@ body.light-mode .draggable-item:hover {
                     console.error('Error:', error);
                     Swal.fire('Error', 'Error de red', 'error');
                 });
+            });
+        }
+
+        // --- PASSWORD CHANGE VALIDATION ---
+        const changePassForm = document.getElementById('changePasswordForm');
+        if(changePassForm) {
+            changePassForm.addEventListener('submit', function(e) {
+                const newPass = document.getElementById('new_password').value;
+                const confirmPass = document.getElementById('confirm_password').value;
+
+                if(newPass.length < 6) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Contraseña muy corta',
+                        text: 'La nueva contraseña debe tener al menos 6 caracteres.',
+                        background: '#1e293b',
+                        color: '#fff'
+                    });
+                    return;
+                }
+
+                if(newPass !== confirmPass) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de coincidencia',
+                        text: 'La nueva contraseña y su confirmación no coinciden.',
+                        background: '#1e293b',
+                        color: '#fff'
+                    });
+                    return;
+                }
             });
         }
     });
