@@ -593,15 +593,15 @@ if (!$is_warehouse) {
                         </div>
                     </a>
 
-                    <a href="#" class="btn btn-secondary w-full"
+                    <a href="../levantamientos/index.php" class="btn btn-secondary w-full"
                         style="justify-content: flex-start; padding: 1rem;">
                         <div
                             style="background: rgba(99, 102, 241, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
-                            <i class="ph ph-map-pin" style="color: var(--primary-500);"></i>
+                            <i class="ph ph-clipboard" style="color: var(--primary-500);"></i>
                         </div>
                         <div>
                             <div style="font-weight: 600;">Levantamientos</div>
-                            <div class="text-xs text-muted">Garantías técnicas</div>
+                            <div class="text-xs text-muted">Requerimientos de proyectos</div>
                         </div>
                     </a>
                 <?php endif; ?>
