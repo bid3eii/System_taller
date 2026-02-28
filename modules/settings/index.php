@@ -44,45 +44,66 @@ $defined_modules = [
     'view_all_entries' => 'Ver todos los equipos ingresados (sin estar asignados)',
 ];
 
-foreach ($defined_modules as $key => $desc) {
-    $code = 'module_' . $key;
-    // Check if exists
-    $stmtCh = $pdo->prepare("SELECT id FROM permissions WHERE code = ?");
-    $stmtCh->execute([$code]);
-    $perm = $stmtCh->fetch();
-    
-    if (!$perm) {
-        $stmtIn = $pdo->prepare("INSERT INTO permissions (code, description) VALUES (?, ?)");
-        $stmtIn->execute([$code, $desc]);
-        $perm_id = $pdo->lastInsertId();
-    } else {
-        $perm_id = $perm['id'];
-    }
+try {
+    foreach ($defined_modules as $key => $desc) {
+        $code = 'module_' . $key;
+        // Check if exists
+        $stmtCh = $pdo->prepare("SELECT id FROM permissions WHERE code = ?");
+        $stmtCh->execute([$code]);
+        $perm = $stmtCh->fetch();
+        
+        if (!$perm) {
+            $stmtIn = $pdo->prepare("INSERT INTO permissions (code, description) VALUES (?, ?)");
+            $stmtIn->execute([$code, $desc]);
+            $perm_id = $pdo->lastInsertId();
+        } else {
+            $perm_id = $perm['id'];
+        }
 
-    // Auto-grant to Admin (Role ID 1) if not exists
-    $stmtRP = $pdo->prepare("SELECT * FROM role_permissions WHERE role_id = 1 AND permission_id = ?");
-    $stmtRP->execute([$perm_id]);
-    if (!$stmtRP->fetch()) {
-        $pdo->prepare("INSERT INTO role_permissions (role_id, permission_id) VALUES (1, ?)")->execute([$perm_id]);
+        // Auto-grant to Admin (Role ID 1) if not exists
+        $stmtRP = $pdo->prepare("SELECT * FROM role_permissions WHERE role_id = 1 AND permission_id = ?");
+        $stmtRP->execute([$perm_id]);
+        if (!$stmtRP->fetch()) {
+            $pdo->prepare("INSERT INTO role_permissions (role_id, permission_id) VALUES (1, ?)")->execute([$perm_id]);
+        }
     }
+} catch (PDOException $e) {
+    // Silence missing table errors during partial restores
 }
 
-// Ensure site_settings table exists
-$pdo->exec("CREATE TABLE IF NOT EXISTS site_settings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    setting_key VARCHAR(50) UNIQUE NOT NULL,
-    setting_value TEXT
-)");
+try {
+    // Ensure site_settings table exists
+    $pdo->exec("CREATE TABLE IF NOT EXISTS site_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        setting_key VARCHAR(50) UNIQUE NOT NULL,
+        setting_value TEXT
+    )");
 
-// Ensure user_custom_modules table exists for per-user overrides
-$pdo->exec("CREATE TABLE IF NOT EXISTS user_custom_modules (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    module_name VARCHAR(50) NOT NULL,
-    is_enabled TINYINT(1) DEFAULT 1,
-    UNIQUE KEY unique_user_module (user_id, module_name),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)");
+    // Ensure user_custom_modules table exists for per-user overrides
+    $pdo->exec("CREATE TABLE IF NOT EXISTS user_custom_modules (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        module_name VARCHAR(50) NOT NULL,
+        is_enabled TINYINT(1) DEFAULT 1,
+        UNIQUE KEY unique_user_module (user_id, module_name),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+
+    // --- AUTO MIGRATE RECENT SCHEMA CHANGES IF MISSING DUE TO OLD RESTORES ---
+    $migrations = [
+        "ALTER TABLE service_orders ADD COLUMN service_type ENUM('service', 'warranty') DEFAULT 'service'",
+        "ALTER TABLE service_orders ADD COLUMN display_id VARCHAR(20) DEFAULT NULL",
+        "ALTER TABLE clients ADD COLUMN is_third_party TINYINT(1) DEFAULT 0",
+        "ALTER TABLE equipments MODIFY COLUMN brand VARCHAR(500) DEFAULT NULL"
+    ];
+    foreach ($migrations as $m) {
+        try {
+            $pdo->exec($m);
+        } catch(PDOException $e) { /* Ignore duplicate columns error */ }
+    }
+} catch (PDOException $e) {
+    // Silence missing table errors during partial restores
+}
 // ---------------------------------------------------------
 
 // Handle POST Actions
@@ -98,10 +119,26 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'restored') {
 if (isset($_GET['error'])) {
     $errType = $_GET['error'];
     $errDetails = isset($_GET['details']) ? htmlspecialchars(urldecode($_GET['details'])) : '';
+    
     if ($errType === 'restore_failed') {
-        $error_msg = "❌ Error al restaurar: " . $errDetails;
+        $sessErr = isset($_SESSION['restore_fatal_error']) ? $_SESSION['restore_fatal_error'] : $errDetails;
+        $error_msg = "❌ Error fatal al restaurar: " . htmlspecialchars($sessErr);
+        unset($_SESSION['restore_fatal_error']);
     } elseif ($errType === 'partial_restore') {
-        $error_msg = "⚠️ Restauración con errores parciales: " . $errDetails;
+        $error_msg = "⚠️ Restauración completada con errores parciales.<br>";
+        if (isset($_SESSION['restore_errors']) && is_array($_SESSION['restore_errors'])) {
+            $error_msg .= "<ul style='margin-top: 5px; margin-bottom: 0; padding-left: 20px; text-align: left; font-size: 0.9em;'>";
+            foreach (array_slice($_SESSION['restore_errors'], 0, 10) as $err) {
+                $error_msg .= "<li>" . htmlspecialchars($err) . "</li>";
+            }
+            if (count($_SESSION['restore_errors']) > 10) {
+                $error_msg .= "<li>...y " . (count($_SESSION['restore_errors']) - 10) . " errores más.</li>";
+            }
+            $error_msg .= "</ul>";
+            unset($_SESSION['restore_errors']);
+        } else {
+            $error_msg .= htmlspecialchars($errDetails);
+        }
     } elseif ($errType === 'upload_error') {
         $error_msg = "❌ Error al subir el archivo. Verifica que sea un .sql válido.";
     } else {
@@ -193,12 +230,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $currentStatement = '';
                 $lines = explode("\n", $sqlContent);
 
+                // --- NEW LOGIC: Pre-scan and drop all target tables AT ONCE ---
+                // This prevents Error 1005 where table A is dropped and recreated (without indexes), 
+                // but table B still exists and holds a foreign key to table A, blocking the CREATE TABLE
+                $tablesToDrop = [];
+                foreach ($lines as $line) {
+                    $trimmed = trim($line);
+                    if (preg_match('/^CREATE TABLE (?:IF NOT EXISTS )?(?:`[^`]+`\.)?`?([^`\s\(]+)`?/i', $trimmed, $m)) {
+                        $tablesToDrop[] = $m[1];
+                    }
+                }
+                if (!empty($tablesToDrop)) {
+                    $pdo->exec("DROP TABLE IF EXISTS `" . implode("`, `", $tablesToDrop) . "`");
+                }
+                // ----------------------------------------------------------------
+
+                // Prepend SET FOREIGN_KEY_CHECKS=0 to ensure it's executed as part of the statement batch
+                $statements[] = "SET FOREIGN_KEY_CHECKS = 0";
+
                 foreach ($lines as $line) {
                     $trimmed = trim($line);
                     // Skip comments and empty lines
                     if (empty($trimmed) || substr($trimmed, 0, 2) === '--' || substr($trimmed, 0, 2) === '/*') {
                         continue;
                     }
+
                     $currentStatement .= $line . "\n";
                     if (substr(rtrim($trimmed), -1) === $delimiter) {
                         $statements[] = trim($currentStatement);
@@ -213,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     try {
                         $pdo->exec($stmt);
                     } catch (PDOException $stmtErr) {
-                        $errors[] = $stmtErr->getMessage();
+                        $errors[] = "Error SQL: " . $stmtErr->getMessage() . " => " . substr($stmt, 0, 100) . "...";
                     }
                 }
 
@@ -222,14 +278,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (empty($errors)) {
                     header("Location: index.php?tab=restore&msg=restored");
                 } else {
-                    // Partial restore — report issues
-                    $errSummary = urlencode(implode(' | ', array_slice($errors, 0, 3)));
-                    header("Location: index.php?tab=restore&error=partial_restore&details=" . $errSummary);
+                    // Partial restore — report issues securely via session to avoid 500 URI too long
+                    $_SESSION['restore_errors'] = $errors;
+                    header("Location: index.php?tab=restore&error=partial_restore");
                 }
                 exit;
             } catch (PDOException $e) {
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
-                header("Location: index.php?tab=restore&error=restore_failed&details=" . urlencode($e->getMessage()));
+                $_SESSION['restore_fatal_error'] = $e->getMessage();
+                header("Location: index.php?tab=restore&error=restore_failed");
                 exit;
             }
         } else {
