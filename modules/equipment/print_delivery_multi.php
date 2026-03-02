@@ -40,24 +40,26 @@ $stmt = $pdo->prepare("
         so.*,
         c_contact.name as contact_name, c_contact.phone, c_contact.email, c_contact.tax_id, c_contact.address,
         c_contact.id as client_id,
-        (SELECT c_o.name 
-         FROM service_orders so_o 
-         JOIN clients c_o ON so_o.client_id = c_o.id 
-         WHERE so_o.equipment_id = so.equipment_id 
-           AND (so_o.service_type = 'warranty' OR so_o.problem_reported = 'Garantía Registrada')
-         ORDER BY so_o.created_at ASC 
-         LIMIT 1) as owner_name,
+        co.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type as equipment_type, e.submodel,
         u.username as delivered_by
     FROM service_orders so
     JOIN clients c_contact ON so.client_id = c_contact.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients co ON e.client_id = co.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
     WHERE so.id IN ($placeholders)
     ORDER BY so.id ASC
 ");
 $stmt->execute($idArray);
-$orders = $stmt->fetchAll();
+$orders_raw = $stmt->fetchAll();
+
+$orders = [];
+foreach ($orders_raw as $o) {
+    // Priority: owner_name (from order) > registered_owner_name (from equipment) > contact_name (from order)
+    $o['owner_name_final'] = !empty($o['owner_name']) ? $o['owner_name'] : (!empty($o['registered_owner_name']) ? $o['registered_owner_name'] : $o['contact_name']);
+    $orders[] = $o;
+}
 
 if (empty($orders)) {
     die("No se encontraron órdenes.");
@@ -73,13 +75,6 @@ foreach ($orders as $order) {
 
 // Use first order for client data
 $clientData = $orders[0];
-
-// Fallback for owner_name
-if (!$clientData['owner_name']) {
-    $stmtFallback = $pdo->prepare("SELECT c.name FROM equipments e JOIN clients c ON e.client_id = c.id WHERE e.id = ?");
-    $stmtFallback->execute([$clientData['equipment_id']]);
-    $clientData['owner_name'] = $stmtFallback->fetchColumn() ?: $clientData['contact_name'];
-}
 
 // Fetch history and notes for each order
 $equipmentData = [];
@@ -132,6 +127,17 @@ if ($fullDeliveryNote) {
     } elseif (preg_match('/Entregado a: (.*?) \((.*?)\)/s', $fullDeliveryNote, $matches)) {
         $receiverName = trim($matches[1]);
         $receiverId = trim($matches[2]);
+    }
+}
+
+// Display Logic for Client vs Contact
+$final_client = trim($clientData['owner_name_final'] ?? '');
+$contact_name = trim($clientData['contact_name'] ?? '');
+$show_secondary_contact = false;
+
+if (!empty($final_client) && !empty($contact_name)) {
+    if (strcasecmp($final_client, $contact_name) !== 0) {
+        $show_secondary_contact = true;
     }
 }
 
@@ -332,22 +338,27 @@ if (empty($exit_doc_number)) {
         }
 
         @media print {
-            @page { margin: 5mm; size: letter; }
+            @page { size: letter; margin: 0 !important; }
+            html, body { height: 100%; overflow: hidden; margin: 0 !important; padding: 0 !important; }
             .actions { display: none; }
-            body { background: white; padding: 0; }
+            body { background: white; padding: 0; margin: 0; overflow: hidden; }
             .paper { 
                 box-shadow: none; 
-                margin: 0; 
-                width: 100%; 
-                min-height: 260mm; 
-                padding: 10mm 15mm 20mm 15mm; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                height: 260mm;
+                max-height: 260mm;
+                box-sizing: border-box;
+                padding: 10mm 15mm; 
                 page-break-after: avoid; 
                 page-break-inside: avoid;
                 display: flex;
                 flex-direction: column;
                 justify-content: flex-start;
-                overflow: visible; 
+                overflow: hidden; 
             }
+            .bottom-section { margin-top: auto; }
+        }
             a[href]:after { content: none !important; }
         }
     </style>
@@ -402,14 +413,16 @@ if (empty($exit_doc_number)) {
                     </div>
                     <div class="info-row">
                         <div class="info-label">Cliente:</div>
-                        <div class="info-val"><?php echo htmlspecialchars($clientData['owner_name']); ?></div>
+                        <div class="info-val"><?php echo htmlspecialchars($clientData['owner_name_final']); ?></div>
                     </div>
                 </div>
                 <div>
+                    <?php if($show_secondary_contact): ?>
                     <div class="info-row">
                         <div class="info-label">Contacto:</div>
                         <div class="info-val"><?php echo htmlspecialchars($clientData['contact_name']); ?></div>
                     </div>
+                    <?php endif; ?>
                     <div class="info-row">
                         <div class="info-label">RUC/Cédula:</div>
                         <div class="info-val"><?php echo htmlspecialchars($clientData['tax_id'] ?? '-'); ?></div>
@@ -426,46 +439,48 @@ if (empty($exit_doc_number)) {
             </div>
         </div>
 
-        <!-- EQUIPMENT TABLE -->
         <div class="section-header">SALIDA DE <?php echo count($orders); ?> EQUIPO(S)</div>
-        <table class="equip-table">
-            <thead>
-                <tr>
-                    <th>INGRESO</th>
-                    <th>MARCA</th>
-                    <th>MODELO</th>
-                    <th># SERIE</th>
-                    <th>CASO #</th>
-                    <th>DIAG #</th>
-                    <th>REP #</th>
-                    <th>DESCRIPCIÓN</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($equipmentData as $item): 
-                    $order = $item['order'];
-                ?>
-                <tr>
-                    <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
-                    <td><?php echo htmlspecialchars($order['brand']); ?></td>
-                    <td><?php echo htmlspecialchars($order['model']); ?></td>
-                    <td><?php echo htmlspecialchars($order['serial_number']); ?></td>
-                    <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order, 5); ?></td>
-                    <td><?php echo $order['diagnosis_number'] ? str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></td>
-                    <td><?php echo $order['repair_number'] ? str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></td>
-                    <td style="font-size: 8px; text-align: left; padding: 2px 4px;">
-                        <?php echo htmlspecialchars(substr($order['problem_reported'], 0, 50)); ?>
-                        <?php if ($item['diagnosis_notes']): ?>
-                            <br><strong>Diag:</strong> <?php echo htmlspecialchars(substr($item['diagnosis_notes'], 0, 40)); ?>
-                        <?php endif; ?>
-                        <?php if ($item['repair_notes']): ?>
-                            <br><strong>Rep:</strong> <?php echo htmlspecialchars(substr($item['repair_notes'], 0, 40)); ?>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+        <?php foreach ($equipmentData as $item): 
+            $order = $item['order'];
+        ?>
+        <div style="border: 1px solid var(--border-color); margin-bottom: 10px;">
+            <table class="equip-table" style="margin-bottom: 0; border: none;">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">INGRESO</th>
+                        <th style="width: 35%;">EQUIPO</th>
+                        <th style="width: 25%;"># SERIE</th>
+                        <th style="width: 25%;">CASO #</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
+                        <td style="text-transform: uppercase; font-weight: bold;"><?php echo htmlspecialchars(trim($order['brand'] . ' ' . $order['model'])); ?></td>
+                        <td style="text-transform: uppercase;"><?php echo htmlspecialchars($order['serial_number']); ?></td>
+                        <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order, 5); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="padding: 5px; background: #fafafa; border-top: 1px solid var(--border-color); font-size: 9px;">
+                <strong>ACCESORIOS:</strong> <?php echo htmlspecialchars($order['accessories_received'] ?: 'N/A'); ?>
+            </div>
+            
+            <div style="padding: 5px; border-top: 1px solid var(--border-color); font-size: 9px;">
+                <strong>PROBLEMA:</strong> <?php echo htmlspecialchars($order['problem_reported']); ?>
+            </div>
+            
+            <div style="padding: 5px; border-top: 1px solid var(--border-color); font-size: 9px; display: grid; grid-template-columns: 1fr 1fr; background: #fff;">
+                <div style="border-right: 1px solid #ddd; padding-right: 5px;">
+                    <strong>DIAG (#<?php echo $order['diagnosis_number'] ?: '-'; ?>):</strong> <?php echo $item['diagnosis_notes'] ? htmlspecialchars($item['diagnosis_notes']) : '-'; ?>
+                </div>
+                <div style="padding-left: 5px;">
+                    <strong>REP (#<?php echo $order['repair_number'] ?: '-'; ?>):</strong> <?php echo $item['repair_notes'] ? htmlspecialchars($item['repair_notes']) : '-'; ?>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
 
         <div class="bottom-section">
             <!-- COMENTARIOS -->

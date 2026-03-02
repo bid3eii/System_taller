@@ -38,7 +38,7 @@ $stmt = $pdo->prepare("
         so.*, so.display_id,
         c.name as contact_name, c.phone, c.email, c.tax_id, c.address,
         e.brand, e.model, e.submodel, e.serial_number, e.type as equipment_type,
-        co.name as owner_name
+        co.name as registered_owner_name
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
@@ -107,12 +107,34 @@ if (empty($doc_number)) {
         .equip_table th { background: #fff; font-weight: bold; }
         
         .legal-footer { font-size: 10px; text-align: justify; border: 1px solid var(--border-color); padding: 8px; margin-bottom: 10px; line-height: 1.3; }
-        .signatures-area { display: flex; justify-content: space-around; margin-top: 10px; }
-        .bottom-section { margin-top: auto; width: 100%; }
-        .sig-box { width: 40%; text-align: center; }
-        .sig-line { border-bottom: 1px solid black; height: 50px; margin-bottom: 5px; }
+        .signatures-area { display: flex; justify-content: space-around; margin-top: 5px; }
+        .bottom-section { margin-top: auto; width: 100%; border-top: 0; padding-top: 5px; }
+        .sig-box { width: 45%; text-align: center; }
+        .sig-line { border-bottom: 1.5px solid black; height: 40px; margin-bottom: 5px; }
 
-        @media print { .actions { display: none; } body { background: white; } .paper { box-shadow: none; margin: 0; width: 100%; padding: 10mm; } }
+        @media print { 
+            @page { size: letter; margin: 0 !important; }
+            html, body { height: 100%; overflow: hidden; margin: 0 !important; padding: 0 !important; }
+            .actions { display: none; } 
+            .paper { 
+                box-shadow: none; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                padding: 10mm 12mm; 
+                height: 260mm; 
+                max-height: 260mm;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                page-break-after: avoid;
+                page-break-before: avoid;
+                overflow: hidden;
+            }
+            .section-box { margin-bottom: 5px; }
+            .equip_table { margin-top: 5px; margin-bottom: 5px; }
+            .signatures-area { margin-top: 5px; }
+            .bottom-section { margin-top: auto; margin-bottom: 0; }
+        }
     </style>
 </head>
 <body>
@@ -145,10 +167,16 @@ if (empty($doc_number)) {
                     <?php if(count($orders) === 1): ?>
                         <div class="info-row"><div class="info-label">Caso #:</div><div class="info-val" style="color: #2563eb; font-weight: bold;"><?php echo get_order_number($orders[0]); ?></div></div>
                     <?php endif; ?>
-                    <div class="info-row"><div class="info-label">Cliente:</div><div class="info-val"><?php echo htmlspecialchars(!empty($first_order['owner_name']) ? $first_order['owner_name'] : $first_order['contact_name']); ?></div></div>
+                    <div class="info-row"><div class="info-label">Cliente:</div><div class="info-val"><?php 
+                        $final_client = trim(!empty($first_order['owner_name']) ? $first_order['owner_name'] : (!empty($first_order['registered_owner_name']) ? $first_order['registered_owner_name'] : $first_order['contact_name']));
+                        $contact_name = trim($first_order['contact_name'] ?? '');
+                        echo htmlspecialchars($final_client); 
+                    ?></div></div>
                 </div>
                 <div>
-                    <div class="info-row"><div class="info-label">Contacto:</div><div class="info-val"><?php echo htmlspecialchars($first_order['contact_name']); ?></div></div>
+                    <?php if($final_client !== $contact_name && !empty($contact_name)): ?>
+                    <div class="info-row"><div class="info-label">Contacto:</div><div class="info-val"><?php echo htmlspecialchars($contact_name); ?></div></div>
+                    <?php endif; ?>
                     <?php $tax_label_print = ($first_order['service_type'] == 'warranty') ? 'Cédula/RUC:' : 'Cédula:'; ?>
                     <div class="info-row"><div class="info-label"><?php echo $tax_label_print; ?></div><div class="info-val"><?php echo htmlspecialchars($first_order['tax_id'] ?: '-'); ?></div></div>
                     <div class="info-row"><div class="info-label">Celular:</div><div class="info-val"><?php echo htmlspecialchars($first_order['phone']); ?></div></div>
@@ -157,41 +185,35 @@ if (empty($doc_number)) {
             </div>
         </div>
 
-        <div class="section-header" style="margin-bottom: 0; border-bottom: none;">INGRESO DE EQUIPO</div>
-        <table class="equip_table" style="margin-top: 0; margin-bottom: 8px;">
+        <?php foreach($orders as $o): ?>
+        <div class="section-header">INGRESO DE EQUIPO</div>
+        <table class="equip_table" style="margin-top: 0; margin-bottom: 10px;">
             <thead>
                 <tr>
-                    <th style="width: 60%;">EQUIPO</th>
-                    <th style="width: 20%;"># SERIE</th>
-                    <th style="width: 20%;">TIPO DE SERVICIO</th>
+                    <th style="width: 50%;">EQUIPO</th>
+                    <th style="width: 25%;"># SERIE</th>
+                    <th style="width: 25%;">TIPO DE SERVICIO</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach($orders as $o): ?>
                 <tr>
-                    <td style="text-align: center; text-transform: uppercase;"><?php echo htmlspecialchars(trim($o['brand'] . ' ' . $o['model'])); ?></td>
-                    <td style="text-align: center; text-transform: uppercase;"><?php echo htmlspecialchars($o['serial_number']); ?></td>
-                    <td style="text-align: center;"><?php echo $o['service_type'] == 'warranty' ? 'GARANTÍA' : 'SERVICIO'; ?></td>
+                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($o['brand'] . ' ' . $o['model'])); ?></td>
+                    <td style="text-transform: uppercase;"><?php echo htmlspecialchars($o['serial_number']); ?></td>
+                    <td><?php echo $o['service_type'] == 'warranty' ? 'GARANTÍA' : 'SERVICIO'; ?></td>
                 </tr>
-                <tr>
-                    <td colspan="4" style="padding: 0; background: #fff;">
-                        <div style="font-weight: bold; text-align: center; border-bottom: 1.5px solid var(--border-color); padding: 4px; font-size: 11px;">ACCESORIOS RECIBIDOS</div>
-                        <div style="padding: 6px; font-size: 11px; text-align: left;">
-                            <?php echo htmlspecialchars($o['accessories_received'] ?: 'N/A'); ?>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="4" style="padding: 0; background: #fff;">
-                        <div style="font-weight: bold; text-align: center; border-bottom: 1.5px solid var(--border-color); padding: 4px; font-size: 11px;">PROBLEMA REPORTADO / SERVICIO SOLICITADO</div>
-                        <div style="padding: 6px; font-size: 11px; text-align: left;">
-                            <?php echo nl2br(htmlspecialchars($o['problem_reported'])); ?>
-                        </div>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
             </tbody>
         </table>
+
+        <div class="section-header">ACCESORIOS RECIBIDOS</div>
+        <div class="section-box" style="margin-top: 0; margin-bottom: 10px; min-height: 30px;">
+            <?php echo htmlspecialchars($o['accessories_received'] ?: 'NINGUNO / SOLO EQUIPO'); ?>
+        </div>
+
+        <div class="section-header">PROBLEMA REPORTADO / SERVICIO SOLICITADO</div>
+        <div class="section-box" style="margin-top: 0; margin-bottom: 10px; min-height: 40px;">
+            <?php echo nl2br(htmlspecialchars($o['problem_reported'])); ?>
+        </div>
+        <?php endforeach; ?>
 
         <div class="bottom-section">
             <?php if(!empty($first_order['entry_notes'])): ?>
@@ -209,11 +231,14 @@ if (empty($doc_number)) {
                 </div>
                 <div class="sig-box">
                     <div class="sig-line"></div>
-                    <div style="font-weight: bold;">Entregué Conforme (Cliente)</div>
-                    <div style="font-size: 10px;"><?php echo htmlspecialchars($first_order['contact_name']); ?></div>
+                    <div style="font-weight: bold;">Entregué Conforme</div>
+                    <div style="font-weight: bold; margin-top: 5px;"><?php 
+                        echo htmlspecialchars($contact_name ?: $final_client); 
+                    ?></div>
                 </div>
             </div>
         </div>
     </div>
 </body>
 </html>
+```

@@ -32,51 +32,37 @@ $stmt = $pdo->prepare("
     SELECT 
         so.*, so.display_id,
         c_contact.name as contact_name, c_contact.phone, c_contact.email, c_contact.tax_id, c_contact.address,
-        COALESCE(
-            NULLIF(so.owner_name, ''),
-            (SELECT c_o.name 
-             FROM service_orders so_o 
-             JOIN clients c_o ON so_o.client_id = c_o.id 
-             WHERE so_o.equipment_id = so.equipment_id 
-               AND (so_o.service_type = 'warranty' OR so_o.problem_reported = 'Garantía Registrada')
-             ORDER BY so_o.created_at ASC 
-             LIMIT 1)
-        ) as owner_name_calc,
+        co.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type as equipment_type,
         u.username as delivered_by
     FROM service_orders so
     JOIN clients c_contact ON so.client_id = c_contact.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients co ON e.client_id = co.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
     WHERE so.id = ?
 ");
 $stmt->execute([$id]);
 $order = $stmt->fetch();
 
-// Fallback if no specific owner found
-if ($order && !$order['owner_name_calc']) {
-    $stmtFallback = $pdo->prepare("SELECT c.name FROM equipments e JOIN clients c ON e.client_id = c.id WHERE e.id = ?");
-    $stmtFallback->execute([$order['equipment_id']]);
-    $order['owner_name'] = $stmtFallback->fetchColumn(); // Removed fallback to contact
-} elseif ($order) {
-    $order['owner_name'] = $order['owner_name_calc'];
-}
+// Priority: owner_name (from order) > registered_owner_name (from equipment) > contact_name (from order)
+$order['owner_name_final'] = !empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name']);
 
 // Display Logic
-$owner = trim($order['owner_name'] ?? '');
-$contact = trim($order['contact_name'] ?? '');
+$final_client = trim($order['owner_name_final'] ?? '');
+$contact_name = trim($order['contact_name'] ?? '');
 
-// Primary Field (Left Col): "Cliente" should show the Equip Owner
 $client_label = 'Cliente:';
-$client_val = !empty($owner) ? $owner : $contact;
+$client_val = $final_client;
 
-// Secondary Field (Right Col): "Contacto" (if different)
+// Secondary Field (Right Col): "Contacto" (only if different)
 $show_secondary = false;
 $secondary_label = 'Contacto:';
-$secondary_val = $contact;
+$secondary_val = $contact_name;
 
-if (!empty($owner) && !empty($contact)) {
-    if ($owner !== $contact) {
+if (!empty($final_client) && !empty($contact_name)) {
+    // If the displayed client is functionally same as contact, hide secondary
+    if (strcasecmp($final_client, $contact_name) !== 0) {
         $show_secondary = true;
     }
 }
@@ -342,22 +328,26 @@ if (empty($order['exit_doc_number'])) {
         }
 
         @media print {
-            @page { margin: 5mm; size: letter; }
+            @page { size: letter; margin: 0 !important; }
+            html, body { height: 100%; overflow: hidden; margin: 0 !important; padding: 0 !important; }
             .actions { display: none; }
-            body { background: white; padding: 0; }
             .paper { 
                 box-shadow: none; 
-                margin: 0; 
-                width: 100%; 
-                min-height: 260mm; /* Safe zone Letter */
-                padding: 10mm 15mm 20mm 15mm; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                height: 260mm;
+                max-height: 260mm;
+                box-sizing: border-box;
+                padding: 10mm 15mm; 
                 page-break-after: avoid; 
                 page-break-inside: avoid;
                 display: flex;
                 flex-direction: column;
                 justify-content: flex-start;
-                overflow: visible; 
+                overflow: hidden; 
             }
+            .bottom-section { margin-top: auto; }
+        }
             a[href]:after { content: none !important; }
         }
     </style>
@@ -434,49 +424,51 @@ if (empty($order['exit_doc_number'])) {
             </div>
         </div>
 
-        <!-- EQUIPMENT TABLE -->
-        <div class="section-header">SALIDA DE 1 EQUIPO(S)</div>
-        <table class="equip-table">
+        <div class="section-header">INFORMACIÓN DEL EQUIPO</div>
+        <table class="equip-table" style="margin-bottom: 10px;">
             <thead>
                 <tr>
                     <th>INGRESO</th>
-                    <th>MARCA</th>
-                    <th>MODELO</th>
-                    <th>SUBMODELO</th>
-                    <th># SERIE</th>
-                    <th>DESCRIPCION</th>
+                    <th>EQUIPO</th>
+                    <th style="width: 25%;"># SERIE</th>
+                    <th>CASO #</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
-                    <td><?php echo htmlspecialchars($order['brand']); ?></td>
-                    <td><?php echo htmlspecialchars($order['model']); ?></td>
-                    <td>-</td>
-                    <td><?php echo htmlspecialchars($order['serial_number']); ?></td>
-                    <td><?php echo htmlspecialchars($order['problem_reported']); ?></td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="font-weight: bold;"># CASO: <span style="color: #2563eb;"><?php echo get_order_number($order); ?></span></td>
-                    <td colspan="2" style="vertical-align: top;">
-                        <div style="font-weight: bold;"># DIAGNOSTICO: <?php echo $order['diagnosis_number'] ? str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
-                        <?php if($diagnosisNote): ?>
-                            <div style="margin-top: 4px; font-weight: normal; font-size: 10px; font-style: italic; color: #333;">
-                                <?php echo nl2br(htmlspecialchars($diagnosisNote)); ?>
-                            </div>
-                        <?php endif; ?>
-                    </td>
-                    <td colspan="2" style="vertical-align: top;">
-                        <div style="font-weight: bold;"># REPARACION: <?php echo $order['repair_number'] ? str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
-                         <?php if($repairNote): ?>
-                            <div style="margin-top: 4px; font-weight: normal; font-size: 10px; font-style: italic; color: #333;">
-                                <?php echo nl2br(htmlspecialchars($repairNote)); ?>
-                            </div>
-                        <?php endif; ?>
-                    </td>
+                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'] . ' ' . $order['model'])); ?></td>
+                    <td style="text-transform: uppercase;"><?php echo htmlspecialchars($order['serial_number']); ?></td>
+                    <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order); ?></td>
                 </tr>
             </tbody>
         </table>
+
+        <div class="section-header">ACCESORIOS RECIBIDOS</div>
+        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; min-height: 25px;">
+            <?php echo htmlspecialchars($order['accessories_received'] ?: 'NINGUNO / SOLO EQUIPO'); ?>
+        </div>
+
+        <div class="section-header">PROBLEMA REPORTADO / SERVICIO SOLICITADO</div>
+        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; min-height: 35px;">
+            <?php echo nl2br(htmlspecialchars($order['problem_reported'])); ?>
+        </div>
+
+        <div class="section-header">RESULTADO DEL SERVICIO</div>
+        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; padding: 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="width: 50%; padding: 5px; border-right: 1px solid var(--border-color); vertical-align: top;">
+                        <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid #eee;">DIAGNÓSTICO: <?php echo $order['diagnosis_number'] ? str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
+                        <?php echo $diagnosisNote ? nl2br(htmlspecialchars($diagnosisNote)) : 'Sin notas adicionales.'; ?>
+                    </td>
+                    <td style="width: 50%; padding: 5px; vertical-align: top;">
+                        <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid #eee;">REPARACIÓN: <?php echo $order['repair_number'] ? str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
+                        <?php echo $repairNote ? nl2br(htmlspecialchars($repairNote)) : 'Sin notas adicionales.'; ?>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <div class="bottom-section">
             <!-- COMENTARIOS -->

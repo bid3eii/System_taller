@@ -61,7 +61,7 @@ try {
 // These are orders entered with service_type = 'warranty'
 $sql = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id,
+        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name,
         c.name as client_name, c.phone,
         e.brand, e.model, e.serial_number, e.type,
         tech.username as tech_name

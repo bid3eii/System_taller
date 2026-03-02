@@ -27,7 +27,7 @@ $is_tech = ($role_id == 3);
 
 $sql = "
     SELECT 
-        so.id, so.status, so.final_cost, so.exit_date, so.invoice_number, so.service_type, so.problem_reported, so.display_id,
+        so.id, so.status, so.final_cost, so.exit_date, so.invoice_number, so.service_type, so.problem_reported, so.display_id, so.owner_name,
         c.name as client_name, 
         e.brand, e.model, e.serial_number, e.type,
         u.username as delivered_by,
@@ -199,7 +199,7 @@ require_once '../../includes/sidebar.php';
                                     <span class="badge badge-blue">Servicio</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo htmlspecialchars($item['client_name']); ?></td>
+                            <td><?php echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : $item['client_name']); ?></td>
                             <td>
                                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                                     <span

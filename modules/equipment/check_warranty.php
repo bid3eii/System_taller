@@ -30,6 +30,7 @@ try {
         $stmtW = $pdo->prepare("
             SELECT 
                 w.id, w.status, w.end_date, w.supplier_name, w.sales_invoice_number, w.product_code,
+                so.owner_name,
                 c_orig.name as original_owner_name
             FROM warranties w 
             LEFT JOIN service_orders so ON w.service_order_id = so.id
@@ -40,6 +41,14 @@ try {
         ");
         $stmtW->execute([$equipment['id']]);
         $warranty = $stmtW->fetch(PDO::FETCH_ASSOC);
+
+        // If no warranty found, still try to find the last owner_name from any service order
+        $lastOwner = $warranty['owner_name'] ?? '';
+        if (!$lastOwner) {
+            $stmtOwner = $pdo->prepare("SELECT owner_name FROM service_orders WHERE equipment_id = ? AND owner_name != '' ORDER BY created_at DESC LIMIT 1");
+            $stmtOwner->execute([$equipment['id']]);
+            $lastOwner = $stmtOwner->fetchColumn();
+        }
 
         // Also fetch Client Name
         $clientName = '';
@@ -76,7 +85,8 @@ try {
                     'client_id' => $equipment['client_id'],
                     'supplier' => $warranty['supplier_name'],
                     'invoice' => $warranty['sales_invoice_number'],
-                    'original_owner' => $warranty['original_owner_name']
+                    'original_owner' => $warranty['original_owner_name'],
+                    'owner_name' => $lastOwner
                 ]
             ]);
         } else {
@@ -91,7 +101,8 @@ try {
                     'submodel' => $equipment['submodel'],
                     'type' => $equipment['type'],
                     'client_name' => $clientName,
-                    'client_id' => $equipment['client_id']
+                    'client_id' => $equipment['client_id'],
+                    'owner_name' => $lastOwner
                 ]
             ]);
         }

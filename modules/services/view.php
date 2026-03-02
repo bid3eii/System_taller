@@ -79,11 +79,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $stmt = $pdo->prepare("
     SELECT 
         so.*,
-        c.name as client_name, c.phone, c.email,
-        e.brand, e.model, e.submodel, e.serial_number, e.type as equipment_type
+        c.name as contact_name, c.phone, c.email,
+        e.brand, e.model, e.submodel, e.serial_number, e.type as equipment_type,
+        co.name as registered_owner_name
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients co ON e.client_id = co.id
     WHERE so.id = ?
 ");
 $stmt->execute([$id]);
@@ -478,7 +480,12 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
 
                             <div class="info-group">
                                 <span class="info-label">Nombre Completo</span>
-                                <div class="info-value highlight"><?php echo htmlspecialchars($order['client_name']); ?>
+                                <div class="info-value highlight"><?php echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name'])); ?>
+<?php if(!empty($order['owner_name']) || !empty($order['registered_owner_name'])): ?>
+    <div style="font-size: 0.8rem; color: var(--p-text-muted); font-weight: normal; margin-top: 2px;">
+        Contacto: <?php echo htmlspecialchars($order['contact_name']); ?>
+    </div>
+<?php endif; ?>
                                 </div>
                             </div>
 
@@ -519,15 +526,14 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             <h4 style="color: var(--p-primary); font-size: 0.9rem; margin-bottom: 1rem;">Equipo</h4>
 
                             <div class="info-group">
-                                <span class="info-label">Equipo</span>
+                                <span class="info-label">Marca / Modelo</span>
                                 <div class="info-value highlight">
-                                    <?php echo htmlspecialchars($order['equipment_type']); ?>
                                     <?php echo htmlspecialchars($order['brand']); ?>
                                 </div>
-                                <div class="info-value text-muted"><?php echo htmlspecialchars($order['model']); ?>
+                                <div class="info-value"><?php echo htmlspecialchars($order['model']); ?>
                                 </div>
                                 <?php if ($order['submodel']): ?>
-                                    <div class="info-value text-muted" style="font-size: 0.9rem;">
+                                    <div class="info-value" style="font-size: 0.9rem; color: var(--p-text-muted);">
                                         <?php echo htmlspecialchars($order['submodel']); ?></div>
                                 <?php endif; ?>
                             </div>

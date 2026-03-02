@@ -18,13 +18,15 @@ if (!$id) {
 $stmt = $pdo->prepare("
     SELECT 
         so.*,
-        c.name as client_name, c.phone, c.email, c.tax_id,
+        c.name as contact_name, c.phone, c.email, c.tax_id,
         e.brand, e.model, e.serial_number, e.type as equipment_type,
-        u.username as created_by
+        u.username as created_by,
+        co.name as registered_owner_name
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN users u ON so.user_id = u.id
+    LEFT JOIN clients co ON e.client_id = co.id
     WHERE so.id = ?
 ");
 $stmt->execute([$id]);
@@ -310,9 +312,18 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                 <div>
                     <div class="section-header">INFORMACIÓN DEL CLIENTE</div>
                     <div class="info-group">
-                        <span class="info-label">Cliente:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($order['client_name']); ?></span>
+                        <span class="info-value"><?php 
+                            $final_client = trim(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name']));
+                            $contact_name = trim($order['contact_name'] ?? '');
+                            echo htmlspecialchars($final_client); 
+                        ?></span>
                     </div>
+                    <?php if($final_client !== $contact_name && !empty($contact_name)): ?>
+                    <div class="info-group">
+                        <span class="info-label">Contacto:</span>
+                        <span class="info-value"><?php echo htmlspecialchars($contact_name); ?></span>
+                    </div>
+                    <?php endif; ?>
                     <?php if($order['tax_id']): ?>
                     <div class="info-group">
                         <span class="info-label">ID/RUC:</span>

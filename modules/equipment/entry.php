@@ -1206,8 +1206,9 @@ require_once '../../includes/sidebar.php';
                             
                             const clientInput = block.querySelector('.registered-client-input');
                             if (clientInput) {
-                                clientInput.value = data.data.client_name || 'Sin cliente registrado';
-                                clientInput.style.color = data.data.client_name ? 'var(--primary-light)' : 'var(--text-muted)';
+                                let owner = data.data.owner_name || data.data.original_owner || data.data.client_name;
+                                clientInput.value = owner || 'Sin cliente registrado';
+                                clientInput.style.color = owner ? 'var(--primary-light)' : 'var(--text-muted)';
                             }
                             
                             if (data.status === 'valid') {
@@ -1508,9 +1509,13 @@ require_once '../../includes/sidebar.php';
                                 }
                                 
                                 // Special: Client Display
-                                if(data.data.client_name) {
-                                    const display = document.getElementById('equipment_client_display');
-                                    let owner = data.data.original_owner || data.data.client_name;
+                                if(data.data.client_name || data.data.owner_name || data.data.original_owner) {
+                                    const display = input.closest('.form-group').parentElement.querySelector('.registered-client-input');
+                                    // 1. owner_name (from previous service order)
+                                    // 2. original_owner (client associated with equipment IN WARRANTY MODULE)
+                                    // 3. client_name (Contact associated with equipment IN EQUIPMENT MODULE)
+                                    let owner = data.data.owner_name || data.data.original_owner || data.data.client_name;
+                                    
                                     if(display && owner) {
                                         display.value = owner;
                                     }
