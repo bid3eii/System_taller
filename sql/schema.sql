@@ -282,6 +282,127 @@ ALTER TABLE `user_custom_modules` ADD CONSTRAINT `user_custom_modules_ibfk_1` FO
 ALTER TABLE `role_permissions` ADD CONSTRAINT `role_permissions_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE, ADD CONSTRAINT `role_permissions_ibfk_2` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE;
 ALTER TABLE `audit_logs` ADD CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `project_surveys`
+--
+
+CREATE TABLE IF NOT EXISTS `project_surveys` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `client_name` varchar(100) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `general_description` text DEFAULT NULL,
+  `scope_activities` text DEFAULT NULL,
+  `estimated_time` varchar(100) DEFAULT NULL,
+  `personnel_required` varchar(100) DEFAULT NULL,
+  `status` enum('draft','submitted','approved') DEFAULT 'draft',
+  `created_at` timestamp DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `project_surveys_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `project_materials`
+--
+
+CREATE TABLE IF NOT EXISTS `project_materials` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `survey_id` int(11) NOT NULL,
+  `item_description` varchar(255) NOT NULL,
+  `quantity` decimal(10,2) DEFAULT 1.00,
+  `unit` varchar(50) DEFAULT 'unidades',
+  `notes` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `survey_id` (`survey_id`),
+  CONSTRAINT `project_materials_ibfk_1` FOREIGN KEY (`survey_id`) REFERENCES `project_surveys` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `anexos_yazaki`
+--
+
+CREATE TABLE IF NOT EXISTS `anexos_yazaki` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `survey_id` int(11) DEFAULT NULL,
+  `user_id` int(11) NOT NULL,
+  `client_name` varchar(255) DEFAULT 'YAZAKI DE NICARAGUA SA',
+  `status` enum('draft','generated') DEFAULT 'draft',
+  `created_at` timestamp DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `survey_id` (`survey_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `anexos_yazaki_ibfk_1` FOREIGN KEY (`survey_id`) REFERENCES `project_surveys` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `anexos_yazaki_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `anexo_tools`
+--
+
+CREATE TABLE IF NOT EXISTS `anexo_tools` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `anexo_id` int(11) NOT NULL,
+  `row_index` int(11) DEFAULT NULL,
+  `tool_id` int(11) DEFAULT NULL,
+  `custom_description` text DEFAULT NULL,
+  `quantity` decimal(10,2) DEFAULT 1.00,
+  PRIMARY KEY (`id`),
+  KEY `anexo_id` (`anexo_id`),
+  KEY `tool_id` (`tool_id`),
+  CONSTRAINT `anexo_tools_ibfk_1` FOREIGN KEY (`anexo_id`) REFERENCES `anexos_yazaki` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `anexo_tools_ibfk_2` FOREIGN KEY (`tool_id`) REFERENCES `tools` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tool_assignments`
+--
+
+CREATE TABLE IF NOT EXISTS `tool_assignments` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `project_name` varchar(255) NOT NULL,
+    `assigned_to` varchar(255) NOT NULL,
+    `technician_1` varchar(255),
+    `technician_2` varchar(255),
+    `technician_3` varchar(255),
+    `delivery_date` date NOT NULL,
+    `return_date` date,
+    `observations` text,
+    `status` enum('pending', 'delivered', 'returned') DEFAULT 'pending',
+    `created_at` timestamp DEFAULT current_timestamp(),
+    `updated_at` timestamp DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tool_assignment_items`
+--
+
+CREATE TABLE IF NOT EXISTS `tool_assignment_items` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `assignment_id` int(11) NOT NULL,
+    `tool_id` int(11) NOT NULL,
+    `quantity` int(11) NOT NULL DEFAULT 1,
+    `status` enum('pending', 'delivered', 'returned') DEFAULT 'pending',
+    `delivery_confirmed` boolean DEFAULT FALSE,
+    `return_confirmed` boolean DEFAULT FALSE,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `tool_assignment_items_ibfk_1` FOREIGN KEY (`assignment_id`) REFERENCES `tool_assignments` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `tool_assignment_items_ibfk_2` FOREIGN KEY (`tool_id`) REFERENCES `tools` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
