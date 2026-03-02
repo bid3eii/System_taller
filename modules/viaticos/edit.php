@@ -6,10 +6,41 @@ require_once '../../includes/functions.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-if (!isset($_SESSION['user_id']) || !can_access_module('viaticos_add', $pdo)) {
+if (!isset($_SESSION['user_id']) || !can_access_module('viaticos_edit', $pdo)) {
     header("Location: " . BASE_URL . "modules/viaticos/index.php");
     exit;
 }
+
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($id === 0) {
+    header("Location: index.php");
+    exit;
+}
+
+// Header
+$stmtH = $pdo->prepare("SELECT v.*, u.username as creator_name FROM viaticos v LEFT JOIN users u ON v.created_by = u.id WHERE v.id = ?");
+$stmtH->execute([$id]);
+$viatico = $stmtH->fetch(PDO::FETCH_ASSOC);
+
+if (!$viatico) {
+    header("Location: index.php");
+    exit;
+}
+
+// Columns (Técnicos)
+$stmtCols = $pdo->prepare("SELECT * FROM viatico_columns WHERE viatico_id = ? ORDER BY display_order ASC");
+$stmtCols->execute([$id]);
+$columns = $stmtCols->fetchAll(PDO::FETCH_ASSOC);
+
+// Concepts (Filas)
+$stmtRows = $pdo->prepare("SELECT * FROM viatico_concepts WHERE viatico_id = ? ORDER BY id ASC");
+$stmtRows->execute([$id]);
+$concepts = $stmtRows->fetchAll(PDO::FETCH_ASSOC);
+
+// Amounts (Celdas)
+$stmtAmts = $pdo->prepare("SELECT * FROM viatico_amounts WHERE viatico_id = ?");
+$stmtAmts->execute([$id]);
+$amounts = $stmtAmts->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch all technicians/users to populate the dropdown
 $stmt = $pdo->query("SELECT id, username FROM users WHERE status = 'active' ORDER BY username ASC");
@@ -120,8 +151,8 @@ require_once '../../includes/sidebar.php';
 <main class="main-content">
     <div class="content-header">
         <div class="header-title">
-            <h1>Crear Nuevo Viático</h1>
-            <p class="text-muted">Presupuesto estilo matriz (Técnicos vs Gastos)</p>
+            <h1>Editar Viático #<?php echo str_pad($viatico['id'], 5, '0', STR_PAD_LEFT); ?></h1>
+            <p class="text-muted">Actualizar datos de presupuesto</p>
         </div>
         <div class="header-actions">
             <a href="index.php" class="btn btn-outline"><i class="ph ph-arrow-left"></i> Volver</a>
@@ -129,7 +160,8 @@ require_once '../../includes/sidebar.php';
     </div>
 
     <!-- Configuration Form -->
-    <form id="viaticoForm" method="POST" action="save.php" style="max-width: 1200px; margin: 0 auto;">
+    <form id="viaticoForm" method="POST" action="update.php" style="max-width: 1200px; margin: 0 auto;">
+        <input type="hidden" name="id" value="<?php echo $viatico['id']; ?>">
 
         <div class="card" style="margin-bottom: 2rem;">
             <div class="card-body"
@@ -138,12 +170,13 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label" style="font-size: 0.85rem; font-weight: bold;">MANTENIMIENTO
                         / PROYECTO</label>
                     <input type="text" name="project_title" class="form-control"
-                        placeholder="Ej. PLOTTER YAZAKI PLANTA 6" required
+                        value="<?php echo htmlspecialchars($viatico['project_title']); ?>" required
                         style="font-size: 1.1rem; font-weight: bold; padding: 0.75rem;">
                 </div>
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label">Fecha</label>
-                    <input type="date" name="date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
+                    <input type="date" name="date" class="form-control" value="<?php echo $viatico['date']; ?>"
+                        required>
                 </div>
 
                 <!-- Tech Adder -->
@@ -243,16 +276,22 @@ require_once '../../includes/sidebar.php';
 
         <div style="display: flex; justify-content: flex-end;">
             <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
-                <i class="ph ph-floppy-disk"></i> Guardar Viáticos
+                <i class="ph ph-floppy-disk"></i> Actualizar Viático
             </button>
         </div>
     </form>
     <script>
+        // Load existing PHP data into JS for pre-population
+        const dbColumns = <?php echo json_encode($columns); ?>;
+        const dbConcepts = <?php echo json_encode($concepts); ?>;
+        const dbAmounts = <?php echo json_encode($amounts); ?>;
+
         const addedTechs = [];
         let techIndex = 0;
 
         // Elements
         const selTech = document.getElementById('techSelector');
+
         const btnAddTech = document.getElementById('btnAddTech');
         const headerRow = document.getElementById('headerRow');
         const grandTotalRow = document.querySelector('.grand-total-row');
@@ -410,8 +449,50 @@ require_once '../../includes/sidebar.php';
         function removeTech(techId) {
             // Future enhancement: remove DOM elements related to tech id.
             // For now, simpler to reload or just restrict removal.
-            alert('En esta versión, si te equivocas de técnico, recarga la página.');
+            alert('En esta versión, si te equivocas de técnico al editar, recarga la página.');
         }
+
+        // Initialize existing data on load
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Add all custom concepts first
+            dbConcepts.forEach(c => {
+                if (c.type === 'custom') {
+                    customConceptInput.value = c.label;
+                    btnAddRow.click();
+                }
+            });
+
+            // 2. Add all columns/technicians
+            dbColumns.forEach(c => {
+                // Select logic
+                for (let i = 0; i < selTech.options.length; i++) {
+                    if (selTech.options[i].value == c.tech_id) {
+                        selTech.selectedIndex = i;
+                        btnAddTech.click();
+                        break;
+                    }
+                }
+            });
+
+            // 3. Populate values
+            // dbAmounts has concept_id, column_id, amount.
+            // We need to match concept label and tech_id
+            dbAmounts.forEach(amt => {
+                const cRow = dbConcepts.find(c => c.id == amt.concept_id);
+                const tCol = dbColumns.find(tc => tc.id == amt.column_id);
+
+                if (cRow && tCol) {
+                    // Find input field for this exact cell
+                    const inpt = document.querySelector(`.calc-input[data-tech="${tCol.tech_id}"][data-cat="${cRow.category}"][name*="[${cRow.label}]"]`);
+                    if (inpt) {
+                        inpt.value = parseFloat(amt.amount).toFixed(2);
+                        // Dispatch input to trigger recalculation
+                        inpt.dispatchEvent(new Event('input'));
+                    }
+                }
+            });
+        });
+
 
     </script>
     <?php require_once '../../includes/footer.php'; ?>

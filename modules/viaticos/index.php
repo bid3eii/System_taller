@@ -50,21 +50,21 @@ require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 ?>
 <main class="main-content">
-    <div class="content-header">
-        <div class="header-title">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div class="icon-box" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary);">
-                    <i class="ph ph-money"></i>
-                </div>
-                <div>
-                    <h1>Control de Viáticos</h1>
-                    <p class="text-muted">Gestión de presupuestos de viaje y comida por proyecto.</p>
-                </div>
+    <div class="content-header"
+        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div class="header-title" style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="icon-box" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary);">
+                <i class="ph ph-money"></i>
+            </div>
+            <div>
+                <h1 style="margin: 0; margin-bottom: 0.25rem;">Control de Viáticos</h1>
+                <p class="text-muted" style="margin: 0;">Gestión de presupuestos de viaje y comida por proyecto.</p>
             </div>
         </div>
         <?php if ($can_add): ?>
             <div class="header-actions">
-                <a href="create.php" class="btn btn-primary">
+                <a href="create.php" class="btn btn-primary"
+                    style="display: inline-flex; align-items: center; gap: 0.5rem;">
                     <i class="ph ph-plus"></i>
                     Nuevo Viático
                 </a>
@@ -93,34 +93,35 @@ require_once '../../includes/sidebar.php';
                     <table class="table" style="margin: 0;">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Fecha</th>
-                                <th>Proyecto</th>
-                                <th>Creado Por</th>
-                                <th class="text-right">Total ($)</th>
-                                <th>Estado</th>
-                                <th class="text-right">Acciones</th>
+                                <th class="text-center">ID</th>
+                                <th class="text-center">Fecha</th>
+                                <th class="text-center">Proyecto</th>
+                                <th class="text-center">Creado Por</th>
+                                <th class="text-center">Total ($)</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($viaticos as $v): ?>
                                 <tr>
-                                    <td style="font-family: monospace; color: var(--text-muted);">#
+                                    <td class="text-center" style="font-family: monospace; color: var(--text-muted);">#
                                         <?php echo str_pad($v['id'], 5, '0', STR_PAD_LEFT); ?>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <?php echo date('d/m/Y', strtotime($v['date'])); ?>
                                     </td>
-                                    <td style="font-weight: 500;">
+                                    <td class="text-center" style="font-weight: 500;">
                                         <?php echo htmlspecialchars($v['project_title']); ?>
                                     </td>
-                                    <td><span class="badge" style="background: var(--bg-card);"><i class="ph ph-user"></i>
+                                    <td class="text-center"><span class="badge" style="background: var(--bg-card);"><i
+                                                class="ph ph-user"></i>
                                             <?php echo htmlspecialchars($v['creator_name']); ?>
                                         </span></td>
-                                    <td class="text-right" style="font-weight: 600; color: var(--success);">$
+                                    <td class="text-center" style="font-weight: 600; color: var(--success);">$
                                         <?php echo number_format($v['total_amount'], 2); ?>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <?php
                                         $scls = 'bg-gray-500';
                                         $stxt = 'Borrador';
@@ -137,16 +138,33 @@ require_once '../../includes/sidebar.php';
                                             <?php echo $stxt; ?>
                                         </span>
                                     </td>
-                                    <td class="text-right">
-                                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                                            <a href="view.php?id=<?php echo $v['id']; ?>&pdf=1"
-                                                class="btn btn-sm btn-icon btn-text" title="Descargar PDF" target="_blank">
+                                    <td class="text-center">
+                                        <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                                            <a href="view.php?id=<?php echo $v['id']; ?>&pdf=1" class="btn btn-secondary"
+                                                style="padding: 0.4rem; font-size: 1rem;" title="Descargar PDF" target="_blank">
                                                 <i class="ph ph-file-pdf" style="color: var(--danger);"></i>
                                             </a>
-                                            <a href="view.php?id=<?php echo $v['id']; ?>" class="btn btn-sm btn-icon btn-text"
-                                                title="Ver Detalle">
+                                            <a href="view.php?id=<?php echo $v['id']; ?>" class="btn btn-secondary"
+                                                style="padding: 0.4rem; font-size: 1rem;" title="Ver Detalle">
                                                 <i class="ph ph-eye"></i>
                                             </a>
+                                            <?php if ($can_edit): ?>
+                                                <a href="edit.php?id=<?php echo $v['id']; ?>" class="btn btn-secondary"
+                                                    style="padding: 0.4rem; font-size: 1rem;" title="Editar">
+                                                    <i class="ph ph-pencil-simple text-warning"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                            <?php if ($can_delete): ?>
+                                                <form action="delete.php" method="POST" style="display:inline;"
+                                                    onsubmit="return confirm('¿Está seguro de eliminar este registro? Esta acción es irreversible.');">
+                                                    <input type="hidden" name="id" value="<?php echo $v['id']; ?>">
+                                                    <button type="submit" class="btn btn-secondary"
+                                                        style="padding: 0.4rem; font-size: 1rem; color: var(--danger);"
+                                                        title="Eliminar">
+                                                        <i class="ph ph-trash"></i>
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
                                             <?php if ($can_edit): ?>
                                                 <!-- Simple form to toggle status paid -->
                                                 <form method="POST" style="display: inline;">
@@ -154,7 +172,8 @@ require_once '../../includes/sidebar.php';
                                                     <input type="hidden" name="viatico_id" value="<?php echo $v['id']; ?>">
                                                     <input type="hidden" name="status"
                                                         value="<?php echo $v['status'] == 'paid' ? 'draft' : 'paid'; ?>">
-                                                    <button type="submit" class="btn btn-sm btn-icon btn-text"
+                                                    <button type="submit" class="btn btn-secondary"
+                                                        style="padding: 0.4rem; font-size: 1rem;"
                                                         title="<?php echo $v['status'] == 'paid' ? 'Marcar Borrador' : 'Marcar Pagado'; ?>">
                                                         <i class="ph ph-check-circle"
                                                             style="color: <?php echo $v['status'] == 'paid' ? 'var(--text-muted)' : 'var(--success)'; ?>"></i>
@@ -163,6 +182,7 @@ require_once '../../includes/sidebar.php';
                                             <?php endif; ?>
                                         </div>
                                     </td>
+
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
