@@ -39,6 +39,11 @@ if (!can_access_module('surveys_view_all', $pdo) && $survey['user_id'] != $_SESS
     die("Acceso denegado a este levantamiento.");
 }
 
+// Check if Comisiones exist for this survey
+$stmtC = $pdo->prepare("SELECT id FROM comisiones WHERE survey_id = ? LIMIT 1");
+$stmtC->execute([$id]);
+$existingComision = $stmtC->fetchColumn();
+
 // Fetch Materials
 $stmtM = $pdo->prepare("SELECT * FROM project_materials WHERE survey_id = ? ORDER BY id ASC");
 $stmtM->execute([$id]);
@@ -80,6 +85,20 @@ $sData = $statusMaps[$survey['status']] ?? ['Desconocido', 'gray', 'ph-question'
         </div>
 
         <div style="display: flex; gap: 0.5rem;">
+            <?php if (can_access_module('comisiones', $pdo)): ?>
+                <?php if ($existingComision): ?>
+                    <a href="../comisiones/view.php?id=<?php echo $existingComision; ?>" class="btn btn-secondary"
+                        style="border-color: var(--warning); color: var(--warning);">
+                        <i class="ph ph-coins"></i> Gestionar Comisiones
+                    </a>
+                <?php else: ?>
+                    <a href="../comisiones/create.php?survey_id=<?php echo $survey['id']; ?>&title=<?php echo urlencode($survey['title']); ?>"
+                        class="btn btn-secondary" style="border-color: var(--warning); color: var(--warning);">
+                        <i class="ph ph-coins"></i> Crear Comisiones
+                    </a>
+                <?php endif; ?>
+            <?php endif; ?>
+
             <?php if (can_access_module('surveys_edit', $pdo) && $survey['status'] !== 'approved'): ?>
                 <a href="edit.php?id=<?php echo $survey['id']; ?>" class="btn btn-secondary">
                     <i class="ph ph-pencil-simple"></i> Editar
