@@ -282,6 +282,56 @@ ALTER TABLE `user_custom_modules` ADD CONSTRAINT `user_custom_modules_ibfk_1` FO
 ALTER TABLE `role_permissions` ADD CONSTRAINT `role_permissions_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE, ADD CONSTRAINT `role_permissions_ibfk_2` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE;
 ALTER TABLE `audit_logs` ADD CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
+--
+-- VIATICOS MODULE TABLES
+--
+CREATE TABLE IF NOT EXISTS `viaticos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `project_title` varchar(255) NOT NULL,
+  `date` date NOT NULL,
+  `total_amount` decimal(10,2) DEFAULT '0.00',
+  `created_by` int(11) NOT NULL,
+  `status` enum('draft','submitted','paid') DEFAULT 'draft',
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`created_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `viatico_columns` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `viatico_id` int(11) NOT NULL,
+  `tech_id` int(11) DEFAULT NULL,
+  `tech_name` varchar(255) NOT NULL,
+  `display_order` int(11) DEFAULT '0',
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`viatico_id`) REFERENCES `viaticos` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`tech_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `viatico_concepts` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `viatico_id` int(11) NOT NULL,
+  `type` enum('predetermined','custom') NOT NULL,
+  `category` enum('food','transport','other') NOT NULL,
+  `label` varchar(100) NOT NULL,
+  `display_order` int(11) DEFAULT '0',
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`viatico_id`) REFERENCES `viaticos` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `viatico_amounts` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `viatico_id` int(11) NOT NULL,
+  `concept_id` int(11) NOT NULL,
+  `column_id` int(11) NOT NULL,
+  `amount` decimal(10,2) DEFAULT '0.00',
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`viatico_id`) REFERENCES `viaticos` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`concept_id`) REFERENCES `viatico_concepts` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`column_id`) REFERENCES `viatico_columns` (`id`) ON DELETE CASCADE,
+  UNIQUE KEY `unique_cell` (`viatico_id`, `concept_id`, `column_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- --------------------------------------------------------
 
 --

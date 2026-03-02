@@ -582,7 +582,8 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Declaración de Conformi
 
 $users_roles_all = $pdo->query("SELECT * FROM roles ORDER BY id ASC")->fetchAll(); // All roles for display
 $users_roles_edit = array_filter($users_roles_all, function ($r) {
-    return $r['id'] > 1; }); // Skip Admin for permissions editing
+    return $r['id'] > 1;
+}); // Skip Admin for permissions editing
 
 $permissions_list = $pdo->query("SELECT * FROM permissions WHERE code LIKE 'module_%'")->fetchAll();
 
@@ -1065,6 +1066,10 @@ require_once '../../includes/sidebar.php';
                 're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left'],
                 'view_all_entries' => ['label' => 'Ver equipos de todos', 'cat' => 'Gestión', 'icon' => 'ph-eye'],
                 'surveys' => ['label' => 'Levantamientos', 'cat' => 'Proyecto', 'icon' => 'ph-clipboard'],
+                'surveys_add' => ['label' => 'Nuevo Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-plus-circle'],
+                'surveys_edit' => ['label' => 'Editar Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-pencil-simple'],
+                'surveys_delete' => ['label' => 'Eliminar Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-trash'],
+                'surveys_view_all' => ['label' => 'Ver lvt. de todos', 'cat' => 'Proyecto', 'icon' => 'ph-eye'],
                 'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
                 'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
             ];
@@ -1248,9 +1253,11 @@ require_once '../../includes/sidebar.php';
                                     </td>
                                     <td>
                                         <div style="font-weight: 500; color: var(--text-main);">
-                                            <?php echo htmlspecialchars($u['username']); ?></div>
+                                            <?php echo htmlspecialchars($u['username']); ?>
+                                        </div>
                                         <div style="font-size: 0.8rem; color: var(--text-muted);">
-                                            <?php echo htmlspecialchars($u['email']); ?></div>
+                                            <?php echo htmlspecialchars($u['email']); ?>
+                                        </div>
                                     </td>
                                     <td>
                                         <span class="badge"><?php echo htmlspecialchars($u['role_name']); ?></span>

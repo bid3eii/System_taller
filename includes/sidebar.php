@@ -139,11 +139,14 @@
         $can_surveys = can_access_module('surveys', $pdo);
         $can_project_history = can_access_module('project_history', $pdo);
         $can_anexos = can_access_module('anexos', $pdo);
+        $can_viaticos = can_access_module('viaticos', $pdo);
 
-        if ($can_surveys || $can_project_history || $can_anexos) {
+        if ($can_surveys || $can_project_history || $can_anexos || $can_viaticos) {
             $proj_children = [];
             if ($can_surveys)
                 $proj_children[] = ['url' => BASE_URL . 'modules/levantamientos/index.php', 'icon' => 'ph-clipboard', 'label' => 'Levantamientos'];
+            if ($can_viaticos)
+                $proj_children[] = ['url' => BASE_URL . 'modules/viaticos/index.php', 'icon' => 'ph-money', 'label' => 'Viáticos'];
             if ($can_anexos)
                 $proj_children[] = ['url' => BASE_URL . 'modules/anexos/index.php', 'icon' => 'ph-file-pdf', 'label' => 'Anexos Yazaki'];
             if ($can_project_history)
