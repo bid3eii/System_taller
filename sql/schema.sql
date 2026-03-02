@@ -65,6 +65,7 @@ CREATE TABLE `clients` (
   `phone` varchar(20) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
   `address` text DEFAULT NULL,
+  `is_third_party` tinyint(1) DEFAULT 0,
   `created_at` timestamp DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

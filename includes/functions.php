@@ -120,8 +120,10 @@ function format_currency($amount)
  * @param int $padding Number of leading zeros
  * @return string
  */
-function get_order_number($order, $padding = 4) {
-    if (!$order) return '-';
+function get_order_number($order, $padding = 4)
+{
+    if (!$order)
+        return '-';
     $num = !empty($order['display_id']) ? $order['display_id'] : $order['id'];
     return '#' . str_pad($num, $padding, '0', STR_PAD_LEFT);
 }
@@ -231,5 +233,29 @@ function update_service_status($pdo, $order_id, $new_status, $note, $user_id)
         }
         throw $e;
     }
+}
+
+/**
+ * Check if the user has one of the required roles
+ * Accepts an array of role names or IDs
+ */
+function has_role($roles, $pdo)
+{
+    if (!isset($_SESSION['user_id']) || !isset($_SESSION['role_id'])) {
+        return false;
+    }
+
+    $role_id = $_SESSION['role_id'];
+
+    // Get the name of the user's role
+    $stmt = $pdo->prepare("SELECT name FROM roles WHERE id = ?");
+    $stmt->execute([$role_id]);
+    $role_name = $stmt->fetchColumn();
+
+    if ($role_name && in_array($role_name, (array) $roles)) {
+        return true;
+    }
+
+    return false;
 }
 
