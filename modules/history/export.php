@@ -18,18 +18,27 @@ $type = isset($_GET['type']) ? trim($_GET['type']) : '';
 // 2. Build Query
 $sql = "
     SELECT 
-        so.id, so.status, so.final_cost, so.exit_date, so.entry_date, so.invoice_number, so.service_type, so.problem_reported,
+        so.id, so.status, so.final_cost, so.exit_date, so.entry_date, so.invoice_number, so.service_type, so.problem_reported, so.owner_name,
         c.name as client_name, 
+        reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type as equipment_type,
         u.username as delivered_by
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
     WHERE (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
 ";
 
 $params = [];
+
+// Security Restriction: If not admin/reception with view_all permission, restrict to own entries
+$can_view_all = has_permission('module_view_all_entries', $pdo) || can_access_module('view_all_entries', $pdo);
+if (!$can_view_all) {
+    $sql .= " AND so.assigned_tech_id = ?";
+    $params[] = $_SESSION['user_id'];
+}
 
 if (!empty($status)) {
     $sql .= " AND so.status = ?";
@@ -109,11 +118,12 @@ header("Expires: 0");
         .type-warranty { color: #ea580c; font-weight: bold; }
         .type-service { color: #0ea5e9; font-weight: bold; }
         
-        .status-pending { background-color: #fef3c7; color: #d97706; }
-        .status-diagnosing { background-color: #dbeafe; color: #2563eb; }
-        .status-repairing { background-color: #f3e8ff; color: #9333ea; }
-        .status-ready { background-color: #dcfce7; color: #16a34a; }
-        .status-delivered { background-color: #d1fae5; color: #059669; }
+        .status-warning { background-color: #fef3c7; color: #d97706; }
+        .status-blue { background-color: #dbeafe; color: #2563eb; }
+        .status-purple { background-color: #f3e8ff; color: #9333ea; }
+        .status-success { background-color: #dcfce7; color: #16a34a; }
+        .status-green { background-color: #d1fae5; color: #059669; }
+        .status-red { background-color: #fee2e2; color: #dc2626; }
     </style>
 </head>
 <body>
@@ -144,19 +154,25 @@ header("Expires: 0");
                     $statusLabel = $status;
                     $statusClass = '';
                     switch($status) {
-                        case 'pending': $statusLabel='Pendiente'; $statusClass='status-pending'; break;
-                        case 'diagnosing': $statusLabel='Diagnóstico'; $statusClass='status-diagnosing'; break;
-                        case 'repairing': $statusLabel='En Reparación'; $statusClass='status-repairing'; break;
-                        case 'ready': $statusLabel='Listo'; $statusClass='status-ready'; break;
-                        case 'delivered': $statusLabel='Entregado'; $statusClass='status-delivered'; break;
-                        case 'cancelled': $statusLabel='Cancelado'; break;
+                        case 'received': $statusLabel='Recibido'; $statusClass='status-blue'; break;
+                        case 'pending_approval': $statusLabel='En Espera'; $statusClass='status-warning'; break;
+                        case 'diagnosing': $statusLabel='Diagnóstico'; $statusClass='status-purple'; break;
+                        case 'in_repair': $statusLabel='En Reparación'; $statusClass='status-purple'; break;
+                        case 'ready': $statusLabel='Listo'; $statusClass='status-success'; break;
+                        case 'delivered': $statusLabel='Entregado'; $statusClass='status-green'; break;
+                        case 'cancelled': $statusLabel='Cancelado'; $statusClass='status-red'; break;
                     }
+
+                    // Display Name Logic (matches dashboard/history)
+                    $displayName = !empty($row['owner_name']) ? $row['owner_name'] : 
+                                  (!empty($row['registered_owner_name']) ? $row['registered_owner_name'] : 
+                                  $row['client_name']);
                 ?>
                 <tr>
                     <td class="bold">#<?php echo str_pad($row['id'], 4, '0', STR_PAD_LEFT); ?></td>
                     <td class="<?php echo $statusClass; ?>"><?php echo $statusLabel; ?></td>
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
-                    <td class="text-left"><?php echo htmlspecialchars($row['client_name']); ?></td>
+                    <td class="text-left"><?php echo htmlspecialchars($displayName); ?></td>
                     <td class="text-left"><?php echo htmlspecialchars($row['brand'] . ' ' . $row['model']); ?></td>
                     <td><?php echo htmlspecialchars($row['serial_number']); ?></td>
                     <td><?php echo date('d/m/Y', strtotime($row['entry_date'])); ?></td>

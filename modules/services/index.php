@@ -19,7 +19,7 @@ if (!can_access_module('services', $pdo)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'assign_tech') {
     // Verify that the one who has that module assigned can assign to technician
     // We already checked can_access_module at the top of the file
-    if (true) {
+    if (can_access_module('assign_equipment', $pdo)) {
         $order_id = $_POST['order_id'];
         $tech_id = !empty($_POST['tech_id']) ? $_POST['tech_id'] : null;
 
@@ -59,12 +59,14 @@ try {
 $sql = "
     SELECT 
         so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.payment_status,
-        c.name as client_name, c.phone,
+        c.name as contact_name, c.phone,
+        reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
         tech.username as tech_name
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     WHERE so.service_type = 'service'
 ";
@@ -137,6 +139,9 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="1">
                             Fecha <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th class="sortable" data-column="cliente">
+                            Cliente <i class="ph ph-caret-up-down sort-icon"></i>
+                        </th>
                         <th class="sortable" data-column="2">
                             Equipo <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
@@ -162,6 +167,13 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>
+                                    <?php 
+                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                             (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
+                                             $item['contact_name'])); 
+                                    ?>
+                                </td>
+                                <td>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <span class="badge"><?php echo htmlspecialchars($item['type']); ?></span>
                                         <span><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
@@ -184,7 +196,7 @@ require_once '../../includes/sidebar.php';
                                                 <i class="ph ph-user-circle"></i>
                                                 <?php echo htmlspecialchars($item['tech_name']); ?>
                                             </span>
-                                            <?php if (true): ?>
+                                            <?php if (can_access_module('assign_equipment', $pdo)): ?>
                                                 <button type="button" class="btn-icon" style="padding: 2px;" title="Cambiar Técnico"
                                                     onclick="openAssignModal('<?php echo $item['id']; ?>', '<?php echo $item['assigned_tech_id']; ?>')">
                                                     <i class="ph ph-pencil-simple" style="font-size: 0.9rem;"></i>
@@ -192,7 +204,7 @@ require_once '../../includes/sidebar.php';
                                             <?php endif; ?>
                                         </div>
                                     <?php else: ?>
-                                        <?php if (true): ?>
+                                        <?php if (can_access_module('assign_equipment', $pdo)): ?>
                                             <button type="button" class="btn btn-sm btn-secondary"
                                                 onclick="openAssignModal('<?php echo $item['id']; ?>', '<?php echo $item['assigned_tech_id']; ?>')">
                                                 <i class="ph ph-user-plus"></i> Asignar
@@ -282,6 +294,9 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="1">
                             Fecha <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th class="sortable" data-column="cliente">
+                            Cliente <i class="ph ph-caret-up-down sort-icon"></i>
+                        </th>
                         <th class="sortable" data-column="2">
                             Equipo <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
@@ -306,6 +321,13 @@ require_once '../../includes/sidebar.php';
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
+                                <td>
+                                    <?php 
+                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                             (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
+                                             $item['contact_name'])); 
+                                    ?>
+                                </td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <span class="badge"><?php echo htmlspecialchars($item['type']); ?></span>

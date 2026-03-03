@@ -28,6 +28,7 @@ $defined_modules = [
     'equipment_exit' => 'Registrar Salida',
     'tools' => 'Gestión de Herramientas',
     'services' => 'Gestión de Servicios',
+    'assign_equipment' => 'Asignar / Reasignar Equipos',
     'warranties' => 'Gestión de Garantías',
     'new_warranty' => 'Registrar Nueva Garantía',
     'history' => 'Ver Historial',
@@ -1051,6 +1052,7 @@ require_once '../../includes/sidebar.php';
                 'equipment_exit' => ['label' => 'Reg. Salida', 'cat' => 'Gestión', 'icon' => 'ph-upload-simple'],
                 'tools' => ['label' => 'Herramientas', 'cat' => 'Gestión', 'icon' => 'ph-wrench'],
                 'services' => ['label' => 'Servicios', 'cat' => 'Gestión', 'icon' => 'ph-briefcase'],
+                'assign_equipment' => ['label' => 'Reasignar Equipos', 'cat' => 'Gestión', 'icon' => 'ph-user-switch'],
                 'warranties' => ['label' => 'Garantías', 'cat' => 'Gestión', 'icon' => 'ph-shield-check'],
                 'new_warranty' => ['label' => 'Nueva Garantía', 'cat' => 'Gestión', 'icon' => 'ph-plus-circle'],
 
@@ -1176,6 +1178,7 @@ require_once '../../includes/sidebar.php';
                 'services' => ['label' => 'Servicios', 'cat' => 'Gestión', 'icon' => 'ph-briefcase'],
                 'warranties' => ['label' => 'Garantías', 'cat' => 'Gestión', 'icon' => 'ph-shield-check'],
                 'new_warranty' => ['label' => 'Nueva Garantía', 'cat' => 'Gestión', 'icon' => 'ph-plus-circle'],
+                'assign_equipment' => ['label' => 'Asignar / Reasignar', 'cat' => 'Gestión', 'icon' => 'ph-user-switch'],
 
                 'users' => ['label' => 'Usuarios', 'cat' => 'Administración', 'icon' => 'ph-user-gear'],
                 'reports' => ['label' => 'Reportes', 'cat' => 'Administración', 'icon' => 'ph-chart-bar'],

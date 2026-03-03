@@ -428,18 +428,18 @@ if (empty($order['exit_doc_number'])) {
         <table class="equip-table" style="margin-bottom: 10px;">
             <thead>
                 <tr>
-                    <th>INGRESO</th>
-                    <th>EQUIPO</th>
+                    <th style="width: 15%;">INGRESO</th>
+                    <th style="width: 15%;"># CASO</th>
+                    <th style="width: 45%;">EQUIPO</th>
                     <th style="width: 25%;"># SERIE</th>
-                    <th>CASO #</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
+                    <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order); ?></td>
                     <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'] . ' ' . $order['model'])); ?></td>
                     <td style="text-transform: uppercase;"><?php echo htmlspecialchars($order['serial_number']); ?></td>
-                    <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order); ?></td>
                 </tr>
             </tbody>
         </table>

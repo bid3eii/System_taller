@@ -29,12 +29,14 @@ $sql = "
     SELECT 
         so.id, so.status, so.final_cost, so.exit_date, so.invoice_number, so.service_type, so.problem_reported, so.display_id, so.owner_name,
         c.name as client_name, 
+        reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
         u.username as delivered_by,
         tech.username as assigned_tech_name
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     WHERE (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
@@ -94,14 +96,17 @@ require_once '../../includes/sidebar.php';
                 } ?>
                 <select name="status" class="premium-select" onchange="this.form.submit()">
                     <option value="">Todos los Estados</option>
-                    <option value="pending" <?php echo $filterStatus == 'pending' ? 'selected' : ''; ?>>Pendientes
+                    <option value="received" <?php echo $filterStatus == 'received' ? 'selected' : ''; ?>>Recibidos
                     </option>
-                    <option value="diagnosing" <?php echo $filterStatus == 'diagnosing' ? 'selected' : ''; ?>>En
-                        Diagnóstico</option>
+                    <option value="pending_approval" <?php echo $filterStatus == 'pending_approval' ? 'selected' : ''; ?>>En Espera
+                    </option>
+                    <option value="diagnosing" <?php echo $filterStatus == 'diagnosing' ? 'selected' : ''; ?>>En Diagnóstico</option>
                     <option value="in_repair" <?php echo $filterStatus == 'in_repair' ? 'selected' : ''; ?>>En Reparación
                     </option>
                     <option value="ready" <?php echo $filterStatus == 'ready' ? 'selected' : ''; ?>>Listos</option>
                     <option value="delivered" <?php echo $filterStatus == 'delivered' ? 'selected' : ''; ?>>Entregados
+                    </option>
+                    <option value="cancelled" <?php echo $filterStatus == 'cancelled' ? 'selected' : ''; ?>>Cancelados
                     </option>
                 </select>
             </form>
@@ -161,12 +166,16 @@ require_once '../../includes/sidebar.php';
                         $statusLabel = 'Desconocido';
 
                         switch ($status) {
-                            case 'pending':
+                            case 'received':
+                                $badgeClass = 'badge-blue';
+                                $statusLabel = 'Recibido';
+                                break;
+                            case 'pending_approval':
                                 $badgeClass = 'badge-warning';
-                                $statusLabel = 'Pendiente';
+                                $statusLabel = 'En Espera';
                                 break;
                             case 'diagnosing':
-                                $badgeClass = 'badge-blue';
+                                $badgeClass = 'badge-purple';
                                 $statusLabel = 'Diagnóstico';
                                 break;
                             case 'in_repair':
@@ -199,11 +208,15 @@ require_once '../../includes/sidebar.php';
                                     <span class="badge badge-blue">Servicio</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : $item['client_name']); ?></td>
+                            <td>
+                                <?php 
+                                    echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                         (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
+                                         $item['client_name'])); 
+                                ?>
+                            </td>
                             <td>
                                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <span
-                                        style="padding: 0.2rem 0.5rem; background: var(--bg-hover); border-radius: 4px; font-size: 0.8rem;"><?php echo htmlspecialchars($item['type']); ?></span>
                                     <span><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
                                     <span
                                         class="text-sm text-muted">(<?php echo htmlspecialchars($item['serial_number']); ?>)</span>
