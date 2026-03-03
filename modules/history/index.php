@@ -29,12 +29,14 @@ $sql = "
     SELECT 
         so.id, so.status, so.final_cost, so.exit_date, so.invoice_number, so.service_type, so.problem_reported, so.display_id, so.owner_name,
         c.name as client_name, 
+        reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
         u.username as delivered_by,
         tech.username as assigned_tech_name
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     WHERE (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
@@ -199,7 +201,13 @@ require_once '../../includes/sidebar.php';
                                     <span class="badge badge-blue">Servicio</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : $item['client_name']); ?></td>
+                            <td>
+                                <?php 
+                                    echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                         (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
+                                         $item['client_name'])); 
+                                ?>
+                            </td>
                             <td>
                                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                                     <span

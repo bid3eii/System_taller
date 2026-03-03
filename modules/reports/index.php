@@ -19,9 +19,11 @@ $sql = "
         TRIM(so.status) as status, 
         so.entry_date, 
         so.diagnosis_number,
+        so.owner_name,
         c.id as client_id,
-        c.name as client_name, 
+        c.name as contact_name, 
         c.phone as client_phone,
+        reg_owner.name as registered_owner_name,
         e.brand, 
         e.model, 
         e.type as equipment_type,
@@ -29,6 +31,7 @@ $sql = "
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users u ON so.assigned_tech_id = u.id
     WHERE so.problem_reported != 'Garantía Registrada'
     ORDER BY so.entry_date DESC
@@ -146,7 +149,13 @@ require_once '../../includes/sidebar.php';
                                 <td><span class="badge-tag"><?php echo get_order_number($order, 5); ?></span></td>
                                 <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                                 <td>
-                                    <div class="fw-medium"><?php echo htmlspecialchars($order['client_name']); ?></div>
+                                    <div class="fw-medium">
+                                        <?php 
+                                            echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : 
+                                                 (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : 
+                                                 $order['contact_name'])); 
+                                        ?>
+                                    </div>
                                     <div class="text-xs text-muted"><?php echo htmlspecialchars($order['client_phone']); ?></div>
                                 </td>
                                 <td>

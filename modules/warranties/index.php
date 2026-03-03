@@ -62,12 +62,14 @@ try {
 $sql = "
     SELECT 
         so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name,
-        c.name as client_name, c.phone,
+        c.name as contact_name, c.phone,
+        reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
         tech.username as tech_name
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN warranties w ON so.id = w.service_order_id
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     WHERE so.service_type = 'warranty'
@@ -141,6 +143,9 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="1">
                             Fecha Ingreso <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th class="sortable" data-column="cliente">
+                            Cliente <i class="ph ph-caret-up-down sort-icon"></i>
+                        </th>
                         <th class="sortable" data-column="2">
                             Equipo <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
@@ -166,6 +171,13 @@ require_once '../../includes/sidebar.php';
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
+                                <td>
+                                    <?php 
+                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                             (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
+                                             $item['contact_name'])); 
+                                    ?>
+                                </td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <span class="badge"><?php echo htmlspecialchars($item['type']); ?></span>
@@ -276,6 +288,9 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="1">
                             Fecha Ingreso <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th class="sortable" data-column="cliente">
+                            Cliente <i class="ph ph-caret-up-down sort-icon"></i>
+                        </th>
                         <th class="sortable" data-column="2">
                             Equipo <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
@@ -300,6 +315,13 @@ require_once '../../includes/sidebar.php';
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
+                                <td>
+                                    <?php 
+                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                             (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
+                                             $item['contact_name'])); 
+                                    ?>
+                                </td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <span class="badge"><?php echo htmlspecialchars($item['type']); ?></span>
