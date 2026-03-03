@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     // Basic permission check: Only Admin (1) or Reception (4) or Supervisor (2) can likely assign
     // Verify that the one who has that module assigned can assign to technician
     // We already checked can_access_module at the top of the file
-    if (true) {
+    if (can_access_module('assign_equipment', $pdo)) {
         $order_id = $_POST['order_id'];
         $tech_id = !empty($_POST['tech_id']) ? $_POST['tech_id'] : null;
 
@@ -202,7 +202,7 @@ require_once '../../includes/sidebar.php';
                                                 <i class="ph ph-user-circle"></i>
                                                 <?php echo htmlspecialchars($item['tech_name']); ?>
                                             </span>
-                                            <?php if (true): ?>
+                                            <?php if (can_access_module('assign_equipment', $pdo)): ?>
                                                 <button type="button" class="btn-icon" style="padding: 2px;" title="Cambiar Técnico"
                                                     onclick="openAssignModal('<?php echo $item['id']; ?>', '<?php echo $item['assigned_tech_id']; ?>')">
                                                     <i class="ph ph-pencil-simple" style="font-size: 0.9rem;"></i>
@@ -210,7 +210,7 @@ require_once '../../includes/sidebar.php';
                                             <?php endif; ?>
                                         </div>
                                     <?php else: ?>
-                                        <?php if (true): ?>
+                                        <?php if (can_access_module('assign_equipment', $pdo)): ?>
                                             <button type="button" class="btn btn-sm btn-secondary"
                                                 onclick="openAssignModal('<?php echo $item['id']; ?>', '<?php echo $item['assigned_tech_id']; ?>')">
                                                 <i class="ph ph-user-plus"></i> Asignar
