@@ -31,6 +31,13 @@ $sql = "
 
 $params = [];
 
+// Security Restriction: If not admin/reception with view_all permission, restrict to own entries
+$can_view_all = has_permission('module_view_all_entries', $pdo) || can_access_module('view_all_entries', $pdo);
+if (!$can_view_all) {
+    $sql .= " AND so.assigned_tech_id = ?";
+    $params[] = $_SESSION['user_id'];
+}
+
 if (!empty($status)) {
     $sql .= " AND so.status = ?";
     $params[] = $status;
@@ -109,11 +116,12 @@ header("Expires: 0");
         .type-warranty { color: #ea580c; font-weight: bold; }
         .type-service { color: #0ea5e9; font-weight: bold; }
         
-        .status-pending { background-color: #fef3c7; color: #d97706; }
-        .status-diagnosing { background-color: #dbeafe; color: #2563eb; }
-        .status-repairing { background-color: #f3e8ff; color: #9333ea; }
-        .status-ready { background-color: #dcfce7; color: #16a34a; }
-        .status-delivered { background-color: #d1fae5; color: #059669; }
+        .status-warning { background-color: #fef3c7; color: #d97706; }
+        .status-blue { background-color: #dbeafe; color: #2563eb; }
+        .status-purple { background-color: #f3e8ff; color: #9333ea; }
+        .status-success { background-color: #dcfce7; color: #16a34a; }
+        .status-green { background-color: #d1fae5; color: #059669; }
+        .status-red { background-color: #fee2e2; color: #dc2626; }
     </style>
 </head>
 <body>
@@ -144,12 +152,13 @@ header("Expires: 0");
                     $statusLabel = $status;
                     $statusClass = '';
                     switch($status) {
-                        case 'pending': $statusLabel='Pendiente'; $statusClass='status-pending'; break;
-                        case 'diagnosing': $statusLabel='Diagnóstico'; $statusClass='status-diagnosing'; break;
-                        case 'repairing': $statusLabel='En Reparación'; $statusClass='status-repairing'; break;
-                        case 'ready': $statusLabel='Listo'; $statusClass='status-ready'; break;
-                        case 'delivered': $statusLabel='Entregado'; $statusClass='status-delivered'; break;
-                        case 'cancelled': $statusLabel='Cancelado'; break;
+                        case 'received': $statusLabel='Recibido'; $statusClass='status-blue'; break;
+                        case 'pending_approval': $statusLabel='En Espera'; $statusClass='status-warning'; break;
+                        case 'diagnosing': $statusLabel='Diagnóstico'; $statusClass='status-purple'; break;
+                        case 'in_repair': $statusLabel='En Reparación'; $statusClass='status-purple'; break;
+                        case 'ready': $statusLabel='Listo'; $statusClass='status-success'; break;
+                        case 'delivered': $statusLabel='Entregado'; $statusClass='status-green'; break;
+                        case 'cancelled': $statusLabel='Cancelado'; $statusClass='status-red'; break;
                     }
                 ?>
                 <tr>

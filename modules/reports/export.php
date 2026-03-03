@@ -20,8 +20,10 @@ $sql = "
     SELECT 
         so.id, 
         so.entry_date, 
-        c.name as client_name, 
+        so.owner_name,
+        c.name as contact_name, 
         c.phone as client_phone,
+        reg_owner.name as registered_owner_name,
         e.brand, 
         e.model, 
         e.type as equipment_type,
@@ -32,11 +34,19 @@ $sql = "
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users u ON so.assigned_tech_id = u.id
     WHERE 1=1
 ";
 
 $params = [];
+
+// Security Restriction: If not admin/reception with view_all permission, restrict to own entries
+$can_view_all = has_permission('module_view_all_entries', $pdo) || can_access_module('view_all_entries', $pdo);
+if (!$can_view_all) {
+    $sql .= " AND so.assigned_tech_id = ?";
+    $params[] = $_SESSION['user_id'];
+}
 
 // Apply Filters
 if ($type !== 'all' && !empty($type)) {
@@ -170,7 +180,13 @@ header("Expires: 0");
                 <tr>
                     <td class="bold">#<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?></td>
                     <td><?php echo date('d/m/Y', strtotime($row['entry_date'])); ?></td>
-                    <td class="text-left bold"><?php echo htmlspecialchars($row['client_name']); ?></td>
+                    <td class="text-left bold">
+                        <?php 
+                            echo htmlspecialchars(!empty($row['owner_name']) ? $row['owner_name'] : 
+                                 (!empty($row['registered_owner_name']) ? $row['registered_owner_name'] : 
+                                 $row['contact_name'])); 
+                        ?>
+                    </td>
                     <td><?php echo htmlspecialchars($row['client_phone']); ?></td>
                     <td><?php echo htmlspecialchars($row['equipment_type']); ?></td>
                     <td><?php echo htmlspecialchars($row['brand']); ?></td>

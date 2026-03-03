@@ -256,10 +256,16 @@ if ($is_warehouse) {
     // Techs ALWAYS see only their assigned orders
     // For Admin/Reception, 'view_all_entries' permission controls visibility
     $recentSql = "
-        SELECT so.id, so.entry_date, so.status, so.service_type, so.display_id, so.owner_name, c.name as client_name, e.brand, e.model, DATEDIFF(NOW(), so.entry_date) as days_in_shop
+        SELECT 
+            so.id, so.entry_date, so.status, so.service_type, so.display_id, so.owner_name, 
+            c.name as client_name, 
+            reg_owner.name as registered_owner_name,
+            e.brand, e.model, 
+            DATEDIFF(NOW(), so.entry_date) as days_in_shop
         FROM service_orders so
         LEFT JOIN clients c ON so.client_id = c.id
         LEFT JOIN equipments e ON so.equipment_id = e.id
+        LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
         LEFT JOIN warranties w ON so.id = w.service_order_id
         WHERE (w.product_code IS NULL OR w.product_code = '') 
         AND so.problem_reported != 'Garantía Registrada'
@@ -559,12 +565,8 @@ if (!$is_warehouse) {
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
             <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                <?php if ($is_tech): ?>
-                    <i class="ph-fill ph-kanban" style="color: var(--primary);"></i> Fila de Trabajo Activa
-                <?php else: ?>
-                    <i class="ph-fill ph-clock-counter-clockwise" style="color: var(--primary);"></i>
-                    <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente'; ?>
-                <?php endif; ?>
+                <i class="ph-fill ph-clock-counter-clockwise" style="color: var(--primary);"></i>
+                <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente'; ?>
             </h3>
             <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>"
                 class="btn btn-sm btn-secondary">Ver Todo</a>
@@ -615,7 +617,13 @@ if (!$is_warehouse) {
                                                 style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">SERVICIO</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td style="padding: 0.75rem;"><?php echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : $item['client_name']); ?></td>
+                                    <td style="padding: 0.75rem;">
+                                        <?php 
+                                            echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                                 (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
+                                                 $item['client_name'])); 
+                                        ?>
+                                    </td>
                                     <td style="padding: 0.75rem;">
                                         <span
                                             class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
@@ -656,16 +664,9 @@ if (!$is_warehouse) {
                                         </div>
                                     </td>
                                     <td style="padding: 0.75rem; width: 1%; white-space: nowrap; text-align: right;">
-                                        <?php if ($is_tech && in_array($item['status'], ['received', 'in_repair', 'diagnosing'])): ?>
-                                            <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn btn-sm"
-                                                style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary); font-weight: 600;">
-                                                <i class="ph-bold ph-play"></i> Continuar
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
-                                                <i class="ph ph-caret-right"></i>
-                                            </a>
-                                        <?php endif; ?>
+                                        <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
+                                            <i class="ph ph-caret-right"></i>
+                                        </a>
                                     </td>
                                 <?php endif; ?>
                             </tr>
