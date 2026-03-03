@@ -185,35 +185,51 @@ if (empty($doc_number)) {
             </div>
         </div>
 
-        <?php foreach($orders as $o): ?>
         <div class="section-header">INGRESO DE EQUIPO</div>
         <table class="equip_table" style="margin-top: 0; margin-bottom: 10px;">
             <thead>
                 <tr>
-                    <th style="width: 50%;">EQUIPO</th>
+                    <th style="width: 15%;"># CASO</th>
+                    <th style="width: 45%;">EQUIPO</th>
                     <th style="width: 25%;"># SERIE</th>
-                    <th style="width: 25%;">TIPO DE SERVICIO</th>
+                    <th style="width: 15%;">TIPO</th>
                 </tr>
             </thead>
             <tbody>
+                <?php foreach($orders as $o): ?>
                 <tr>
+                    <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($o); ?></td>
                     <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($o['brand'] . ' ' . $o['model'])); ?></td>
                     <td style="text-transform: uppercase;"><?php echo htmlspecialchars($o['serial_number']); ?></td>
                     <td><?php echo $o['service_type'] == 'warranty' ? 'GARANTÍA' : 'SERVICIO'; ?></td>
                 </tr>
+                <?php endforeach; ?>
             </tbody>
         </table>
 
         <div class="section-header">ACCESORIOS RECIBIDOS</div>
         <div class="section-box" style="margin-top: 0; margin-bottom: 10px; min-height: 30px;">
-            <?php echo htmlspecialchars($o['accessories_received'] ?: 'NINGUNO / SOLO EQUIPO'); ?>
+            <?php 
+            $acc_list = [];
+            foreach($orders as $o) {
+                $prefix = (count($orders) > 1) ? "<strong>" . get_order_number($o) . ":</strong> " : "";
+                $acc_list[] = $prefix . htmlspecialchars($o['accessories_received'] ?: 'NINGUNO');
+            }
+            echo implode("<br>", $acc_list);
+            ?>
         </div>
 
         <div class="section-header">PROBLEMA REPORTADO / SERVICIO SOLICITADO</div>
         <div class="section-box" style="margin-top: 0; margin-bottom: 10px; min-height: 40px;">
-            <?php echo nl2br(htmlspecialchars($o['problem_reported'])); ?>
+            <?php 
+            $prob_list = [];
+            foreach($orders as $o) {
+                $prefix = (count($orders) > 1) ? "<strong>" . get_order_number($o) . ":</strong> " : "";
+                $prob_list[] = $prefix . nl2br(htmlspecialchars($o['problem_reported']));
+            }
+            echo implode("<br>", $prob_list);
+            ?>
         </div>
-        <?php endforeach; ?>
 
         <div class="bottom-section">
             <?php if(!empty($first_order['entry_notes'])): ?>

@@ -439,48 +439,80 @@ if (empty($exit_doc_number)) {
             </div>
         </div>
 
-        <div class="section-header">SALIDA DE <?php echo count($orders); ?> EQUIPO(S)</div>
-        <?php foreach ($equipmentData as $item): 
-            $order = $item['order'];
-        ?>
-        <div style="border: 1px solid var(--border-color); margin-bottom: 10px;">
-            <table class="equip-table" style="margin-bottom: 0; border: none;">
-                <thead>
-                    <tr>
-                        <th style="width: 15%;">INGRESO</th>
-                        <th style="width: 35%;">EQUIPO</th>
-                        <th style="width: 25%;"># SERIE</th>
-                        <th style="width: 25%;">CASO #</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
-                        <td style="text-transform: uppercase; font-weight: bold;"><?php echo htmlspecialchars(trim($order['brand'] . ' ' . $order['model'])); ?></td>
-                        <td style="text-transform: uppercase;"><?php echo htmlspecialchars($order['serial_number']); ?></td>
-                        <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order, 5); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div style="padding: 5px; background: #fafafa; border-top: 1px solid var(--border-color); font-size: 9px;">
-                <strong>ACCESORIOS:</strong> <?php echo htmlspecialchars($order['accessories_received'] ?: 'N/A'); ?>
-            </div>
-            
-            <div style="padding: 5px; border-top: 1px solid var(--border-color); font-size: 9px;">
-                <strong>PROBLEMA:</strong> <?php echo htmlspecialchars($order['problem_reported']); ?>
-            </div>
-            
-            <div style="padding: 5px; border-top: 1px solid var(--border-color); font-size: 9px; display: grid; grid-template-columns: 1fr 1fr; background: #fff;">
-                <div style="border-right: 1px solid #ddd; padding-right: 5px;">
-                    <strong>DIAG (#<?php echo $order['diagnosis_number'] ?: '-'; ?>):</strong> <?php echo $item['diagnosis_notes'] ? htmlspecialchars($item['diagnosis_notes']) : '-'; ?>
-                </div>
-                <div style="padding-left: 5px;">
-                    <strong>REP (#<?php echo $order['repair_number'] ?: '-'; ?>):</strong> <?php echo $item['repair_notes'] ? htmlspecialchars($item['repair_notes']) : '-'; ?>
-                </div>
-            </div>
+        <div class="section-header">INFORMACIÓN DE EQUIPOS</div>
+        <table class="equip-table" style="margin-bottom: 10px;">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">INGRESO</th>
+                    <th style="width: 15%;"># CASO</th>
+                    <th style="width: 45%;">EQUIPO</th>
+                    <th style="width: 25%;"># SERIE</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($equipmentData as $item): 
+                    $order = $item['order'];
+                ?>
+                <tr>
+                    <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
+                    <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order, 5); ?></td>
+                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'] . ' ' . $order['model'])); ?></td>
+                    <td style="text-transform: uppercase;"><?php echo htmlspecialchars($order['serial_number']); ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <div class="section-header">ACCESORIOS RECIBIDOS</div>
+        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; min-height: 25px;">
+            <?php 
+            $acc_list = [];
+            foreach($equipmentData as $item) {
+                $order = $item['order'];
+                $prefix = (count($equipmentData) > 1) ? "<strong>" . get_order_number($order, 5) . ":</strong> " : "";
+                $acc_list[] = $prefix . htmlspecialchars($order['accessories_received'] ?: 'NINGUNO');
+            }
+            echo implode("<br>", $acc_list);
+            ?>
         </div>
-        <?php endforeach; ?>
+
+        <div class="section-header">PROBLEMA REPORTADO / SERVICIO SOLICITADO</div>
+        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; min-height: 35px;">
+            <?php 
+            $prob_list = [];
+            foreach($equipmentData as $item) {
+                $order = $item['order'];
+                $prefix = (count($equipmentData) > 1) ? "<strong>" . get_order_number($order, 5) . ":</strong> " : "";
+                $prob_list[] = $prefix . nl2br(htmlspecialchars($order['problem_reported']));
+            }
+            echo implode("<br>", $prob_list);
+            ?>
+        </div>
+
+        <div class="section-header">RESULTADOS DEL SERVICIO</div>
+        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; padding: 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <?php foreach ($equipmentData as $item): 
+                    $order = $item['order'];
+                ?>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td colspan="2" style="background: #f9f9f9; padding: 3px 5px; font-weight: bold; border-bottom: 1px solid #ddd;">
+                        <?php echo get_order_number($order, 5); ?> - <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 50%; padding: 5px; border-right: 1px solid var(--border-color); vertical-align: top;">
+                        <div style="font-weight: bold; margin-bottom: 2px;">DIAGNÓSTICO (#<?php echo $order['diagnosis_number'] ?: '-'; ?>)</div>
+                        <?php echo $item['diagnosis_notes'] ? nl2br(htmlspecialchars($item['diagnosis_notes'])) : '-'; ?>
+                    </td>
+                    <td style="width: 50%; padding: 5px; vertical-align: top;">
+                        <div style="font-weight: bold; margin-bottom: 2px;">REPARACIÓN (#<?php echo $order['repair_number'] ?: '-'; ?>)</div>
+                        <?php echo $item['repair_notes'] ? nl2br(htmlspecialchars($item['repair_notes'])) : '-'; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        </div>
 
         <div class="bottom-section">
             <!-- COMENTARIOS -->
