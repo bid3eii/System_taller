@@ -374,6 +374,18 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                         <span style="color: #94a3b8;">Salida:
                             #<?php echo str_pad($order['exit_doc_number'], 5, '0', STR_PAD_LEFT); ?></span>
                     <?php endif; ?>
+                    <?php
+                    $paymentMaps = [
+                        'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
+                        'pagado' => ['Pagado', 'success', 'ph-money']
+                    ];
+                    $pData = $paymentMaps[$order['payment_status']] ?? ['Desconocido', 'gray', 'ph-question'];
+                    ?>
+                    <span class="status-badge status-<?php echo $pData[1]; ?>"
+                        style="font-size: 0.8rem; vertical-align: middle;">
+                        <i class="ph <?php echo $pData[2]; ?>"></i>
+                        <?php echo strtoupper($pData[0]); ?>
+                    </span>
                 </div>
                 <p style="color: var(--p-text-muted); font-size: 0.9rem;">Ingresado el
                     <?php echo date('d/m/Y H:i', strtotime($order['entry_date'])); ?>
@@ -778,6 +790,40 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
 
                             </form>
                         </div>
+                    <?php endif; ?>
+
+                    <!-- Payment Status Update -->
+                    <?php if (can_access_module('surveys_status', $pdo)): ?>
+                        <div class="update-card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--success);">
+                            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: var(--p-text-main);">
+                                <i class="ph ph-money" style="color: var(--success);"></i> Pago y Comisiones</h3>
+
+                            <form method="POST" action="update_payment_status.php" onsubmit="return confirm('¿Confirmas el cambio de estado de pago? Si marcas como PAGADO, se generará la comisión para el técnico asignado.');">
+                                <input type="hidden" name="id" value="<?php echo $order['id']; ?>">
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Estado de Pago</label>
+                                    <select name="payment_status" class="modern-select" <?php echo $order['payment_status'] === 'pagado' ? 'disabled' : ''; ?>>
+                                        <option value="pendiente" <?php echo $order['payment_status'] === 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
+                                        <option value="pagado" <?php echo $order['payment_status'] === 'pagado' ? 'selected' : ''; ?>>Pagado/Cancelado</option>
+                                    </select>
+                                </div>
+
+                                <?php if ($order['payment_status'] !== 'pagado'): ?>
+                                    <button type="submit" class="btn-update" style="background: var(--success);">
+                                        Actualizar Pago
+                                    </button>
+                                <?php else: ?>
+                                    <p style="font-size: 0.8rem; color: var(--p-text-muted); margin-top: 0.5rem; margin-bottom: 0;">La comisión para este servicio fue generada automáticamente.</p>
+                                    <?php if (can_access_module('comisiones', $pdo)): ?>
+                                        <a href="../comisiones/index.php" class="btn btn-secondary" style="display: block; text-align: center; margin-top: 0.5rem; width: 100%; border-color: var(--success); color: var(--success);">
+                                            Ver Comisiones
+                                        </a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </form>
+                        </div>
+                    <?php endif; ?>
 
                         <script>
                                                                                                (function() {
@@ -928,8 +974,6 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                             <?php endif; ?>
                             
                                 <?php endif; ?>
-
-                    <?php endif; ?>
 
                     <!-- History -->
                     <div class="form-section">
