@@ -565,12 +565,8 @@ if (!$is_warehouse) {
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
             <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                <?php if ($is_tech): ?>
-                    <i class="ph-fill ph-kanban" style="color: var(--primary);"></i> Fila de Trabajo Activa
-                <?php else: ?>
-                    <i class="ph-fill ph-clock-counter-clockwise" style="color: var(--primary);"></i>
-                    <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente'; ?>
-                <?php endif; ?>
+                <i class="ph-fill ph-clock-counter-clockwise" style="color: var(--primary);"></i>
+                <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente'; ?>
             </h3>
             <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>"
                 class="btn btn-sm btn-secondary">Ver Todo</a>
@@ -668,16 +664,9 @@ if (!$is_warehouse) {
                                         </div>
                                     </td>
                                     <td style="padding: 0.75rem; width: 1%; white-space: nowrap; text-align: right;">
-                                        <?php if ($is_tech && in_array($item['status'], ['received', 'in_repair', 'diagnosing'])): ?>
-                                            <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn btn-sm"
-                                                style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary); font-weight: 600;">
-                                                <i class="ph-bold ph-play"></i> Continuar
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
-                                                <i class="ph ph-caret-right"></i>
-                                            </a>
-                                        <?php endif; ?>
+                                        <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
+                                            <i class="ph ph-caret-right"></i>
+                                        </a>
                                     </td>
                                 <?php endif; ?>
                             </tr>

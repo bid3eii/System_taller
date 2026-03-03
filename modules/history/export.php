@@ -31,6 +31,13 @@ $sql = "
 
 $params = [];
 
+// Security Restriction: If not admin/reception with view_all permission, restrict to own entries
+$can_view_all = has_permission('module_view_all_entries', $pdo) || can_access_module('view_all_entries', $pdo);
+if (!$can_view_all) {
+    $sql .= " AND so.assigned_tech_id = ?";
+    $params[] = $_SESSION['user_id'];
+}
+
 if (!empty($status)) {
     $sql .= " AND so.status = ?";
     $params[] = $status;

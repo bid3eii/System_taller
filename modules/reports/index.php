@@ -11,6 +11,16 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Check permissions
+$can_view_all = can_access_module('view_all_entries', $pdo);
+$params = [];
+$where_clauses = ["so.problem_reported != 'Garantía Registrada'"];
+
+if (!$can_view_all) {
+    $where_clauses[] = "so.assigned_tech_id = ?";
+    $params[] = $_SESSION['user_id'];
+}
+
 // Fetch all service orders with relevant details
 $sql = "
     SELECT 
@@ -33,12 +43,13 @@ $sql = "
     LEFT JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users u ON so.assigned_tech_id = u.id
-    WHERE so.problem_reported != 'Garantía Registrada'
+    WHERE " . implode(" AND ", $where_clauses) . "
     ORDER BY so.entry_date DESC
 ";
 
 try {
-    $stmt = $pdo->query($sql);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     die("Error al cargar los datos: " . $e->getMessage());
