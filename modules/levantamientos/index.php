@@ -94,7 +94,8 @@ $surveys = $stmt->fetchAll();
                         <th>Título del Proyecto</th>
                         <th>Técnico</th>
                         <th>Materiales</th>
-                        <th>Estado</th>
+                        <th>Progreso</th>
+                        <th>Pago</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -137,14 +138,29 @@ $surveys = $stmt->fetchAll();
                                     <?php
                                     $statusMaps = [
                                         'draft' => ['Borrador', 'gray'],
-                                        'submitted' => ['Enviado', 'blue'],
-                                        'approved' => ['Aprobado', 'green']
+                                        'submitted' => ['Aprobación Pdte', 'blue'],
+                                        'approved' => ['Aprobado/Inicio', 'indigo'],
+                                        'in_progress' => ['En Progreso', 'orange'],
+                                        'completed' => ['Completado', 'green']
                                     ];
                                     $col = $statusMaps[$item['status']][1] ?? 'gray';
                                     $lbl = $statusMaps[$item['status']][0] ?? $item['status'];
                                     ?>
                                     <span class="status-badge status-<?php echo $col; ?>">
                                         <?php echo strtoupper($lbl); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php
+                                    $paymentMaps = [
+                                        'pendiente' => ['Pendiente', 'gray'],
+                                        'pagado' => ['Pagado', 'green']
+                                    ];
+                                    $pCol = $paymentMaps[$item['payment_status']][1] ?? 'gray';
+                                    $pLbl = $paymentMaps[$item['payment_status']][0] ?? $item['payment_status'];
+                                    ?>
+                                    <span class="status-badge status-<?php echo $pCol; ?>">
+                                        <?php echo strtoupper($pLbl); ?>
                                     </span>
                                 </td>
                                 <td>

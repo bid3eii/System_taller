@@ -58,7 +58,7 @@ try {
 // Fetch Regular Service Orders (Not Warranty)
 $sql = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name,
+        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.payment_status,
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
@@ -242,6 +242,19 @@ require_once '../../includes/sidebar.php';
                                         <?php echo $label; ?>
                                     </span>
                                 </td>
+                                <td>
+                                    <?php
+                                    $paymentMaps = [
+                                        'pendiente' => ['Pendiente', 'gray'],
+                                        'pagado' => ['Pagado', 'green']
+                                    ];
+                                    $pCol = $paymentMaps[$item['payment_status']][1] ?? 'gray';
+                                    $pLbl = $paymentMaps[$item['payment_status']][0] ?? $item['payment_status'];
+                                    ?>
+                                    <span class="status-badge status-<?php echo $pCol; ?>">
+                                        <?php echo strtoupper($pLbl); ?>
+                                    </span>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -338,6 +351,19 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td>
                                     <span class="status-badge status-gray">Entregado</span>
+                                </td>
+                                <td>
+                                    <?php
+                                    $paymentMaps = [
+                                        'pendiente' => ['Pendiente', 'gray'],
+                                        'pagado' => ['Pagado', 'green']
+                                    ];
+                                    $pCol = $paymentMaps[$item['payment_status']][1] ?? 'gray';
+                                    $pLbl = $paymentMaps[$item['payment_status']][0] ?? $item['payment_status'];
+                                    ?>
+                                    <span class="status-badge status-<?php echo $pCol; ?>">
+                                        <?php echo strtoupper($pLbl); ?>
+                                    </span>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

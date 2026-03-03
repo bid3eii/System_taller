@@ -29,37 +29,11 @@ if (!$comision) {
     exit;
 }
 
-// Fetch all technicians involved and their assigned concepts/amounts
-$stmtD = $pdo->prepare("SELECT cd.*, u.username as tech_name 
-                        FROM comision_detalles cd
-                        JOIN users u ON cd.tech_id = u.id
-                        WHERE cd.comision_id = ?
-                        ORDER BY u.username ASC, cd.concept ASC");
-$stmtD->execute([$id]);
-$detalles_raw = $stmtD->fetchAll(PDO::FETCH_ASSOC);
-
-// Pivot Data for Display
-$matrix = [];
-$techs = [];
-$conceptsSet = [];
-
-foreach ($detalles_raw as $row) {
-    $tId = $row['tech_id'];
-    $tName = $row['tech_name'];
-    $concept = $row['concept'];
-    $amount = floatval($row['amount']);
-
-    if (!isset($techs[$tId])) {
-        $techs[$tId] = ['name' => $tName, 'total' => 0];
-    }
-
-    if (!in_array($concept, $conceptsSet)) {
-        $conceptsSet[] = $concept;
-    }
-
-    $matrix[$concept][$tId] = $amount;
-    $techs[$tId]['total'] += $amount;
-}
+// Since the table is now flat, we don't have cd.detalles, just one record.
+$page_title = 'Ver Comisión #' . str_pad($comision['id'], 5, '0', STR_PAD_LEFT);
+require_once '../../includes/header.php';
+require_once '../../includes/sidebar.php';
+?>
 
 $page_title = 'Ver Comisión #' . str_pad($comision['id'], 5, '0', STR_PAD_LEFT);
 require_once '../../includes/header.php';
@@ -142,15 +116,25 @@ require_once '../../includes/sidebar.php';
             <a href="index.php" class="btn btn-secondary">
                 <i class="ph ph-arrow-left"></i> Volver
             </a>
-            <?php if ($comision['status'] === 'draft' && can_access_module('comisiones_edit', $pdo)): ?>
-                <a href="mark_paid.php?id=<?php echo $comision['id']; ?>" class="btn btn-primary" style="background: var(--success); border-color: var(--success);" onclick="return confirm('¿Confirmar que estas comisiones ya fueron pagadas a los técnicos?');">
-                    <i class="ph ph-check-circle"></i> Marcar como Pagada
-                </a>
+            <?php if ($comision['estado'] === 'PENDIENTE' && can_access_module('comisiones_edit', $pdo)): ?>
+                <form action="mark_paid.php" method="POST" style="display: inline;"
+                    onsubmit="return confirm('¿Confirmar que esta comisión ya fue pagada?');">
+                    <input type="hidden" name="id" value="<?php echo $comision['id']; ?>">
+                    <button type="submit" class="btn btn-primary"
+                        style="background: var(--success); border-color: var(--success);">
+                        <i class="ph ph-check-circle"></i> Marcar como Pagada
+                    </button>
+                </form>
             <?php endif; ?>
-            <?php if (!empty($comision['survey_id'])): ?>
-                <a href="../levantamientos/view.php?id=<?php echo $comision['survey_id']; ?>" class="btn btn-primary"
+            <?php if ($comision['tipo'] === 'PROYECTO' && !empty($comision['reference_id'])): ?>
+                <a href="../levantamientos/view.php?id=<?php echo $comision['reference_id']; ?>" class="btn btn-primary"
                     style="background: var(--primary-600);">
-                    <i class="ph ph-clipboard"></i> Ver Proyecto Original
+                    <i class="ph ph-clipboard"></i> Ver Proyecto
+                </a>
+            <?php elseif ($comision['tipo'] === 'SERVICIO' && !empty($comision['reference_id'])): ?>
+                <a href="../services/view.php?id=<?php echo $comision['reference_id']; ?>" class="btn btn-primary"
+                    style="background: var(--primary-600);">
+                    <i class="ph ph-clipboard"></i> Ver Servicio
                 </a>
             <?php endif; ?>
         </div>
@@ -160,35 +144,42 @@ require_once '../../includes/sidebar.php';
         <div
             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
             <div>
-                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">PROYECTO
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">PROYECTO /
+                    CASO
                 </p>
                 <div style="font-size: 1.1rem; font-weight: 600;">
-                    <?php echo htmlspecialchars($comision['project_title']); ?>
+                    <?php echo htmlspecialchars($comision['caso'] ?: 'N/A'); ?>
                 </div>
             </div>
             <div>
-                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">FECHA</p>
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">FECHA DE
+                    SERVICIO</p>
                 <div style="font-size: 1.1rem; font-weight: 600;">
-                    <?php echo date('d/m/Y', strtotime($comision['date'])); ?>
+                    <?php echo date('d/m/Y', strtotime($comision['fecha_servicio'])); ?>
                 </div>
             </div>
             <div>
-                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">REGISTRADO
-                    POR</p>
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">TÉCNICO
+                    ASIGNADO
+                </p>
                 <div style="font-size: 1.1rem; font-weight: 600;">
                     <i class="ph ph-user"></i>
-                    <?php echo htmlspecialchars($comision['creator_name']); ?>
+                    <?php
+                    if ($comision['tech_id']) {
+                        $stmtT = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+                        $stmtT->execute([$comision['tech_id']]);
+                        echo htmlspecialchars($stmtT->fetchColumn() ?: 'Desconocido');
+                    } else {
+                        echo 'N/A';
+                    }
+                    ?>
                 </div>
             </div>
             <div>
                 <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">ESTADO</p>
                 <?php
-                $scls = 'bg-gray-500';
-                $stxt = 'Borrador';
-                if ($comision['status'] == 'paid') {
-                    $scls = 'bg-green-500';
-                    $stxt = 'Pagado';
-                }
+                $scls = $comision['estado'] === 'PAGADA' ? 'bg-green-500' : 'bg-orange-500';
+                $stxt = $comision['estado'];
                 ?>
                 <span class="badge"
                     style="background: <?php echo $scls; ?>20; color: <?php echo $scls; ?>; font-size: 1rem; border: 1px solid <?php echo $scls; ?>40;">
@@ -198,70 +189,69 @@ require_once '../../includes/sidebar.php';
         </div>
 
         <hr style="border-color: var(--border-color); margin: 2rem 0;">
-        <h3 style="margin-bottom: 1rem;">Desglose de Comisiones por Técnico</h3>
+        <h3 style="margin-bottom: 1rem;">Detalles del Servicio</h3>
 
-        <?php if (!empty($techs)): ?>
-            <div class="matrix-wrapper">
-                <table class="matrix-table">
-                    <thead>
-                        <tr>
-                            <th style="text-align: left; width: 250px;">Concepto</th>
-                            <?php foreach ($techs as $tId => $tData): ?>
-                                <th>
-                                    <i class="ph ph-user"></i>
-                                    <?php echo htmlspecialchars($tData['name']); ?>
-                                </th>
-                            <?php endforeach; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($conceptsSet as $concept): ?>
-                            <tr>
-                                <td style="text-align: left; font-weight: 500;">
-                                    <?php echo htmlspecialchars($concept); ?>
-                                </td>
-                                <?php foreach ($techs as $tId => $tData): ?>
-                                    <td style="color: var(--text-color);">
-                                        <?php
-                                        $val = isset($matrix[$concept][$tId]) ? $matrix[$concept][$tId] : 0;
-                                        echo $val > 0 ? '$' . number_format($val, 2) : '<span style="color: var(--border-color);">-</span>';
-                                        ?>
-                                    </td>
-                                <?php endforeach; ?>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                    <tfoot>
-                        <tr style="background: var(--bg-surface);">
-                            <td style="text-align: right; font-weight: bold;">TOTAL POR TÉCNICO:</td>
-                            <?php foreach ($techs as $tId => $tData): ?>
-                                <td style="font-weight: bold; color: var(--success); font-size: 1.1rem;">
-                                    $
-                                    <?php echo number_format($tData['total'], 2); ?>
-                                </td>
-                            <?php endforeach; ?>
-                        </tr>
-                    </tfoot>
-                </table>
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div>
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">TIPO</p>
+                <div style="font-size: 1rem; color: var(--text-color);">
+                    <?php echo htmlspecialchars($comision['tipo']); ?>
+                </div>
             </div>
-        <?php else: ?>
-            <div class="alert alert-warning" style="text-align: center; padding: 2rem;">
-                <i class="ph ph-warning-circle" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
-                No se encontraron detalles de comisiones registrados.
+            <div>
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">CLIENTE</p>
+                <div style="font-size: 1rem; color: var(--text-color);">
+                    <?php echo htmlspecialchars($comision['cliente']); ?>
+                </div>
             </div>
-        <?php endif; ?>
+            <div>
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">LUGAR</p>
+                <div style="font-size: 1rem; color: var(--text-color);">
+                    <?php echo htmlspecialchars($comision['lugar'] ?: 'N/A'); ?>
+                </div>
+            </div>
+            <div>
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">SERVICIO
+                </p>
+                <div style="font-size: 1rem; color: var(--text-color);">
+                    <?php echo htmlspecialchars($comision['servicio']); ?>
+                </div>
+            </div>
+            <div>
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">VENDEDOR
+                </p>
+                <div style="font-size: 1rem; color: var(--text-color);">
+                    <?php echo htmlspecialchars($comision['vendedor'] ?: 'N/A'); ?>
+                </div>
+            </div>
+            <div>
+                <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">FACTURA /
+                    O.S.</p>
+                <div style="font-size: 1rem; color: var(--text-color);">
+                    <?php echo htmlspecialchars($comision['factura'] ?: 'N/A'); ?>
+                </div>
+            </div>
+            <?php if ($comision['fecha_facturacion']): ?>
+                <div>
+                    <p class="text-muted" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">FECHA DE
+                        FACTURACIÓN</p>
+                    <div style="font-size: 1rem; color: var(--text-color);">
+                        <?php echo date('d/m/Y', strtotime($comision['fecha_facturacion'])); ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
 
         <div class="grand-total-box">
-            <p style="margin: 0; font-size: 1rem; opacity: 0.8;">GRAN TOTAL ASIGNADO</p>
+            <p style="margin: 0; font-size: 1rem; opacity: 0.8;">CUOTA ASIGNADA</p>
             <div style="font-size: 2.5rem; font-weight: bold; margin-top: 0.5rem;">
                 $
-                <?php echo number_format($comision['total_amount'], 2); ?>
+                <?php echo number_format($comision['cantidad'], 2); ?>
             </div>
-            <p style="margin: 1rem 0 0 0; font-size: 0.85rem; opacity: 0.7;">
-                Registrado el
-                <?php echo date('d/m/Y h:i A', strtotime($comision['created_at'])); ?>
-            </p>
         </div>
+
+
 
     </div>
 
