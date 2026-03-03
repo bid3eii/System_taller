@@ -18,13 +18,15 @@ $type = isset($_GET['type']) ? trim($_GET['type']) : '';
 // 2. Build Query
 $sql = "
     SELECT 
-        so.id, so.status, so.final_cost, so.exit_date, so.entry_date, so.invoice_number, so.service_type, so.problem_reported,
+        so.id, so.status, so.final_cost, so.exit_date, so.entry_date, so.invoice_number, so.service_type, so.problem_reported, so.owner_name,
         c.name as client_name, 
+        reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type as equipment_type,
         u.username as delivered_by
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users u ON so.authorized_by_user_id = u.id
     WHERE (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')
 ";
@@ -160,12 +162,17 @@ header("Expires: 0");
                         case 'delivered': $statusLabel='Entregado'; $statusClass='status-green'; break;
                         case 'cancelled': $statusLabel='Cancelado'; $statusClass='status-red'; break;
                     }
+
+                    // Display Name Logic (matches dashboard/history)
+                    $displayName = !empty($row['owner_name']) ? $row['owner_name'] : 
+                                  (!empty($row['registered_owner_name']) ? $row['registered_owner_name'] : 
+                                  $row['client_name']);
                 ?>
                 <tr>
                     <td class="bold">#<?php echo str_pad($row['id'], 4, '0', STR_PAD_LEFT); ?></td>
                     <td class="<?php echo $statusClass; ?>"><?php echo $statusLabel; ?></td>
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
-                    <td class="text-left"><?php echo htmlspecialchars($row['client_name']); ?></td>
+                    <td class="text-left"><?php echo htmlspecialchars($displayName); ?></td>
                     <td class="text-left"><?php echo htmlspecialchars($row['brand'] . ' ' . $row['model']); ?></td>
                     <td><?php echo htmlspecialchars($row['serial_number']); ?></td>
                     <td><?php echo date('d/m/Y', strtotime($row['entry_date'])); ?></td>

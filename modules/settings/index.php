@@ -1178,6 +1178,7 @@ require_once '../../includes/sidebar.php';
                 'services' => ['label' => 'Servicios', 'cat' => 'Gestión', 'icon' => 'ph-briefcase'],
                 'warranties' => ['label' => 'Garantías', 'cat' => 'Gestión', 'icon' => 'ph-shield-check'],
                 'new_warranty' => ['label' => 'Nueva Garantía', 'cat' => 'Gestión', 'icon' => 'ph-plus-circle'],
+                'assign_equipment' => ['label' => 'Asignar / Reasignar', 'cat' => 'Gestión', 'icon' => 'ph-user-switch'],
 
                 'users' => ['label' => 'Usuarios', 'cat' => 'Administración', 'icon' => 'ph-user-gear'],
                 'reports' => ['label' => 'Reportes', 'cat' => 'Administración', 'icon' => 'ph-chart-bar'],
