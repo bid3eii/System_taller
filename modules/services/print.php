@@ -301,7 +301,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
             </div>
             <div class="doc-meta">
                 <h2>ORDEN <?php echo get_order_number($order); ?></h2>
-                <p><?php echo date('d/m/Y'); ?></p>
+                <p><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></p>
             </div>
         </header>
 
@@ -348,12 +348,8 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                         <span class="info-value"><?php echo htmlspecialchars($order['equipment_type']); ?></span>
                     </div>
                     <div class="info-group">
-                        <span class="info-label">Marca:</span>
+                        <span class="info-label">Equipo:</span>
                         <span class="info-value"><?php echo htmlspecialchars($order['brand']); ?></span>
-                    </div>
-                    <div class="info-group">
-                        <span class="info-label">Modelo:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($order['model']); ?></span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Serie (SN):</span>

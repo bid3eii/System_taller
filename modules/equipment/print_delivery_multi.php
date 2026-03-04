@@ -79,7 +79,7 @@ $clientData = $orders[0];
 // Fetch history and notes for each order
 $equipmentData = [];
 foreach ($orders as $order) {
-    $stmtHistory = $pdo->prepare("SELECT action, notes FROM service_order_history WHERE service_order_id = ? ORDER BY created_at ASC");
+    $stmtHistory = $pdo->prepare("SELECT action, notes FROM service_order_history WHERE service_order_id = ? ORDER BY created_at DESC, id DESC");
     $stmtHistory->execute([$order['id']]);
     $allHistory = $stmtHistory->fetchAll();
     
@@ -456,7 +456,7 @@ if (empty($exit_doc_number)) {
                 <tr>
                     <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                     <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order, 5); ?></td>
-                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'] . ' ' . $order['model'])); ?></td>
+                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'])); ?></td>
                     <td style="text-transform: uppercase;"><?php echo htmlspecialchars($order['serial_number']); ?></td>
                 </tr>
                 <?php endforeach; ?>
@@ -497,7 +497,7 @@ if (empty($exit_doc_number)) {
                 ?>
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td colspan="2" style="background: #f9f9f9; padding: 3px 5px; font-weight: bold; border-bottom: 1px solid #ddd;">
-                        <?php echo get_order_number($order, 5); ?> - <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
+                        <?php echo get_order_number($order, 5); ?> - <?php echo htmlspecialchars($order['brand']); ?>
                     </td>
                 </tr>
                 <tr>

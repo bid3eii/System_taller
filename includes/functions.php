@@ -219,8 +219,8 @@ function update_service_status($pdo, $order_id, $new_status, $note, $user_id)
 
         // Log History
         $action_label = $new_status; // Can be mapped if needed, but keeping it simple
-        $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, ?, ?, ?)")
-            ->execute([$order_id, $new_status, $note, $user_id]);
+        $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, ?, ?, ?, ?)")
+            ->execute([$order_id, $new_status, $note, $user_id, get_local_datetime()]);
 
         if ($transactionStarted) {
             $pdo->commit();

@@ -107,7 +107,7 @@ $stmtHist = $pdo->prepare("
     FROM service_order_history h
     LEFT JOIN users u ON h.user_id = u.id
     WHERE h.service_order_id = ?
-    ORDER BY h.created_at DESC
+    ORDER BY h.created_at DESC, h.id DESC
 ");
 $stmtHist->execute([$id]);
 $history = $stmtHist->fetchAll();
@@ -266,6 +266,30 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
         .timeline-icon { position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--p-primary); border: 2px solid var(--p-bg-card); }
         .timeline-date { font-size: 0.8rem; color: var(--p-text-muted); }
         .timeline-text { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.25rem; }
+
+        .history-container {
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            margin-right: -0.5rem;
+        }
+
+        .history-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .history-container::-webkit-scrollbar-thumb {
+            background: var(--p-border);
+            border-radius: 10px;
+        }
+
+        .history-container::-webkit-scrollbar-thumb:hover {
+            background: var(--p-primary);
+        }
         .mobile-hidden {
              display: block;
         }
@@ -738,7 +762,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                          <i class="ph ph-clock-counter-clockwise"></i> Historial
                     </div>
                     
-                    <div style="padding-left: 0.5rem;">
+                    <div class="history-container" style="padding-left: 0.5rem;">
                         <?php foreach($history as $event): ?>
                             <div class="timeline-item">
                                 <div class="timeline-icon"></div>

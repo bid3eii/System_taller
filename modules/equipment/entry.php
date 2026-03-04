@@ -273,8 +273,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $order_ids[] = $order_id_new;
 
                 // 3. History
-                $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id) VALUES (?, 'received', 'Equipo ingresado al taller', ?)");
-                $stmtHist->execute([$order_id_new, $_SESSION['user_id']]);
+                $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', 'Equipo ingresado al taller', ?, ?)");
+                $stmtHist->execute([$order_id_new, $_SESSION['user_id'], $now]);
 
                 // 4. Sequence/Doc Number
                 if ($entry_doc_number === null) {

@@ -199,7 +199,7 @@ if (empty($doc_number)) {
                 <?php foreach($orders as $o): ?>
                 <tr>
                     <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($o); ?></td>
-                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($o['brand'] . ' ' . $o['model'])); ?></td>
+                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($o['brand'])); ?></td>
                     <td style="text-transform: uppercase;"><?php echo htmlspecialchars($o['serial_number']); ?></td>
                     <td><?php echo $o['service_type'] == 'warranty' ? 'GARANTÍA' : 'SERVICIO'; ?></td>
                 </tr>
