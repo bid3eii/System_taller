@@ -17,10 +17,15 @@ if ($search) {
     if (empty($clean_id)) $clean_id = '0'; // Fallback
 
     $stmt = $pdo->prepare("
-        SELECT so.*, c.name as client_name, e.brand, e.model, u.username as tech_full_name
+        SELECT so.*, 
+               c.name as contact_name, 
+               co.name as registered_owner_name,
+               e.brand, e.model, 
+               u.username as tech_full_name
         FROM service_orders so
         LEFT JOIN clients c ON so.client_id = c.id
         LEFT JOIN equipments e ON so.equipment_id = e.id
+        LEFT JOIN clients co ON e.client_id = co.id
         LEFT JOIN users u ON so.assigned_tech_id = u.id
         WHERE so.id = ? OR so.display_id = ?
     ");
@@ -563,8 +568,17 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
                 <!-- INFO CARDS -->
                 <div class="info-container">
                     <div class="detail-item">
-                        <span class="detail-label">Cliente</span>
-                        <span class="detail-value"><?php echo htmlspecialchars($order_data['client_name']); ?></span>
+                        <span class="detail-value">
+                            <?php 
+                            $final_client_name = !empty($order_data['owner_name']) ? $order_data['owner_name'] : (!empty($order_data['registered_owner_name']) ? $order_data['registered_owner_name'] : $order_data['contact_name']);
+                            echo htmlspecialchars($final_client_name); 
+                            ?>
+                            <?php if($final_client_name !== $order_data['contact_name']): ?>
+                                <div style="font-size: 0.75rem; color: var(--text-mute); font-weight: normal; margin-top: 2px;">
+                                    Contacto: <?php echo htmlspecialchars($order_data['contact_name']); ?>
+                                </div>
+                            <?php endif; ?>
+                        </span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Equipo</span>

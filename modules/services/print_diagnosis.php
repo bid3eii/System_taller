@@ -45,10 +45,9 @@ if (!$order) {
     die("Orden no encontrada.");
 }
 
-// Fetch User who elaborated the diagnosis (From History)
-// We look for the last 'diagnosing' status change or update
+// Fetch User who elaborated the diagnosis (From History) and the date
 $stmtHistory = $pdo->prepare("
-    SELECT u.username, r.name as role_name
+    SELECT u.username, r.name as role_name, h.created_at
     FROM service_order_history h
     JOIN users u ON h.user_id = u.id
     LEFT JOIN roles r ON u.role_id = r.id
@@ -61,6 +60,7 @@ $diagnosis_author = $stmtHistory->fetch();
 
 $elaborated_by = $diagnosis_author['username'] ?? 'Desconocido'; 
 $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
+$diagnosis_date = $diagnosis_author['created_at'] ?? $order['entry_date']; 
 
 ?>
 <!DOCTYPE html>
@@ -93,14 +93,15 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
         
         /* PAPER PREVIEW ON SCREEN */
         .page-container {
-            position: relative; /* Context for absolute footer */
+            position: relative;
             width: 216mm;
             min-height: 279mm;
             margin: 20px auto;
             background: white;
             padding: 2cm 1.5cm;
-            padding-bottom: 2cm;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
         }
 
         /* ACTIONS (BUTTONS) */
@@ -220,7 +221,8 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
 
         /* SIGNATURE SECTION (FLOWS NATURALLY) */
         .signature-section {
-            margin-top: 2cm;
+            margin-top: auto; /* Push to bottom */
+            padding-top: 2cm;
             padding-bottom: 1cm;
             page-break-inside: avoid;
         }
@@ -331,7 +333,7 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                                 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'
                             ];
                             ?>
-                            Fecha: <?php echo date('d') . ' de ' . $months[date('F')] . ' de ' . date('Y'); ?>
+                            Fecha: <?php echo date('d', strtotime($diagnosis_date)) . ' de ' . $months[date('F', strtotime($diagnosis_date))] . ' de ' . date('Y', strtotime($diagnosis_date)); ?>
                         </div>
 
                         <div class="doc-title">
@@ -355,36 +357,23 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                                 <span class="info-label">No. Diagnóstico:</span>
                                 <span class="info-value"><?php echo $order['diagnosis_number']; ?></span>
                             </div>
+                            <div class="info-item">
+                                <span class="info-label">No. Factura:</span>
+                                <span class="info-value"><?php echo htmlspecialchars($order['invoice_number'] ?: '---'); ?></span>
+                            </div>
                             
                             <div class="info-item">
-                                <span class="info-label">Dispositivo:</span>
-                                <span class="info-value"><?php echo htmlspecialchars($order['equipment_type']); ?></span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Marca:</span>
+                                <span class="info-label">Equipo:</span>
                                 <span class="info-value"><?php echo htmlspecialchars($order['brand']); ?></span>
                             </div>
-                            <div class="info-item">
-                                <span class="info-label">Modelo:</span>
-                                <span class="info-value"><?php echo htmlspecialchars($order['model']); ?></span>
-                            </div>
-
                             <div class="info-item">
                                 <span class="info-label">No. Serie:</span>
                                 <span class="info-value"><?php echo htmlspecialchars($order['serial_number']); ?></span>
                             </div>
-
-                            <div class="info-item">
+                            <div class="info-item" style="grid-column: span 2;">
                                 <span class="info-label">Falla Reportada:</span>
                                 <span class="info-value"><?php echo htmlspecialchars($order['problem_reported']); ?></span>
                             </div>
-
-                            <?php if($order['invoice_number']): ?>
-                            <div class="info-item">
-                                <span class="info-label">No. Factura:</span>
-                                <span class="info-value"><?php echo htmlspecialchars($order['invoice_number']); ?></span>
-                            </div>
-                            <?php endif; ?>
                         </div>
 
                         <!-- Diagnosis Details Moved Up -->
@@ -402,17 +391,14 @@ $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
                             </div>
                         </div>
 
-                        <!-- Signature Section (Flows naturally, not absolute) -->
-                        <div class="signature-section">
-                            <div class="elaborated-by-label">Elaborado por:</div>
-                            <div style="font-size: 14px; font-weight: bold; margin-top: 5px;"><?php echo htmlspecialchars($elaborated_by); ?></div>
-                            <div style="font-size: 13px; color: #555;"><?php echo htmlspecialchars($elaborated_role); ?> - <?php echo htmlspecialchars($company_name); ?></div>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
         </table>
         
+        <!-- Signature Section (Flows naturally, not absolute) -->
+        <div class="signature-section">
+            <div class="elaborated-by-label">Elaborado por:</div>
+            <div style="font-size: 14px; font-weight: bold; margin-top: 5px;"><?php echo htmlspecialchars($elaborated_by); ?></div>
+            <div style="font-size: 13px; color: #555;"><?php echo htmlspecialchars($elaborated_role); ?> - <?php echo htmlspecialchars($company_name); ?></div>
+        </div>
 
     </div>
 

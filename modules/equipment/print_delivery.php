@@ -398,7 +398,7 @@ if (empty($order['exit_doc_number'])) {
                 <div>
                     <div class="info-row">
                         <div class="info-label">Fecha:</div>
-                        <div class="info-val"><?php echo $order['exit_date'] ? date('d/m/Y h:i:s A', strtotime($order['exit_date'])) : date('d/m/Y h:i:s A'); ?></div>
+                        <div class="info-val"><?php echo $order['exit_date'] ? date('d/m/Y h:i:s A', strtotime($order['exit_date'])) : '-'; ?></div>
                     </div>
                     <div class="info-row">
                         <div class="info-label"><?php echo $client_label; ?></div>
@@ -438,7 +438,7 @@ if (empty($order['exit_doc_number'])) {
                 <tr>
                     <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                     <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order); ?></td>
-                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'] . ' ' . $order['model'])); ?></td>
+                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'])); ?></td>
                     <td style="text-transform: uppercase;"><?php echo htmlspecialchars($order['serial_number']); ?></td>
                 </tr>
             </tbody>
