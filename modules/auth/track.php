@@ -431,6 +431,42 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
             transform: translateX(-5px);
         }
 
+        /* Floating Tools Animation */
+        .floating-tools {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .tool-icon {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.06);
+            font-size: 4rem;
+            animation: float-bg 20s infinite linear;
+        }
+        body.light-mode .tool-icon {
+            color: rgba(0, 0, 0, 0.08);
+        }
+        .tool-icon:nth-child(1) { top: 10%; left: 10%; animation-duration: 25s; font-size: 5rem; }
+        .tool-icon:nth-child(2) { top: 20%; left: 80%; animation-duration: 30s; animation-delay: -5s; }
+        .tool-icon:nth-child(3) { top: 80%; left: 15%; animation-duration: 22s; animation-delay: -10s; font-size: 6rem; }
+        .tool-icon:nth-child(4) { top: 70%; left: 85%; animation-duration: 28s; animation-delay: -2s; }
+        .tool-icon:nth-child(5) { top: 40%; left: 40%; animation-duration: 35s; animation-delay: -15s; font-size: 3rem; }
+        .tool-icon:nth-child(6) { top: 50%; left: 90%; animation-duration: 24s; animation-delay: -8s; }
+        .tool-icon:nth-child(7) { top: 15%; left: 50%; animation-duration: 29s; animation-delay: -12s; }
+        .tool-icon:nth-child(8) { top: 85%; left: 60%; animation-duration: 32s; animation-delay: -6s; font-size: 5rem; }
+
+        @keyframes float-bg {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -50px) rotate(10deg); }
+            66% { transform: translate(-20px, 20px) rotate(-5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
         /* Theme Toggle styles from login.php */
         .theme-toggle {
             position: fixed;
@@ -484,6 +520,19 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
     </style>
 </head>
 <body class="dark-mode"> <!-- Initially set dark-mode, will be updated by JS -->
+    
+    <!-- Animated Background -->
+    <div class="floating-tools">
+        <i class="ph ph-wrench tool-icon"></i>
+        <i class="ph ph-gear tool-icon"></i>
+        <i class="ph ph-screwdriver tool-icon"></i>
+        <i class="ph ph-desktop tool-icon"></i>
+        <i class="ph ph-hammer tool-icon"></i>
+        <i class="ph ph-plugs tool-icon"></i>
+        <i class="ph ph-wifi-high tool-icon"></i>
+        <i class="ph ph-cpu tool-icon"></i>
+    </div>
+
     <div class="container">
         <div class="track-card">
             <a href="login.php" class="back-btn">
