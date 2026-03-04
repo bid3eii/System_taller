@@ -224,27 +224,18 @@ if (isset($_SESSION['error'])) {
                             <tr>
                                 <td>
                                     <?php
-                                    $c_json = htmlspecialchars(json_encode([
-                                        'id' => $c['id'],
-                                        'caso' => $c['caso'],
-                                        'tipo' => $c['tipo'],
-                                        'cliente' => $c['cliente'],
-                                        'tech_name' => strval($c['tech_name'] ?: 'Desconocido'),
-                                        'servicio' => $c['servicio'],
-                                        'lugar' => strval($c['lugar'] ?: 'Sin especificar'),
-                                        'vendedor' => strval($c['vendedor'] ?: 'N/A'),
-                                        'fecha_servicio' => date('d/m/Y', strtotime($c['fecha_servicio'])),
-                                        'factura' => strval($c['factura'] ?: 'Pendiente'),
-                                        'fecha_facturacion' => $c['fecha_facturacion'] ? date('d/m/Y', strtotime($c['fecha_facturacion'])) : 'Pendiente',
-                                        'estado' => $c['estado'],
-                                        'notas' => strval($c['notas'] ?: 'Sin observaciones.'),
-                                        'reference_id' => $c['reference_id']
-                                    ]), ENT_QUOTES, 'UTF-8');
+                                    // Origin link logic
+                                    $origin_link = '#';
+                                    if ($c['tipo'] === 'PROYECTO' && !empty($c['reference_id'])) {
+                                        $origin_link = "../levantamientos/view.php?id=" . $c['reference_id'];
+                                    } elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
+                                        $origin_link = "../services/view.php?id=" . $c['reference_id'];
+                                    }
                                     ?>
-                                    <a href="javascript:void(0);"
-                                       onclick="openInfoModal(<?php echo $c_json; ?>)"
+                                    <a href="<?php echo htmlspecialchars($origin_link); ?>"
+                                       title="Ver Origen"
                                        style="color: var(--primary-400); text-decoration: none; font-weight: 600;">
-                                        <?php echo htmlspecialchars($c['caso']); ?>
+                                        <?php echo htmlspecialchars($c['caso']); ?> <i class="ph ph-link-simple" style="font-size: 0.8rem;"></i>
                                     </a>
                                     <br>
                                     <span class="badge"
@@ -295,6 +286,32 @@ if (isset($_SESSION['error'])) {
                                 <?php if ($is_admin): ?>
                                     <td class="text-center">
                                         <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                                            <?php
+                                            // Make sure we have the JSON string for the Info Modal
+                                            $c_json2 = htmlspecialchars(json_encode([
+                                                'id' => $c['id'],
+                                                'caso' => $c['caso'],
+                                                'tipo' => $c['tipo'],
+                                                'cliente' => $c['cliente'],
+                                                'tech_name' => strval($c['tech_name'] ?: 'Desconocido'),
+                                                'servicio' => $c['servicio'],
+                                                'lugar' => strval($c['lugar'] ?: 'Sin especificar'),
+                                                'vendedor' => strval($c['vendedor'] ?: 'N/A'),
+                                                'fecha_servicio' => date('d/m/Y', strtotime($c['fecha_servicio'])),
+                                                'factura' => strval($c['factura'] ?: 'Pendiente'),
+                                                'fecha_facturacion' => $c['fecha_facturacion'] ? date('d/m/Y', strtotime($c['fecha_facturacion'])) : 'Pendiente',
+                                                'estado' => $c['estado'],
+                                                'notas' => strval($c['notas'] ?: 'Sin observaciones.'),
+                                                'reference_id' => $c['reference_id']
+                                            ]), ENT_QUOTES, 'UTF-8');
+                                            ?>
+                                            <button type="button" class="btn btn-secondary"
+                                                style="color: var(--primary-400); border-color: var(--primary-400);"
+                                                title="Ver Detalles de la Comisión"
+                                                onclick="openInfoModal(<?php echo $c_json2; ?>)">
+                                                <i class="ph ph-info"></i>
+                                            </button>
+
                                             <?php if ($c['estado'] === 'PENDIENTE'): ?>
                                                 <button type="button" class="btn btn-secondary"
                                                     style="color: var(--success); border-color: var(--success);"
