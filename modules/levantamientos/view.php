@@ -526,22 +526,31 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                         <h4 style="margin: 0; color: #f8fafc; font-size: 1rem;">Finanzas y Comisión</h4>
                     </div>
 
-                    <form method="POST" action="update_payment_status.php"
-                        style="display: flex; flex-direction: column; gap: 0.75rem;"
-                        onsubmit="return confirm('¿Confirmas el cambio de estado de pago?\n\nMarcar como PAGADO cerrará el ciclo financiero de este Levantamiento/Proyecto y generará automáticamente la comisión para el técnico asignado.');">
+                    <form method="POST" action="update_payment_status.php" id="form-payment-status"
+                        style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <input type="hidden" name="id" value="<?php echo $survey['id']; ?>">
-                        <select name="payment_status" class="modern-select" <?php echo $survey['payment_status'] === 'pagado' ? 'disabled' : ''; ?>
+                        <select name="payment_status" id="payment_status_select" class="modern-select" <?php echo $survey['payment_status'] === 'pagado' ? 'disabled' : ''; ?>
                             style="<?php echo $survey['payment_status'] === 'pagado' ? 'opacity: 0.6;' : ''; ?>">
                             <option value="pendiente" <?php echo $survey['payment_status'] === 'pendiente' ? 'selected' : ''; ?>>Facturación Pendiente</option>
                             <option value="pagado" <?php echo $survey['payment_status'] === 'pagado' ? 'selected' : ''; ?>>
                                 Cancelado / Pagado</option>
                         </select>
-                        <button type="submit" class="btn"
+                        <button type="submit" class="btn" onclick="return confirmPaymentChange();"
                             style="width: 100%; justify-content: center; background: #10b981; color: #fff; border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);"
                             <?php echo $survey['payment_status'] === 'pagado' ? 'disabled' : ''; ?>>
-                            <?php echo $survey['payment_status'] === 'pagado' ? 'Liquidado' : 'Procesar Pago'; ?>
+                            <?php echo $survey['payment_status'] === 'pagado' ? 'Liquidado' : 'Actualizar Estado'; ?>
                         </button>
                     </form>
+
+                    <script>
+                        function confirmPaymentChange() {
+                            const select = document.getElementById('payment_status_select');
+                            if (select && select.value === 'pagado' && '<?php echo $survey['payment_status']; ?>' !== 'pagado') {
+                                return confirm('¿Confirmas el cambio de estado de pago a PAGADO?\n\nMarcar como PAGADO cerrará el ciclo financiero de este proyecto y generará automáticamente la comisión para el técnico asignado.');
+                            }
+                            return true;
+                        }
+                    </script>
                     <?php if ($survey['payment_status'] === 'pagado'): ?>
                         <div
                             style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px; font-size: 0.8rem; color: #94a3b8; display: flex; gap: 0.5rem; border-left: 2px solid #10b981;">
