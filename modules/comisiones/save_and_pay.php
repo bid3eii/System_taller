@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     $fecha_fact = !empty($_POST['fecha_facturacion']) ? $_POST['fecha_facturacion'] : null;
     $lugar = clean($_POST['lugar'] ?? '');
     $vendedor = clean($_POST['vendedor'] ?? '');
-    $cantidad = floatval($_POST['cantidad'] ?? 0);
 
     try {
         $stmt = $pdo->prepare("
@@ -27,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
                 fecha_facturacion = ?,
                 lugar = ?,
                 vendedor = ?,
-                cantidad = ?,
                 estado = 'PAGADA',
                 fecha_pago = CURDATE()
             WHERE id = ?
@@ -37,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
             $fecha_fact,
             $lugar ?: null,
             $vendedor ?: null,
-            $cantidad,
             $id
         ]);
 

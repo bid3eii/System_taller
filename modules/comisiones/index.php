@@ -210,9 +210,6 @@ if (isset($_SESSION['error'])) {
                         <?php endif; ?>
                         <th class="text-center"
                             style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
-                            Cuota</th>
-                        <th class="text-center"
-                            style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
                             Estado</th>
                         <?php if ($is_admin): ?>
                             <th class="text-center"
@@ -239,7 +236,6 @@ if (isset($_SESSION['error'])) {
                                         'fecha_servicio' => date('d/m/Y', strtotime($c['fecha_servicio'])),
                                         'factura' => strval($c['factura'] ?: 'Pendiente'),
                                         'fecha_facturacion' => $c['fecha_facturacion'] ? date('d/m/Y', strtotime($c['fecha_facturacion'])) : 'Pendiente',
-                                        'cantidad' => number_format($c['cantidad'], 2),
                                         'estado' => $c['estado'],
                                         'notas' => strval($c['notas'] ?: 'Sin observaciones.'),
                                         'reference_id' => $c['reference_id']
@@ -288,9 +284,6 @@ if (isset($_SESSION['error'])) {
                                         </div>
                                     </td>
                                 <?php endif; ?>
-                                <td class="text-center" style="font-weight: 600; color: var(--text-main);">
-                                    <?php echo $c['cantidad']; ?>
-                                </td>
                                 <td class="text-center">
                                     <?php
                                     $scls = $c['estado'] === 'PAGADA' ? 'green' : 'orange';
@@ -310,7 +303,6 @@ if (isset($_SESSION['error'])) {
                                                         <?php echo $c['id']; ?>,
                                                         '<?php echo addslashes(htmlspecialchars($c['caso'])); ?>',
                                                         '<?php echo addslashes(htmlspecialchars($c['cliente'])); ?>',
-                                                        '<?php echo number_format($c['cantidad'], 2, '.', ''); ?>',
                                                         '<?php echo addslashes(htmlspecialchars($c['factura'] ?? '')); ?>',
                                                         '<?php echo $c['fecha_facturacion'] ? date('Y-m-d', strtotime($c['fecha_facturacion'])) : ''; ?>',
                                                         '<?php echo addslashes(htmlspecialchars($c['lugar'] ?? '')); ?>',
@@ -396,10 +388,6 @@ if (isset($_SESSION['error'])) {
                     <span style="display:block; font-size:0.75rem; color:#64748b; text-transform:uppercase;">Vendedor / Captador</span>
                     <strong id="infoVendedor" style="color:#f1f5f9;"></strong>
                 </div>
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:1rem; border-radius:0.5rem; margin-top:1rem;">
-                    <span style="display:block; font-size:0.75rem; color:#64748b; text-transform:uppercase;">Cuota Asignada</span>
-                    <strong id="infoCuota" style="color:#10b981; font-size:1.5rem;"></strong>
-                </div>
             </div>
         </div>
 
@@ -445,7 +433,7 @@ if (isset($_SESSION['error'])) {
         <form id="payForm" method="POST" action="save_and_pay.php">
             <input type="hidden" name="id" id="modalId">
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
                 <div>
                     <label style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:0.4rem;">Nº Factura / O.S.</label>
                     <input id="modalFactura" name="factura" type="text" placeholder="Ej. 162453"
@@ -466,11 +454,6 @@ if (isset($_SESSION['error'])) {
                     <input id="modalVendedor" name="vendedor" type="text" placeholder="Nombre del vendedor"
                         style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; padding:0.6rem 0.75rem; font-size:0.9rem; box-sizing:border-box;">
                 </div>
-            </div>
-            <div style="margin-bottom:1.5rem;">
-                <label style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:0.4rem;">Cuota ($)</label>
-                <input id="modalCuota" name="cantidad" type="number" step="0.01" min="0"
-                    style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; padding:0.6rem 0.75rem; font-size:0.9rem; box-sizing:border-box;">
             </div>
 
             <div style="display:flex; gap:0.75rem;">
@@ -502,7 +485,6 @@ function openInfoModal(c) {
     
     document.getElementById('infoTecnico').textContent = c.tech_name;
     document.getElementById('infoVendedor').textContent = c.vendedor;
-    document.getElementById('infoCuota').textContent = '$' + c.cantidad;
     
     document.getElementById('infoFactura').textContent = c.factura;
     document.getElementById('infoFechaFactura').textContent = c.fecha_facturacion;
@@ -523,14 +505,14 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
     if (e.target === this) closeInfoModal();
 });
 
-function openPayModal(id, caso, cliente, cuota, factura, fecha, lugar, vendedor) {
+function openPayModal(id, caso, cliente, factura, fecha, lugar, vendedor) {
     document.getElementById('modalId').value      = id;
     document.getElementById('modalSubtitle').textContent = caso + ' · ' + cliente;
     document.getElementById('modalFactura').value  = factura;
     document.getElementById('modalFechaFact').value = fecha;
     document.getElementById('modalLugar').value    = lugar;
     document.getElementById('modalVendedor').value  = vendedor;
-    document.getElementById('modalCuota').value    = cuota;
+    
     const modal = document.getElementById('payModal');
     modal.style.display = 'flex';
     document.getElementById('modalFactura').focus();

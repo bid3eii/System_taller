@@ -22,11 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $fecha_fact = !empty($_POST['fecha_facturacion']) ? $_POST['fecha_facturacion'] : null;
         $lugar = clean($_POST['lugar'] ?? '');
         $vendedor = clean($_POST['vendedor'] ?? '');
-        $cantidad = floatval($_POST['cantidad'] ?? 0);
         $notas = clean($_POST['notas'] ?? '');
 
-        $stmt = $pdo->prepare("UPDATE comisiones SET factura=?, fecha_facturacion=?, lugar=?, vendedor=?, cantidad=?, notas=? WHERE id=?");
-        $stmt->execute([$factura ?: null, $fecha_fact, $lugar ?: null, $vendedor ?: null, $cantidad, $notas ?: null, $id]);
+        $stmt = $pdo->prepare("UPDATE comisiones SET factura=?, fecha_facturacion=?, lugar=?, vendedor=?, notas=? WHERE id=?");
+        $stmt->execute([$factura ?: null, $fecha_fact, $lugar ?: null, $vendedor ?: null, $notas ?: null, $id]);
         $_SESSION['success'] = "Comisión actualizada correctamente.";
     }
 
@@ -353,12 +352,6 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
                             <?php echo !empty($comision['fecha_facturacion']) ? date('d/m/Y', strtotime($comision['fecha_facturacion'])) : 'Pendiente'; ?>
                         </div>
                     </div>
-                    <div class="field-item">
-                        <span class="label">Cuota Asignada</span>
-                        <div class="value" style="color:#a5b4fc; font-size:1.3rem;">
-                            $<?php echo number_format($comision['cantidad'], 2); ?>
-                        </div>
-                    </div>
                     <?php if ($comision['fecha_pago']): ?>
                         <div class="field-item">
                             <span class="label">Fecha de Pago</span>
@@ -406,11 +399,6 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
                                 <input type="text" name="vendedor" class="edit-input" placeholder="Nombre del vendedor"
                                     value="<?php echo htmlspecialchars($comision['vendedor'] ?? ''); ?>">
                             </div>
-                            <div>
-                                <label class="edit-label">Cuota ($)</label>
-                                <input type="number" step="0.01" min="0" name="cantidad" class="edit-input"
-                                    value="<?php echo number_format($comision['cantidad'], 2, '.', ''); ?>">
-                            </div>
                         </div>
                         <div style="margin-bottom:1.25rem;">
                             <label class="edit-label">Notas / Observaciones</label>
@@ -427,14 +415,6 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
 
         <!-- ======= RIGHT: Actions Sidebar ======= -->
         <div>
-            <!-- Amount Hero -->
-            <div class="amount-hero">
-                <div class="label">Cuota Asignada</div>
-                <div class="amount">$<?php echo number_format($comision['cantidad'], 2); ?></div>
-                <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">
-                    <?php echo htmlspecialchars($comision['tech_username'] ?: 'Sin técnico'); ?>
-                </div>
-            </div>
 
             <!-- Mark As Paid -->
             <?php if ($isPending && $canEdit): ?>
