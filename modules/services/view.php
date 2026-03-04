@@ -309,6 +309,30 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
             margin-bottom: 0.25rem;
         }
 
+        .history-container {
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            margin-right: -0.5rem;
+        }
+
+        .history-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .history-container::-webkit-scrollbar-thumb {
+            background: var(--p-border);
+            border-radius: 10px;
+        }
+
+        .history-container::-webkit-scrollbar-thumb:hover {
+            background: var(--p-primary);
+        }
+
         .sidebar-sticky {
             position: sticky;
             top: 2rem;
@@ -983,7 +1007,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             </div>
                         </div>
                         
-                        <div style="padding-left: 0.5rem;">
+                        <div class="history-container" style="padding-left: 0.5rem;">
                             <?php foreach ($history as $event): ?>
                                         <div class="timeline-item">
                                             <div class="timeline-icon"></div>
