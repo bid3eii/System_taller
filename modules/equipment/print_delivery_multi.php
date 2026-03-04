@@ -79,7 +79,7 @@ $clientData = $orders[0];
 // Fetch history and notes for each order
 $equipmentData = [];
 foreach ($orders as $order) {
-    $stmtHistory = $pdo->prepare("SELECT action, notes FROM service_order_history WHERE service_order_id = ? ORDER BY created_at ASC, id ASC");
+    $stmtHistory = $pdo->prepare("SELECT action, notes FROM service_order_history WHERE service_order_id = ? ORDER BY created_at DESC, id DESC");
     $stmtHistory->execute([$order['id']]);
     $allHistory = $stmtHistory->fetchAll();
     
