@@ -226,19 +226,10 @@ if (isset($_SESSION['error'])) {
                         <?php foreach ($comisiones as $c): ?>
                             <tr>
                                 <td>
-                                    <?php if ($c['tipo'] === 'PROYECTO' && !empty($c['reference_id'])): ?>
-                                        <a href="../levantamientos/view.php?id=<?php echo $c['reference_id']; ?>"
-                                            style="color: var(--primary-500); text-decoration: none; font-weight: 500;">
-                                            <?php echo htmlspecialchars($c['caso']); ?>
-                                        </a>
-                                    <?php elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])): ?>
-                                        <a href="../services/view.php?id=<?php echo $c['reference_id']; ?>"
-                                            style="color: var(--primary-500); text-decoration: none; font-weight: 500;">
-                                            <?php echo htmlspecialchars($c['caso']); ?>
-                                        </a>
-                                    <?php else: ?>
-                                        <span style="font-weight: 500;"><?php echo htmlspecialchars($c['caso']); ?></span>
-                                    <?php endif; ?>
+                                    <a href="view.php?id=<?php echo $c['id']; ?>"
+                                       style="color: var(--primary-400); text-decoration: none; font-weight: 600;">
+                                        <?php echo htmlspecialchars($c['caso']); ?>
+                                    </a>
                                     <br>
                                     <span class="badge"
                                         style="font-size: 0.70rem; margin-top: 0.25rem;"><?php echo htmlspecialchars($c['tipo']); ?></span>
