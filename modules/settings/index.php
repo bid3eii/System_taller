@@ -44,6 +44,10 @@ $defined_modules = [
     're_enter_workshop' => 'Reingresar a Taller',
     'view_all_entries' => 'Ver todos los equipos ingresados (sin estar asignados)',
     'surveys' => 'Levantamientos',
+    'surveys_add' => 'Crear Levantamiento',
+    'surveys_edit' => 'Editar Levantamiento',
+    'surveys_delete' => 'Eliminar Levantamiento',
+    'surveys_view_all' => 'Ver Levantamientos de Todos',
     'project_history' => 'Historial Proyectos',
     'anexos' => 'Anexos Yazaki',
 ];
