@@ -107,7 +107,7 @@ $stmtHist = $pdo->prepare("
     FROM service_order_history h
     LEFT JOIN users u ON h.user_id = u.id
     WHERE h.service_order_id = ?
-    ORDER BY h.created_at DESC
+    ORDER BY h.created_at DESC, h.id DESC
 ");
 $stmtHist->execute([$id]);
 $history = $stmtHist->fetchAll();
