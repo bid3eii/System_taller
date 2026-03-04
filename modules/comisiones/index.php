@@ -283,15 +283,21 @@ if (isset($_SESSION['error'])) {
                                     <td class="text-center">
                                         <div style="display: flex; gap: 0.5rem; justify-content: center;">
                                             <?php if ($c['estado'] === 'PENDIENTE'): ?>
-                                                <form action="mark_paid.php" method="POST" style="display: inline;"
-                                                    onsubmit="return confirm('¿Marcar esta comisión como PAGADA?');">
-                                                    <input type="hidden" name="id" value="<?php echo $c['id']; ?>">
-                                                    <button type="submit" class="btn btn-secondary"
-                                                        style="color: var(--success); border-color: var(--success);"
-                                                        title="Marcar como Pagada">
-                                                        <i class="ph ph-check"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-secondary"
+                                                    style="color: var(--success); border-color: var(--success);"
+                                                    title="Liquidar Comisión"
+                                                    onclick="openPayModal(
+                                                        <?php echo $c['id']; ?>,
+                                                        '<?php echo addslashes(htmlspecialchars($c['caso'])); ?>',
+                                                        '<?php echo addslashes(htmlspecialchars($c['cliente'])); ?>',
+                                                        '<?php echo number_format($c['cantidad'], 2, '.', ''); ?>',
+                                                        '<?php echo addslashes(htmlspecialchars($c['factura'] ?? '')); ?>',
+                                                        '<?php echo $c['fecha_facturacion'] ? date('Y-m-d', strtotime($c['fecha_facturacion'])) : ''; ?>',
+                                                        '<?php echo addslashes(htmlspecialchars($c['lugar'] ?? '')); ?>',
+                                                        '<?php echo addslashes(htmlspecialchars($c['vendedor'] ?? '')); ?>'
+                                                    )">
+                                                    <i class="ph ph-check"></i>
+                                                </button>
                                             <?php endif; ?>
                                             <?php if (can_access_module('comisiones_delete', $pdo)): ?>
                                                 <form action="delete.php" method="POST" style="display: inline;"
@@ -321,4 +327,84 @@ if (isset($_SESSION['error'])) {
         </div>
     </div>
 
-    <?php require_once '../../includes/footer.php'; ?>
+<?php require_once '../../includes/footer.php'; ?>
+
+<!-- ====== QUICK PAY MODAL ====== -->
+<div id="payModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); border-radius:1rem; padding:2rem; width:90%; max-width:520px; box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <div>
+                <h2 style="margin:0; font-size:1.25rem; color:#f1f5f9;"><i class="ph ph-currency-circle-dollar" style="color:#10b981;"></i> Liquidar Comisión</h2>
+                <p id="modalSubtitle" style="margin:0.25rem 0 0; font-size:0.85rem; color:#64748b;"></p>
+            </div>
+            <button onclick="closePayModal()" style="background:transparent; border:none; color:#64748b; font-size:1.5rem; cursor:pointer; line-height:1;">×</button>
+        </div>
+
+        <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
+            <p style="margin:0; font-size:0.85rem; color:#6ee7b7;"><i class="ph ph-info"></i> Completa los datos de facturación antes de marcar como Pagada. Puedes dejarlos vacíos y actualizar después.</p>
+        </div>
+
+        <form id="payForm" method="POST" action="save_and_pay.php">
+            <input type="hidden" name="id" id="modalId">
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                <div>
+                    <label style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:0.4rem;">Nº Factura / O.S.</label>
+                    <input id="modalFactura" name="factura" type="text" placeholder="Ej. 162453"
+                        style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; padding:0.6rem 0.75rem; font-size:0.9rem; box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:0.4rem;">Fecha Facturación</label>
+                    <input id="modalFechaFact" name="fecha_facturacion" type="date"
+                        style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; padding:0.6rem 0.75rem; font-size:0.9rem; box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:0.4rem;">Lugar / Zona</label>
+                    <input id="modalLugar" name="lugar" type="text" placeholder="Taller, León, Managua..."
+                        style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; padding:0.6rem 0.75rem; font-size:0.9rem; box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:0.4rem;">Vendedor</label>
+                    <input id="modalVendedor" name="vendedor" type="text" placeholder="Nombre del vendedor"
+                        style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; padding:0.6rem 0.75rem; font-size:0.9rem; box-sizing:border-box;">
+                </div>
+            </div>
+            <div style="margin-bottom:1.5rem;">
+                <label style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; color:#64748b; margin-bottom:0.4rem;">Cuota ($)</label>
+                <input id="modalCuota" name="cantidad" type="number" step="0.01" min="0"
+                    style="width:100%; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; padding:0.6rem 0.75rem; font-size:0.9rem; box-sizing:border-box;">
+            </div>
+
+            <div style="display:flex; gap:0.75rem;">
+                <button type="button" onclick="closePayModal()"
+                    style="flex:1; padding:0.75rem; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:transparent; color:#94a3b8; cursor:pointer; font-weight:600;">Cancelar</button>
+                <button type="submit"
+                    style="flex:2; padding:0.75rem; border-radius:8px; border:none; background:#10b981; color:#fff; cursor:pointer; font-weight:700; font-size:1rem;">
+                    <i class="ph ph-check-circle"></i> Marcar como Pagada
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openPayModal(id, caso, cliente, cuota, factura, fecha, lugar, vendedor) {
+    document.getElementById('modalId').value      = id;
+    document.getElementById('modalSubtitle').textContent = caso + ' · ' + cliente;
+    document.getElementById('modalFactura').value  = factura;
+    document.getElementById('modalFechaFact').value = fecha;
+    document.getElementById('modalLugar').value    = lugar;
+    document.getElementById('modalVendedor').value  = vendedor;
+    document.getElementById('modalCuota').value    = cuota;
+    const modal = document.getElementById('payModal');
+    modal.style.display = 'flex';
+    document.getElementById('modalFactura').focus();
+}
+function closePayModal() {
+    document.getElementById('payModal').style.display = 'none';
+}
+// Close on backdrop click
+document.getElementById('payModal').addEventListener('click', function(e) {
+    if (e.target === this) closePayModal();
+});
+</script>
