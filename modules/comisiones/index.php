@@ -109,6 +109,11 @@ if (isset($_SESSION['error'])) {
             <p class="text-muted">Registro y control de pagos a técnicos</p>
         </div>
         <div>
+            <?php if (can_access_module('comisiones_add', $pdo)): ?>
+                <a href="add.php" class="btn btn-primary" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <i class="ph ph-plus"></i> Nueva Comisión Manual
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 

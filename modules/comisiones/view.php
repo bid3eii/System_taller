@@ -125,6 +125,10 @@ require_once '../../includes/sidebar.php';
                         <i class="ph ph-check-circle"></i> Marcar como Pagada
                     </button>
                 </form>
+                <a href="edit.php?id=<?php echo $comision['id']; ?>" class="btn btn-primary"
+                    style="background: var(--warning); border-color: var(--warning); color: #000;">
+                    <i class="ph ph-pencil-simple"></i> Editar Cuota
+                </a>
             <?php endif; ?>
             <?php if ($comision['tipo'] === 'PROYECTO' && !empty($comision['reference_id'])): ?>
                 <a href="../levantamientos/view.php?id=<?php echo $comision['reference_id']; ?>" class="btn btn-primary"
