@@ -52,10 +52,11 @@ $weeklyCounts = [];
 $recentItems = []; // Generic items for table
 $recentType = 'services'; // 'services' or 'tools'
 
-// Fetch Technicians for Filter
-$stmtTechs = $pdo->query("SELECT id, username FROM users WHERE role_id = 3 AND status = 'active' ORDER BY username ASC");
-$technicians = $stmtTechs->fetchAll();
-$selectedTech = isset($_GET['tech_id']) ? (int)$_GET['tech_id'] : null;
+// Handle Sorting for Technician Column
+$sort = isset($_GET['sort']) ? $_GET['sort'] : 'date';
+$order = isset($_GET['order']) && $_GET['order'] == 'asc' ? 'asc' : 'desc';
+$nextOrder = ($order == 'asc') ? 'desc' : 'asc';
+$sortIcon = ($order == 'asc') ? 'ph-caret-up' : 'ph-caret-down';
 
 // --- DATA FETCHING LOGIC ---
 
@@ -278,25 +279,19 @@ if ($is_warehouse) {
         AND so.problem_reported != 'Garantía Registrada'
     ";
 
-    if ($selectedTech) {
-        $recentSql .= " AND so.assigned_tech_id = " . (int)$selectedTech;
-    }
-
-
     if (!$can_view_all) {
         $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
-        // For techs, we prioritize active ones by status: received/in_repair/pending_approval first
-        $recentSql .= " ORDER BY CASE so.status 
-            WHEN 'received' THEN 1
-            WHEN 'in_repair' THEN 2
-            WHEN 'pending_approval' THEN 3
-            WHEN 'ready' THEN 4
-            WHEN 'delivered' THEN 5
-            WHEN 'cancelled' THEN 6
-            ELSE 7 END, so.entry_date ASC LIMIT 12";
-    } else {
-        $recentSql .= " ORDER BY so.entry_date DESC LIMIT 12";
     }
+
+    // Apply Sorting
+    if ($sort == 'tech') {
+        $recentSql .= " ORDER BY tech_name " . ($order == 'asc' ? 'ASC' : 'DESC');
+    } else {
+        // Default sort by date
+        $recentSql .= " ORDER BY so.entry_date " . ($order == 'asc' ? 'ASC' : 'DESC');
+    }
+    
+    $recentSql .= " LIMIT 12";
 
     $recentItems = $pdo->query($recentSql)->fetchAll();
 }
@@ -581,22 +576,6 @@ if (!$is_warehouse) {
                 <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente'; ?>
             </h3>
             <div style="display: flex; gap: 0.75rem; align-items: center;">
-                <?php if ($recentType == 'services' && ($is_admin || $is_reception)): ?>
-                    <form method="GET" style="display: flex; align-items: center;">
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <i class="ph ph-funnel" style="position: absolute; left: 0.75rem; color: var(--text-muted); pointer-events: none;"></i>
-                            <select name="tech_id" onchange="this.form.submit()" 
-                                style="padding: 0.4rem 0.75rem 0.4rem 2.25rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-size: 0.85rem; cursor: pointer; min-width: 160px; appearance: none;">
-                                <option value="">Todos los Técnicos</option>
-                                <?php foreach ($technicians as $t): ?>
-                                    <option value="<?php echo $t['id']; ?>" <?php echo $selectedTech == $t['id'] ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($t['username']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </form>
-                <?php endif; ?>
                 <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>"
                     class="btn btn-sm btn-secondary">Ver Todo</a>
             </div>
@@ -615,7 +594,16 @@ if (!$is_warehouse) {
                             <th style="padding: 0.75rem;">Tipo</th>
                             <th style="padding: 0.75rem;">Cliente</th>
                             <th style="padding: 0.75rem;">Equipo</th>
-                            <th style="padding: 0.75rem;">Técnico</th>
+                            <th style="padding: 0.75rem;">
+                                <a href="?sort=tech&order=<?php echo $nextOrder; ?>" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;">
+                                    Técnico
+                                    <?php if($sort == 'tech'): ?>
+                                        <i class="ph <?php echo $sortIcon; ?>" style="font-size: 0.8rem; color: var(--primary);"></i>
+                                    <?php else: ?>
+                                        <i class="ph ph-caret-up-down" style="font-size: 0.8rem; opacity: 0.3;"></i>
+                                    <?php endif; ?>
+                                </a>
+                            </th>
                             <th style="padding: 0.75rem;">Estado</th>
                             <th style="padding: 0.75rem; width: 1%; text-align: right;"></th>
                         <?php endif; ?>
