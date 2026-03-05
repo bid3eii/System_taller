@@ -146,19 +146,35 @@ require_once '../../includes/sidebar.php';
                 <i class="ph-fill ph-package"></i> Equipos a Entregar (<?php echo $equipmentCount; ?>)
             </h3>
             <div style="display: grid; gap: 0.75rem;">
-                <?php foreach ($orders as $index => $order): ?>
-                <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-hover); border-radius: 8px; border: 1px solid var(--border-color);">
-                        <div style="background: #10b981; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
+                <?php foreach ($orders as $index => $order): 
+                    // Fetch Latest Repair Note for this order
+                    $stmtRepair = $pdo->prepare("
+                        SELECT notes 
+                        FROM service_order_history 
+                        WHERE service_order_id = ? AND action = 'in_repair' AND notes IS NOT NULL AND notes != ''
+                        ORDER BY created_at DESC 
+                        LIMIT 1
+                    ");
+                    $stmtRepair->execute([$order['id']]);
+                    $latestRepairNote = $stmtRepair->fetchColumn();
+                ?>
+                <div style="display: flex; align-items: start; gap: 1rem; padding: 1rem; background: var(--bg-hover); border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="background: #10b981; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; margin-top: 0.25rem;">
                             <?php echo $index + 1; ?>
                         </div>
                         <div style="flex: 1;">
                             <div style="font-weight: 600; margin-bottom: 0.25rem;">
                                 <?php echo htmlspecialchars($order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model']); ?>
                             </div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
                                 Serie: <?php echo htmlspecialchars($order['serial_number']); ?> | 
                                 Orden: <?php echo get_order_number($order, 5); ?>
                             </div>
+                            <?php if ($latestRepairNote): ?>
+                            <div style="font-size: 0.9rem; color: var(--text-main); background: rgba(0,0,0,0.2); padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 2px solid var(--primary-400); margin-top: 0.5rem;">
+                                <strong>Detalle Téc.:</strong> <?php echo nl2br(htmlspecialchars($latestRepairNote)); ?>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>

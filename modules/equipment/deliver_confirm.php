@@ -33,6 +33,17 @@ if (!$order) {
     die("Orden no encontrada.");
 }
 
+// Fetch Latest Repair Note (if any)
+$stmtRepair = $pdo->prepare("
+    SELECT notes 
+    FROM service_order_history 
+    WHERE service_order_id = ? AND action = 'in_repair' AND notes IS NOT NULL AND notes != ''
+    ORDER BY created_at DESC 
+    LIMIT 1
+");
+$stmtRepair->execute([$id]);
+$latestRepairNote = $stmtRepair->fetchColumn();
+
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
@@ -148,8 +159,18 @@ require_once '../../includes/sidebar.php';
                 <div>
                     <span class="text-muted d-block text-sm">Equipo</span>
                     <span class="font-medium"><?php echo htmlspecialchars($order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model']); ?></span>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                        S/N: <?php echo htmlspecialchars($order['serial_number']); ?>
+                    </div>
                 </div>
-
+                <?php if ($latestRepairNote): ?>
+                <div style="grid-column: 1 / -1; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+                    <span class="text-muted d-block text-sm mb-1"><i class="ph ph-wrench"></i> Detalles de Reparación</span>
+                    <div style="font-size: 0.95rem; color: var(--text-main); background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 6px; border-left: 3px solid var(--primary-400);">
+                        <?php echo nl2br(htmlspecialchars($latestRepairNote)); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 
