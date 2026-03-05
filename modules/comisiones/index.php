@@ -97,6 +97,10 @@ if (isset($_SESSION['error'])) {
         border: 1px solid var(--border-color);
         overflow-x: auto;
     }
+
+    .table-row-hover:hover {
+        background-color: rgba(255, 255, 255, 0.03);
+    }
 </style>
 
 <div class="animate-enter">
@@ -216,12 +220,28 @@ if (isset($_SESSION['error'])) {
                                 style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
                                 Acciones</th>
                         <?php endif; ?>
-                    </tr>
-                </thead>
                 <tbody>
                     <?php if (count($comisiones) > 0): ?>
                         <?php foreach ($comisiones as $c): ?>
-                            <tr>
+                            <?php
+                            $c_json2 = htmlspecialchars(json_encode([
+                                'id' => $c['id'],
+                                'caso' => $c['caso'],
+                                'tipo' => $c['tipo'],
+                                'cliente' => $c['cliente'],
+                                'tech_name' => strval($c['tech_name'] ?: 'Desconocido'),
+                                'servicio' => $c['servicio'],
+                                'lugar' => strval($c['lugar'] ?: 'Sin especificar'),
+                                'vendedor' => strval($c['vendedor'] ?: 'N/A'),
+                                'fecha_servicio' => date('d/m/Y', strtotime($c['fecha_servicio'])),
+                                'factura' => strval($c['factura'] ?: 'Pendiente'),
+                                'fecha_facturacion' => $c['fecha_facturacion'] ? date('d/m/Y', strtotime($c['fecha_facturacion'])) : 'Pendiente',
+                                'estado' => $c['estado'],
+                                'notas' => strval($c['notas'] ?: 'Sin observaciones.'),
+                                'reference_id' => $c['reference_id']
+                            ]), ENT_QUOTES, 'UTF-8');
+                            ?>
+                            <tr class="table-row-hover" style="cursor: pointer;" onclick="openInfoModal(<?php echo $c_json2; ?>)">
                                 <td>
                                     <?php
                                     // Origin link logic
@@ -233,8 +253,9 @@ if (isset($_SESSION['error'])) {
                                     }
                                     ?>
                                     <a href="<?php echo htmlspecialchars($origin_link); ?>"
-                                       title="Ver Origen"
-                                       style="color: var(--primary-400); text-decoration: none; font-weight: 600;">
+                                       title="Ir al Origen"
+                                       onclick="event.stopPropagation();"
+                                       style="color: #60a5fa; text-decoration: underline; font-weight: 600; font-size: 1.05rem;">
                                         <?php echo htmlspecialchars($c['caso']); ?> <i class="ph ph-link-simple" style="font-size: 0.8rem;"></i>
                                     </a>
                                     <br>
@@ -284,34 +305,8 @@ if (isset($_SESSION['error'])) {
                                     </span>
                                 </td>
                                 <?php if ($is_admin): ?>
-                                    <td class="text-center">
+                                    <td class="text-center" onclick="event.stopPropagation();">
                                         <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                                            <?php
-                                            // Make sure we have the JSON string for the Info Modal
-                                            $c_json2 = htmlspecialchars(json_encode([
-                                                'id' => $c['id'],
-                                                'caso' => $c['caso'],
-                                                'tipo' => $c['tipo'],
-                                                'cliente' => $c['cliente'],
-                                                'tech_name' => strval($c['tech_name'] ?: 'Desconocido'),
-                                                'servicio' => $c['servicio'],
-                                                'lugar' => strval($c['lugar'] ?: 'Sin especificar'),
-                                                'vendedor' => strval($c['vendedor'] ?: 'N/A'),
-                                                'fecha_servicio' => date('d/m/Y', strtotime($c['fecha_servicio'])),
-                                                'factura' => strval($c['factura'] ?: 'Pendiente'),
-                                                'fecha_facturacion' => $c['fecha_facturacion'] ? date('d/m/Y', strtotime($c['fecha_facturacion'])) : 'Pendiente',
-                                                'estado' => $c['estado'],
-                                                'notas' => strval($c['notas'] ?: 'Sin observaciones.'),
-                                                'reference_id' => $c['reference_id']
-                                            ]), ENT_QUOTES, 'UTF-8');
-                                            ?>
-                                            <button type="button" class="btn btn-secondary"
-                                                style="color: var(--primary-400); border-color: var(--primary-400);"
-                                                title="Ver Detalles de la Comisión"
-                                                onclick="openInfoModal(<?php echo $c_json2; ?>)">
-                                                <i class="ph ph-info"></i>
-                                            </button>
-
                                             <?php if ($c['estado'] === 'PENDIENTE'): ?>
                                                 <button type="button" class="btn btn-secondary"
                                                     style="color: var(--success); border-color: var(--success);"
@@ -345,7 +340,7 @@ if (isset($_SESSION['error'])) {
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="text-center" style="padding: 2rem; color: var(--text-muted);">
+                            <td colspan="<?php echo $is_admin ? '7' : '6'; ?>" class="text-center" style="padding: 2rem; color: var(--text-muted);">
                                 <i class="ph ph-coins" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                                 <p>No se encontraron registros de comisiones.</p>
                             </td>
