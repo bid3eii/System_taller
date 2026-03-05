@@ -802,9 +802,8 @@ setInterval(function() {
                 currentTbody.innerHTML = newTbody.innerHTML;
                 
                 // Update implementation-specific variables
-                // In reports module, rows are stored in 'originalRows'
-                const newRows = Array.from(newTbody.querySelectorAll('tr'));
-                originalRows = newRows.filter(row => !row.querySelector('td[colspan]')); 
+                // Use rows from the ACTIVE DOM (currentTbody) to prevent duplication during sort
+                originalRows = Array.from(currentTbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]')); 
                 
                 // Re-apply current filters
                 filterTable();
