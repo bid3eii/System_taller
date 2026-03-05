@@ -91,7 +91,7 @@ foreach ($allHistory as $h) {
              $diagnosisNotesArr[] = $h['notes'];
         }
     }
-    if (($h['action'] === 'in_repair' || $h['action'] === 'ready') && !empty($h['notes'])) {
+    if (($h['action'] === 'in_repair') && !empty($h['notes'])) {
          if (!in_array($h['notes'], $repairNotesArr)) {
              $repairNotesArr[] = $h['notes'];
         }
@@ -257,7 +257,7 @@ if (empty($order['exit_doc_number'])) {
             gap: 20px;
         }
         .info-row { margin-bottom: 3px; display: flex; }
-        .info-label { font-weight: bold; width: 80px; text-align: right; margin-right: 10px; }
+        .info-label { font-weight: bold; width: 110px; text-align: right; margin-right: 10px; min-width: 110px; }
         .info-val { flex: 1; }
 
         /* TABLE */
@@ -404,6 +404,10 @@ if (empty($order['exit_doc_number'])) {
                         <div class="info-label"><?php echo $client_label; ?></div>
                         <div class="info-val"><?php echo htmlspecialchars($client_val); ?></div>
                     </div>
+                    <div class="info-row">
+                        <div class="info-label">Diagnóstico:</div>
+                        <div class="info-val"><?php echo $order['diagnosis_number'] ? '#' . str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
+                    </div>
                 </div>
                 <div>
                     <?php if($show_secondary): ?>
@@ -444,6 +448,14 @@ if (empty($order['exit_doc_number'])) {
             </tbody>
         </table>
 
+        <?php if (!empty($order['repair_number']) || !empty($repairNote)): ?>
+        <div class="section-header">DETALLES DE REPARACIÓN</div>
+        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; min-height: 25px;">
+            <div style="font-weight: bold; margin-bottom: 3px;">REPARACIÓN #<?php echo $order['repair_number'] ? str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT) : '-'; ?> | S/N: <?php echo htmlspecialchars($order['serial_number']); ?></div>
+            <?php echo $repairNote ? nl2br(htmlspecialchars($repairNote)) : 'Sin repuestos o notas de reparación registradas.'; ?>
+        </div>
+        <?php endif; ?>
+
         <div class="section-header">ACCESORIOS RECIBIDOS</div>
         <div class="section-box" style="margin-bottom: 10px; font-size: 10px; min-height: 25px;">
             <?php echo htmlspecialchars($order['accessories_received'] ?: 'NINGUNO / SOLO EQUIPO'); ?>
@@ -454,21 +466,7 @@ if (empty($order['exit_doc_number'])) {
             <?php echo nl2br(htmlspecialchars($order['problem_reported'])); ?>
         </div>
 
-        <div class="section-header">RESULTADO DEL SERVICIO</div>
-        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; padding: 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="width: 50%; padding: 5px; border-right: 1px solid var(--border-color); vertical-align: top;">
-                        <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid #eee;">DIAGNÓSTICO: <?php echo $order['diagnosis_number'] ? str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
-                        <?php echo $diagnosisNote ? nl2br(htmlspecialchars($diagnosisNote)) : 'Sin notas adicionales.'; ?>
-                    </td>
-                    <td style="width: 50%; padding: 5px; vertical-align: top;">
-                        <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid #eee;">REPARACIÓN: <?php echo $order['repair_number'] ? str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
-                        <?php echo $repairNote ? nl2br(htmlspecialchars($repairNote)) : 'Sin notas adicionales.'; ?>
-                    </td>
-                </tr>
-            </table>
-        </div>
+
 
         <div class="bottom-section">
             <!-- COMENTARIOS -->
