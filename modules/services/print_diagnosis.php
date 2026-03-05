@@ -62,6 +62,11 @@ $elaborated_by = $diagnosis_author['username'] ?? 'Desconocido';
 $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
 $diagnosis_date = $diagnosis_author['created_at'] ?? $order['entry_date']; 
 
+// Fetch Diagnosis Images
+$stmtImages = $pdo->prepare("SELECT image_path FROM diagnosis_images WHERE service_order_id = ? ORDER BY id ASC");
+$stmtImages->execute([$id]);
+$diagnosis_imgs = $stmtImages->fetchAll();
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -218,6 +223,29 @@ $diagnosis_date = $diagnosis_author['created_at'] ?? $order['entry_date'];
             white-space: pre-line; /* Keeps line breaks but allows better justification than pre-wrap for this purpose */
             orphans: 3;
             widows: 3;
+        }
+
+        /* IMAGES GRID */
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .image-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fdfdfd;
+            text-align: center;
+            padding: 5px;
+        }
+        .image-card img {
+            max-width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
         }
 
         /* SIGNATURE SECTION (FLOWS NATURALLY) */
@@ -391,6 +419,21 @@ $diagnosis_date = $diagnosis_author['created_at'] ?? $order['entry_date'];
                                 <?php echo $order['diagnosis_conclusion'] ? htmlspecialchars($order['diagnosis_conclusion']) : 'No registrado.'; ?>
                             </div>
                         </div>
+
+                        <?php if (count($diagnosis_imgs) > 0): ?>
+                        <div class="diagnosis-section" style="page-break-before: always;">
+                            <div class="section-title" style="text-align: center; font-size: 1.4rem; padding-bottom: 10px; border-bottom: 2px solid #eee; margin-bottom: 20px;">
+                                Imágenes de Evidencia
+                            </div>
+                            <div class="images-grid">
+                                <?php foreach ($diagnosis_imgs as $img): ?>
+                                    <div class="image-card">
+                                        <img src="../../<?php echo htmlspecialchars($img['image_path']); ?>" alt="Evidencia">
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
         </table>
         
