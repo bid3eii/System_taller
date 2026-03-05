@@ -213,8 +213,9 @@ $diagnosis_date = $diagnosis_author['created_at'] ?? $order['entry_date'];
             font-size: 13px;
             line-height: 1.5;
             text-align: justify; /* Justified Content */
+            text-justify: inter-word;
             margin-bottom: 15px;
-            white-space: pre-wrap; /* Keeps line breaks */
+            white-space: pre-line; /* Keeps line breaks but allows better justification than pre-wrap for this purpose */
             orphans: 3;
             widows: 3;
         }
@@ -341,7 +342,7 @@ $diagnosis_date = $diagnosis_author['created_at'] ?? $order['entry_date'];
                             <?php 
                                 $final_client_name = !empty($order['owner_name']) ? $order['owner_name'] : $order['client_name'];
                             ?>
-                            <div class="client-subtitle">Cliente: <?php echo htmlspecialchars($final_client_name); ?></div>
+                            <div class="client-subtitle"><?php echo htmlspecialchars($final_client_name); ?></div>
                         </div>
 
                         <div class="info-grid">
