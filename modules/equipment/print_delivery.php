@@ -91,7 +91,7 @@ foreach ($allHistory as $h) {
              $diagnosisNotesArr[] = $h['notes'];
         }
     }
-    if (($h['action'] === 'in_repair' || $h['action'] === 'ready') && !empty($h['notes'])) {
+    if (($h['action'] === 'in_repair') && !empty($h['notes'])) {
          if (!in_array($h['notes'], $repairNotesArr)) {
              $repairNotesArr[] = $h['notes'];
         }
@@ -403,6 +403,10 @@ if (empty($order['exit_doc_number'])) {
                     <div class="info-row">
                         <div class="info-label"><?php echo $client_label; ?></div>
                         <div class="info-val"><?php echo htmlspecialchars($client_val); ?></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Diagnóstico:</div>
+                        <div class="info-val"><?php echo $order['diagnosis_number'] ? '#' . str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
                     </div>
                 </div>
                 <div>
