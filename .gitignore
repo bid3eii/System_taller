@@ -1,0 +1,4 @@
+/uploads/
+/assets/uploads/
+.DS_Store
+*.log
