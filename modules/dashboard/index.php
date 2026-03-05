@@ -52,6 +52,11 @@ $weeklyCounts = [];
 $recentItems = []; // Generic items for table
 $recentType = 'services'; // 'services' or 'tools'
 
+// Fetch Technicians for Filter
+$stmtTechs = $pdo->query("SELECT id, username FROM users WHERE role_id = 3 AND status = 'active' ORDER BY username ASC");
+$technicians = $stmtTechs->fetchAll();
+$selectedTech = isset($_GET['tech_id']) ? (int)$_GET['tech_id'] : null;
+
 // --- DATA FETCHING LOGIC ---
 
 // --- DATA FETCHING LOGIC ---
@@ -272,6 +277,11 @@ if ($is_warehouse) {
         WHERE (w.product_code IS NULL OR w.product_code = '') 
         AND so.problem_reported != 'Garantía Registrada'
     ";
+
+    if ($selectedTech) {
+        $recentSql .= " AND so.assigned_tech_id = " . (int)$selectedTech;
+    }
+
 
     if (!$can_view_all) {
         $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
@@ -570,8 +580,26 @@ if (!$is_warehouse) {
                 <i class="ph-fill ph-clock-counter-clockwise" style="color: var(--primary);"></i>
                 <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente'; ?>
             </h3>
-            <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>"
-                class="btn btn-sm btn-secondary">Ver Todo</a>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <?php if ($recentType == 'services' && ($is_admin || $is_reception)): ?>
+                    <form method="GET" style="display: flex; align-items: center;">
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <i class="ph ph-funnel" style="position: absolute; left: 0.75rem; color: var(--text-muted); pointer-events: none;"></i>
+                            <select name="tech_id" onchange="this.form.submit()" 
+                                style="padding: 0.4rem 0.75rem 0.4rem 2.25rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); font-size: 0.85rem; cursor: pointer; min-width: 160px; appearance: none;">
+                                <option value="">Todos los Técnicos</option>
+                                <?php foreach ($technicians as $t): ?>
+                                    <option value="<?php echo $t['id']; ?>" <?php echo $selectedTech == $t['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($t['username']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </form>
+                <?php endif; ?>
+                <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>"
+                    class="btn btn-sm btn-secondary">Ver Todo</a>
+            </div>
         </div>
 
         <div class="table-container">
