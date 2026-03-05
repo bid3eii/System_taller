@@ -560,7 +560,7 @@ body.light-mode td {
 /* Light mode form control override */
 body.light-mode .form-control {
   background-color: white;
-  border: 1px solid var(--slate-300);
+  border: 1px solid var(--slate-400);
 }
 
 body.light-mode .form-control:focus {
