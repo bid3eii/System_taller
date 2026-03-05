@@ -1151,7 +1151,7 @@ require_once '../../includes/sidebar.php';
                     </div>
 
                     <div
-                        style="margin-top: 2rem; display: flex; justify-content: flex-end; position: sticky; bottom: 0; background: var(--bg-card); border-top: 1px solid var(--border-color); padding: 1.5rem; margin: 0 -1.5rem -1.5rem -1.5rem; z-index: 100; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                        style="margin-top: 2rem; display: flex; justify-content: flex-end; position: sticky; bottom: 0; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border-color); padding: 1.5rem; margin: 0 -1.5rem -1.5rem -1.5rem; z-index: 100; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
                         <button type="submit" class="btn btn-primary" style="min-width: 200px;">
                             <i class="ph ph-floppy-disk"></i> Guardar Permisos del Rol
                         </button>
@@ -1395,7 +1395,7 @@ require_once '../../includes/sidebar.php';
                             </div>
 
                             <div
-                                style="margin-top: 2rem; display: flex; justify-content: flex-end; position: sticky; bottom: 0; background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 1.5rem; margin: 0 -1.5rem -1.5rem -1.5rem; border-top: 1px solid var(--border-color); z-index: 100; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                                style="margin-top: 2rem; display: flex; justify-content: flex-end; position: sticky; bottom: 0; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 1.5rem; margin: 0 -1.5rem -1.5rem -1.5rem; border-top: 1px solid var(--border-color); z-index: 100; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
                                 <button type="submit" class="btn btn-primary" style="min-width: 200px;">
                                     <i class="ph ph-floppy-disk"></i> Guardar Excepciones
                                 </button>
