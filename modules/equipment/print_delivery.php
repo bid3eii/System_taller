@@ -444,11 +444,13 @@ if (empty($order['exit_doc_number'])) {
             </tbody>
         </table>
 
+        <?php if (!empty($order['repair_number']) || !empty($repairNote)): ?>
         <div class="section-header">DETALLES DE REPARACIÓN</div>
         <div class="section-box" style="margin-bottom: 10px; font-size: 10px; min-height: 25px;">
             <div style="font-weight: bold; margin-bottom: 3px;">REPARACIÓN #<?php echo $order['repair_number'] ? str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></div>
             <?php echo $repairNote ? nl2br(htmlspecialchars($repairNote)) : 'Sin repuestos o notas de reparación registradas.'; ?>
         </div>
+        <?php endif; ?>
 
         <div class="section-header">ACCESORIOS RECIBIDOS</div>
         <div class="section-box" style="margin-bottom: 10px; font-size: 10px; min-height: 25px;">
