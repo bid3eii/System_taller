@@ -206,7 +206,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
             $processed++;
 
         } catch (Exception $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             $errors[] = "Fila " . ($offset + $count) . ": " . $e->getMessage();
         }
     }
