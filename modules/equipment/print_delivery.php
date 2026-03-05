@@ -257,7 +257,7 @@ if (empty($order['exit_doc_number'])) {
             gap: 20px;
         }
         .info-row { margin-bottom: 3px; display: flex; }
-        .info-label { font-weight: bold; width: 80px; text-align: right; margin-right: 10px; }
+        .info-label { font-weight: bold; width: 110px; text-align: right; margin-right: 10px; min-width: 110px; }
         .info-val { flex: 1; }
 
         /* TABLE */
