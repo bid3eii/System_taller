@@ -171,7 +171,6 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td>
                                     <div class="fw-medium"><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></div>
-                                    <div class="text-xs text-muted"><?php echo htmlspecialchars($order['equipment_type']); ?></div>
                                 </td>
                                 <td>
                                     <?php if ($order['service_type'] == 'warranty'): ?>
