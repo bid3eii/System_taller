@@ -83,9 +83,6 @@ $records = $stmt->fetchAll();
                 <i class="ph ph-magnifying-glass input-icon"></i>
             </div>
             <button type="submit" class="btn btn-secondary">Buscar</button>
-            <?php if(!empty($search)): ?>
-                <a href="database.php" class="btn btn-sm btn-ghost" title="Limpiar búsqueda">&times; Limpiar</a>
-            <?php endif; ?>
         </form>
     </div>
 

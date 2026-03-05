@@ -42,6 +42,12 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleClear();
             input.focus();
             
+            // If the input belongs to a form and is a server-side search, submit form to clear filters
+            if (input.form && input.name === 'search') {
+                input.form.submit();
+                return;
+            }
+            
             // Trigger input event for live search listeners
             // We dispatch both 'input' and 'change' to ensure maximum compatibility
             setTimeout(() => {
