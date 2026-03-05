@@ -214,7 +214,7 @@ require_once '../../includes/sidebar.php';
             </div>
 
             <div class="form-group">
-                <label class="form-label">DNI / Identificación *</label>
+                <label class="form-label">Cédula *</label>
                 <div class="input-group">
                     <input type="text" name="receiver_id" class="form-control" placeholder="Número de documento" required>
                     <i class="ph ph-identification-card input-icon"></i>
