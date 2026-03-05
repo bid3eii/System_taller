@@ -261,12 +261,14 @@ if ($is_warehouse) {
             c.name as client_name, 
             reg_owner.name as registered_owner_name,
             e.brand, e.model, 
+            tech.username as tech_name,
             DATEDIFF(NOW(), so.entry_date) as days_in_shop
         FROM service_orders so
         LEFT JOIN clients c ON so.client_id = c.id
         LEFT JOIN equipments e ON so.equipment_id = e.id
         LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
         LEFT JOIN warranties w ON so.id = w.service_order_id
+        LEFT JOIN users tech ON so.assigned_tech_id = tech.id
         WHERE (w.product_code IS NULL OR w.product_code = '') 
         AND so.problem_reported != 'Garantía Registrada'
     ";
@@ -585,6 +587,7 @@ if (!$is_warehouse) {
                             <th style="padding: 0.75rem;">Tipo</th>
                             <th style="padding: 0.75rem;">Cliente</th>
                             <th style="padding: 0.75rem;">Equipo</th>
+                            <th style="padding: 0.75rem;">Técnico</th>
                             <th style="padding: 0.75rem;">Estado</th>
                             <th style="padding: 0.75rem; width: 1%; text-align: right;"></th>
                         <?php endif; ?>
@@ -627,6 +630,12 @@ if (!$is_warehouse) {
                                     <td style="padding: 0.75rem;">
                                         <span
                                             class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
+                                    </td>
+                                    <td style="padding: 0.75rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
+                                            <i class="ph ph-user-circle" style="color: var(--slate-400);"></i>
+                                            <span style="color: var(--text-secondary);"><?php echo htmlspecialchars($item['tech_name'] ?? '---'); ?></span>
+                                        </div>
                                     </td>
                                     <td style="padding: 0.75rem;">
                                         <?php
