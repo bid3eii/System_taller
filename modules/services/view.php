@@ -822,12 +822,12 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: var(--p-text-main);">
                                 <i class="ph ph-money" style="color: var(--success);"></i> Pago y Comisiones</h3>
 
-                            <form method="POST" action="update_payment_status.php" onsubmit="return confirm('¿Confirmas el cambio de estado de pago? Si marcas como PAGADO, se generará la comisión para el técnico asignado.');">
+                            <form method="POST" action="update_payment_status.php" id="form-payment-order-status" onsubmit="return confirmOrderPaymentChange();">
                                 <input type="hidden" name="id" value="<?php echo $order['id']; ?>">
                                 
                                 <div style="margin-bottom: 1rem;">
                                     <label style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Estado de Pago</label>
-                                    <select name="payment_status" class="modern-select" <?php echo $order['payment_status'] === 'pagado' ? 'disabled' : ''; ?>>
+                                    <select name="payment_status" id="payment_status_order_select" class="modern-select" <?php echo $order['payment_status'] === 'pagado' ? 'disabled' : ''; ?>>
                                         <option value="pendiente" <?php echo $order['payment_status'] === 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
                                         <option value="pagado" <?php echo $order['payment_status'] === 'pagado' ? 'selected' : ''; ?>>Pagado/Cancelado</option>
                                     </select>
@@ -846,6 +846,16 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </form>
+                            
+                            <script>
+                            function confirmOrderPaymentChange() {
+                                const select = document.getElementById('payment_status_order_select');
+                                if (select && select.value === 'pagado' && '<?php echo $order['payment_status']; ?>' !== 'pagado') {
+                                    return confirm('¿Confirmas el cambio de estado de pago a PAGADO?\n\nMarcar como PAGADO generará automáticamente la comisión para el técnico asignado.');
+                                }
+                                return true;
+                            }
+                            </script>
                         </div>
                     <?php endif; ?>
 

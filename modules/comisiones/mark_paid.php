@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     $id = intval($_POST['id']);
 
     try {
-        $stmt = $pdo->prepare("UPDATE comisiones SET estado = 'PAGADA' WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE comisiones SET estado = 'PAGADA', fecha_pago = CURDATE() WHERE id = ?");
         $stmt->execute([$id]);
 
         $_SESSION['success'] = "Comisión marcada como pagada correctamente.";

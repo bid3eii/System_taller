@@ -35,6 +35,25 @@ try {
     $pdo->exec($sql_create_table);
     echo "<p>&#10004; Tabla <b>comisiones</b> verificada/creada exitosamente.</p>";
 
+    // 2. Agregar columnas nuevas si no existen (fecha_pago, notas)
+    $existing_cols = [];
+    $col_result = $pdo->query("SHOW COLUMNS FROM comisiones");
+    foreach ($col_result->fetchAll(PDO::FETCH_ASSOC) as $col) {
+        $existing_cols[] = $col['Field'];
+    }
+    if (!in_array('fecha_pago', $existing_cols)) {
+        $pdo->exec("ALTER TABLE comisiones ADD COLUMN fecha_pago DATE NULL AFTER estado");
+        echo "<p>&#10004; Columna <b>fecha_pago</b> agregada.</p>";
+    } else {
+        echo "<p>&#10004; Columna <b>fecha_pago</b> ya existía.</p>";
+    }
+    if (!in_array('notas', $existing_cols)) {
+        $pdo->exec("ALTER TABLE comisiones ADD COLUMN notas TEXT NULL AFTER fecha_pago");
+        echo "<p>&#10004; Columna <b>notas</b> agregada.</p>";
+    } else {
+        echo "<p>&#10004; Columna <b>notas</b> ya existía.</p>";
+    }
+
     // 2. Insertar permisos granulares si no existen
     $permisos = [
         ['module_comisiones', 'Acceso al módulo de Comisiones'],
