@@ -36,9 +36,9 @@ if (!$survey) {
     die("Levantamiento no encontrado.");
 }
 
-// Cannot edit if approved
-if ($survey['status'] === 'approved') {
-    die("No se puede editar un levantamiento aprobado.");
+// Cannot edit if already a project or if payment was already made
+if (in_array($survey['status'], ['approved', 'in_progress', 'completed']) || $survey['payment_status'] === 'pagado') {
+    die("No se puede editar un levantamiento que ya está en curso o ha sido pagado.");
 }
 
 // Security: If tech doesn't have view_all, only allow if they own it
@@ -73,6 +73,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
+            // 0. Prepare Audit Log Data (Before Changes)
+            // $survey variable already contains old survey data fetched at the top
+            $stmtOldMat = $pdo->prepare("SELECT * FROM project_materials WHERE survey_id = ? ORDER BY id ASC");
+            $stmtOldMat->execute([$id]);
+            $old_materials = $stmtOldMat->fetchAll(PDO::FETCH_ASSOC);
+
+            $old_state = [
+                'client_name' => $survey['client_name'],
+                'title' => $survey['title'],
+                'general_description' => $survey['general_description'],
+                'scope_activities' => $survey['scope_activities'],
+                'estimated_time' => $survey['estimated_time'],
+                'personnel_required' => $survey['personnel_required'],
+                'materials' => $old_materials
+            ];
+
             // 1. Update Survey
             $stmtU = $pdo->prepare("
                 UPDATE project_surveys 
@@ -90,11 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id
             ]);
 
-            // 2. Clear old materials (for simplicity, delete and reinsert or do a diff)
-            // A simpler approach is deleting all and reinserting the form contents
+            // 2. Clear old materials
             $pdo->prepare("DELETE FROM project_materials WHERE survey_id = ?")->execute([$id]);
 
-            // 3. Insert Materials
+            // 3. Insert Materials & Build New State
+            $new_materials = [];
             if (!empty($mat_descriptions)) {
                 $stmtMat = $pdo->prepare("
                     INSERT INTO project_materials (survey_id, item_description, quantity, unit, notes) 
@@ -109,9 +125,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $notes = clean($mat_notes[$i] ?? '');
 
                         $stmtMat->execute([$id, $desc, $qty, $unit, $notes]);
+
+                        $new_materials[] = [
+                            'item_description' => $desc,
+                            'quantity' => $qty,
+                            'unit' => $unit,
+                            'notes' => $notes
+                        ];
                     }
                 }
             }
+
+            $new_state = [
+                'client_name' => $client_name,
+                'title' => $title,
+                'general_description' => $general_description,
+                'scope_activities' => $scope_activities,
+                'estimated_time' => $estimated_time,
+                'personnel_required' => $personnel_required,
+                'materials' => $new_materials
+            ];
+
+            // 4. Log Audit Action
+            log_audit($pdo, 'project_surveys', $id, 'EDICION', $old_state, $new_state);
 
             $pdo->commit();
             header("Location: view.php?id=$id&msg=updated");
@@ -261,14 +297,9 @@ require_once '../../includes/sidebar.php';
         <!-- 4. Materials Requirement -->
         <div class="card" style="margin-bottom: 2rem;">
             <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ph ph-list-dashes" style="font-size: 1.2rem; color: var(--success);"></i>
-                    <h3 style="margin: 0; color: var(--text-primary);">Requerimientos y Materiales</h3>
-                </div>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="addMaterialRow()">
-                    <i class="ph ph-plus"></i> Añadir Ítem
-                </button>
+                style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                <i class="ph ph-list-dashes" style="font-size: 1.2rem; color: var(--success);"></i>
+                <h3 style="margin: 0; color: var(--text-primary);">Requerimientos y Materiales</h3>
             </div>
 
             <div class="table-container">
@@ -329,16 +360,32 @@ require_once '../../includes/sidebar.php';
                     </tbody>
                 </table>
             </div>
+            <!-- Bottom Add Row Button -->
+            <div style="margin-top: 1rem; text-align: center;">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addMaterialRow()">
+                    <i class="ph ph-plus"></i> Añadir Ítem
+                </button>
+            </div>
         </div>
 
-        <div
-            style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; position: sticky; bottom: 2rem; z-index: 10;">
-            <a href="view.php?id=<?php echo $id; ?>" class="btn btn-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary" style="box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
-                <i class="ph ph-floppy-disk"></i> Guardar Cambios
-            </button>
-        </div>
+        <!-- Spacer so form content doesn't hide behind the fixed bar -->
+        <div style="height: 5rem;"></div>
     </form>
+
+    <!-- Fixed action bar pinned to bottom of screen -->
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+                background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(12px);
+                border-top: 1px solid rgba(255,255,255,0.07);
+                padding: 0.85rem 2rem;
+                display: flex; justify-content: flex-end; gap: 0.85rem; align-items: center;
+                box-shadow: 0 -4px 24px rgba(0,0,0,0.4);">
+        <a href="view.php?id=<?php echo $id; ?>" class="btn btn-secondary"
+            style="min-width: 110px; text-align: center;">Cancelar</a>
+        <button form="surveyForm" type="submit" class="btn btn-primary"
+            style="min-width: 160px; box-shadow: 0 4px 12px rgba(99,102,241,0.35); font-weight: 600;">
+            <i class="ph ph-floppy-disk"></i> Guardar Cambios
+        </button>
+    </div>
 </div>
 
 <script>

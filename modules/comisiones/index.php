@@ -122,36 +122,50 @@ if (isset($_SESSION['error'])) {
     </div>
 
         <!-- Filters -->
-        <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
+        <style>
+            .filter-input {
+                background: rgba(15, 23, 42, 0.6) !important;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                color: #f8fafc !important;
+                height: 42px !important;
+            }
+            .filter-input:focus {
+                border-color: var(--primary-500) !important;
+                box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+            }
+            .filter-label {
+                color: #94a3b8;
+                font-size: 0.8rem;
+                font-weight: 500;
+                margin-bottom: 0.4rem;
+                letter-spacing: 0.3px;
+            }
+        </style>
+        <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05);">
             <form method="GET" action="" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
-                <div style="flex: 1; min-width: 200px;">
-                    <label
-                        style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Buscar</label>
+                <div style="flex: 1; min-width: 250px;">
+                    <label class="filter-label" style="display: block;">Buscar</label>
                     <div class="input-group">
-                        <input type="text" name="search" class="form-control"
+                        <input type="text" name="search" class="form-control filter-input"
                             placeholder="Cliente, servicio, caso, factura..."
                             value="<?php echo htmlspecialchars($search); ?>">
-                        <i class="ph ph-magnifying-glass input-icon"></i>
+                        <i class="ph ph-magnifying-glass input-icon" style="color: #64748b;"></i>
                     </div>
                 </div>
 
-                <div style="width: 150px;">
-                    <label
-                        style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Estado</label>
-                    <select name="status" class="form-control">
+                <div style="width: 160px;">
+                    <label class="filter-label" style="display: block;">Estado</label>
+                    <select name="status" class="form-control filter-input">
                         <option value="">Todos</option>
-                        <option value="PENDIENTE" <?php echo $status_filter === 'PENDIENTE' ? 'selected' : ''; ?>>
-                            Pendiente</option>
-                        <option value="PAGADA" <?php echo $status_filter === 'PAGADA' ? 'selected' : ''; ?>>Pagada
-                        </option>
+                        <option value="PENDIENTE" <?php echo $status_filter === 'PENDIENTE' ? 'selected' : ''; ?>>Pendiente</option>
+                        <option value="PAGADA" <?php echo $status_filter === 'PAGADA' ? 'selected' : ''; ?>>Pagada</option>
                     </select>
                 </div>
 
                 <?php if ($is_admin): ?>
                     <div style="width: 200px;">
-                        <label
-                            style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Técnico</label>
-                        <select name="tech_id" class="form-control">
+                        <label class="filter-label" style="display: block;">Técnico</label>
+                        <select name="tech_id" class="form-control filter-input">
                             <option value="">Todos los técnicos</option>
                             <?php foreach ($technicians as $tech): ?>
                                 <option value="<?php echo $tech['id']; ?>" <?php echo $tech_filter == $tech['id'] ? 'selected' : ''; ?>>
@@ -162,19 +176,69 @@ if (isset($_SESSION['error'])) {
                     </div>
                 <?php endif; ?>
 
-                <div>
-                    <button type="submit" class="btn btn-secondary" style="height: 38px;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="submit" class="btn btn-secondary" style="height: 42px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; font-weight: 500;">
                         <i class="ph ph-funnel"></i> Filtrar
                     </button>
                     <?php if ($search || $status_filter || $tech_filter): ?>
                         <a href="index.php" class="btn btn-secondary"
-                            style="height: 38px; border-color: var(--danger); color: var(--danger);">
+                            style="height: 42px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; font-weight: 500;">
                             <i class="ph ph-x"></i> Limpiar
                         </a>
                     <?php endif; ?>
                 </div>
             </form>
         </div>
+
+        <?php
+        // Count for quick filters
+        $stmtP = $pdo->prepare("SELECT COUNT(*) FROM comisiones WHERE tipo = 'PROYECTO'");
+        $stmtP->execute();
+        $countProyectos = $stmtP->fetchColumn();
+
+        $stmtS = $pdo->prepare("SELECT COUNT(*) FROM comisiones WHERE tipo = 'SERVICIO'");
+        $stmtS->execute();
+        $countServicios = $stmtS->fetchColumn();
+        ?>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <a href="index.php?search=PROYECTO" style="text-decoration: none; display: block; background: rgba(30, 41, 59, 0.4); border: 1px solid <?php echo (strpos(strtoupper($search), 'PROYECTO') !== false) ? 'rgba(99, 102, 241, 0.5)' : 'rgba(255,255,255,0.05)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                        <i class="ph ph-buildings"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Proyectos</h4>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #fff; line-height: 1.2;"><?php echo $countProyectos; ?></div>
+                    </div>
+                </div>
+                <?php if (strpos(strtoupper($search), 'PROYECTO') !== false): ?>
+                    <div style="position: absolute; top: 0; right: 0; background: rgba(99, 102, 241, 0.2); color: #818cf8; font-size: 0.7rem; padding: 0.2rem 0.6rem; border-bottom-left-radius: 8px; font-weight: 600;">ACTIVO</div>
+                <?php endif; ?>
+            </a>
+
+            <a href="index.php?search=SERVICIO" style="text-decoration: none; display: block; background: rgba(30, 41, 59, 0.4); border: 1px solid <?php echo (strpos(strtoupper($search), 'SERVICIO') !== false) ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255,255,255,0.05)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                        <i class="ph ph-wrench"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Servicios</h4>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #fff; line-height: 1.2;"><?php echo $countServicios; ?></div>
+                    </div>
+                </div>
+                <?php if (strpos(strtoupper($search), 'SERVICIO') !== false): ?>
+                    <div style="position: absolute; top: 0; right: 0; background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.7rem; padding: 0.2rem 0.6rem; border-bottom-left-radius: 8px; font-weight: 600;">ACTIVO</div>
+                <?php endif; ?>
+            </a>
+        </div>
+        
+        <style>
+            .hover-card-filter:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+                border-color: rgba(255, 255, 255, 0.1) !important;
+            }
+        </style>
 
         <?php if ($success_msg): ?>
             <div class="alert alert-success"
@@ -255,12 +319,21 @@ if (isset($_SESSION['error'])) {
                                     <a href="<?php echo htmlspecialchars($origin_link); ?>"
                                        title="Ir al Origen"
                                        onclick="event.stopPropagation();"
-                                       style="color: #60a5fa; text-decoration: underline; font-weight: 600; font-size: 1.05rem;">
+                                       style="color: #60a5fa; text-decoration: none; font-weight: 600; font-size: 1.05rem;">
                                         <?php echo htmlspecialchars($c['caso']); ?> <i class="ph ph-link-simple" style="font-size: 0.8rem;"></i>
                                     </a>
                                     <br>
+                                    <?php
+                                    $tipoColor = $c['tipo'] === 'PROYECTO' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+                                    $tipoText = $c['tipo'] === 'PROYECTO' ? '#818cf8' : '#34d399';
+                                    $tipoBorder = $c['tipo'] === 'PROYECTO' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(16, 185, 129, 0.3)';
+                                    $tipoIcon = $c['tipo'] === 'PROYECTO' ? 'ph-buildings' : 'ph-wrench';
+                                    ?>
                                     <span class="badge"
-                                        style="font-size: 0.70rem; margin-top: 0.25rem;"><?php echo htmlspecialchars($c['tipo']); ?></span>
+                                        style="font-size: 0.70rem; margin-top: 0.4rem; padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid <?php echo $tipoBorder; ?>; background: <?php echo $tipoColor; ?>; color: <?php echo $tipoText; ?>; display: inline-flex; align-items: center; gap: 0.3rem; letter-spacing: 0.5px;">
+                                        <i class="ph <?php echo $tipoIcon; ?>" style="font-size: 0.85rem;"></i>
+                                        <?php echo htmlspecialchars($c['tipo']); ?>
+                                    </span>
                                 </td>
                                 <td>
                                     <?php echo date('d/m/Y', strtotime($c['fecha_servicio'])); ?>

@@ -5,7 +5,7 @@ require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 
-if (!can_access_module('surveys_status', $pdo)) {
+if (!can_access_module('settings', $pdo)) {
     die("Acceso denegado.");
 }
 

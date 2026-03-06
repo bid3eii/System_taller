@@ -817,12 +817,12 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                     <?php endif; ?>
 
                     <!-- Payment Status Update -->
-                    <?php if (can_access_module('surveys_status', $pdo)): ?>
+                    <?php if (can_access_module('settings', $pdo)): ?>
                         <div class="update-card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--success);">
                             <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: var(--p-text-main);">
                                 <i class="ph ph-money" style="color: var(--success);"></i> Pago y Comisiones</h3>
 
-                            <form method="POST" action="update_payment_status.php" id="form-payment-order-status" onsubmit="return confirmOrderPaymentChange();">
+                            <form method="POST" action="update_payment_status.php" id="form-payment-order-status" onsubmit="return confirmOrderPaymentChange(event);">
                                 <input type="hidden" name="id" value="<?php echo $order['id']; ?>">
                                 
                                 <div style="margin-bottom: 1rem;">
@@ -848,10 +848,27 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             </form>
                             
                             <script>
-                            function confirmOrderPaymentChange() {
+                            function confirmOrderPaymentChange(event) {
                                 const select = document.getElementById('payment_status_order_select');
                                 if (select && select.value === 'pagado' && '<?php echo $order['payment_status']; ?>' !== 'pagado') {
-                                    return confirm('¿Confirmas el cambio de estado de pago a PAGADO?\n\nMarcar como PAGADO generará automáticamente la comisión para el técnico asignado.');
+                                    event.preventDefault();
+                                    Swal.fire({
+                                        title: '¿Confirmar Pago?',
+                                        text: 'Asegúrate de haber ingresado correctamente los montos abonados. Marcar como PAGADO cerrará el servicio y generará automáticamente la comisión para el técnico asignado.',
+                                        icon: 'warning',
+                                        showCancelButton: true,
+                                        confirmButtonColor: '#10b981',
+                                        cancelButtonColor: '#64748b',
+                                        confirmButtonText: '<i class="ph ph-check-circle"></i> Sí, marcar como Pagado',
+                                        cancelButtonText: 'Cancelar',
+                                        background: '#1e293b',
+                                        color: '#fff'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            document.getElementById('form-payment-order-status').submit();
+                                        }
+                                    });
+                                    return false;
                                 }
                                 return true;
                             }
