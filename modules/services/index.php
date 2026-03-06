@@ -148,13 +148,14 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="3">
                             No. Serie <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
-                        <th>Falla Reportada</th>
                         <th class="sortable" data-column="5">
                             Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
                         <th class="sortable" data-column="6">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th>Finanzas</th>
+                        <th style="text-align: right;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -167,10 +168,10 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>
-                                    <?php 
-                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
-                                             (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
-                                             $item['contact_name'])); 
+                                    <?php
+                                    echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] :
+                                        (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] :
+                                            $item['contact_name']));
                                     ?>
                                 </td>
                                 <td>
@@ -181,10 +182,6 @@ require_once '../../includes/sidebar.php';
                                 <td>
                                     <span
                                         class="text-sm font-medium"><?php echo htmlspecialchars($item['serial_number']); ?></span>
-                                </td>
-                                <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                                    title="<?php echo htmlspecialchars($item['problem_reported']); ?>">
-                                    <?php echo htmlspecialchars($item['problem_reported']); ?>
                                 </td>
                                 <!-- Assigned Technician -->
                                 <td onclick="event.stopPropagation();">
@@ -254,6 +251,12 @@ require_once '../../includes/sidebar.php';
                                         <?php echo strtoupper($pLbl); ?>
                                     </span>
                                 </td>
+                                <td style="text-align: right;" onclick="event.stopPropagation();">
+                                    <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-primary"
+                                        style="padding: 0.4rem 1rem; font-size: 0.85rem;">
+                                        <i class="ph ph-gear"></i> Gestionar
+                                    </a>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -309,6 +312,8 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="6">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th>Finanzas</th>
+                        <th style="text-align: right;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -321,10 +326,10 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>
-                                    <?php 
-                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
-                                             (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
-                                             $item['contact_name'])); 
+                                    <?php
+                                    echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] :
+                                        (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] :
+                                            $item['contact_name']));
                                     ?>
                                 </td>
                                 <td>
@@ -363,6 +368,12 @@ require_once '../../includes/sidebar.php';
                                     <span class="status-badge status-<?php echo $pCol; ?>">
                                         <?php echo strtoupper($pLbl); ?>
                                     </span>
+                                </td>
+                                <td style="text-align: right;" onclick="event.stopPropagation();">
+                                    <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
+                                        style="padding: 0.4rem 1rem; font-size: 0.85rem;">
+                                        <i class="ph ph-eye"></i> Ver
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

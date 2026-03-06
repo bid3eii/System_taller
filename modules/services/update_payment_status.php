@@ -12,6 +12,7 @@ if (!can_access_module('settings', $pdo)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['id']);
     $payment_status = $_POST['payment_status'];
+    $invoice_number = isset($_POST['invoice_number']) ? clean($_POST['invoice_number']) : null;
 
     if (!in_array($payment_status, ['pendiente', 'pagado'])) {
         die("Estado no válido");
@@ -45,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($payment_status === 'pagado' && $order['payment_status'] !== 'pagado') {
 
             // 1. Update order
-            $stmt = $pdo->prepare("UPDATE service_orders SET payment_status = ? WHERE id = ?");
-            $stmt->execute([$payment_status, $id]);
+            $stmt = $pdo->prepare("UPDATE service_orders SET payment_status = ?, invoice_number = ? WHERE id = ?");
+            $stmt->execute([$payment_status, $invoice_number, $id]);
 
             // 2. Auto-generate comision for the assigned technician
             $tech_id = $order['assigned_tech_id'];
@@ -56,8 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtU->execute([$tech_id]);
                 $tech_name = $stmtU->fetchColumn() ?: 'Desconocido';
 
-                // Format service description
-                $servicio_desc = $order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model'];
+                // Format service description (same as services list: brand + model only)
+                $servicio_desc = trim($order['brand'] . ' ' . $order['model']);
 
                 $insertC = $pdo->prepare("
                     INSERT INTO comisiones (
@@ -68,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         tipo, 
                         vendedor, 
                         caso, 
+                        factura,
                         estado, 
                         tech_id, 
                         reference_id
@@ -77,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ?,
                         1,
                         'SERVICIO',
+                        ?,
                         ?,
                         ?,
                         'PENDIENTE',
@@ -89,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $servicio_desc,
                     $tech_name, // vendedor
                     "Servicio_#" . str_pad($id, 4, '0', STR_PAD_LEFT), // caso
+                    $invoice_number, // factura
                     $tech_id,
                     $id
                 ]);
@@ -117,9 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->commit();
     } catch (Exception $e) {
         $pdo->rollBack();
-        $_SESSION['error_message'] = "Error: " . $e->getMessage();
+        $_SESSION['error_message'] = "Error al procesar: " . $e->getMessage();
     }
 }
 
-header("Location: view.php?id=" . $id);
+// Redirect back to manage.php
+$redirect_base = file_exists(__DIR__ . '/manage.php') ? 'manage.php' : 'view.php';
+$msg = isset($_SESSION['error_message']) ? 'error' : 'success';
+header("Location: " . $redirect_base . "?id=" . $id . "&msg=" . $msg);
 exit;

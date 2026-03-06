@@ -112,12 +112,26 @@ if (isset($_SESSION['error'])) {
             </h1>
             <p class="text-muted">Registro y control de pagos a técnicos</p>
         </div>
-        <div>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
             <?php if (can_access_module('comisiones_add', $pdo)): ?>
                 <a href="add.php" class="btn btn-primary" style="display: flex; gap: 0.5rem; align-items: center;">
                     <i class="ph ph-plus"></i> Nueva Comisión Manual
                 </a>
             <?php endif; ?>
+            <?php
+            // Build export URL preserving current filters
+            $export_params = http_build_query(array_filter([
+                'search'   => $search,
+                'status'   => $status_filter,
+                'tech_id'  => $tech_filter
+            ]));
+            $export_url = 'export.php' . ($export_params ? '?' . $export_params : '');
+            ?>
+            <a href="<?php echo $export_url; ?>" class="btn btn-secondary"
+               style="display: flex; gap: 0.5rem; align-items: center; border-color: rgba(16,185,129,0.4); color: #34d399;"
+               title="Exportar comisiones visibles como archivo Excel/CSV para RRHH">
+                <i class="ph ph-export"></i> Exportar para RRHH
+            </a>
         </div>
     </div>
 
