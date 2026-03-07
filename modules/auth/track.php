@@ -58,11 +58,24 @@ if ($search) {
         
         // Group notes by action (status change) to show in tooltip
         foreach($history_raw as $h) {
-            $history_data[$h['action']][] = [
-                'date' => date('d/m H:i', strtotime($h['created_at'])),
-                'note' => $h['notes'],
-                'user' => $h['user_name']
-            ];
+            $raw_note = $h['notes'];
+            
+            // Clean out automated text injections to only show manual progress notes
+            // 1. Remove Diagnosis blocks: "\n\n[Diagnóstico]\nProcedimiento: ...\nConclusión: ..."
+            $raw_note = preg_replace('/(\r?\n)*\[Diagnóstico\](\r?\n)*Procedimiento:.*?(\r?\n)*Conclusión:.*?(?=(\r?\n|$))/s', '', $raw_note);
+            
+            // 2. Remove Spare Part blocks: "Se utiliza repuesto: ..."
+            $raw_note = preg_replace('/(\r?\n)*Se utiliza repuesto:.*?(?=(\r?\n|$))/s', '', $raw_note);
+
+            $clean_note = trim($raw_note);
+
+            if (!empty($clean_note)) {
+                $history_data[$h['action']][] = [
+                    'date' => date('d/m H:i', strtotime($h['created_at'])),
+                    'note' => $clean_note,
+                    'user' => $h['user_name']
+                ];
+            }
         }
     } else {
         $error = "No se encontró ninguna orden con ese número.";
@@ -535,10 +548,11 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
 
     <div class="container">
         <div class="track-card">
-            <a href="login.php" class="back-btn">
-                <i class="ph-bold ph-arrow-left"></i> Volver al Inicio
+            <?php if ($search): ?>
+            <a href="track.php" class="back-btn">
+                <i class="ph-bold ph-arrow-left"></i> Buscar Otro Caso
             </a>
-            
+            <?php endif; ?>
             <div class="header">
                 <div class="logo-box">
                     <i class="ph-fill ph-magnifying-glass"></i>
