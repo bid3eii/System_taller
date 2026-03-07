@@ -535,9 +535,7 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
 
     <div class="container">
         <div class="track-card">
-            <a href="login.php" class="back-btn">
-                <i class="ph-bold ph-arrow-left"></i> Volver al Inicio
-            </a>
+            <!-- Back Button Removed -->
             
             <div class="header">
                 <div class="logo-box">
