@@ -37,8 +37,11 @@ if (!$is_admin) {
 }
 
 if ($search) {
-    $where[] = "(c.cliente LIKE ? OR c.servicio LIKE ? OR c.caso LIKE ? OR c.factura LIKE ?)";
+    // Also include service_orders and project_surveys invoice_number in search
+    $where[] = "(c.cliente LIKE ? OR c.servicio LIKE ? OR c.caso LIKE ? OR c.factura LIKE ? OR so.invoice_number LIKE ? OR ps.invoice_number LIKE ?)";
     $srch = "%$search%";
+    $params[] = $srch;
+    $params[] = $srch;
     $params[] = $srch;
     $params[] = $srch;
     $params[] = $srch;
@@ -53,9 +56,16 @@ if (!$is_admin && $status_filter) {
 
 $where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
-$stmt_str = "SELECT c.*, u.username as tech_name 
+$stmt_str = "SELECT c.*, u.username as tech_name,
+                    CASE 
+                        WHEN c.tipo = 'SERVICIO' AND so.invoice_number IS NOT NULL AND so.invoice_number != '' THEN so.invoice_number
+                        WHEN c.tipo = 'PROYECTO' AND ps.invoice_number IS NOT NULL AND ps.invoice_number != '' THEN ps.invoice_number
+                        ELSE c.factura 
+                    END as computed_factura
              FROM comisiones c 
              LEFT JOIN users u ON c.tech_id = u.id 
+             LEFT JOIN service_orders so ON c.tipo = 'SERVICIO' AND c.reference_id = so.id
+             LEFT JOIN project_surveys ps ON c.tipo = 'PROYECTO' AND c.reference_id = ps.id
              $where_clause
              ORDER BY c.fecha_servicio DESC, c.id DESC";
 
@@ -353,7 +363,7 @@ if (isset($_SESSION['error'])) {
                                     'lugar' => strval($c['lugar'] ?: 'Sin especificar'),
                                     'vendedor' => strval($c['vendedor'] ?: 'N/A'),
                                     'fecha_servicio' => date('d/m/Y', strtotime($c['fecha_servicio'])),
-                                    'factura' => strval($c['factura'] ?: 'Pendiente'),
+                                    'factura' => strval($c['computed_factura'] ?: 'Pendiente'),
                                     'fecha_facturacion' => $c['fecha_facturacion'] ? date('d/m/Y', strtotime($c['fecha_facturacion'])) : 'Pendiente',
                                     'estado' => $c['estado'],
                                     'notas' => strval($c['notas'] ?: 'Sin observaciones.'),
@@ -397,8 +407,8 @@ if (isset($_SESSION['error'])) {
                                         <div style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?php echo htmlspecialchars($c['servicio']); ?>">
                                             <?php echo htmlspecialchars($c['servicio']); ?>
                                         </div>
-                                        <?php if ($c['factura']): ?>
-                                            <div style="font-size:.8rem; color:var(--text-muted); margin-top:.25rem;"><i class="ph ph-receipt"></i> Factura: <?php echo htmlspecialchars($c['factura']); ?></div>
+                                        <?php if ($c['computed_factura']): ?>
+                                            <div style="font-size:.8rem; color:var(--text-muted); margin-top:.25rem;"><i class="ph ph-receipt"></i> Factura: <?php echo htmlspecialchars($c['computed_factura']); ?></div>
                                         <?php endif; ?>
                                     </td>
                                     <?php if ($is_admin): ?>
@@ -423,7 +433,7 @@ if (isset($_SESSION['error'])) {
                                                             <?php echo $c['id']; ?>,
                                                             '<?php echo addslashes(htmlspecialchars($c['caso'])); ?>',
                                                             '<?php echo addslashes(htmlspecialchars($c['cliente'])); ?>',
-                                                            '<?php echo addslashes(htmlspecialchars($c['factura'] ?? '')); ?>',
+                                                            '<?php echo addslashes(htmlspecialchars($c['computed_factura'] ?? '')); ?>',
                                                             '<?php echo $c['fecha_facturacion'] ? date('Y-m-d', strtotime($c['fecha_facturacion'])) : ''; ?>',
                                                             '<?php echo addslashes(htmlspecialchars($c['lugar'] ?? '')); ?>',
                                                             '<?php echo addslashes(htmlspecialchars($c['vendedor'] ?? '')); ?>'
@@ -733,11 +743,11 @@ if (isset($_SESSION['error'])) {
             <button onclick="closePayModal()" style="background:transparent; border:none; color:#64748b; font-size:1.5rem; cursor:pointer; line-height:1;">×</button>
         </div>
 
-        <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
-            <p style="margin:0; font-size:0.85rem; color:#6ee7b7;"><i class="ph ph-info"></i> Completa los datos de facturación antes de marcar como Pagada. Puedes dejarlos vacíos y actualizar después.</p>
+        <div style="background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
+            <p style="margin:0; font-size:0.85rem; color:#fbbf24;"><i class="ph ph-warning"></i> El <strong>Nº de Factura</strong> es obligatorio para poder liquidar la comisión.</p>
         </div>
 
-        <form id="payForm" method="POST" action="save_and_pay.php">
+        <form id="payForm" method="POST" action="save_and_pay.php" onsubmit="return validatePayForm(event)">
             <input type="hidden" name="id" id="modalId">
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
@@ -815,14 +825,40 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
 function openPayModal(id, caso, cliente, factura, fecha, lugar, vendedor) {
     document.getElementById('modalId').value      = id;
     document.getElementById('modalSubtitle').textContent = caso + ' · ' + cliente;
-    document.getElementById('modalFactura').value  = factura;
-    document.getElementById('modalFechaFact').value = fecha;
+    
+    const inputFactura = document.getElementById('modalFactura');
+    const inputFecha = document.getElementById('modalFechaFact');
+    
+    inputFactura.value = factura;
+    inputFecha.value = fecha;
     document.getElementById('modalLugar').value    = lugar;
-    document.getElementById('modalVendedor').value  = vendedor;
+    document.getElementById('modalVendedor').value  = ''; // Empty by default
+    
+    // Block editing if the invoice is already set
+    if (factura && factura.trim() !== '' && factura !== 'Pendiente') {
+        inputFactura.setAttribute('readonly', true);
+        inputFactura.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        inputFactura.style.cursor = 'not-allowed';
+        
+        inputFecha.setAttribute('readonly', true);
+        inputFecha.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        inputFecha.style.cursor = 'not-allowed';
+    } else {
+        inputFactura.removeAttribute('readonly');
+        inputFactura.style.backgroundColor = 'rgba(0,0,0,0.3)';
+        inputFactura.style.cursor = 'text';
+        
+        inputFecha.removeAttribute('readonly');
+        inputFecha.style.backgroundColor = 'rgba(0,0,0,0.3)';
+        inputFecha.style.cursor = 'text';
+    }
     
     const modal = document.getElementById('payModal');
     modal.style.display = 'flex';
-    document.getElementById('modalFactura').focus();
+    
+    if (!factura || factura.trim() === '' || factura === 'Pendiente') {
+        inputFactura.focus();
+    }
 }
 function closePayModal() {
     document.getElementById('payModal').style.display = 'none';
@@ -830,5 +866,36 @@ function closePayModal() {
 // Close on backdrop click
 document.getElementById('payModal').addEventListener('click', function(e) {
     if (e.target === this) closePayModal();
+});
+
+function validatePayForm(e) {
+    const factura = document.getElementById('modalFactura').value.trim();
+    const input   = document.getElementById('modalFactura');
+    if (!factura) {
+        e.preventDefault();
+        input.style.borderColor = '#ef4444';
+        input.style.boxShadow   = '0 0 0 2px rgba(239,68,68,0.25)';
+        input.focus();
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Factura Requerida',
+                text: 'Debe ingresar el Nº de Factura antes de liquidar la comisión.',
+                icon: 'warning',
+                background: '#1e293b',
+                color: '#fff',
+                confirmButtonColor: '#6366f1'
+            });
+        } else {
+            alert('Debe ingresar el Nº de Factura antes de liquidar la comisión.');
+        }
+        return false;
+    }
+    input.style.borderColor = '';
+    input.style.boxShadow   = '';
+    return true;
+}
+document.getElementById('modalFactura')?.addEventListener('input', function() {
+    this.style.borderColor = '';
+    this.style.boxShadow   = '';
 });
 </script>

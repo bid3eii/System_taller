@@ -52,9 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 2. Update commission invoice for the assigned technician
             $tech_id = $order['assigned_tech_id'];
             if ($tech_id) {
-                // Update the existing PENDIENTE commission with the invoice number if provided
+                // Update the existing PENDIENTE commission with the invoice number, billing date and mark as PAGADA
                 if ($invoice_number) {
-                    $updateC = $pdo->prepare("UPDATE comisiones SET factura = ? WHERE reference_id = ? AND tipo = 'SERVICIO'");
+                    $updateC = $pdo->prepare("
+                        UPDATE comisiones
+                        SET factura = ?,
+                            fecha_facturacion = CURDATE(),
+                            estado = 'PAGADA',
+                            fecha_pago = CURDATE()
+                        WHERE reference_id = ? AND tipo = 'SERVICIO'
+                    ");
                     $updateC->execute([$invoice_number, $id]);
                 }
 

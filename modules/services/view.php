@@ -625,6 +625,50 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
             <!-- Right Column -->
             <div class="sidebar-sticky">
 
+                <!-- Billing Info Card (only when invoice exists) -->
+                <?php if (!empty($order['invoice_number'])): ?>
+                    <div class="form-section no-print"
+                        style="border-left: 4px solid <?php echo $order['payment_status'] === 'pagado' ? '#10b981' : '#f59e0b'; ?>;">
+                        <div
+                            style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--p-border); color:<?php echo $order['payment_status'] === 'pagado' ? '#34d399' : '#fbbf24'; ?>; font-weight:600; font-size:1.05rem;">
+                            <i class="ph ph-receipt"></i> Datos de Facturación
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+                            <div>
+                                <span
+                                    style="display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--p-text-muted); margin-bottom:0.3rem; font-weight:600;">Nº
+                                    Factura</span>
+                                <strong
+                                    style="font-size:1.05rem; color:#f1f5f9; font-family:monospace;"><?php echo htmlspecialchars($order['invoice_number']); ?></strong>
+                            </div>
+                            <div>
+                                <span
+                                    style="display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--p-text-muted); margin-bottom:0.3rem; font-weight:600;">Estado
+                                    de Cobro</span>
+                                <?php if ($order['payment_status'] === 'pagado'): ?>
+                                    <span
+                                        style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.35); border-radius:6px; padding:0.25rem 0.65rem; font-size:0.8rem; font-weight:700;">
+                                        <i class="ph ph-check-circle"></i> PAGADO
+                                    </span>
+                                <?php else: ?>
+                                    <span
+                                        style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:0.25rem 0.65rem; font-size:0.8rem; font-weight:700;">
+                                        <i class="ph ph-hourglass"></i> PENDIENTE
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php if (can_access_module('comisiones', $pdo)): ?>
+                            <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--p-border);">
+                                <a href="../comisiones/index.php"
+                                    style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.82rem; color:#818cf8; text-decoration:none;">
+                                    <i class="ph ph-coins"></i> Ver en Módulo de Comisiones
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Update Status Panel -->
                 <?php if ($order['status'] !== 'delivered' && $order['status'] !== 'cancelled'): ?>
                     <div class="update-card no-print" style="margin-bottom: 1.5rem;">

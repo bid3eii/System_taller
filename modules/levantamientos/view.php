@@ -343,7 +343,49 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
         letter-spacing: 0.5px;
     }
 
-    /* Content card project title pill */
+    /* Override inline colors injected by Microsoft Word / rich-text paste */
+    .rich-text-content span,
+    .rich-text-content p,
+    .rich-text-content li,
+    .rich-text-content div {
+        color: #cbd5e1 !important;
+    }
+
+    .rich-text-content strong,
+    .rich-text-content b {
+        color: #e2e8f0 !important;
+    }
+
+    .rich-text-content a {
+        color: #93c5fd !important;
+    }
+
+    /* Strip Word-specific MsoNormal spacing */
+    .MsoNormal,
+    .MsoListParagraph,
+    .MsoListParagraphCxSpFirst,
+    .MsoListParagraphCxSpMiddle,
+    .MsoListParagraphCxSpLast {
+        color: #cbd5e1 !important;
+        margin: 0 0 0.3rem 0 !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        text-indent: 0 !important;
+        font-family: inherit !important;
+        font-size: inherit !important;
+    }
+
+    /* Prevent Word content from overflowing the card */
+    .rich-text-content {
+        overflow: hidden;
+        max-width: 100%;
+    }
+
+    .rich-text-content * {
+        max-width: 100%;
+    }
+
+
     .card-project-title {
         display: flex;
         align-items: center;
@@ -630,38 +672,38 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                         }
                     </style>
                     <script>
-                    document.querySelectorAll('.inline-note-cell').forEach(function(cell) {
-                        cell.addEventListener('click', function() {
-                            if (cell.querySelector('.inline-note-input')) return;
-                            const matId = cell.dataset.materialId;
-                            const currentNote = cell.dataset.notes;
-                            const input = document.createElement('input');
-                            input.type = 'text'; input.className = 'inline-note-input';
-                            input.value = currentNote; input.placeholder = 'Agregar nota...';
-                            cell.innerHTML = ''; cell.appendChild(input); input.focus(); input.select();
-                            function saveNote() {
-                                const newNote = input.value.trim();
-                                fetch('save_material_note.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'material_id=' + matId + '&notes=' + encodeURIComponent(newNote) })
-                                .then(r => r.json()).then(function(data) {
-                                    cell.dataset.notes = newNote;
-                                    const esc = s => s.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                                    cell.innerHTML = newNote
-                                        ? `<i class="ph ph-note" style="color:#64748b;font-size:0.72rem;flex-shrink:0;"></i><span class="note-display" style="color:#94a3b8;font-size:0.78rem;">${esc(newNote)}</span><i class="ph ph-pencil-simple" style="color:#3f4f63;font-size:0.68rem;opacity:0;transition:opacity 0.15s;"></i>`
-                                        : `<span class="note-display" style="color:#3f4f63;font-size:0.76rem;font-style:italic;">+ nota</span><i class="ph ph-pencil-simple" style="color:#3f4f63;font-size:0.68rem;opacity:0;transition:opacity 0.15s;"></i>`;
-                                    if (data.success) { cell.style.borderColor = 'rgba(52,211,153,0.4)'; setTimeout(() => { cell.style.borderColor = 'transparent'; }, 900); }
-                                });
-                            }
-                            input.addEventListener('blur', saveNote);
-                            input.addEventListener('keydown', function(e) {
-                                if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-                                if (e.key === 'Escape') {
-                                    cell.innerHTML = currentNote
-                                        ? `<i class="ph ph-note" style="color:#64748b;font-size:0.72rem;flex-shrink:0;"></i><span class="note-display" style="color:#94a3b8;font-size:0.78rem;">${currentNote}</span><i class="ph ph-pencil-simple" style="color:#3f4f63;font-size:0.68rem;opacity:0;transition:opacity 0.15s;"></i>`
-                                        : `<span class="note-display" style="color:#3f4f63;font-size:0.76rem;font-style:italic;">+ nota</span><i class="ph ph-pencil-simple" style="color:#3f4f63;font-size:0.68rem;opacity:0;transition:opacity 0.15s;"></i>`;
+                        document.querySelectorAll('.inline-note-cell').forEach(function (cell) {
+                            cell.addEventListener('click', function () {
+                                if (cell.querySelector('.inline-note-input')) return;
+                                const matId = cell.dataset.materialId;
+                                const currentNote = cell.dataset.notes;
+                                const input = document.createElement('input');
+                                input.type = 'text'; input.className = 'inline-note-input';
+                                input.value = currentNote; input.placeholder = 'Agregar nota...';
+                                cell.innerHTML = ''; cell.appendChild(input); input.focus(); input.select();
+                                function saveNote() {
+                                    const newNote = input.value.trim();
+                                    fetch('save_material_note.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'material_id=' + matId + '&notes=' + encodeURIComponent(newNote) })
+                                        .then(r => r.json()).then(function (data) {
+                                            cell.dataset.notes = newNote;
+                                            const esc = s => s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                            cell.innerHTML = newNote
+                                                ? `<i class="ph ph-note" style="color:#64748b;font-size:0.72rem;flex-shrink:0;"></i><span class="note-display" style="color:#94a3b8;font-size:0.78rem;">${esc(newNote)}</span><i class="ph ph-pencil-simple" style="color:#3f4f63;font-size:0.68rem;opacity:0;transition:opacity 0.15s;"></i>`
+                                                : `<span class="note-display" style="color:#3f4f63;font-size:0.76rem;font-style:italic;">+ nota</span><i class="ph ph-pencil-simple" style="color:#3f4f63;font-size:0.68rem;opacity:0;transition:opacity 0.15s;"></i>`;
+                                            if (data.success) { cell.style.borderColor = 'rgba(52,211,153,0.4)'; setTimeout(() => { cell.style.borderColor = 'transparent'; }, 900); }
+                                        });
                                 }
+                                input.addEventListener('blur', saveNote);
+                                input.addEventListener('keydown', function (e) {
+                                    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+                                    if (e.key === 'Escape') {
+                                        cell.innerHTML = currentNote
+                                            ? `<i class="ph ph-note" style="color:#64748b;font-size:0.72rem;flex-shrink:0;"></i><span class="note-display" style="color:#94a3b8;font-size:0.78rem;">${currentNote}</span><i class="ph ph-pencil-simple" style="color:#3f4f63;font-size:0.68rem;opacity:0;transition:opacity 0.15s;"></i>`
+                                            : `<span class="note-display" style="color:#3f4f63;font-size:0.76rem;font-style:italic;">+ nota</span><i class="ph ph-pencil-simple" style="color:#3f4f63;font-size:0.68rem;opacity:0;transition:opacity 0.15s;"></i>`;
+                                    }
+                                });
                             });
                         });
-                    });
                     </script>
                 </div>
 

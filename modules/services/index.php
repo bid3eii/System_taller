@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $comision = $stmt_com->fetch();
 
                 $stmt_s = $pdo->prepare("
-                    SELECT c.name as client_name, e.brand, e.model
+                    SELECT c.name as client_name, e.brand, e.model, so.payment_status, so.invoice_number
                     FROM service_orders so
                     LEFT JOIN clients c ON so.client_id = c.id
                     LEFT JOIN equipments e ON so.equipment_id = e.id
@@ -54,11 +54,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $stmt_up_c = $pdo->prepare("UPDATE comisiones SET tech_id = ?, vendedor = ? WHERE id = ?");
                     $stmt_up_c->execute([$tech_id, $tech_name, $comision['id']]);
                 } else {
+                    $initial_status = 'PENDIENTE';
+                    $initial_invoice = null;
+                    $initial_date = null;
+                    
+                    if ($serv['payment_status'] === 'pagado' && !empty($serv['invoice_number'])) {
+                        $initial_status = 'PAGADA';
+                        $initial_invoice = $serv['invoice_number'];
+                        $initial_date = date('Y-m-d'); // CURDATE()
+                    }
+
                     $insertC = $pdo->prepare("
                         INSERT INTO comisiones (
-                            fecha_servicio, cliente, servicio, cantidad, tipo, vendedor, caso, estado, tech_id, reference_id
+                            fecha_servicio, cliente, servicio, cantidad, tipo, vendedor, caso, estado, tech_id, reference_id, factura, fecha_facturacion, fecha_pago
                         ) VALUES (
-                            CURDATE(), ?, ?, 1, 'SERVICIO', ?, ?, 'PENDIENTE', ?, ?
+                            CURDATE(), ?, ?, 1, 'SERVICIO', ?, ?, ?, ?, ?, ?, ?, ?
                         )
                     ");
                     $insertC->execute([
@@ -66,8 +76,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         $servicio_desc,
                         $tech_name,
                         "Servicio_#" . str_pad($order_id, 4, '0', STR_PAD_LEFT),
+                        $initial_status,
                         $tech_id,
-                        $order_id
+                        $order_id,
+                        $initial_invoice,
+                        $initial_date,
+                        $initial_date // fecha_pago = fecha_facturacion
                     ]);
                 }
                 // ------------------------------------------
