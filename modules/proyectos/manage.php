@@ -42,6 +42,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt_update = $pdo->prepare("UPDATE project_surveys SET assigned_tech_id = ? WHERE id = ?");
         if ($stmt_update->execute([$new_tech_id, $id])) {
             $_SESSION['success_msg'] = "Técnico asignado correctamente.";
+
+            // --- Auto-generate or update commission for the assigned tech ---
+            $stmt_com = $pdo->prepare("SELECT id FROM comisiones WHERE reference_id = ? AND tipo = 'PROYECTO'");
+            $stmt_com->execute([$id]);
+            $comision = $stmt_com->fetch();
+
+            $stmt_t = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+            $stmt_t->execute([$new_tech_id]);
+            $tech_name = $stmt_t->fetchColumn() ?: 'Desconocido';
+
+            $stmt_p = $pdo->prepare("SELECT title, client_name FROM project_surveys WHERE id = ?");
+            $stmt_p->execute([$id]);
+            $proj = $stmt_p->fetch();
+
+            if ($comision) {
+                $stmt_up_c = $pdo->prepare("UPDATE comisiones SET tech_id = ?, vendedor = ? WHERE id = ?");
+                $stmt_up_c->execute([$new_tech_id, $tech_name, $comision['id']]);
+            } else {
+                $insertC = $pdo->prepare("
+                    INSERT INTO comisiones (
+                        fecha_servicio, cliente, servicio, cantidad, tipo, vendedor, caso, estado, tech_id, reference_id
+                    ) VALUES (
+                        CURDATE(), ?, ?, 1, 'PROYECTO', ?, ?, 'PENDIENTE', ?, ?
+                    )
+                ");
+                $insertC->execute([
+                    $proj['client_name'],
+                    $proj['title'],
+                    $tech_name,
+                    "Proyecto_#" . str_pad($id, 4, '0', STR_PAD_LEFT),
+                    $new_tech_id,
+                    $id
+                ]);
+            }
+            // -------------------------------------------------------------
+
             // Refresh survey data
             $stmt->execute([$id]);
             $survey = $stmt->fetch();
@@ -399,9 +435,11 @@ require_once '../../includes/sidebar.php';
                             <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">Este proyecto ya
                                 fue liquidado. Revisa el módulo de <strong>Comisiones</strong> para pagar al técnico.</div>
                             <?php if (!empty($survey['invoice_number'])): ?>
-                            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #fbbf24; font-weight: 500; display: flex; align-items: center; gap: 0.3rem;">
-                                <i class="ph ph-receipt"></i> Factura: <?php echo htmlspecialchars($survey['invoice_number']); ?>
-                            </div>
+                                <div
+                                    style="margin-top: 0.5rem; font-size: 0.85rem; color: #fbbf24; font-weight: 500; display: flex; align-items: center; gap: 0.3rem;">
+                                    <i class="ph ph-receipt"></i> Factura:
+                                    <?php echo htmlspecialchars($survey['invoice_number']); ?>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -415,7 +453,9 @@ require_once '../../includes/sidebar.php';
                         style="display: flex; flex-direction: column; gap: 1rem;">
                         <input type="hidden" name="id" value="<?php echo $survey['id']; ?>">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 600;">Estado de Pago</label>
+                            <label
+                                style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 600;">Estado
+                                de Pago</label>
                             <select name="payment_status" id="payment_status_select" class="modern-select"
                                 style="border-color: rgba(16, 185, 129, 0.3); width: 100%;">
                                 <option value="pendiente" <?php echo $survey['payment_status'] === 'pendiente' ? 'selected' : ''; ?>>⏳ Facturación Pendiente</option>
@@ -423,8 +463,11 @@ require_once '../../includes/sidebar.php';
                             </select>
                         </div>
                         <div id="invoice_field_container" style="display: none;">
-                            <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 600;">Número de Factura</label>
-                            <input type="text" name="invoice_number" id="invoice_number_input" class="modern-input" placeholder="Ej. F001-000234" style="border-color: rgba(16, 185, 129, 0.2); width: 100%;">
+                            <label
+                                style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 600;">Número
+                                de Factura</label>
+                            <input type="text" name="invoice_number" id="invoice_number_input" class="modern-input"
+                                placeholder="Ej. F001-000234" style="border-color: rgba(16, 185, 129, 0.2); width: 100%;">
                         </div>
                         <button type="button" class="btn btn-success" id="btn-actualizar-pagos"
                             style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 600; box-shadow: 0 4px 12px rgba(16,185,129,0.25);"
@@ -433,9 +476,9 @@ require_once '../../includes/sidebar.php';
                         </button>
                     </form>
                     <script>
-                        document.getElementById('payment_status_select').addEventListener('change', function() {
+                        document.getElementById('payment_status_select').addEventListener('change', function () {
                             const invoiceContainer = document.getElementById('invoice_field_container');
-                            if(this.value === 'pagado') {
+                            if (this.value === 'pagado') {
                                 invoiceContainer.style.display = 'block';
                             } else {
                                 invoiceContainer.style.display = 'none';
@@ -466,7 +509,7 @@ require_once '../../includes/sidebar.php';
                                 if (result.isConfirmed) {
                                     // Make invoice number required when paying
                                     const invoiceInput = document.getElementById('invoice_number_input');
-                                    if(invoiceInput && invoiceInput.value.trim() === '') {
+                                    if (invoiceInput && invoiceInput.value.trim() === '') {
                                         Swal.fire({
                                             icon: 'error',
                                             title: 'Número de Factura Requerido',

@@ -27,12 +27,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $stmt = $pdo->prepare("UPDATE service_orders SET assigned_tech_id = ? WHERE id = ?");
             $stmt->execute([$tech_id, $order_id]);
 
-            // Log history
+            // Log history and commission logic
             $tech_name = "Sin Asignar";
             if ($tech_id) {
                 $stmtT = $pdo->prepare("SELECT username FROM users WHERE id = ?");
                 $stmtT->execute([$tech_id]);
                 $tech_name = $stmtT->fetchColumn();
+
+                // --- Auto-generate or update commission ---
+                $stmt_com = $pdo->prepare("SELECT id FROM comisiones WHERE reference_id = ? AND tipo = 'SERVICIO'");
+                $stmt_com->execute([$order_id]);
+                $comision = $stmt_com->fetch();
+
+                $stmt_s = $pdo->prepare("
+                    SELECT c.name as client_name, e.brand, e.model
+                    FROM service_orders so
+                    LEFT JOIN clients c ON so.client_id = c.id
+                    LEFT JOIN equipments e ON so.equipment_id = e.id
+                    WHERE so.id = ?
+                ");
+                $stmt_s->execute([$order_id]);
+                $serv = $stmt_s->fetch();
+                $servicio_desc = trim($serv['brand'] . ' ' . $serv['model']);
+
+                if ($comision) {
+                    $stmt_up_c = $pdo->prepare("UPDATE comisiones SET tech_id = ?, vendedor = ? WHERE id = ?");
+                    $stmt_up_c->execute([$tech_id, $tech_name, $comision['id']]);
+                } else {
+                    $insertC = $pdo->prepare("
+                        INSERT INTO comisiones (
+                            fecha_servicio, cliente, servicio, cantidad, tipo, vendedor, caso, estado, tech_id, reference_id
+                        ) VALUES (
+                            CURDATE(), ?, ?, 1, 'SERVICIO', ?, ?, 'PENDIENTE', ?, ?
+                        )
+                    ");
+                    $insertC->execute([
+                        $serv['client_name'],
+                        $servicio_desc,
+                        $tech_name,
+                        "Servicio_#" . str_pad($order_id, 4, '0', STR_PAD_LEFT),
+                        $tech_id,
+                        $order_id
+                    ]);
+                }
+                // ------------------------------------------
             }
 
             $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");

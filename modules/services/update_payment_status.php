@@ -49,57 +49,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("UPDATE service_orders SET payment_status = ?, invoice_number = ? WHERE id = ?");
             $stmt->execute([$payment_status, $invoice_number, $id]);
 
-            // 2. Auto-generate comision for the assigned technician
+            // 2. Update commission invoice for the assigned technician
             $tech_id = $order['assigned_tech_id'];
             if ($tech_id) {
-                // Get tech name
-                $stmtU = $pdo->prepare("SELECT username FROM users WHERE id = ?");
-                $stmtU->execute([$tech_id]);
-                $tech_name = $stmtU->fetchColumn() ?: 'Desconocido';
+                // Update the existing PENDIENTE commission with the invoice number if provided
+                if ($invoice_number) {
+                    $updateC = $pdo->prepare("UPDATE comisiones SET factura = ? WHERE reference_id = ? AND tipo = 'SERVICIO'");
+                    $updateC->execute([$invoice_number, $id]);
+                }
 
-                // Format service description (same as services list: brand + model only)
-                $servicio_desc = trim($order['brand'] . ' ' . $order['model']);
-
-                $insertC = $pdo->prepare("
-                    INSERT INTO comisiones (
-                        fecha_servicio, 
-                        cliente, 
-                        servicio, 
-                        cantidad, 
-                        tipo, 
-                        vendedor, 
-                        caso, 
-                        factura,
-                        estado, 
-                        tech_id, 
-                        reference_id
-                    ) VALUES (
-                        CURDATE(),
-                        ?,
-                        ?,
-                        1,
-                        'SERVICIO',
-                        ?,
-                        ?,
-                        ?,
-                        'PENDIENTE',
-                        ?,
-                        ?
-                    )
-                ");
-                $insertC->execute([
-                    $order['client_name'],
-                    $servicio_desc,
-                    $tech_name, // vendedor
-                    "Servicio_#" . str_pad($id, 4, '0', STR_PAD_LEFT), // caso
-                    $invoice_number, // factura
-                    $tech_id,
-                    $id
-                ]);
-
-                // log history logic for comision
                 $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");
-                $stmtH->execute([$id, "Comisión auto-generada para técnico por pago", $_SESSION['user_id'], get_local_datetime()]);
+                $stmtH->execute([$id, "Ciclo financiero cerrado. Factura registrada en comisión.", $_SESSION['user_id'], get_local_datetime()]);
             }
 
             // Log payment status change

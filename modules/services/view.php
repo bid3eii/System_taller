@@ -625,6 +625,48 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
             <!-- Right Column -->
             <div class="sidebar-sticky">
 
+                <!-- Update Status Panel -->
+                <?php if ($order['status'] !== 'delivered' && $order['status'] !== 'cancelled'): ?>
+                    <div class="update-card no-print" style="margin-bottom: 1.5rem;">
+                        <div
+                            style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--p-border); color:var(--p-primary); font-weight:600; font-size:1.05rem;">
+                            <i class="ph ph-arrows-clockwise"></i> Actualizar Estado
+                        </div>
+                        <form method="POST" action="">
+                            <input type="hidden" name="action" value="update_status">
+                            <div style="margin-bottom:1rem;">
+                                <label
+                                    style="display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--p-text-muted); margin-bottom:0.4rem; font-weight:600;">Nuevo
+                                    Estado</label>
+                                <select name="status" class="modern-select">
+                                    <?php
+                                    $allStatuses = [
+                                        'received' => 'Recibido',
+                                        'diagnosing' => 'En Revisión/Diagnóstico',
+                                        'pending_approval' => 'En Espera',
+                                        'in_repair' => 'En Reparación',
+                                        'ready' => 'Listo',
+                                        'delivered' => 'Entregado',
+                                        'cancelled' => 'Cancelado',
+                                    ];
+                                    foreach ($allStatuses as $val => $label): ?>
+                                        <option value="<?php echo $val; ?>" <?php echo $order['status'] === $val ? 'selected' : ''; ?>>
+                                            <?php echo $label; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div style="margin-bottom:1.25rem;">
+                                <label
+                                    style="display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--p-text-muted); margin-bottom:0.4rem; font-weight:600;">Nota
+                                    de Progreso</label>
+                                <textarea name="note" class="modern-textarea" rows="3"
+                                    placeholder="Ej. Se realizó cambio de repuesto..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-update">Guardar Cambios</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
 
                 <!-- History -->
                 <div class="form-section">

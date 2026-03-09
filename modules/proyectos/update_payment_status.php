@@ -26,12 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmtC = $pdo->prepare("
             SELECT 
                 ps.payment_status, 
-                ps.user_id as tech_id,
+                ps.assigned_tech_id as tech_id,
                 ps.client_name,
                 ps.title as project_title,
                 u.username as tech_name
             FROM project_surveys ps
-            LEFT JOIN users u ON ps.user_id = u.id
+            LEFT JOIN users u ON ps.assigned_tech_id = u.id
             WHERE ps.id = ?
         ");
         $stmtC->execute([$id]);
@@ -48,51 +48,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("UPDATE project_surveys SET payment_status = ?, invoice_number = ? WHERE id = ?");
             $stmt->execute([$payment_status, $invoice_number, $id]);
 
-            // 2. Auto-generate comision for the assigned technician
+            // 2. Update commission invoice for the assigned technician
             $tech_id = $project['tech_id'];
             if ($tech_id) {
-                $tech_name = $project['tech_name'] ?: 'Desconocido';
-                $proyecto_desc = $project['project_title'];
-
-                $insertC = $pdo->prepare("
-                    INSERT INTO comisiones (
-                        fecha_servicio, 
-                        cliente, 
-                        servicio, 
-                        cantidad, 
-                        tipo, 
-                        vendedor, 
-                        caso, 
-                        estado, 
-                        tech_id, 
-                        reference_id,
-                        factura
-                    ) VALUES (
-                        CURDATE(),
-                        ?,
-                        ?,
-                        1,
-                        'PROYECTO',
-                        ?,
-                        ?,
-                        'PENDIENTE',
-                        ?,
-                        ?,
-                        ?
-                    )
-                ");
-                $insertC->execute([
-                    $project['client_name'],
-                    $proyecto_desc,
-                    $tech_name, // vendedor
-                    "Proyecto_#" . str_pad($id, 4, '0', STR_PAD_LEFT), // caso
-                    $tech_id,
-                    $id,
-                    $invoice_number
-                ]);
+                // Update the existing PENDIENTE commission with the invoice number if provided
+                if ($invoice_number) {
+                    $updateC = $pdo->prepare("UPDATE comisiones SET factura = ? WHERE reference_id = ? AND tipo = 'PROYECTO'");
+                    $updateC->execute([$invoice_number, $id]);
+                }
 
                 // Log audit
-                log_audit($pdo, $id, 'project_surveys', 'UPDATE STATUS', 'pendiente', 'pagado (Comisión Téc. Generada)');
+                log_audit($pdo, $id, 'project_surveys', 'UPDATE STATUS', 'pendiente', 'pagado (Ciclo Financiero Cerrado)');
             } else {
                 log_audit($pdo, $id, 'project_surveys', 'UPDATE STATUS', 'pendiente', 'pagado (Sin Téc.)');
             }

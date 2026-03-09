@@ -22,7 +22,7 @@ $search = $_GET['search'] ?? '';
 $status_filter = $_GET['status'] ?? '';
 $tech_filter = strval($_GET['tech_id'] ?? '');
 
-// Build query
+// Build query (admin sees both sections always; status_filter only applies to tech view)
 $params = [];
 $where = [];
 
@@ -45,7 +45,8 @@ if ($search) {
     $params[] = $srch;
 }
 
-if ($status_filter) {
+// For tech view only, apply status filter
+if (!$is_admin && $status_filter) {
     $where[] = "c.estado = ?";
     $params[] = $status_filter;
 }
@@ -61,6 +62,10 @@ $stmt_str = "SELECT c.*, u.username as tech_name
 $stmt = $pdo->prepare($stmt_str);
 $stmt->execute($params);
 $comisiones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Split into two groups for admin view
+$comisiones_pendientes = array_filter($comisiones, fn($c) => $c['estado'] === 'PENDIENTE');
+$comisiones_listos     = array_filter($comisiones, fn($c) => $c['estado'] === 'PAGADA');
 
 // Fetch technicians for filter (Admins only)
 $technicians = [];
@@ -270,6 +275,32 @@ if (isset($_SESSION['error'])) {
                     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
                     border-color: rgba(255, 255, 255, 0.1) !important;
                 }
+                .section-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    margin: 1.75rem 0 1rem 0;
+                    padding-bottom: 0.75rem;
+                    border-bottom: 2px solid;
+                }
+                .section-header.pendiente { border-color: rgba(245,158,11,0.35); }
+                .section-header.listo     { border-color: rgba(16,185,129,0.35); }
+                .section-title {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.6px;
+                }
+                .section-title.pendiente { color: #fbbf24; }
+                .section-title.listo     { color: #34d399; }
+                .section-count {
+                    font-size: 0.78rem;
+                    font-weight: 700;
+                    padding: 0.2rem 0.65rem;
+                    border-radius: 20px;
+                }
+                .section-count.pendiente { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.35); }
+                .section-count.listo     { background: rgba(16,185,129,0.12); color: #34d399;  border: 1px solid rgba(16,185,129,0.35); }
             </style>
 
             <?php if ($success_msg): ?>
@@ -287,173 +318,163 @@ if (isset($_SESSION['error'])) {
                     </div>
             <?php endif; ?>
 
+            <?php
+            // Helper to render a commissions table section
+            function renderComisionesSection($rows, $is_admin, $pdo) {
+            ?>
             <div class="table-responsive">
                 <table class="data-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr>
-                            <th
-                                style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
-                                Caso</th>
-                            <th
-                                style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
-                                Fecha</th>
-                            <th
-                                style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
-                                Cliente</th>
-                            <th
-                                style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
-                                Servicio</th>
+                            <th style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">Caso</th>
+                            <th style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">Fecha</th>
+                            <th style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">Cliente</th>
+                            <th style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">Servicio</th>
                             <?php if ($is_admin): ?>
-                                    <th
-                                        style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
-                                        Técnico</th>
+                                <th style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">Técnico</th>
                             <?php endif; ?>
-                            <th class="text-center"
-                                style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
-                                Estado</th>
+                            <th class="text-center" style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">Estado</th>
                             <?php if ($is_admin): ?>
-                                    <th class="text-center"
-                                        style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">
-                                        Acciones</th>
+                                <th class="text-center" style="padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-weight: 600;">Acciones</th>
                             <?php endif; ?>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <?php if (count($comisiones) > 0): ?>
-                                <?php foreach ($comisiones as $c): ?>
-                                        <?php
-                                        $c_json2 = htmlspecialchars(json_encode([
-                                            'id' => $c['id'],
-                                            'caso' => $c['caso'],
-                                            'tipo' => $c['tipo'],
-                                            'cliente' => $c['cliente'],
-                                            'tech_name' => strval($c['tech_name'] ?: 'Desconocido'),
-                                            'servicio' => $c['servicio'],
-                                            'lugar' => strval($c['lugar'] ?: 'Sin especificar'),
-                                            'vendedor' => strval($c['vendedor'] ?: 'N/A'),
-                                            'fecha_servicio' => date('d/m/Y', strtotime($c['fecha_servicio'])),
-                                            'factura' => strval($c['factura'] ?: 'Pendiente'),
-                                            'fecha_facturacion' => $c['fecha_facturacion'] ? date('d/m/Y', strtotime($c['fecha_facturacion'])) : 'Pendiente',
-                                            'estado' => $c['estado'],
-                                            'notas' => strval($c['notas'] ?: 'Sin observaciones.'),
-                                            'reference_id' => $c['reference_id']
-                                        ]), ENT_QUOTES, 'UTF-8');
-                                        ?>
-                                        <tr class="table-row-hover" style="cursor: pointer;" onclick="openInfoModal(<?php echo $c_json2; ?>)">
-                                            <td>
-                                                <?php
-                                                // Origin link logic
-                                                $origin_link = '#';
-                                                if ($c['tipo'] === 'PROYECTO' && !empty($c['reference_id'])) {
-                                                    $origin_link = "../levantamientos/view.php?id=" . $c['reference_id'];
-                                                } elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
-                                                    $origin_link = "../services/view.php?id=" . $c['reference_id'];
-                                                }
-                                                ?>
-                                                <a href="<?php echo htmlspecialchars($origin_link); ?>"
-                                                   title="Ir al Origen"
-                                                   onclick="event.stopPropagation();"
-                                                   style="color: #60a5fa; text-decoration: none; font-weight: 600; font-size: 1.05rem;">
-                                                    <?php echo htmlspecialchars($c['caso']); ?> <i class="ph ph-link-simple" style="font-size: 0.8rem;"></i>
-                                                </a>
-                                                <br>
-                                                <?php
-                                                $tipoColor = $c['tipo'] === 'PROYECTO' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)';
-                                                $tipoText = $c['tipo'] === 'PROYECTO' ? '#818cf8' : '#34d399';
-                                                $tipoBorder = $c['tipo'] === 'PROYECTO' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(16, 185, 129, 0.3)';
-                                                $tipoIcon = $c['tipo'] === 'PROYECTO' ? 'ph-buildings' : 'ph-wrench';
-                                                ?>
-                                                <span class="badge"
-                                                    style="font-size: 0.70rem; margin-top: 0.4rem; padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid <?php echo $tipoBorder; ?>; background: <?php echo $tipoColor; ?>; color: <?php echo $tipoText; ?>; display: inline-flex; align-items: center; gap: 0.3rem; letter-spacing: 0.5px;">
-                                                    <i class="ph <?php echo $tipoIcon; ?>" style="font-size: 0.85rem;"></i>
-                                                    <?php echo htmlspecialchars($c['tipo']); ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <?php echo date('d/m/Y', strtotime($c['fecha_servicio'])); ?>
-                                                <?php if ($c['fecha_facturacion']): ?>
-                                                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
-                                                            Fact: <?php echo date('d/m/Y', strtotime($c['fecha_facturacion'])); ?>
-                                                        </div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <div><?php echo htmlspecialchars($c['cliente']); ?></div>
-                                                <?php if ($c['lugar']): ?>
-                                                        <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="ph ph-map-pin"></i>
-                                                            <?php echo htmlspecialchars($c['lugar']); ?></div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <div style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                                                    title="<?php echo htmlspecialchars($c['servicio']); ?>">
-                                                    <?php echo htmlspecialchars($c['servicio']); ?>
-                                                </div>
-                                                <?php if ($c['factura']): ?>
-                                                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;"><i
-                                                                class="ph ph-receipt"></i> Factura: <?php echo htmlspecialchars($c['factura']); ?>
-                                                        </div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <?php if ($is_admin): ?>
-                                                    <td>
-                                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                            <i class="ph ph-user-circle" style="color: var(--text-muted); font-size: 1.2rem;"></i>
-                                                            <span><?php echo htmlspecialchars($c['tech_name'] ?: 'Desconocido'); ?></span>
-                                                        </div>
-                                                    </td>
-                                            <?php endif; ?>
-                                            <td class="text-center">
-                                                <?php
-                                                $scls = $c['estado'] === 'PAGADA' ? 'green' : 'orange';
-                                                ?>
-                                                <span class="status-badge status-<?php echo $scls; ?>">
-                                                    <?php echo $c['estado']; ?>
-                                                </span>
-                                            </td>
-                                            <?php if ($is_admin): ?>
-                                                    <td class="text-center" onclick="event.stopPropagation();">
-                                                        <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                                                            <?php if ($c['estado'] === 'PENDIENTE'): ?>
-                                                                    <button type="button" class="btn btn-secondary"
-                                                                        style="color: var(--success); border-color: var(--success);"
-                                                                        title="Liquidar Comisión"
-                                                                        onclick="openPayModal(
-                                                        <?php echo $c['id']; ?>,
-                                                        '<?php echo addslashes(htmlspecialchars($c['caso'])); ?>',
-                                                        '<?php echo addslashes(htmlspecialchars($c['cliente'])); ?>',
-                                                        '<?php echo addslashes(htmlspecialchars($c['factura'] ?? '')); ?>',
-                                                        '<?php echo $c['fecha_facturacion'] ? date('Y-m-d', strtotime($c['fecha_facturacion'])) : ''; ?>',
-                                                        '<?php echo addslashes(htmlspecialchars($c['lugar'] ?? '')); ?>',
-                                                        '<?php echo addslashes(htmlspecialchars($c['vendedor'] ?? '')); ?>'
-                                                    )">
-                                                                        <i class="ph ph-check"></i>
-                                                                    </button>
-                                                            <?php endif; ?>
-                                                            <?php if (can_access_module('comisiones_delete', $pdo)): ?>
-                                                                    <form action="delete.php" method="POST" style="display: inline;"
-                                                                        onsubmit="return confirm('¿Está seguro de eliminar esta comisión de forma permanente?');">
-                                                                        <input type="hidden" name="id" value="<?php echo $c['id']; ?>">
-                                                                        <button type="submit" class="btn btn-secondary"
-                                                                            style="color: var(--danger); border-color: var(--danger);" title="Eliminar">
-                                                                            <i class="ph ph-trash"></i>
-                                                                        </button>
-                                                                    </form>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </td>
-                                            <?php endif; ?>
-                                        </tr>
-                                <?php endforeach; ?>
-                        <?php else: ?>
-                                <tr>
-                                    <td colspan="<?php echo $is_admin ? '7' : '6'; ?>" class="text-center" style="padding: 2rem; color: var(--text-muted);">
-                                        <i class="ph ph-coins" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                                        <p>No se encontraron registros de comisiones.</p>
+                        <?php if (count($rows) > 0): ?>
+                            <?php foreach ($rows as $c): ?>
+                                <?php
+                                $c_json2 = htmlspecialchars(json_encode([
+                                    'id' => $c['id'],
+                                    'caso' => $c['caso'],
+                                    'tipo' => $c['tipo'],
+                                    'cliente' => $c['cliente'],
+                                    'tech_name' => strval($c['tech_name'] ?: 'Desconocido'),
+                                    'servicio' => $c['servicio'],
+                                    'lugar' => strval($c['lugar'] ?: 'Sin especificar'),
+                                    'vendedor' => strval($c['vendedor'] ?: 'N/A'),
+                                    'fecha_servicio' => date('d/m/Y', strtotime($c['fecha_servicio'])),
+                                    'factura' => strval($c['factura'] ?: 'Pendiente'),
+                                    'fecha_facturacion' => $c['fecha_facturacion'] ? date('d/m/Y', strtotime($c['fecha_facturacion'])) : 'Pendiente',
+                                    'estado' => $c['estado'],
+                                    'notas' => strval($c['notas'] ?: 'Sin observaciones.'),
+                                    'reference_id' => $c['reference_id']
+                                ]), ENT_QUOTES, 'UTF-8');
+                                $origin_link = '#';
+                                if ($c['tipo'] === 'PROYECTO' && !empty($c['reference_id']))
+                                    $origin_link = "../levantamientos/view.php?id=" . $c['reference_id'];
+                                elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id']))
+                                    $origin_link = "../services/view.php?id=" . $c['reference_id'];
+                                $tipoColor  = $c['tipo'] === 'PROYECTO' ? 'rgba(99,102,241,0.15)' : 'rgba(16,185,129,0.15)';
+                                $tipoText   = $c['tipo'] === 'PROYECTO' ? '#818cf8' : '#34d399';
+                                $tipoBorder = $c['tipo'] === 'PROYECTO' ? 'rgba(99,102,241,0.3)' : 'rgba(16,185,129,0.3)';
+                                $tipoIcon   = $c['tipo'] === 'PROYECTO' ? 'ph-buildings' : 'ph-wrench';
+                                $scls       = $c['estado'] === 'PAGADA' ? 'green' : 'orange';
+                                ?>
+                                <tr class="table-row-hover" style="cursor: pointer;" onclick="openInfoModal(<?php echo $c_json2; ?>)">
+                                    <td>
+                                        <a href="<?php echo htmlspecialchars($origin_link); ?>" title="Ir al Origen" onclick="event.stopPropagation();"
+                                           style="color: #60a5fa; text-decoration: none; font-weight: 600; font-size: 1.05rem;">
+                                            <?php echo htmlspecialchars($c['caso']); ?> <i class="ph ph-link-simple" style="font-size: 0.8rem;"></i>
+                                        </a><br>
+                                        <span class="badge" style="font-size:.70rem; margin-top:.4rem; padding:.2rem .6rem; border-radius:4px; border:1px solid <?php echo $tipoBorder; ?>; background:<?php echo $tipoColor; ?>; color:<?php echo $tipoText; ?>; display:inline-flex; align-items:center; gap:.3rem; letter-spacing:.5px;">
+                                            <i class="ph <?php echo $tipoIcon; ?>" style="font-size:.85rem;"></i>
+                                            <?php echo htmlspecialchars($c['tipo']); ?>
+                                        </span>
                                     </td>
+                                    <td>
+                                        <?php echo date('d/m/Y', strtotime($c['fecha_servicio'])); ?>
+                                        <?php if ($c['fecha_facturacion']): ?>
+                                            <div style="font-size:.8rem; color:var(--text-muted); margin-top:.25rem;">Fact: <?php echo date('d/m/Y', strtotime($c['fecha_facturacion'])); ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div><?php echo htmlspecialchars($c['cliente']); ?></div>
+                                        <?php if ($c['lugar']): ?>
+                                            <div style="font-size:.8rem; color:var(--text-muted);"><i class="ph ph-map-pin"></i> <?php echo htmlspecialchars($c['lugar']); ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?php echo htmlspecialchars($c['servicio']); ?>">
+                                            <?php echo htmlspecialchars($c['servicio']); ?>
+                                        </div>
+                                        <?php if ($c['factura']): ?>
+                                            <div style="font-size:.8rem; color:var(--text-muted); margin-top:.25rem;"><i class="ph ph-receipt"></i> Factura: <?php echo htmlspecialchars($c['factura']); ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <?php if ($is_admin): ?>
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:.5rem;">
+                                                <i class="ph ph-user-circle" style="color:var(--text-muted); font-size:1.2rem;"></i>
+                                                <span><?php echo htmlspecialchars($c['tech_name'] ?: 'Desconocido'); ?></span>
+                                            </div>
+                                        </td>
+                                    <?php endif; ?>
+                                    <td class="text-center">
+                                        <span class="status-badge status-<?php echo $scls; ?>"><?php echo $c['estado']; ?></span>
+                                    </td>
+                                    <?php if ($is_admin): ?>
+                                        <td class="text-center" onclick="event.stopPropagation();">
+                                            <div style="display:flex; gap:.5rem; justify-content:center;">
+                                                <?php if ($c['estado'] === 'PENDIENTE'): ?>
+                                                    <button type="button" class="btn btn-secondary"
+                                                        style="color:var(--success); border-color:var(--success);"
+                                                        title="Liquidar Comisión"
+                                                        onclick="openPayModal(
+                                                            <?php echo $c['id']; ?>,
+                                                            '<?php echo addslashes(htmlspecialchars($c['caso'])); ?>',
+                                                            '<?php echo addslashes(htmlspecialchars($c['cliente'])); ?>',
+                                                            '<?php echo addslashes(htmlspecialchars($c['factura'] ?? '')); ?>',
+                                                            '<?php echo $c['fecha_facturacion'] ? date('Y-m-d', strtotime($c['fecha_facturacion'])) : ''; ?>',
+                                                            '<?php echo addslashes(htmlspecialchars($c['lugar'] ?? '')); ?>',
+                                                            '<?php echo addslashes(htmlspecialchars($c['vendedor'] ?? '')); ?>'
+                                                        )">
+                                                        <i class="ph ph-check"></i>
+                                                    </button>
+                                                <?php endif; ?>
+                                                <?php if (can_access_module('comisiones_delete', $pdo)): ?>
+                                                    <form action="delete.php" method="POST" style="display:inline;"
+                                                        onsubmit="return confirm('¿Está seguro de eliminar esta comisión de forma permanente?');">
+                                                        <input type="hidden" name="id" value="<?php echo $c['id']; ?>">
+                                                        <button type="submit" class="btn btn-secondary"
+                                                            style="color:var(--danger); border-color:var(--danger);" title="Eliminar">
+                                                            <i class="ph ph-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                    <?php endif; ?>
                                 </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="<?php echo $is_admin ? '7' : '6'; ?>" class="text-center" style="padding: 2rem; color: var(--text-muted);">
+                                    <i class="ph ph-coins" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                                    <p>No hay registros en esta sección.</p>
+                                </td>
+                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
+            <?php } ?>
+
+            <!-- ===== SECCIÓN PENDIENTES ===== -->
+            <div class="section-header pendiente">
+                <i class="ph ph-hourglass" style="font-size:1.3rem; color:#fbbf24;"></i>
+                <span class="section-title pendiente">Pendientes</span>
+                <span class="section-count pendiente"><?php echo count($comisiones_pendientes); ?></span>
+            </div>
+            <?php renderComisionesSection($comisiones_pendientes, $is_admin, $pdo); ?>
+
+            <!-- ===== SECCIÓN LISTOS ===== -->
+            <div class="section-header listo" style="margin-top:2.5rem;">
+                <i class="ph ph-check-circle" style="font-size:1.3rem; color:#34d399;"></i>
+                <span class="section-title listo">Listos / Pagados</span>
+                <span class="section-count listo"><?php echo count($comisiones_listos); ?></span>
+            </div>
+            <?php renderComisionesSection($comisiones_listos, $is_admin, $pdo); ?>
+
         </div>
 
     <?php require_once '../../includes/footer.php'; ?>

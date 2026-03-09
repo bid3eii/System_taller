@@ -290,7 +290,7 @@ if ($is_warehouse) {
         // Default sort by date
         $recentSql .= " ORDER BY so.entry_date " . ($order == 'asc' ? 'ASC' : 'DESC');
     }
-    
+
     $recentSql .= " LIMIT 12";
 
     $recentItems = $pdo->query($recentSql)->fetchAll();
@@ -434,135 +434,135 @@ if (!$is_warehouse) {
                     $isClickable = false;
             }
             ?>
-            <?php if ($isClickable): ?>
-                <a href="<?php echo $cardUrl; ?>" class="card stat-card"
-                    style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s;">
-                <?php else: ?>
-                    <div class="card stat-card">
-                    <?php endif; ?>
-                    <div style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
-                        <div class="stat-icon" style="background: <?php echo $bg; ?>; color: <?php echo $col; ?>;">
-                            <i class="ph <?php echo $icon; ?>"></i>
+                <?php if ($isClickable): ?>
+                        <a href="<?php echo $cardUrl; ?>" class="card stat-card"
+                            style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s;">
+                    <?php else: ?>
+                            <div class="card stat-card">
+                        <?php endif; ?>
+                        <div style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                            <div class="stat-icon" style="background: <?php echo $bg; ?>; color: <?php echo $col; ?>;">
+                                <i class="ph <?php echo $icon; ?>"></i>
+                            </div>
+                            <div class="stat-value" style="color: var(--text-main);"><?php echo $val; ?></div>
+                            <div class="stat-label" style="color: var(--text-muted);"><?php echo $lbl; ?></div>
                         </div>
-                        <div class="stat-value" style="color: var(--text-main);"><?php echo $val; ?></div>
-                        <div class="stat-label" style="color: var(--text-muted);"><?php echo $lbl; ?></div>
+                        <?php if ($isClickable): ?>
+                        </a>
+                <?php else: ?>
                     </div>
-                    <?php if ($isClickable): ?>
-                </a>
-            <?php else: ?>
-            </div>
-        <?php endif; ?>
+            <?php endif; ?>
     <?php endforeach; ?>
 </div>
 
 <!-- CHARTS ROW -->
 <!-- CHARTS ROW -->
 <?php if ($is_warehouse): ?>
-    <div
-        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
-        <!-- Status Chart (Everyone sees this or similar) -->
-        <div class="card" style="min-height: 400px;">
-            <h3 class="mb-4">Estado de Reparaciones</h3>
-            <div style="position: relative; height: 300px; width: 100%;">
-                <canvas id="statusChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Weekly Chart (Reception & Admin only) -->
-        <?php if ($is_reception || $is_admin): ?>
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+            <!-- Status Chart (Everyone sees this or similar) -->
             <div class="card" style="min-height: 400px;">
-                <h3 class="mb-4">Ingresos de la Semana</h3>
+                <h3 class="mb-4">Estado de Reparaciones</h3>
                 <div style="position: relative; height: 300px; width: 100%;">
-                    <canvas id="weeklyChart"></canvas>
+                    <canvas id="statusChart"></canvas>
                 </div>
             </div>
-        <?php endif; ?>
-    </div>
+
+            <!-- Weekly Chart (Reception & Admin only) -->
+            <?php if ($is_reception || $is_admin): ?>
+                    <div class="card" style="min-height: 400px;">
+                        <h3 class="mb-4">Ingresos de la Semana</h3>
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
+            <?php endif; ?>
+        </div>
 <?php elseif ($is_warehouse): ?>
-    <!-- Warehouse Charts Row (Single Chart?) -->
-    <div style="margin-bottom: 2rem;">
-        <div class="card" style="min-height: 400px; max-width: 600px; margin: 0 auto;">
-            <h3 class="mb-4">Estado del Inventario</h3>
-            <div style="position: relative; height: 300px; width: 100%;">
-                <canvas id="statusChart"></canvas> <!-- Reusing statusChart ID -->
+        <!-- Warehouse Charts Row (Single Chart?) -->
+        <div style="margin-bottom: 2rem;">
+            <div class="card" style="min-height: 400px; max-width: 600px; margin: 0 auto;">
+                <h3 class="mb-4">Estado del Inventario</h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="statusChart"></canvas> <!-- Reusing statusChart ID -->
+                </div>
             </div>
         </div>
-    </div>
 <?php endif; ?>
 
 
 <!-- TECH QUICK ACTIONS -->
 <?php if (!$is_warehouse && $is_tech): ?>
-    <div
-        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <a href="../services/index.php" class="card btn btn-secondary"
-            style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
-            <div
-                style="background: rgba(234, 179, 8, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
-                <i class="ph ph-list-checks" style="color: var(--warning); font-size: 1.5rem;"></i>
-            </div>
-            <div style="text-align: left;">
-                <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Mis Asignaciones</div>
-                <div class="text-sm text-muted">Ver y buscar órdenes</div>
-            </div>
-        </a>
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <a href="../services/index.php" class="card btn btn-secondary"
+                style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div
+                    style="background: rgba(234, 179, 8, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
+                    <i class="ph ph-list-checks" style="color: var(--warning); font-size: 1.5rem;"></i>
+                </div>
+                <div style="text-align: left;">
+                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Mis Asignaciones</div>
+                    <div class="text-sm text-muted">Ver y buscar órdenes</div>
+                </div>
+            </a>
 
-        <a href="../levantamientos/index.php" class="card btn btn-secondary"
-            style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
-            <div
-                style="background: rgba(99, 102, 241, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
-                <i class="ph ph-clipboard" style="color: var(--primary-500); font-size: 1.5rem;"></i>
-            </div>
-            <div style="text-align: left;">
-                <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Levantamientos</div>
-                <div class="text-sm text-muted">Requerimientos de proyectos</div>
-            </div>
-        </a>
-    </div>
+            <a href="../levantamientos/index.php" class="card btn btn-secondary"
+                style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div
+                    style="background: rgba(99, 102, 241, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
+                    <i class="ph ph-clipboard" style="color: var(--primary-500); font-size: 1.5rem;"></i>
+                </div>
+                <div style="text-align: left;">
+                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Levantamientos</div>
+                    <div class="text-sm text-muted">Requerimientos de proyectos</div>
+                </div>
+            </a>
+        </div>
 <?php endif; ?>
 
 <!-- ADMIN / RECEPTION QUICK ACTIONS -->
 <?php if ($is_admin || $is_reception): ?>
-    <div
-        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <a href="../clients/add.php" class="card btn btn-secondary"
-            style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
-            <div
-                style="background: rgba(34, 197, 94, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
-                <i class="ph ph-user-plus" style="color: var(--success); font-size: 1.5rem;"></i>
-            </div>
-            <div style="text-align: left;">
-                <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Nuevo Cliente</div>
-                <div class="text-sm text-muted">Registro rápido</div>
-            </div>
-        </a>
-
-        <a href="../equipment/entry.php" class="card btn btn-secondary"
-            style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
-            <div
-                style="background: rgba(99, 102, 241, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
-                <i class="ph ph-file-plus" style="color: var(--primary-500); font-size: 1.5rem;"></i>
-            </div>
-            <div style="text-align: left;">
-                <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Nueva Orden</div>
-                <div class="text-sm text-muted">Ingresar equipo</div>
-            </div>
-        </a>
-
-        <?php if ($is_admin): ?>
-            <a href="../tools/index.php" class="card btn btn-secondary"
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <a href="../clients/add.php" class="card btn btn-secondary"
                 style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
                 <div
-                    style="background: rgba(234, 179, 8, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
-                    <i class="ph ph-toolbox" style="color: var(--warning); font-size: 1.5rem;"></i>
+                    style="background: rgba(34, 197, 94, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
+                    <i class="ph ph-user-plus" style="color: var(--success); font-size: 1.5rem;"></i>
                 </div>
                 <div style="text-align: left;">
-                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Inventario</div>
-                    <div class="text-sm text-muted">Control de herramientas</div>
+                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Nuevo Cliente</div>
+                    <div class="text-sm text-muted">Registro rápido</div>
                 </div>
             </a>
-        <?php endif; ?>
-    </div>
+
+            <a href="../equipment/entry.php" class="card btn btn-secondary"
+                style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div
+                    style="background: rgba(99, 102, 241, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
+                    <i class="ph ph-file-plus" style="color: var(--primary-500); font-size: 1.5rem;"></i>
+                </div>
+                <div style="text-align: left;">
+                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Nueva Orden</div>
+                    <div class="text-sm text-muted">Ingresar equipo</div>
+                </div>
+            </a>
+
+            <?php if ($is_admin): ?>
+                    <a href="../tools/index.php" class="card btn btn-secondary"
+                        style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
+                        <div
+                            style="background: rgba(234, 179, 8, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
+                            <i class="ph ph-toolbox" style="color: var(--warning); font-size: 1.5rem;"></i>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Inventario</div>
+                            <div class="text-sm text-muted">Control de herramientas</div>
+                        </div>
+                    </a>
+            <?php endif; ?>
+        </div>
 <?php endif; ?>
 
 <!-- RECENT ACTIVITY & QUICK ACTIONS -->
@@ -587,121 +587,121 @@ if (!$is_warehouse) {
                     <tr>
                         <th style="padding: 0.75rem;">Fecha</th>
                         <?php if ($recentType == 'tools'): ?>
-                            <th style="padding: 0.75rem;">Usuario</th>
-                            <th style="padding: 0.75rem;">Herramienta</th>
-                            <th style="padding: 0.75rem;">Estado</th>
+                                <th style="padding: 0.75rem;">Usuario</th>
+                                <th style="padding: 0.75rem;">Herramienta</th>
+                                <th style="padding: 0.75rem;">Estado</th>
                         <?php else: ?>
-                            <th style="padding: 0.75rem;">Tipo</th>
-                            <th style="padding: 0.75rem;">Cliente</th>
-                            <th style="padding: 0.75rem;">Equipo</th>
-                            <th style="padding: 0.75rem;">
-                                <a href="?sort=tech&order=<?php echo $nextOrder; ?>" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;">
-                                    Técnico
-                                    <?php if($sort == 'tech'): ?>
-                                        <i class="ph <?php echo $sortIcon; ?>" style="font-size: 0.8rem; color: var(--primary);"></i>
-                                    <?php else: ?>
-                                        <i class="ph ph-caret-up-down" style="font-size: 0.8rem; opacity: 0.3;"></i>
-                                    <?php endif; ?>
-                                </a>
-                            </th>
-                            <th style="padding: 0.75rem;">Estado</th>
-                            <th style="padding: 0.75rem; width: 1%; text-align: right;"></th>
+                                <th style="padding: 0.75rem;">Tipo</th>
+                                <th style="padding: 0.75rem;">Cliente</th>
+                                <th style="padding: 0.75rem;">Equipo</th>
+                                <th style="padding: 0.75rem;">
+                                    <a href="?sort=tech&order=<?php echo $nextOrder; ?>" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;">
+                                        Técnico
+                                        <?php if ($sort == 'tech'): ?>
+                                                <i class="ph <?php echo $sortIcon; ?>" style="font-size: 0.8rem; color: var(--primary);"></i>
+                                        <?php else: ?>
+                                                <i class="ph ph-caret-up-down" style="font-size: 0.8rem; opacity: 0.3;"></i>
+                                        <?php endif; ?>
+                                    </a>
+                                </th>
+                                <th style="padding: 0.75rem;">Estado</th>
+                                <th style="padding: 0.75rem; width: 1%; text-align: right;"></th>
                         <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (count($recentItems) > 0): ?>
-                        <?php foreach ($recentItems as $item): ?>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <td style="padding: 0.75rem;">
-                                    <?php
-                                    $d = $recentType == 'tools' ? $item['date'] : $item['entry_date'];
-                                    echo date('d/m', strtotime($d));
-                                    ?>
-                                </td>
+                            <?php foreach ($recentItems as $item): ?>
+                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                        <td style="padding: 0.75rem;">
+                                            <?php
+                                            $d = $recentType == 'tools' ? $item['date'] : $item['entry_date'];
+                                            echo date('d/m', strtotime($d));
+                                            ?>
+                                        </td>
 
-                                <?php if ($recentType == 'tools'): ?>
-                                    <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['user_name']); ?></td>
-                                    <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['item_name']); ?></td>
-                                    <td style="padding: 0.75rem;">
-                                        <span class="badge"><?php echo ucfirst($item['status']); ?></span>
-                                    </td>
-                                <?php else: ?>
-                                    <td style="padding: 0.75rem;">
-                                        <?php if (isset($item['service_type']) && $item['service_type'] == 'warranty'): ?>
-                                            <span
-                                                style="background: rgba(249, 115, 22, 0.1); color: #f97316; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">GARANTÍA</span>
+                                        <?php if ($recentType == 'tools'): ?>
+                                                <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['user_name']); ?></td>
+                                                <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['item_name']); ?></td>
+                                                <td style="padding: 0.75rem;">
+                                                    <span class="badge"><?php echo ucfirst($item['status']); ?></span>
+                                                </td>
                                         <?php else: ?>
-                                            <span
-                                                style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">SERVICIO</span>
+                                                <td style="padding: 0.75rem;">
+                                                    <?php if (isset($item['service_type']) && $item['service_type'] == 'warranty'): ?>
+                                                            <span
+                                                                style="background: rgba(249, 115, 22, 0.1); color: #f97316; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">GARANTÍA</span>
+                                                    <?php else: ?>
+                                                            <span
+                                                                style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">SERVICIO</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td style="padding: 0.75rem;">
+                                                    <?php
+                                                    echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] :
+                                                        (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] :
+                                                            $item['client_name']));
+                                                    ?>
+                                                </td>
+                                                <td style="padding: 0.75rem;">
+                                                    <span
+                                                        class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
+                                                </td>
+                                                <td style="padding: 0.75rem;">
+                                                    <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
+                                                        <i class="ph ph-user-circle" style="color: var(--slate-400);"></i>
+                                                        <span style="color: var(--text-secondary);"><?php echo htmlspecialchars($item['tech_name'] ?? '---'); ?></span>
+                                                    </div>
+                                                </td>
+                                                <td style="padding: 0.75rem;">
+                                                    <?php
+                                                    $s = $item['status'];
+                                                    $col = 'gray'; // default
+                                                    $label2 = $s; // default
+                                                    $is_delayed = isset($item['days_in_shop']) && $item['days_in_shop'] > 7 && !in_array($s, ['ready', 'delivered', 'cancelled']);
+
+                                                    $statusMapDA = [
+                                                        'received' => ['Recibido', 'blue'],
+                                                        'diagnosing' => ['Diagnóstico', 'yellow'],
+                                                        'in_repair' => ['Reparación', 'purple'],
+                                                        'ready' => ['Listo', 'green'],
+                                                        'delivered' => ['Entregado', 'gray'],
+                                                        'pending_approval' => ['En Espera', 'orange'],
+                                                        'cancelled' => ['Cancelado', 'red']
+                                                    ];
+
+                                                    if (isset($statusMapDA[$s])) {
+                                                        $label2 = $statusMapDA[$s][0];
+                                                        $col = $statusMapDA[$s][1];
+                                                    } else {
+                                                        $label2 = ucfirst($s);
+                                                    }
+                                                    ?>
+                                                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                                        <span
+                                                            class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
+                                                        <?php if ($is_delayed && ($is_admin || $is_reception)): ?>
+                                                                <span title="Lleva <?php echo $item['days_in_shop']; ?> días en taller"
+                                                                    style="color: var(--danger); font-size: 1.2rem; display: flex; align-items: center;">
+                                                                    <i class="ph-fill ph-warning-circle"></i>
+                                                                </span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </td>
+                                                <td style="padding: 0.75rem; width: 1%; white-space: nowrap; text-align: right;">
+                                                    <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
+                                                        <i class="ph ph-caret-right"></i>
+                                                    </a>
+                                                </td>
                                         <?php endif; ?>
-                                    </td>
-                                    <td style="padding: 0.75rem;">
-                                        <?php 
-                                            echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
-                                                 (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
-                                                 $item['client_name'])); 
-                                        ?>
-                                    </td>
-                                    <td style="padding: 0.75rem;">
-                                        <span
-                                            class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
-                                    </td>
-                                    <td style="padding: 0.75rem;">
-                                        <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
-                                            <i class="ph ph-user-circle" style="color: var(--slate-400);"></i>
-                                            <span style="color: var(--text-secondary);"><?php echo htmlspecialchars($item['tech_name'] ?? '---'); ?></span>
-                                        </div>
-                                    </td>
-                                    <td style="padding: 0.75rem;">
-                                        <?php
-                                        $s = $item['status'];
-                                        $col = 'gray'; // default
-                                        $label2 = $s; // default
-                                        $is_delayed = isset($item['days_in_shop']) && $item['days_in_shop'] > 7 && !in_array($s, ['ready', 'delivered', 'cancelled']);
-
-                                        $statusMapDA = [
-                                            'received' => ['Recibido', 'blue'],
-                                            'diagnosing' => ['Diagnóstico', 'yellow'],
-                                            'in_repair' => ['Reparación', 'purple'],
-                                            'ready' => ['Listo', 'green'],
-                                            'delivered' => ['Entregado', 'gray'],
-                                            'pending_approval' => ['En Espera', 'orange'],
-                                            'cancelled' => ['Cancelado', 'red']
-                                        ];
-
-                                        if (isset($statusMapDA[$s])) {
-                                            $label2 = $statusMapDA[$s][0];
-                                            $col = $statusMapDA[$s][1];
-                                        } else {
-                                            $label2 = ucfirst($s);
-                                        }
-                                        ?>
-                                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                                            <span
-                                                class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
-                                            <?php if ($is_delayed && ($is_admin || $is_reception)): ?>
-                                                <span title="Lleva <?php echo $item['days_in_shop']; ?> días en taller"
-                                                    style="color: var(--danger); font-size: 1.2rem; display: flex; align-items: center;">
-                                                    <i class="ph-fill ph-warning-circle"></i>
-                                                </span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                    <td style="padding: 0.75rem; width: 1%; white-space: nowrap; text-align: right;">
-                                        <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
-                                            <i class="ph ph-caret-right"></i>
-                                        </a>
-                                    </td>
-                                <?php endif; ?>
-                            </tr>
-                        <?php endforeach; ?>
+                                    </tr>
+                            <?php endforeach; ?>
                     <?php else: ?>
-                        <tr>
-                            <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
-                                Sin actividad reciente.
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                                    Sin actividad reciente.
+                                </td>
+                            </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -712,54 +712,54 @@ if (!$is_warehouse) {
     <div style="display: flex; flex-direction: column; gap: 2rem;">
 
         <?php if ($is_tech || $is_admin || $is_reception): ?>
-            <!-- Status Chart (Tech, Admin, Reception) -->
-            <div class="card">
-                <h3 class="mb-4">Estado de Reparaciones</h3>
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="statusChart"></canvas>
+                <!-- Status Chart (Tech, Admin, Reception) -->
+                <div class="card">
+                    <h3 class="mb-4">Estado de Reparaciones</h3>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
                 </div>
-            </div>
         <?php endif; ?>
 
         <?php if ($is_admin || $is_reception || $is_tech): ?>
-            <!-- Weekly Chart -->
-            <div class="card">
-                <h3 class="mb-4"><?php echo $is_tech ? 'Mi Rendimiento (Completados)' : 'Ingresos de la Semana'; ?></h3>
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="weeklyChart"></canvas>
+                <!-- Weekly Chart -->
+                <div class="card">
+                    <h3 class="mb-4"><?php echo $is_tech ? 'Mi Rendimiento (Completados)' : 'Ingresos de la Semana'; ?></h3>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
                 </div>
-            </div>
         <?php endif; ?>
 
         <?php if ($is_warehouse): ?>
-            <!-- Quick Actions -->
-            <div class="card">
-                <h3 class="mb-4">Accesos Rápidos</h3>
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <a href="../tools/add.php" class="btn btn-secondary w-full"
-                        style="justify-content: flex-start; padding: 1rem;">
-                        <div
-                            style="background: rgba(99, 102, 241, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
-                            <i class="ph ph-plus" style="color: var(--primary-500);"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight: 600;">Nueva Herramienta</div>
-                            <div class="text-xs text-muted">Registrar item</div>
-                        </div>
-                    </a>
-                    <a href="../tools/assign.php" class="btn btn-secondary w-full"
-                        style="justify-content: flex-start; padding: 1rem;">
-                        <div
-                            style="background: rgba(234, 179, 8, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
-                            <i class="ph ph-hand-giving" style="color: var(--warning);"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight: 600;">Asignar / Prestar</div>
-                            <div class="text-xs text-muted">Registrar salida</div>
-                        </div>
-                    </a>
+                <!-- Quick Actions -->
+                <div class="card">
+                    <h3 class="mb-4">Accesos Rápidos</h3>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <a href="../tools/add.php" class="btn btn-secondary w-full"
+                            style="justify-content: flex-start; padding: 1rem;">
+                            <div
+                                style="background: rgba(99, 102, 241, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
+                                <i class="ph ph-plus" style="color: var(--primary-500);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600;">Nueva Herramienta</div>
+                                <div class="text-xs text-muted">Registrar item</div>
+                            </div>
+                        </a>
+                        <a href="../tools/assign.php" class="btn btn-secondary w-full"
+                            style="justify-content: flex-start; padding: 1rem;">
+                            <div
+                                style="background: rgba(234, 179, 8, 0.2); padding: 8px; border-radius: 8px; margin-right: 0.5rem;">
+                                <i class="ph ph-hand-giving" style="color: var(--warning);"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600;">Asignar / Prestar</div>
+                                <div class="text-xs text-muted">Registrar salida</div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
-            </div>
         <?php endif; ?>
     </div>
 </div>
@@ -805,38 +805,38 @@ if (!$is_warehouse) {
     });
 
     <?php if (!$is_warehouse && ($is_reception || $is_admin || $is_tech)): ?>
-        // Weekly Chart
-        const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
-        new Chart(ctxWeekly, {
-            type: 'bar',
-            data: {
-                labels: <?php echo json_encode($weeklyLabels); ?>,
-                datasets: [{
-                    label: '<?php echo $is_tech ? 'Equipos Listos' : 'Equipos Recibidos'; ?>',
-                    data: <?php echo json_encode($weeklyCounts); ?>,
-                    backgroundColor: '<?php echo $is_tech ? '#22c55e' : '#6366f1'; ?>',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: gridColor },
-                        ticks: { color: textColor, precision: 0 }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: textColor }
-                    }
+            // Weekly Chart
+            const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+            new Chart(ctxWeekly, {
+                type: 'bar',
+                data: {
+                    labels: <?php echo json_encode($weeklyLabels); ?>,
+                    datasets: [{
+                        label: '<?php echo $is_tech ? 'Equipos Listos' : 'Equipos Recibidos'; ?>',
+                        data: <?php echo json_encode($weeklyCounts); ?>,
+                        backgroundColor: '<?php echo $is_tech ? '#22c55e' : '#6366f1'; ?>',
+                        borderRadius: 4
+                    }]
                 },
-                plugins: {
-                    legend: { display: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: textColor, precision: 0 }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
                 }
-            }
-        });
+            });
     <?php endif; ?>
 </script>
 
