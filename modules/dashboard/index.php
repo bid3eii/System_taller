@@ -75,7 +75,7 @@ if ($is_warehouse) {
     $kpi1_icon = "ph-calendar-plus";
 
     // KPI 2: Componentes Vigentes
-    $stmt = $pdo->query("SELECT SUM(CASE WHEN end_date >= CURDATE() THEN 1 ELSE 0 END) as active, SUM(CASE WHEN end_date < CURDATE() THEN 1 ELSE 0 END) as expired FROM warranties WHERE product_code IS NOT NULL AND product_code != ''");
+    $stmt = $pdo->query("SELECT SUM(CASE WHEN status = 'active' AND (end_date >= CURDATE() OR end_date IS NULL) THEN 1 ELSE 0 END) as active, SUM(CASE WHEN status = 'expired' OR end_date < CURDATE() THEN 1 ELSE 0 END) as expired FROM warranties WHERE product_code IS NOT NULL AND product_code != ''");
     $statusData = $stmt->fetch(PDO::FETCH_ASSOC);
     $kpi2_val = $statusData['active'] ?? 0;
     $whExpiredCount = $statusData['expired'] ?? 0;
