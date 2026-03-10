@@ -14,6 +14,11 @@ $page_title = 'Clientes';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php'; // Actually Navbar
 
+// Initialize search variables
+$search = trim($_GET['search'] ?? '');
+$where = '1=1';
+$params = [];
+
 if ($search) {
     $where .= " AND (name LIKE ? OR tax_id LIKE ? OR phone LIKE ? OR email LIKE ?)";
     $params = ["%$search%", "%$search%", "%$search%", "%$search%"];
