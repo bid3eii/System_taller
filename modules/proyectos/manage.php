@@ -37,52 +37,81 @@ $techs = $stmt_techs->fetchAll();
 
 // Handle tech assignment update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'assign_tech') {
-    $new_tech_id = (int) $_POST['tech_id'];
-    if ($new_tech_id > 0) {
-        $stmt_update = $pdo->prepare("UPDATE project_surveys SET assigned_tech_id = ? WHERE id = ?");
-        if ($stmt_update->execute([$new_tech_id, $id])) {
-            $_SESSION['success_msg'] = "Técnico asignado correctamente.";
+    if (isset($_POST['tech_ids']) && is_array($_POST['tech_ids'])) {
+        $valid_tech_ids = [];
+        foreach ($_POST['tech_ids'] as $tid) {
+            if ((int) $tid > 0) {
+                $valid_tech_ids[] = (int) $tid;
+            }
+        }
 
-            // --- Auto-generate or update commission for the assigned tech ---
-            $stmt_com = $pdo->prepare("SELECT id FROM comisiones WHERE reference_id = ? AND tipo = 'PROYECTO'");
-            $stmt_com->execute([$id]);
-            $comision = $stmt_com->fetch();
+        $tech_ids_str = implode(',', $valid_tech_ids);
 
-            $stmt_t = $pdo->prepare("SELECT username FROM users WHERE id = ?");
-            $stmt_t->execute([$new_tech_id]);
-            $tech_name = $stmt_t->fetchColumn() ?: 'Desconocido';
+        $stmt_update = $pdo->prepare("UPDATE project_surveys SET assigned_tech_ids = ? WHERE id = ?");
+        if ($stmt_update->execute([$tech_ids_str, $id])) {
+            $_SESSION['success_msg'] = "Personal asignado correctamente.";
 
+            // --- Auto-generate or update commissions ---
             $stmt_p = $pdo->prepare("SELECT title, client_name FROM project_surveys WHERE id = ?");
             $stmt_p->execute([$id]);
             $proj = $stmt_p->fetch();
 
-            if ($comision) {
-                $stmt_up_c = $pdo->prepare("UPDATE comisiones SET tech_id = ?, vendedor = ? WHERE id = ?");
-                $stmt_up_c->execute([$new_tech_id, $tech_name, $comision['id']]);
-            } else {
-                $insertC = $pdo->prepare("
-                    INSERT INTO comisiones (
-                        fecha_servicio, cliente, servicio, cantidad, tipo, vendedor, caso, estado, tech_id, reference_id
-                    ) VALUES (
-                        CURDATE(), ?, ?, 1, 'PROYECTO', ?, ?, 'PENDIENTE', ?, ?
-                    )
-                ");
-                $insertC->execute([
-                    $proj['client_name'],
-                    $proj['title'],
-                    $tech_name,
-                    "Proyecto_#" . str_pad($id, 4, '0', STR_PAD_LEFT),
-                    $new_tech_id,
-                    $id
-                ]);
+            $stmt_all_c = $pdo->prepare("SELECT id, tech_id, estado FROM comisiones WHERE reference_id = ? AND tipo = 'PROYECTO'");
+            $stmt_all_c->execute([$id]);
+            $existing_comisiones = $stmt_all_c->fetchAll(PDO::FETCH_ASSOC);
+
+            $comisiones_map = [];
+            foreach ($existing_comisiones as $c) {
+                $comisiones_map[$c['tech_id']] = $c;
+            }
+
+            foreach ($valid_tech_ids as $tid) {
+                if (!isset($comisiones_map[$tid])) {
+                    $stmt_t = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+                    $stmt_t->execute([$tid]);
+                    $tech_name = $stmt_t->fetchColumn() ?: 'Desconocido';
+
+                    $insertC = $pdo->prepare("
+                        INSERT INTO comisiones (
+                            fecha_servicio, cliente, servicio, cantidad, tipo, vendedor, caso, estado, tech_id, reference_id
+                        ) VALUES (
+                            CURDATE(), ?, ?, 1, 'PROYECTO', ?, ?, 'PENDIENTE', ?, ?
+                        )
+                    ");
+                    $insertC->execute([
+                        $proj['client_name'],
+                        $proj['title'],
+                        $tech_name,
+                        "Proyecto_#" . str_pad($id, 4, '0', STR_PAD_LEFT),
+                        $tid,
+                        $id
+                    ]);
+                }
+            }
+
+            foreach ($comisiones_map as $c_tech_id => $c) {
+                if (!in_array($c_tech_id, $valid_tech_ids)) {
+                    if ($c['estado'] === 'PENDIENTE') {
+                        $pdo->prepare("DELETE FROM comisiones WHERE id = ?")->execute([$c['id']]);
+                    }
+                }
             }
             // -------------------------------------------------------------
 
-            // Refresh survey data
             $stmt->execute([$id]);
             $survey = $stmt->fetch();
         } else {
-            $_SESSION['error_msg'] = "Error al asignar técnico.";
+            $_SESSION['error_msg'] = "Error al asignar personal.";
+        }
+    } else {
+        $stmt_update = $pdo->prepare("UPDATE project_surveys SET assigned_tech_ids = NULL WHERE id = ?");
+        if ($stmt_update->execute([$id])) {
+            $_SESSION['success_msg'] = "Personal desasignado.";
+            $pdo->prepare("DELETE FROM comisiones WHERE reference_id = ? AND tipo = 'PROYECTO' AND estado = 'PENDIENTE'")->execute([$id]);
+            $stmt->execute([$id]);
+            $survey = $stmt->fetch();
+        } else {
+            $_SESSION['error_msg'] = "Error al quitar personal.";
         }
     }
 }
@@ -652,21 +681,25 @@ require_once '../../includes/sidebar.php';
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <div
                         style="background: rgba(0,0,0,0.2); padding: 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
-                        <div <div
+                        <div
                             style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem;">
                             Personal Asignado</div>
 
-                        <form method="POST" style="margin: 0; display: flex; gap: 0.5rem;">
+                        <form method="POST" style="margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
                             <input type="hidden" name="action" value="assign_tech">
-                            <select name="tech_id" class="modern-select"
-                                style="padding: 0.5rem; font-size: 0.9rem; flex-grow: 1;" onchange="this.form.submit()">
-                                <option value="">-- Seleccionar Técnico --</option>
-                                <?php foreach ($techs as $t): ?>
-                                    <option value="<?php echo $t['id']; ?>" <?php echo ($survey['assigned_tech_id'] ?? 0) == $t['id'] ? 'selected' : ''; ?>>
+                            <select name="tech_ids[]" id="assigned_tech_ids" class="form-control" multiple>
+                                <?php
+                                $assigned_arr = array_filter(explode(',', $survey['assigned_tech_ids'] ?? ''));
+                                foreach ($techs as $t):
+                                    ?>
+                                    <option value="<?php echo $t['id']; ?>" <?php echo in_array($t['id'], $assigned_arr) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($t['username']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">
+                                <i class="ph ph-check"></i> Asignar Seleccionados
+                            </button>
                         </form>
                     </div>
                     <div
@@ -881,5 +914,90 @@ require_once '../../includes/sidebar.php';
         if (e.target === this) this.style.display = 'none';
     });
 </script>
+
+<!-- Choices.js for Multiple Select -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const personnelSelect = document.getElementById('assigned_tech_ids');
+        if (personnelSelect) {
+            new Choices(personnelSelect, {
+                removeItemButton: true,
+                placeholderValue: 'Seleccionar técnicos...',
+                searchPlaceholderValue: 'Buscar personal...',
+                noResultsText: 'No se encontraron resultados',
+                itemSelectText: 'Presiona para seleccionar'
+            });
+        }
+    });
+</script>
+<style>
+    /* Custom Dark Theme for Choices.js to match System Taller */
+    .choices__inner {
+        background-color: var(--bg-card, #1e1e2d);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 8px;
+        color: var(--text-primary, #e2e8f0);
+        min-height: 48px;
+        padding: 7px 7px 3.75px;
+    }
+
+    .choices.is-open .choices__inner {
+        border-radius: 8px 8px 0 0;
+        border-color: var(--primary-color, #6366f1);
+    }
+
+    .choices__list--dropdown {
+        background-color: var(--bg-darker, #1e1e2d);
+        border: 1px solid var(--border-color, #323248);
+        color: var(--text-primary, #e2e8f0);
+        word-break: break-all;
+        z-index: 100;
+    }
+
+    .choices__list--dropdown .choices__item--selectable {
+        padding-right: 10px;
+    }
+
+    .choices__list--dropdown .choices__item--selectable.is-highlighted {
+        background-color: var(--primary-color, #6366f1);
+        color: white;
+    }
+
+    .choices[data-type*="select-multiple"] .choices__button {
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        margin: 0 0 0 8px;
+    }
+
+    .choices__input {
+        background-color: transparent;
+        color: var(--text-primary, #e2e8f0);
+    }
+
+    .choices__input::placeholder {
+        color: #94a3b8;
+    }
+
+    .choices[data-type*="select-multiple"] .choices__list--dropdown {
+        padding-bottom: 5px;
+    }
+
+    .choices__list--multiple .choices__item {
+        background-color: var(--primary-color, #6366f1);
+        border: 1px solid var(--primary-color, #6366f1);
+        border-radius: 4px;
+    }
+
+    .choices__group .choices__heading {
+        color: #94a3b8;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-color, #323248);
+        padding-bottom: 5px;
+        margin-bottom: 5px;
+    }
+</style>
 
 <?php require_once '../../includes/footer.php'; ?>

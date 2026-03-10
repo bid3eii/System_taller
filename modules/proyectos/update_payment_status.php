@@ -26,12 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmtC = $pdo->prepare("
             SELECT 
                 ps.payment_status, 
-                ps.assigned_tech_id as tech_id,
+                ps.assigned_tech_ids,
                 ps.client_name,
-                ps.title as project_title,
-                u.username as tech_name
+                ps.title as project_title
             FROM project_surveys ps
-            LEFT JOIN users u ON ps.assigned_tech_id = u.id
             WHERE ps.id = ?
         ");
         $stmtC->execute([$id]);
@@ -48,9 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("UPDATE project_surveys SET payment_status = ?, invoice_number = ? WHERE id = ?");
             $stmt->execute([$payment_status, $invoice_number, $id]);
 
-            // 2. Update commission invoice for the assigned technician
-            $tech_id = $project['tech_id'];
-            if ($tech_id) {
+            // 2. Update commission invoice for the assigned technicians
+            $tech_ids = $project['assigned_tech_ids'];
+            if (!empty($tech_ids)) {
                 // Update the existing PENDIENTE commission with the invoice number if provided
                 if ($invoice_number) {
                     $updateC = $pdo->prepare("UPDATE comisiones SET factura = ? WHERE reference_id = ? AND tipo = 'PROYECTO'");
