@@ -447,24 +447,84 @@ require_once '../../includes/sidebar.php';
         <!-- LEFT COLUMN: Content Heavy -->
         <div style="display: flex; flex-direction: column;">
 
-            <div class="glass-card" style="padding: 1.5rem; margin-bottom: 2rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="glass-card" style="padding: 0; margin-bottom: 2rem; overflow: hidden;">
+                <!-- Accordion Header (clickable) -->
+                <div id="summary-header" onclick="toggleSummary()" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div
-                            style="width: 44px; height: 44px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); color: var(--primary-400); display: flex; align-items: center; justify-content: center;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); color: var(--primary-400); display: flex; align-items: center; justify-content: center;">
                             <i class="ph ph-info" style="font-size: 1.4rem;"></i>
                         </div>
                         <div>
-                            <h3 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; line-height: 1.2;">
-                                Resumen del Expediente</h3>
-                            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">
-                                Detalles del proyecto y cliente</p>
+                            <h3 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; line-height: 1.2;">Resumen del Expediente</h3>
+                            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">Detalles del proyecto y cliente</p>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-secondary"
-                        onclick="document.getElementById('summaryModal').style.display='flex'">
-                        <i class="ph ph-list-magnifying-glass"></i> Ver Detalles
-                    </button>
+                    <i class="ph ph-caret-down" id="summary-caret" style="font-size: 1.3rem; color: var(--text-muted); transition: transform 0.25s ease;"></i>
+                </div>
+
+                <!-- Accordion Body (hidden by default) -->
+                <div id="summary-body" style="max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.25s ease;">
+                    <div style="padding: 0 1.5rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 1.25rem; padding-top: 1.5rem;">
+
+                        <!-- Cliente -->
+                        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                            <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-buildings" style="font-size: 1.2rem;"></i></div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Cliente / Empresa</div>
+                                <div style="font-weight: 500; font-size: 1.05rem; color: var(--text-primary);"><?php echo htmlspecialchars($survey['client_name']); ?></div>
+                            </div>
+                        </div>
+
+                        <!-- Proyecto -->
+                        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                            <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-folder" style="font-size: 1.2rem;"></i></div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Proyecto</div>
+                                <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);"><?php echo htmlspecialchars($survey['title']); ?></div>
+                            </div>
+                        </div>
+
+                        <!-- Técnico -->
+                        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                            <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-user-circle" style="font-size: 1.2rem;"></i></div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Técnico Responsable</div>
+                                <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);"><?php echo htmlspecialchars($survey['tech_name']); ?></div>
+                            </div>
+                        </div>
+
+                        <!-- Fecha -->
+                        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                            <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-calendar-blank" style="font-size: 1.2rem;"></i></div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Fecha de Creación</div>
+                                <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);"><?php echo date('d/m/Y \a \l\a\s h:i A', strtotime($survey['created_at'])); ?></div>
+                            </div>
+                        </div>
+
+                        <?php if (!empty($survey['general_description'])): ?>
+                        <!-- Descripción -->
+                        <div style="display: flex; gap: 0.75rem; align-items: flex-start; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.05);">
+                            <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-article" style="font-size: 1.2rem;"></i></div>
+                            <div style="flex-grow: 1;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.4rem;">Descripción del Proyecto</div>
+                                <div class="rich-text-content" style="font-weight: 400; font-size: 0.95rem; color: var(--text-primary); line-height: 1.6; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);"><?php echo $survey['general_description']; ?></div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($survey['scope_activities'])): ?>
+                        <!-- Alcance -->
+                        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                            <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-list-checks" style="font-size: 1.2rem;"></i></div>
+                            <div style="flex-grow: 1;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.4rem;">Alcance y Actividades</div>
+                                <div class="rich-text-content" style="font-weight: 400; font-size: 0.95rem; color: var(--text-primary); line-height: 1.6; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);"><?php echo $survey['scope_activities']; ?></div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                    </div>
                 </div>
             </div>
 
@@ -858,133 +918,27 @@ require_once '../../includes/sidebar.php';
     </div>
 </div>
 
-<!-- Modal for Summary -->
-<div id="summaryModal"
-    style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 1rem;">
-    <div class="glass-card animate-enter"
-        style="width: 100%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
-        <div class="glass-card-header"
-            style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin: 0;">
-            <i class="ph ph-info" style="color: var(--primary-400);"></i>
-            <h3 class="glass-card-title">Resumen del Expediente</h3>
-            <button type="button" onclick="document.getElementById('summaryModal').style.display='none'"
-                class="hover-bg-light"
-                style="margin-left: auto; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); cursor: pointer; padding: 0.5rem; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;">
-                <i class="ph ph-x"
-                    style="font-size: 1.2rem; background: none; -webkit-text-fill-color: currentColor;"></i>
-            </button>
-        </div>
-        <div style="padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto;">
-            <!-- Cliente -->
-            <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-buildings"
-                        style="font-size: 1.2rem;"></i></div>
-                <div>
-                    <div
-                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">
-                        Cliente / Empresa</div>
-                    <div style="font-weight: 500; font-size: 1.05rem; color: var(--text-primary);">
-                        <?php echo htmlspecialchars($survey['client_name']); ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Proyecto -->
-            <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-folder"
-                        style="font-size: 1.2rem;"></i></div>
-                <div>
-                    <div
-                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">
-                        Proyecto</div>
-                    <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);">
-                        <?php echo htmlspecialchars($survey['title']); ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Técnico -->
-            <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-user-circle"
-                        style="font-size: 1.2rem;"></i></div>
-                <div>
-                    <div
-                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">
-                        Técnico Responsable</div>
-                    <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);">
-                        <?php echo htmlspecialchars($survey['tech_name']); ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Fecha -->
-            <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-calendar-blank"
-                        style="font-size: 1.2rem;"></i></div>
-                <div>
-                    <div
-                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">
-                        Fecha de Creación</div>
-                    <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);">
-                        <?php echo date('d/m/Y \a \l\a\s h:i A', strtotime($survey['created_at'])); ?>
-                    </div>
-                </div>
-            </div>
-
-            <?php if (!empty($survey['general_description'])): ?>
-                <!-- Descripción General -->
-                <div
-                    style="display: flex; gap: 0.75rem; align-items: flex-start; margin-top: 0.5rem; padding-top: 1.5rem; border-top: 1px dashed rgba(255,255,255,0.05);">
-                    <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-article"
-                            style="font-size: 1.2rem;"></i></div>
-                    <div style="flex-grow: 1;">
-                        <div
-                            style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.4rem;">
-                            Descripción del Proyecto</div>
-                        <div class="rich-text-content"
-                            style="font-weight: 400; font-size: 0.95rem; color: var(--text-primary); line-height: 1.6; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);">
-                            <?php echo $survey['general_description']; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <?php if (!empty($survey['scope_activities'])): ?>
-                <!-- Alcance -->
-                <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                    <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-list-checks"
-                            style="font-size: 1.2rem;"></i></div>
-                    <div style="flex-grow: 1;">
-                        <div
-                            style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.4rem;">
-                            Alcance y Actividades</div>
-                        <div class="rich-text-content"
-                            style="font-weight: 400; font-size: 0.95rem; color: var(--text-primary); line-height: 1.6; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);">
-                            <?php echo $survey['scope_activities']; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
-        <div
-            style="padding: 1.25rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.3); display: flex; justify-content: flex-end;">
-            <button type="button" class="btn btn-secondary hover-bg-light"
-                style="padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 500;"
-                onclick="document.getElementById('summaryModal').style.display='none'">
-                <i class="ph ph-x-circle" style="font-size: 1.1rem; margin-right: 0.25rem;"></i> Cerrar
-            </button>
-        </div>
-    </div>
-</div>
 
 <script>
     // Close modals when clicking outside
     document.getElementById('materialsModal').addEventListener('click', function (e) {
         if (e.target === this) this.style.display = 'none';
     });
-    document.getElementById('summaryModal').addEventListener('click', function (e) {
-        if (e.target === this) this.style.display = 'none';
-    });
+
+    // Summary accordion toggle
+    var summaryOpen = false;
+    function toggleSummary() {
+        summaryOpen = !summaryOpen;
+        const body = document.getElementById('summary-body');
+        const caret = document.getElementById('summary-caret');
+        if (summaryOpen) {
+            body.style.maxHeight = body.scrollHeight + 600 + 'px';
+            caret.style.transform = 'rotate(180deg)';
+        } else {
+            body.style.maxHeight = '0';
+            caret.style.transform = 'rotate(0deg)';
+        }
+    }
 </script>
 
 <?php require_once '../../includes/footer.php'; ?>
