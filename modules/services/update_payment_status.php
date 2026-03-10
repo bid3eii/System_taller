@@ -5,13 +5,14 @@ require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 
-if (!can_access_module('surveys_status', $pdo)) {
+if (!can_access_module('settings', $pdo)) {
     die("Acceso denegado.");
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['id']);
     $payment_status = $_POST['payment_status'];
+    $invoice_number = isset($_POST['invoice_number']) ? clean($_POST['invoice_number']) : null;
 
     if (!in_array($payment_status, ['pendiente', 'pagado'])) {
         die("Estado no válido");
@@ -45,57 +46,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($payment_status === 'pagado' && $order['payment_status'] !== 'pagado') {
 
             // 1. Update order
-            $stmt = $pdo->prepare("UPDATE service_orders SET payment_status = ? WHERE id = ?");
-            $stmt->execute([$payment_status, $id]);
+            $stmt = $pdo->prepare("UPDATE service_orders SET payment_status = ?, invoice_number = ? WHERE id = ?");
+            $stmt->execute([$payment_status, $invoice_number, $id]);
 
-            // 2. Auto-generate comision for the assigned technician
+            // 2. Update commission invoice for the assigned technician
             $tech_id = $order['assigned_tech_id'];
             if ($tech_id) {
-                // Get tech name
-                $stmtU = $pdo->prepare("SELECT username FROM users WHERE id = ?");
-                $stmtU->execute([$tech_id]);
-                $tech_name = $stmtU->fetchColumn() ?: 'Desconocido';
+                // Update the existing PENDIENTE commission with the invoice number, billing date and mark as PAGADA
+                if ($invoice_number) {
+                    $updateC = $pdo->prepare("
+                        UPDATE comisiones
+                        SET factura = ?,
+                            fecha_facturacion = CURDATE(),
+                            estado = 'PAGADA',
+                            fecha_pago = CURDATE()
+                        WHERE reference_id = ? AND tipo = 'SERVICIO'
+                    ");
+                    $updateC->execute([$invoice_number, $id]);
+                }
 
-                // Format service description
-                $servicio_desc = $order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model'];
-
-                $insertC = $pdo->prepare("
-                    INSERT INTO comisiones (
-                        fecha_servicio, 
-                        cliente, 
-                        servicio, 
-                        cantidad, 
-                        tipo, 
-                        vendedor, 
-                        caso, 
-                        estado, 
-                        tech_id, 
-                        reference_id
-                    ) VALUES (
-                        CURDATE(),
-                        ?,
-                        ?,
-                        1,
-                        'SERVICIO',
-                        ?,
-                        ?,
-                        'PENDIENTE',
-                        ?,
-                        ?
-                    )
-                ");
-                $insertC->execute([
-                    $order['client_name'],
-                    $servicio_desc,
-                    $tech_name, // vendedor
-                    "Servicio_#" . str_pad($id, 4, '0', STR_PAD_LEFT), // caso
-                    $tech_id,
-                    $id
-                ]);
-
-                // log history logic for comision
                 $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");
-                $stmtH->execute([$id, "Comisión auto-generada para técnico por pago", $_SESSION['user_id'], get_local_datetime()]);
+                $stmtH->execute([$id, "Ciclo financiero cerrado. Factura registrada en comisión.", $_SESSION['user_id'], get_local_datetime()]);
             }
 
             // Log payment status change
@@ -117,9 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->commit();
     } catch (Exception $e) {
         $pdo->rollBack();
-        $_SESSION['error_message'] = "Error: " . $e->getMessage();
+        $_SESSION['error_message'] = "Error al procesar: " . $e->getMessage();
     }
 }
 
-header("Location: view.php?id=" . $id);
+// Redirect back to manage.php
+$redirect_base = file_exists(__DIR__ . '/manage.php') ? 'manage.php' : 'view.php';
+$msg = isset($_SESSION['error_message']) ? 'error' : 'success';
+header("Location: " . $redirect_base . "?id=" . $id . "&msg=" . $msg);
 exit;

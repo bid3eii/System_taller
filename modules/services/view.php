@@ -383,7 +383,8 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                         style="font-size: 0.9rem; color: var(--p-text-muted);"><?php echo $statusLabels[$order['status']] ?? $order['status']; ?></span>
                 </div>
                 <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.25rem;">Caso
-                    <?php echo get_order_number($order); ?></h1>
+                    <?php echo get_order_number($order); ?>
+                </h1>
 
                 <div style="font-size: 0.9rem; margin-top: 0.25rem; margin-bottom: 0.5rem; display: flex; gap: 1rem;">
                     <?php if ($order['diagnosis_number']): ?>
@@ -516,12 +517,14 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
 
                             <div class="info-group">
                                 <span class="info-label">Nombre Completo</span>
-                                <div class="info-value highlight"><?php echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name'])); ?>
-<?php if(!empty($order['owner_name']) || !empty($order['registered_owner_name'])): ?>
-    <div style="font-size: 0.8rem; color: var(--p-text-muted); font-weight: normal; margin-top: 2px;">
-        Contacto: <?php echo htmlspecialchars($order['contact_name']); ?>
-    </div>
-<?php endif; ?>
+                                <div class="info-value highlight">
+                                    <?php echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name'])); ?>
+                                    <?php if (!empty($order['owner_name']) || !empty($order['registered_owner_name'])): ?>
+                                        <div
+                                            style="font-size: 0.8rem; color: var(--p-text-muted); font-weight: normal; margin-top: 2px;">
+                                            Contacto: <?php echo htmlspecialchars($order['contact_name']); ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
@@ -570,14 +573,16 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                 </div>
                                 <?php if ($order['submodel']): ?>
                                     <div class="info-value" style="font-size: 0.9rem; color: var(--p-text-muted);">
-                                        <?php echo htmlspecialchars($order['submodel']); ?></div>
+                                        <?php echo htmlspecialchars($order['submodel']); ?>
+                                    </div>
                                 <?php endif; ?>
                             </div>
 
                             <div class="info-group">
                                 <span class="info-label">Número de Serie</span>
                                 <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em;">
-                                    <?php echo htmlspecialchars($order['serial_number']); ?></div>
+                                    <?php echo htmlspecialchars($order['serial_number']); ?>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -619,416 +624,126 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
 
             <!-- Right Column -->
             <div class="sidebar-sticky">
-                <?php if (!$is_history_view && !$is_original_mode): ?>
 
-                    <!-- Status Update -->
-                    <?php if ($order['status'] !== 'delivered'): ?>
-                        <div class="update-card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--p-primary);">
-                            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: var(--p-text-main);">
-                                Actualizar Estado</h3>
-                            <form method="POST" enctype="multipart/form-data">
-                                <input type="hidden" name="action" value="update_status">
-
-                                <div style="margin-bottom: 1rem;">
-                                    <label
-                                        style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Nuevo
-                                        Estado</label>
-                                    <select name="status" id="statusSelect" class="modern-select">
-                                        <?php foreach ($statusLabels as $key => $label): ?>
-                                            <?php if ($key !== 'delivered' && $key !== 'cancelled'): ?>
-                                                <option value="<?php echo $key; ?>" <?php echo $order['status'] === $key ? 'selected' : ''; ?>>
-                                                    <?php echo $label; ?>
-                                                </option>
-                                            <?php endif; ?>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-
-                                <div style="margin-bottom: 1rem;">
-                                    <label
-                                        style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Nota
-                                        de Progreso</label>
-                                    <textarea name="note" id="progressNote" class="modern-textarea" rows="3"
-                                        placeholder="Ej. Se realizó cambio de repuesto..." required></textarea>
-                                </div>
-
-                                <button type="submit" class="btn-update">
-                                    Guardar Cambios
-                                </button>
-
-                                <!-- Diagnosis Modal (Inside Form) -->
-                                <div id="diagnosisModal"
-                                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-                                    <div
-                                        style="background: var(--p-bg-card); padding: 2rem; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--p-border);">
-                                        <h2 style="margin-top: 0; color: var(--p-primary); margin-bottom: 1.5rem;">Reporte de
-                                            Diagnóstico</h2>
-
-                                        <!-- Readonly Info -->
-                                        <div
-                                            style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                                            <div
-                                                style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
-                                                <span style="font-weight: bold; color: var(--p-primary);">Caso
-                                                    #<?php echo str_pad($order['id'], 4, '0', STR_PAD_LEFT); ?></span>
-                                                <?php if ($order['diagnosis_number']): ?>
-                                                    <span style="color: #fbbf24;">Diag
-                                                        #<?php echo str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT); ?></span>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div style="font-weight: bold; margin-bottom: 0.25rem;">
-                                                <?php echo htmlspecialchars($order['client_name']); ?></div>
-                                            <div style="font-size: 0.85rem; color: var(--p-text-muted);">
-                                                <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
-                                            </div>
-                                            <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                                                <span style="color: var(--p-text-muted);">Falla:</span>
-                                                <?php echo htmlspecialchars($order['problem_reported']); ?>
-                                            </div>
-                                        </div>
-
-                                        <div style="margin-bottom: 1rem;">
-                                            <label
-                                                style="display: block; margin-bottom: 0.5rem; color: var(--p-text-muted); font-size: 0.85rem;">Procedimiento</label>
-                                            <textarea name="diagnosis_procedure" id="diag_procedure" class="modern-textarea"
-                                                rows="4" placeholder="Describe las pruebas realizadas..."></textarea>
-                                        </div>
-
-                                        <div style="margin-bottom: 1rem;">
-                                            <label
-                                                style="display: block; margin-bottom: 0.5rem; color: var(--p-text-muted); font-size: 0.85rem;">Conclusión
-                                                / Solución</label>
-                                            <textarea name="diagnosis_conclusion" id="diag_conclusion" class="modern-textarea"
-                                                rows="4" placeholder="Conclusión técnica..."></textarea>
-                                        </div>
-
-                                        <div style="margin-bottom: 1.5rem;">
-                                            <label
-                                                style="display: block; margin-bottom: 0.5rem; color: var(--p-text-muted); font-size: 0.85rem;">Evidencia
-                                                (Imágenes)</label>
-                                            <input type="file" name="diagnosis_images[]" multiple accept="image/*"
-                                                class="modern-input">
-                                        </div>
-
-                                        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                                            <button type="button" id="btnCancelDiag" class="btn btn-secondary"
-                                                style="background: transparent; border: 1px solid var(--p-border); color: var(--p-text-main);">Cancelar</button>
-                                            <button type="button" id="btnConfirmDiag" class="btn btn-primary">Guardar
-                                                Diagnóstico</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Repair Modal (New) -->
-                                <div id="repairModal"
-                                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-                                    <div
-                                        style="background: var(--p-bg-card); padding: 2rem; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--p-border);">
-                                        <h2 style="margin-top: 0; color: var(--p-primary); margin-bottom: 1.5rem;">Gestión de
-                                            Reparación</h2>
-
-                                        <!-- Readonly Info (Client/Device) -->
-                                        <div
-                                            style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                                            <div
-                                                style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
-                                                <span style="font-weight: bold; color: var(--p-primary);">Caso
-                                                    #<?php echo str_pad($order['id'], 4, '0', STR_PAD_LEFT); ?></span>
-                                                <!-- Repair number is generated AFTER saving, so we don't show it here yet unless it already exists -->
-                                                <?php if ($order['repair_number']): ?>
-                                                    <span style="color: #34d399;">Rep
-                                                        #<?php echo str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT); ?></span>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div style="font-weight: bold; margin-bottom: 0.25rem;">
-                                                <?php echo htmlspecialchars($order['client_name']); ?></div>
-                                            <div style="font-size: 0.85rem; color: var(--p-text-muted);">
-                                                <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
-                                            </div>
-                                            <div style="margin-top: 0.5rem; font-size: 0.9rem;">
-                                                <span style="color: var(--p-text-muted);">Falla:</span>
-                                                <?php echo htmlspecialchars($order['problem_reported']); ?>
-                                            </div>
-                                        </div>
-
-                                        <!-- Previous Diagnosis Info (If available) -->
-                                        <?php if ($order['diagnosis_conclusion']): ?>
-                                            <div
-                                                style="margin-bottom: 1.5rem; padding: 0.75rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 8px;">
-                                                <label
-                                                    style="display: block; font-size: 0.8rem; color: #fbbf24; margin-bottom: 0.25rem; font-weight: 600;">Diagnóstico
-                                                    Previo</label>
-                                                <div style="font-size: 0.9rem; color: var(--p-text-main); white-space: pre-line;">
-                                                    <?php echo htmlspecialchars($order['diagnosis_conclusion']); ?>
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
-
-                                        <div
-                                            style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
-                                            <label
-                                                style="display: block; font-size: 0.9rem; color: var(--p-text-muted); margin-bottom: 0.5rem; font-weight: 600;">🛠️
-                                                Repuestos / Acciones</label>
-                                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                                <select id="partSelect" class="modern-select"
-                                                    style="font-size: 0.85rem; flex: 1.5;">
-                                                    <option value="">-- Seleccionar Repuesto --</option>
-                                                    <option value="Pantalla">Pantalla</option>
-                                                    <option value="Batería">Batería</option>
-                                                    <option value="Teclado">Teclado</option>
-                                                    <option value="Disco SSD">Disco SSD</option>
-                                                    <option value="Memoria RAM">Memoria RAM</option>
-                                                    <option value="Centro de Carga">Centro de Carga</option>
-                                                    <option value="Fuente de Poder">Fuente de Poder</option>
-                                                    <option value="Cargador">Cargador</option>
-                                                    <option value="Mantenimiento General">Mantenimiento General</option>
-                                                    <option value="Limpieza Interna">Limpieza Interna</option>
-                                                    <option value="Instalación Windows">Instalación Windows</option>
-                                                </select>
-                                                <input type="text" id="partSN" placeholder="S/N" class="modern-input"
-                                                    style="flex: 1; font-size: 0.85rem; padding: 0.5rem;">
-                                                <button type="button" id="btnAddPart"
-                                                    style="background: var(--p-border); color: white; border: none; padding: 0 0.75rem; border-radius: 6px; cursor: pointer; font-size: 1.2rem; height: 38px;">+</button>
-                                            </div>
-                                            <p style="font-size: 0.8rem; color: var(--p-text-muted); margin-top: 0.5rem;">Agrega
-                                                los repuestos utilizados a la nota de reparación.</p>
-                                        </div>
-
-                                        <div style="margin-bottom: 1rem;">
-                                            <label
-                                                style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Nota
-                                                de Reparación</label>
-                                            <textarea id="repairNoteModal" class="modern-textarea" rows="4"
-                                                placeholder="Detalles de la reparación y repuestos utilizados..."></textarea>
-                                        </div>
-
-                                        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                                            <button type="button" id="btnCancelRepair" class="btn btn-secondary"
-                                                style="background: transparent; border: 1px solid var(--p-border); color: var(--p-text-main);">Cancelar</button>
-                                            <button type="button" id="btnConfirmRepair" class="btn btn-primary"
-                                                style="background: #a855f7; border-color: #a855f7;">Confirmar
-                                                Reparación</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </form>
+                <!-- Billing Info Card (only when invoice exists) -->
+                <?php if (!empty($order['invoice_number'])): ?>
+                    <div class="form-section no-print"
+                        style="border-left: 4px solid <?php echo $order['payment_status'] === 'pagado' ? '#10b981' : '#f59e0b'; ?>;">
+                        <div
+                            style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--p-border); color:<?php echo $order['payment_status'] === 'pagado' ? '#34d399' : '#fbbf24'; ?>; font-weight:600; font-size:1.05rem;">
+                            <i class="ph ph-receipt"></i> Datos de Facturación
                         </div>
-                    <?php endif; ?>
-
-                    <!-- Payment Status Update -->
-                    <?php if (can_access_module('surveys_status', $pdo)): ?>
-                        <div class="update-card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--success);">
-                            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: var(--p-text-main);">
-                                <i class="ph ph-money" style="color: var(--success);"></i> Pago y Comisiones</h3>
-
-                            <form method="POST" action="update_payment_status.php" onsubmit="return confirm('¿Confirmas el cambio de estado de pago? Si marcas como PAGADO, se generará la comisión para el técnico asignado.');">
-                                <input type="hidden" name="id" value="<?php echo $order['id']; ?>">
-                                
-                                <div style="margin-bottom: 1rem;">
-                                    <label style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Estado de Pago</label>
-                                    <select name="payment_status" class="modern-select" <?php echo $order['payment_status'] === 'pagado' ? 'disabled' : ''; ?>>
-                                        <option value="pendiente" <?php echo $order['payment_status'] === 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
-                                        <option value="pagado" <?php echo $order['payment_status'] === 'pagado' ? 'selected' : ''; ?>>Pagado/Cancelado</option>
-                                    </select>
-                                </div>
-
-                                <?php if ($order['payment_status'] !== 'pagado'): ?>
-                                    <button type="submit" class="btn-update" style="background: var(--success);">
-                                        Actualizar Pago
-                                    </button>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+                            <div>
+                                <span
+                                    style="display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--p-text-muted); margin-bottom:0.3rem; font-weight:600;">Nº
+                                    Factura</span>
+                                <strong
+                                    style="font-size:1.05rem; color:#f1f5f9; font-family:monospace;"><?php echo htmlspecialchars($order['invoice_number']); ?></strong>
+                            </div>
+                            <div>
+                                <span
+                                    style="display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--p-text-muted); margin-bottom:0.3rem; font-weight:600;">Estado
+                                    de Cobro</span>
+                                <?php if ($order['payment_status'] === 'pagado'): ?>
+                                    <span
+                                        style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.35); border-radius:6px; padding:0.25rem 0.65rem; font-size:0.8rem; font-weight:700;">
+                                        <i class="ph ph-check-circle"></i> PAGADO
+                                    </span>
                                 <?php else: ?>
-                                    <p style="font-size: 0.8rem; color: var(--p-text-muted); margin-top: 0.5rem; margin-bottom: 0;">La comisión para este servicio fue generada automáticamente.</p>
-                                    <?php if (can_access_module('comisiones', $pdo)): ?>
-                                        <a href="../comisiones/index.php" class="btn btn-secondary" style="display: block; text-align: center; margin-top: 0.5rem; width: 100%; border-color: var(--success); color: var(--success);">
-                                            Ver Comisiones
-                                        </a>
-                                    <?php endif; ?>
+                                    <span
+                                        style="display:inline-flex; align-items:center; gap:0.3rem; background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:0.25rem 0.65rem; font-size:0.8rem; font-weight:700;">
+                                        <i class="ph ph-hourglass"></i> PENDIENTE
+                                    </span>
                                 <?php endif; ?>
-                            </form>
-                        </div>
-                    <?php endif; ?>
-
-                        <script>
-                                                                                               (function() {
-                                                    var statusSelect = document.getElementById('statusSelect');
-                                                    // Spare parts elements now in modal
-                                                    var btnAddPart = document.getElementById('btnAddPart');
-                                                    var partSelect = document.getElementById('partSelect');
-                                                    var partSN = document.getElementById('partSN');
-                                    
-                                                    // Main note
-                                                    var progressNote = document.getElementById('progressNote');
-                                    
-                                                    // Modals
-                                                    var diagModal = document.getElementById('diagnosisModal');
-                                                    var repairModal = document.getElementById('repairModal');
-                                    
-                                                    // Modal Inputs
-                                                    var repairNoteModal = document.getElementById('repairNoteModal');
-
-                                                    // Buttons
-                                                    var btnConfirmDiag = document.getElementById('btnConfirmDiag');
-                                                    var btnCancelDiag = document.getElementById('btnCancelDiag');
-                                                    var btnConfirmRepair = document.getElementById('btnConfirmRepair');
-                                                    var btnCancelRepair = document.getElementById('btnCancelRepair');
-
-                                                    var previousStatus = statusSelect ? statusSelect.value : '';
-                                                    var form = statusSelect ? statusSelect.closest('form') : null;
-
-                                                    if(statusSelect) {
-                                                        statusSelect.addEventListener('focus', function() {
-                                                            previousStatus = this.value;
-                                                        });
-
-                                                        statusSelect.addEventListener('change', function() {
-                                                            if (this.value === 'diagnosing') {
-                                                                diagModal.style.display = 'flex';
-                                                            } else if (this.value === 'in_repair') {
-                                                                repairModal.style.display = 'flex';
-                                                                // Pre-fill modal note if needed, or clear it
-                                                                repairNoteModal.value = ""; 
-                                                            } else {
-                                                                diagModal.style.display = 'none';
-                                                                repairModal.style.display = 'none';
-                                                            }
-                                                        });
-
-                                                        // Diagnosis Modal Actions
-                                                        if(btnCancelDiag) {
-                                                            btnCancelDiag.addEventListener('click', function() {
-                                                                diagModal.style.display = 'none';
-                                                                statusSelect.value = previousStatus;
-                                                            });
-                                                        }
-                                                        if(btnConfirmDiag) {
-                                                            btnConfirmDiag.addEventListener('click', function() {
-                                                                form.submit();
-                                                            });
-                                                        }
-
-                                                        // Repair Modal Actions
-                                                        if(btnCancelRepair) {
-                                                            btnCancelRepair.addEventListener('click', function() {
-                                                                repairModal.style.display = 'none';
-                                                                statusSelect.value = previousStatus;
-                                                            });
-                                                        }
-                                                        if(btnConfirmRepair) {
-                                                            btnConfirmRepair.addEventListener('click', function() {
-                                                                // Transfer note to main form
-                                                                if(repairNoteModal.value.trim() !== "") {
-                                                                    // Append or set
-                                                                    progressNote.value = repairNoteModal.value;
-                                                                }
-                                                                form.submit();
-                                                            });
-                                                        }
-                                                    }
-
-                                                    // Spare Parts Logic (Inside Repair Modal)
-                                                    if (btnAddPart && partSelect && repairNoteModal) {
-                                                        btnAddPart.addEventListener('click', function() {
-                                                            var val = partSelect.value;
-                                                            var sn = partSN ? partSN.value.trim() : "";
-                                                            if(val) {
-                                                                var entry = "Se utiliza repuesto: " + val;
-                                                                if(sn) entry += " (S/N: " + sn + ")";
-                                                
-                                                                repairNoteModal.value = (repairNoteModal.value ? repairNoteModal.value + "\n" : "") + entry;
-                                                
-                                                                // Reset inputs
-                                                                partSelect.value = "";
-                                                                if(partSN) partSN.value = "";
-                                                            }
-                                                        });
-                                                    }
-                                                })();
-                                            </script>
-                            
-                                            <?php if ($autoPrintDiagnosis): ?>
-                                                        <script>
-                                                            document.addEventListener("DOMContentLoaded", function() {
-                                                                window.location.href = 'print_diagnosis.php?id=<?php echo $id; ?>&autoprint=1';
-                                                            });
-                                                        </script>
-                                            <?php endif; ?>
-
-                                <?php else: ?>
-                                            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
-                                                <i class="ph ph-check-circle" style="font-size: 1.5rem; color: #34d399;"></i>
-                                                <div>
-                                                    <strong style="color: #34d399; display: block;">Servicio Entregado</strong>
-                                                    <span style="font-size: 0.85rem; color: var(--p-text-muted);">Proceso finalizado.</span>
-                                                </div>
-                                            </div>
-                            
-                                            <?php if (has_permission('module_re_enter_workshop', $pdo)): ?>
-                                                        <div class="update-card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--p-primary);">
-                                                            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: var(--p-text-main);">
-                                                                <i class="ph ph-arrow-u-down-left"></i> Reingresar a Taller
-                                                            </h3>
-                                                            <p style="font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 1rem;">
-                                                                Tiene permisos para reabrir este caso. Seleccione el estado al que desea regresar.
-                                                            </p>
-                                                            <form method="POST">
-                                                                <input type="hidden" name="action" value="update_status">
-                                        
-                                                                <div style="margin-bottom: 1rem;">
-                                                                    <label style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Nuevo Estado</label>
-                                                                    <select name="status" class="modern-select">
-                                                                        <option value="received">Recibido (Inicial)</option>
-                                                                        <option value="diagnosing">En Diagnóstico</option>
-                                                                        <option value="pending_approval">En Espera</option>
-                                                                        <option value="in_repair">En Reparación</option>
-                                                                        <option value="ready">Listo</option>
-                                                                    </select>
-                                                                </div>
-
-                                                                <div style="margin-bottom: 1rem;">
-                                                                    <label style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Motivo de Reingreso</label>
-                                                                    <textarea name="note" class="modern-textarea" rows="2" placeholder="Ej. Cliente reporta falla recurrente..." required></textarea>
-                                                                </div>
-
-                                                                <button type="submit" class="btn-update">
-                                                                    Confirmar Reingreso
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                            <?php endif; ?>
-                            
-                                <?php endif; ?>
-
-                    <!-- History -->
-                    <div class="form-section">
-                        <div class="form-section-header">
-                            <div style="display:flex; align-items:center; gap:0.5rem">
-                                <i class="ph ph-clock-counter-clockwise"></i> Historial
                             </div>
                         </div>
-                        
-                        <div class="history-container" style="padding-left: 0.5rem;">
-                            <?php foreach ($history as $event): ?>
-                                        <div class="timeline-item">
-                                            <div class="timeline-icon"></div>
-                                            <div class="timeline-text">
-                                                <?php echo $statusLabels[$event['action']] ?? $event['action']; ?>
-                                            </div>
-                                            <div class="timeline-date">
-                                                <?php echo date('d/m/Y H:i', strtotime($event['created_at'])); ?> • <?php echo htmlspecialchars($event['user_name']); ?>
-                                            </div>
-                                            <?php if ($event['notes']): ?>
-                                                        <div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--p-text-muted); background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;">
-                                                            <?php echo htmlspecialchars($event['notes']); ?>
-                                                        </div>
-                                            <?php endif; ?>
-                                        </div>
-                            <?php endforeach; ?>
+                        <?php if (can_access_module('comisiones', $pdo)): ?>
+                            <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--p-border);">
+                                <a href="../comisiones/index.php"
+                                    style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.82rem; color:#818cf8; text-decoration:none;">
+                                    <i class="ph ph-coins"></i> Ver en Módulo de Comisiones
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Update Status Panel -->
+                <?php if ($order['status'] !== 'delivered' && $order['status'] !== 'cancelled'): ?>
+                    <div class="update-card no-print" style="margin-bottom: 1.5rem;">
+                        <div
+                            style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--p-border); color:var(--p-primary); font-weight:600; font-size:1.05rem;">
+                            <i class="ph ph-arrows-clockwise"></i> Actualizar Estado
+                        </div>
+                        <form method="POST" action="">
+                            <input type="hidden" name="action" value="update_status">
+                            <div style="margin-bottom:1rem;">
+                                <label
+                                    style="display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--p-text-muted); margin-bottom:0.4rem; font-weight:600;">Nuevo
+                                    Estado</label>
+                                <select name="status" class="modern-select">
+                                    <?php
+                                    $allStatuses = [
+                                        'received' => 'Recibido',
+                                        'diagnosing' => 'En Revisión/Diagnóstico',
+                                        'pending_approval' => 'En Espera',
+                                        'in_repair' => 'En Reparación',
+                                        'ready' => 'Listo',
+                                        'delivered' => 'Entregado',
+                                        'cancelled' => 'Cancelado',
+                                    ];
+                                    foreach ($allStatuses as $val => $label): ?>
+                                        <option value="<?php echo $val; ?>" <?php echo $order['status'] === $val ? 'selected' : ''; ?>>
+                                            <?php echo $label; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div style="margin-bottom:1.25rem;">
+                                <label
+                                    style="display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--p-text-muted); margin-bottom:0.4rem; font-weight:600;">Nota
+                                    de Progreso</label>
+                                <textarea name="note" class="modern-textarea" rows="3"
+                                    placeholder="Ej. Se realizó cambio de repuesto..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-update">Guardar Cambios</button>
+                        </form>
+                    </div>
+                <?php endif; ?>
+
+                <!-- History -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <div style="display:flex; align-items:center; gap:0.5rem">
+                            <i class="ph ph-clock-counter-clockwise"></i> Historial
                         </div>
                     </div>
-                </div>
 
+                    <div class="history-container" style="padding-left: 0.5rem;">
+                        <?php foreach ($history as $event): ?>
+                            <div class="timeline-item">
+                                <div class="timeline-icon"></div>
+                                <div class="timeline-text">
+                                    <?php echo $statusLabels[$event['action']] ?? $event['action']; ?>
+                                </div>
+                                <div class="timeline-date">
+                                    <?php echo date('d/m/Y H:i', strtotime($event['created_at'])); ?> •
+                                    <?php echo htmlspecialchars($event['user_name']); ?>
+                                </div>
+                                <?php if ($event['notes']): ?>
+                                    <div
+                                        style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--p-text-muted); background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;">
+                                        <?php echo htmlspecialchars($event['notes']); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
+</div>
 <?php require_once '../../includes/footer.php'; ?>

@@ -27,12 +27,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $stmt = $pdo->prepare("UPDATE service_orders SET assigned_tech_id = ? WHERE id = ?");
             $stmt->execute([$tech_id, $order_id]);
 
-            // Log history
+            // Log history and commission logic
             $tech_name = "Sin Asignar";
             if ($tech_id) {
                 $stmtT = $pdo->prepare("SELECT username FROM users WHERE id = ?");
                 $stmtT->execute([$tech_id]);
                 $tech_name = $stmtT->fetchColumn();
+
+                // --- Auto-generate or update commission ---
+                $stmt_com = $pdo->prepare("SELECT id FROM comisiones WHERE reference_id = ? AND tipo = 'SERVICIO'");
+                $stmt_com->execute([$order_id]);
+                $comision = $stmt_com->fetch();
+
+                $stmt_s = $pdo->prepare("
+                    SELECT c.name as client_name, e.brand, e.model, so.payment_status, so.invoice_number
+                    FROM service_orders so
+                    LEFT JOIN clients c ON so.client_id = c.id
+                    LEFT JOIN equipments e ON so.equipment_id = e.id
+                    WHERE so.id = ?
+                ");
+                $stmt_s->execute([$order_id]);
+                $serv = $stmt_s->fetch();
+                $servicio_desc = trim($serv['brand'] . ' ' . $serv['model']);
+
+                if ($comision) {
+                    $stmt_up_c = $pdo->prepare("UPDATE comisiones SET tech_id = ?, vendedor = ? WHERE id = ?");
+                    $stmt_up_c->execute([$tech_id, $tech_name, $comision['id']]);
+                } else {
+                    $initial_status = 'PENDIENTE';
+                    $initial_invoice = null;
+                    $initial_date = null;
+                    
+                    if ($serv['payment_status'] === 'pagado' && !empty($serv['invoice_number'])) {
+                        $initial_status = 'PAGADA';
+                        $initial_invoice = $serv['invoice_number'];
+                        $initial_date = date('Y-m-d'); // CURDATE()
+                    }
+
+                    $insertC = $pdo->prepare("
+                        INSERT INTO comisiones (
+                            fecha_servicio, cliente, servicio, cantidad, tipo, vendedor, caso, estado, tech_id, reference_id, factura, fecha_facturacion, fecha_pago
+                        ) VALUES (
+                            CURDATE(), ?, ?, 1, 'SERVICIO', ?, ?, ?, ?, ?, ?, ?, ?
+                        )
+                    ");
+                    $insertC->execute([
+                        $serv['client_name'],
+                        $servicio_desc,
+                        $tech_name,
+                        "Servicio_#" . str_pad($order_id, 4, '0', STR_PAD_LEFT),
+                        $initial_status,
+                        $tech_id,
+                        $order_id,
+                        $initial_invoice,
+                        $initial_date,
+                        $initial_date // fecha_pago = fecha_facturacion
+                    ]);
+                }
+                // ------------------------------------------
             }
 
             $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");
@@ -204,13 +256,14 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="3">
                             No. Serie <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
-                        <th>Falla Reportada</th>
                         <th class="sortable" data-column="5">
                             Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
                         <th class="sortable" data-column="6">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th>Finanzas</th>
+                        <th style="text-align: right;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -223,10 +276,10 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>
-                                    <?php 
-                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
-                                             (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
-                                             $item['contact_name'])); 
+                                    <?php
+                                    echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] :
+                                        (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] :
+                                            $item['contact_name']));
                                     ?>
                                 </td>
                                 <td>
@@ -237,10 +290,6 @@ require_once '../../includes/sidebar.php';
                                 <td>
                                     <span
                                         class="text-sm font-medium"><?php echo htmlspecialchars($item['serial_number']); ?></span>
-                                </td>
-                                <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                                    title="<?php echo htmlspecialchars($item['problem_reported']); ?>">
-                                    <?php echo htmlspecialchars($item['problem_reported']); ?>
                                 </td>
                                 <!-- Assigned Technician -->
                                 <td onclick="event.stopPropagation();">
@@ -309,6 +358,12 @@ require_once '../../includes/sidebar.php';
                                     <span class="status-badge status-<?php echo $pCol; ?>">
                                         <?php echo strtoupper($pLbl); ?>
                                     </span>
+                                </td>
+                                <td style="text-align: right;" onclick="event.stopPropagation();">
+                                    <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-primary"
+                                        style="padding: 0.4rem 1rem; font-size: 0.85rem;">
+                                        <i class="ph ph-gear"></i> Gestionar
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -393,6 +448,8 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="6">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th>Finanzas</th>
+                        <th style="text-align: right;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -405,10 +462,10 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>
-                                    <?php 
-                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
-                                             (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
-                                             $item['contact_name'])); 
+                                    <?php
+                                    echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] :
+                                        (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] :
+                                            $item['contact_name']));
                                     ?>
                                 </td>
                                 <td>
@@ -447,6 +504,12 @@ require_once '../../includes/sidebar.php';
                                     <span class="status-badge status-<?php echo $pCol; ?>">
                                         <?php echo strtoupper($pLbl); ?>
                                     </span>
+                                </td>
+                                <td style="text-align: right;" onclick="event.stopPropagation();">
+                                    <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
+                                        style="padding: 0.4rem 1rem; font-size: 0.85rem;">
+                                        <i class="ph ph-eye"></i> Ver
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

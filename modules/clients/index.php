@@ -14,9 +14,9 @@ $page_title = 'Clientes';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php'; // Actually Navbar
 
-// Search Logic
-$search = $_GET['search'] ?? '';
-$where = "1";
+// Initialize search variables
+$search = trim($_GET['search'] ?? '');
+$where = '1=1';
 $params = [];
 
 if ($search) {

@@ -46,7 +46,7 @@ $sql = "
         (SELECT COUNT(*) FROM project_materials pm WHERE pm.survey_id = ps.id) as materials_count
     FROM project_surveys ps
     LEFT JOIN users u ON ps.user_id = u.id
-    WHERE $where
+    WHERE $where AND ps.status IN ('draft', 'submitted')
     ORDER BY ps.created_at DESC
 ";
 
@@ -172,7 +172,7 @@ $surveys = $stmt->fetchAll();
                                             class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem;"
                                             title="Imprimir/PDF"><i class="ph ph-printer"></i></a>
 
-                                        <?php if (can_access_module('surveys_edit', $pdo) && $item['status'] !== 'approved'): ?>
+                                        <?php if (can_access_module('surveys_edit', $pdo) && in_array($item['status'], ['draft', 'submitted']) && $item['payment_status'] !== 'pagado'): ?>
                                             <a href="edit.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
                                                 style="padding: 0.4rem; font-size: 1rem;" title="Editar"><i
                                                     class="ph ph-pencil-simple"></i></a>

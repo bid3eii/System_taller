@@ -136,14 +136,17 @@
         }
 
         // Projects (Proyectos)
+        $can_proyectos = can_access_module('proyectos', $pdo) || $_SESSION['role'] === 'superadmin' || $_SESSION['role'] === 'admin';
         $can_surveys = can_access_module('surveys', $pdo);
         $can_project_history = can_access_module('project_history', $pdo);
         $can_anexos = can_access_module('anexos', $pdo);
         $can_viaticos = can_access_module('viaticos', $pdo);
         $can_comisiones = can_access_module('comisiones', $pdo);
 
-        if ($can_surveys || $can_project_history || $can_anexos || $can_viaticos || $can_comisiones) {
+        if ($can_proyectos || $can_surveys || $can_project_history || $can_anexos || $can_viaticos || $can_comisiones) {
             $proj_children = [];
+            if ($can_proyectos)
+                $proj_children[] = ['url' => BASE_URL . 'modules/proyectos/index.php', 'icon' => 'ph-kanban', 'label' => 'Proyectos'];
             if ($can_surveys)
                 $proj_children[] = ['url' => BASE_URL . 'modules/levantamientos/index.php', 'icon' => 'ph-clipboard', 'label' => 'Levantamientos'];
             if ($can_viaticos)
@@ -160,7 +163,7 @@
                 'url' => '#',
                 'icon' => 'ph-folder-open',
                 'label' => 'Proyecto',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/levantamientos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/project_history/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/anexos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/comisiones/') !== false),
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/proyectos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/levantamientos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/project_history/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/anexos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/comisiones/') !== false),
                 'children' => $proj_children
             ];
         }

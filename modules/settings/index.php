@@ -43,7 +43,19 @@ $defined_modules = [
     'settings_restore' => 'Restaurar Sistema',
     're_enter_workshop' => 'Reingresar a Taller',
     'view_all_entries' => 'Ver todos los equipos ingresados (sin estar asignados)',
+    'comisiones' => 'Comisiones',
+    'comisiones_add' => 'Crear Comisiones',
+    'comisiones_edit' => 'Editar Comisiones',
+    'comisiones_delete' => 'Eliminar Comisiones',
+    'viaticos' => 'Viáticos',
+    'viaticos_add' => 'Crear Viático',
+    'viaticos_edit' => 'Editar Viático',
+    'viaticos_delete' => 'Eliminar Viático',
     'surveys' => 'Levantamientos',
+    'surveys_add' => 'Crear Levantamiento',
+    'surveys_edit' => 'Editar Levantamiento',
+    'surveys_delete' => 'Eliminar Levantamiento',
+    'surveys_view_all' => 'Ver Levantamientos de Todos',
     'project_history' => 'Historial Proyectos',
     'anexos' => 'Anexos Yazaki',
 ];
@@ -623,17 +635,17 @@ require_once '../../includes/sidebar.php';
     </div>
 
     <?php if ($success_msg): ?>
-        <div
-            style="background: rgba(16, 185, 129, 0.1); color: #6ee7b7; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
-            <i class="ph ph-check-circle"></i> <?php echo $success_msg; ?>
-        </div>
+            <div
+                style="background: rgba(16, 185, 129, 0.1); color: #6ee7b7; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+                <i class="ph ph-check-circle"></i> <?php echo $success_msg; ?>
+            </div>
     <?php endif; ?>
 
     <?php if ($error_msg): ?>
-        <div
-            style="background: rgba(239, 68, 68, 0.1); color: #fca5a5; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
-            <i class="ph ph-warning"></i> <?php echo $error_msg; ?>
-        </div>
+            <div
+                style="background: rgba(239, 68, 68, 0.1); color: #fca5a5; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+                <i class="ph ph-warning"></i> <?php echo $error_msg; ?>
+            </div>
     <?php endif; ?>
 
     <!-- Tabs Header -->
@@ -663,215 +675,215 @@ require_once '../../includes/sidebar.php';
 
     <div id="tab-general" style="display: <?php echo $active_tab == 'general' ? 'block' : 'none'; ?>;">
         <?php if (!can_access_module('settings_general', $pdo) && !can_access_module('settings', $pdo)): ?>
-            <div class="card">
-                <div class="text-center p-4">Acceso denegado a Configuración General.</div>
-            </div>
+                <div class="card">
+                    <div class="text-center p-4">Acceso denegado a Configuración General.</div>
+                </div>
         <?php else: ?>
-            <div class="card" style="max-width: 1200px; margin: 0 auto; overflow: visible;">
-                <form method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="action" value="update_general_settings">
+                <div class="card" style="max-width: 1200px; margin: 0 auto; overflow: visible;">
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="action" value="update_general_settings">
 
-                    <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start;">
+                        <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start;">
 
-                        <!-- LEFT COLUMN: BRANDING -->
-                        <div>
-                            <div
-                                style="background: rgba(var(--primary-rgb), 0.03); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; text-align: center;">
-                                <h4 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-main);">
-                                    Identidad Visual</h4>
-
+                            <!-- LEFT COLUMN: BRANDING -->
+                            <div>
                                 <div
-                                    style="position: relative; width: 100%; height: 180px; background: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; border: 2px dashed var(--border-color); overflow: hidden; transition: all 0.2s;">
-                                    <?php if ($system_logo && file_exists("../../assets/uploads/" . $system_logo)): ?>
-                                        <img src="../../assets/uploads/<?php echo $system_logo; ?>" id="logoPreview" alt="Logo"
-                                            style="max-height: 140px; max-width: 90%; object-fit: contain;">
-                                    <?php else: ?>
-                                        <div id="noLogoText"
-                                            style="color: var(--text-muted); font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
-                                            <i class="ph ph-image" style="font-size: 2rem;"></i>
-                                            <span>Sin Logo</span>
-                                        </div>
-                                    <?php endif; ?>
+                                    style="background: rgba(var(--primary-rgb), 0.03); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; text-align: center;">
+                                    <h4 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-main);">
+                                        Identidad Visual</h4>
+
+                                    <div
+                                        style="position: relative; width: 100%; height: 180px; background: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; border: 2px dashed var(--border-color); overflow: hidden; transition: all 0.2s;">
+                                        <?php if ($system_logo && file_exists("../../assets/uploads/" . $system_logo)): ?>
+                                                <img src="../../assets/uploads/<?php echo $system_logo; ?>" id="logoPreview" alt="Logo"
+                                                    style="max-height: 140px; max-width: 90%; object-fit: contain;">
+                                        <?php else: ?>
+                                                <div id="noLogoText"
+                                                    style="color: var(--text-muted); font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                                    <i class="ph ph-image" style="font-size: 2rem;"></i>
+                                                    <span>Sin Logo</span>
+                                                </div>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div style="position: relative;">
+                                        <input type="file" name="system_logo" id="logoInput" class="form-control"
+                                            accept="image/*"
+                                            style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2;"
+                                            onchange="previewLogo(this)">
+                                        <button type="button" class="btn btn-secondary"
+                                            style="width: 100%; position: relative; z-index: 1;">
+                                            <i class="ph ph-upload-simple"></i> Cambiar Logo
+                                        </button>
+                                    </div>
+                                    <p class="text-muted" style="font-size: 0.75rem; margin-top: 0.75rem; margin-bottom: 0;">
+                                        Recomendado: PNG/JPG, fondo transparente.</p>
                                 </div>
 
-                                <div style="position: relative;">
-                                    <input type="file" name="system_logo" id="logoInput" class="form-control"
-                                        accept="image/*"
-                                        style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2;"
-                                        onchange="previewLogo(this)">
-                                    <button type="button" class="btn btn-secondary"
-                                        style="width: 100%; position: relative; z-index: 1;">
-                                        <i class="ph ph-upload-simple"></i> Cambiar Logo
-                                    </button>
-                                </div>
-                                <p class="text-muted" style="font-size: 0.75rem; margin-top: 0.75rem; margin-bottom: 0;">
-                                    Recomendado: PNG/JPG, fondo transparente.</p>
+                                <!-- Organization Info moved here or keep simple -->
                             </div>
 
-                            <!-- Organization Info moved here or keep simple -->
-                        </div>
-
-                        <!-- RIGHT COLUMN: DETAILS -->
-                        <div>
-                            <div
-                                style="background: rgba(var(--bg-card-rgb), 0.6); border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem;">
-
-                                <h3 class="mb-4"
-                                    style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="ph-fill ph-buildings" style="color: var(--primary);"></i> Información de la
-                                    Empresa
-                                </h3>
-
+                            <!-- RIGHT COLUMN: DETAILS -->
+                            <div>
                                 <div
-                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                                    <div class="form-group">
-                                        <label class="form-label"
-                                            style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Nombre
-                                            de la Empresa</label>
-                                        <input type="text" name="company_name" class="form-control premium-input"
-                                            value="<?php echo htmlspecialchars($company_name); ?>"
-                                            placeholder="Ej. Mastertec">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label"
-                                            style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Dirección</label>
-                                        <input type="text" name="company_address" class="form-control premium-input"
-                                            value="<?php echo htmlspecialchars($company_address); ?>"
-                                            placeholder="Ej. Calle Principal #123">
-                                    </div>
-                                </div>
+                                    style="background: rgba(var(--bg-card-rgb), 0.6); border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem;">
 
-                                <div
-                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-                                    <div class="form-group">
-                                        <label class="form-label"
-                                            style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Teléfono</label>
-                                        <div style="position: relative;">
-                                            <i class="ph ph-phone"
-                                                style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                                            <input type="text" name="company_phone" class="form-control premium-input"
-                                                style="padding-left: 2.5rem;"
-                                                value="<?php echo htmlspecialchars($company_phone); ?>"
-                                                placeholder="Ej. +505 8888 8888">
+                                    <h3 class="mb-4"
+                                        style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="ph-fill ph-buildings" style="color: var(--primary);"></i> Información de la
+                                        Empresa
+                                    </h3>
+
+                                    <div
+                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                                        <div class="form-group">
+                                            <label class="form-label"
+                                                style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Nombre
+                                                de la Empresa</label>
+                                            <input type="text" name="company_name" class="form-control premium-input"
+                                                value="<?php echo htmlspecialchars($company_name); ?>"
+                                                placeholder="Ej. Mastertec">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"
+                                                style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Dirección</label>
+                                            <input type="text" name="company_address" class="form-control premium-input"
+                                                value="<?php echo htmlspecialchars($company_address); ?>"
+                                                placeholder="Ej. Calle Principal #123">
                                         </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label class="form-label"
-                                            style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Email
-                                            de Contacto</label>
-                                        <div style="position: relative;">
-                                            <i class="ph ph-envelope"
-                                                style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                                            <input type="email" name="company_email" class="form-control premium-input"
-                                                style="padding-left: 2.5rem;"
-                                                value="<?php echo htmlspecialchars($company_email); ?>"
-                                                placeholder="contacto@empresa.com">
+
+                                    <div
+                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                                        <div class="form-group">
+                                            <label class="form-label"
+                                                style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Teléfono</label>
+                                            <div style="position: relative;">
+                                                <i class="ph ph-phone"
+                                                    style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                                                <input type="text" name="company_phone" class="form-control premium-input"
+                                                    style="padding-left: 2.5rem;"
+                                                    value="<?php echo htmlspecialchars($company_phone); ?>"
+                                                    placeholder="Ej. +505 8888 8888">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label"
+                                                style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Email
+                                                de Contacto</label>
+                                            <div style="position: relative;">
+                                                <i class="ph ph-envelope"
+                                                    style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                                                <input type="email" name="company_email" class="form-control premium-input"
+                                                    style="padding-left: 2.5rem;"
+                                                    value="<?php echo htmlspecialchars($company_email); ?>"
+                                                    placeholder="contacto@empresa.com">
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <hr style="border-color: var(--border-color); opacity: 0.5; margin: 2rem 0;">
+                                    <hr style="border-color: var(--border-color); opacity: 0.5; margin: 2rem 0;">
 
-                                <h3 class="mb-4"
-                                    style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="ph-fill ph-file-text" style="color: #8b5cf6;"></i> Configuración de Documentos
-                                </h3>
+                                    <h3 class="mb-4"
+                                        style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="ph-fill ph-file-text" style="color: #8b5cf6;"></i> Configuración de Documentos
+                                    </h3>
 
-                                <div class="form-group" style="margin-bottom: 2rem;">
-                                    <div
-                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                        <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Términos de
-                                            Ingreso (Hoja de Recepción)</label>
-                                        <span class="badge"
-                                            style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary); font-size: 0.7rem;">Visible
-                                            al cliente</span>
+                                    <div class="form-group" style="margin-bottom: 2rem;">
+                                        <div
+                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                            <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Términos de
+                                                Ingreso (Hoja de Recepción)</label>
+                                            <span class="badge"
+                                                style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary); font-size: 0.7rem;">Visible
+                                                al cliente</span>
+                                        </div>
+                                        <textarea name="print_entry_text" class="form-control premium-input" rows="6"
+                                            style="resize: vertical; white-space: pre-wrap; line-height: 1.5; font-size: 0.9rem;"><?php echo htmlspecialchars($settings['print_entry_text'] ?? ""); ?></textarea>
                                     </div>
-                                    <textarea name="print_entry_text" class="form-control premium-input" rows="6"
-                                        style="resize: vertical; white-space: pre-wrap; line-height: 1.5; font-size: 0.9rem;"><?php echo htmlspecialchars($settings['print_entry_text'] ?? ""); ?></textarea>
-                                </div>
 
-                                <div class="form-group">
-                                    <div
-                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                        <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Garantía y
-                                            Entrega (Pie de Página)</label>
-                                        <span class="badge"
-                                            style="background: rgba(16, 185, 129, 0.1); color: #10b981; font-size: 0.7rem;">Visible
-                                            en Salida</span>
+                                    <div class="form-group">
+                                        <div
+                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                            <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Garantía y
+                                                Entrega (Pie de Página)</label>
+                                            <span class="badge"
+                                                style="background: rgba(16, 185, 129, 0.1); color: #10b981; font-size: 0.7rem;">Visible
+                                                en Salida</span>
+                                        </div>
+                                        <textarea name="print_footer_text" class="form-control premium-input" rows="4"
+                                            style="resize: vertical; line-height: 1.5; font-size: 0.9rem;"><?php echo htmlspecialchars($print_footer_text); ?></textarea>
                                     </div>
-                                    <textarea name="print_footer_text" class="form-control premium-input" rows="4"
-                                        style="resize: vertical; line-height: 1.5; font-size: 0.9rem;"><?php echo htmlspecialchars($print_footer_text); ?></textarea>
-                                </div>
 
-                                <div style="margin-top: 2rem; text-align: right;">
-                                    <button type="submit" class="btn btn-primary"
-                                        style="padding: 0.8rem 2rem; font-size: 1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);">
-                                        <i class="ph-bold ph-floppy-disk"></i> Guardar Cambios
-                                    </button>
-                                </div>
+                                    <div style="margin-top: 2rem; text-align: right;">
+                                        <button type="submit" class="btn btn-primary"
+                                            style="padding: 0.8rem 2rem; font-size: 1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);">
+                                            <i class="ph-bold ph-floppy-disk"></i> Guardar Cambios
+                                        </button>
+                                    </div>
 
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </form>
-            </div>
+                    </form>
+                </div>
 
-            <script>
-                function previewLogo(input) {
-                    if (input.files && input.files[0]) {
-                        var reader = new FileReader();
-                        reader.onload = function (e) {
-                            var img = document.getElementById('logoPreview');
-                            var noLogo = document.getElementById('noLogoText');
+                <script>
+                    function previewLogo(input) {
+                        if (input.files && input.files[0]) {
+                            var reader = new FileReader();
+                            reader.onload = function (e) {
+                                var img = document.getElementById('logoPreview');
+                                var noLogo = document.getElementById('noLogoText');
 
-                            if (img) {
-                                img.src = e.target.result;
-                                img.style.display = 'block';
-                            } else {
-                                // Create img if it doesn't exist
-                                img = document.createElement('img');
-                                img.id = 'logoPreview';
-                                img.src = e.target.result;
-                                img.style.maxHeight = '140px';
-                                img.style.maxWidth = '90%';
-                                img.style.objectFit = 'contain';
+                                if (img) {
+                                    img.src = e.target.result;
+                                    img.style.display = 'block';
+                                } else {
+                                    // Create img if it doesn't exist
+                                    img = document.createElement('img');
+                                    img.id = 'logoPreview';
+                                    img.src = e.target.result;
+                                    img.style.maxHeight = '140px';
+                                    img.style.maxWidth = '90%';
+                                    img.style.objectFit = 'contain';
 
-                                var container = document.querySelector('#noLogoText').parentNode;
-                                container.innerHTML = '';
-                                container.appendChild(img);
+                                    var container = document.querySelector('#noLogoText').parentNode;
+                                    container.innerHTML = '';
+                                    container.appendChild(img);
+                                }
+
+                                if (noLogo) noLogo.style.display = 'none';
                             }
-
-                            if (noLogo) noLogo.style.display = 'none';
+                            reader.readAsDataURL(input.files[0]);
                         }
-                        reader.readAsDataURL(input.files[0]);
                     }
-                }
-            </script>
+                </script>
 
-            <style>
-                .premium-input {
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid var(--border-color);
-                    border-radius: 12px;
-                    padding: 0.8rem 1rem;
-                    transition: all 0.2s;
-                }
+                <style>
+                    .premium-input {
+                        background: rgba(255, 255, 255, 0.05);
+                        border: 1px solid var(--border-color);
+                        border-radius: 12px;
+                        padding: 0.8rem 1rem;
+                        transition: all 0.2s;
+                    }
 
-                .premium-input:focus {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-color: var(--primary);
-                    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
-                }
+                    .premium-input:focus {
+                        background: rgba(255, 255, 255, 0.1);
+                        border-color: var(--primary);
+                        box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+                    }
 
-                body.light-mode .premium-input {
-                    background: white;
-                    border-color: #e2e8f0;
-                }
+                    body.light-mode .premium-input {
+                        background: white;
+                        border-color: #e2e8f0;
+                    }
 
-                body.light-mode .premium-input:focus {
-                    border-color: var(--primary);
-                }
-            </style>
+                    body.light-mode .premium-input:focus {
+                        border-color: var(--primary);
+                    }
+                </style>
         <?php endif; ?>
     </div>
 </div>
@@ -879,33 +891,33 @@ require_once '../../includes/sidebar.php';
 <!-- TAB: ROLES -->
 <div id="tab-roles" style="display: <?php echo $active_tab == 'roles' ? 'block' : 'none'; ?>;">
     <?php if (!can_access_module('settings_roles', $pdo) && !can_access_module('settings', $pdo)): ?>
-        <div class="card">
-            <div class="text-center p-4">Acceso denegado a Gestión de Roles.</div>
-        </div>
+            <div class="card">
+                <div class="text-center p-4">Acceso denegado a Gestión de Roles.</div>
+            </div>
     <?php else: ?>
-        <div class="card" style="margin-bottom: 2rem; width: fit-content;">
-            <h3><i class="ph ph-plus-circle"></i> Crear Nuevo Rol</h3>
-            <p class="text-muted mb-4">Agregue nuevos roles al sistema para asignar permisos específicos.</p>
-            <form method="POST" style="display: flex; gap: 1rem; align-items: flex-end;">
-                <input type="hidden" name="action" value="create_role">
-                <div class="form-group" style="margin-bottom: 0; flex-grow: 1; max-width: 400px;">
-                    <label class="form-label">Nombre del Rol</label>
-                    <input type="text" name="role_name" class="form-control" placeholder="Ej. Supervisor, Técnico..."
-                        required>
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="ph ph-plus"></i> Guardar Rol
-                </button>
-            </form>
-        </div>
+            <div class="card" style="margin-bottom: 2rem; width: fit-content;">
+                <h3><i class="ph ph-plus-circle"></i> Crear Nuevo Rol</h3>
+                <p class="text-muted mb-4">Agregue nuevos roles al sistema para asignar permisos específicos.</p>
+                <form method="POST" style="display: flex; gap: 1rem; align-items: flex-end;">
+                    <input type="hidden" name="action" value="create_role">
+                    <div class="form-group" style="margin-bottom: 0; flex-grow: 1; max-width: 400px;">
+                        <label class="form-label">Nombre del Rol</label>
+                        <input type="text" name="role_name" class="form-control" placeholder="Ej. Supervisor, Técnico..."
+                            required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ph ph-plus"></i> Guardar Rol
+                    </button>
+                </form>
+            </div>
 
-        <!-- Roles Summary Table -->
-        <div class="card">
-            <h3 class="mb-4">Resumen de Roles</h3>
+            <!-- Roles Summary Table -->
+            <div class="card">
+                <h3 class="mb-4">Resumen de Roles</h3>
 
-            <?php
-            // Fetch Roles with Counts
-            $stmtRolesSummary = $pdo->query("
+                <?php
+                // Fetch Roles with Counts
+                $stmtRolesSummary = $pdo->query("
                 SELECT 
                     r.id, 
                     r.name, 
@@ -914,56 +926,56 @@ require_once '../../includes/sidebar.php';
                 FROM roles r
                 ORDER BY r.id ASC
             ");
-            $roles_summary = $stmtRolesSummary->fetchAll();
-            ?>
+                $roles_summary = $stmtRolesSummary->fetchAll();
+                ?>
 
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Rol</th>
-                        <th style="text-align: center;">Usuarios Asignados</th>
-                        <th style="text-align: center;">Módulos Activos</th>
-                        <th style="width: 50px;"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($roles_summary as $rs): ?>
-                        <?php
-                        $is_super_role = ($rs['id'] == 1);
-                        $row_style = $is_super_role ? "opacity: 0.7; cursor: not-allowed; background: rgba(0,0,0,0.02);" : "cursor: pointer; transition: background 0.2s;";
-                        $onclick = $is_super_role ? "" : "window.location.href='?tab=modules&subtab=roles&target_role_id={$rs['id']}'";
-                        ?>
-                        <tr onclick="<?php echo $onclick; ?>" style="<?php echo $row_style; ?>"
-                            class="<?php echo $is_super_role ? '' : 'hover-row'; ?>">
-                            <td style="font-weight: 500; font-size: 0.95rem;">
-                                <?php if ($is_super_role): ?>
-                                    <i class="ph-fill ph-lock-key" style="color: var(--warning); margin-right: 0.5rem;"></i>
-                                <?php else: ?>
-                                    <i class="ph ph-shield" style="color: var(--text-muted); margin-right: 0.5rem;"></i>
-                                <?php endif; ?>
-                                <?php echo htmlspecialchars($rs['name']); ?>
-                            </td>
-                            <td style="text-align: center;">
-                                <span class="badge" style="background: var(--bg-hover); color: var(--text-main);">
-                                    <i class="ph-bold ph-users" style="font-size: 0.8rem; margin-right: 4px;"></i>
-                                    <?php echo $rs['user_count']; ?>
-                                </span>
-                            </td>
-                            <td style="text-align: center;">
-                                <span class="badge" style="background: rgba(var(--success-rgb), 0.1); color: var(--success);">
-                                    <?php echo $rs['id'] == 1 ? 'Todos' : $rs['module_count']; ?>
-                                </span>
-                            </td>
-                            <td style="color: var(--text-muted);">
-                                <?php if (!$is_super_role): ?>
-                                    <i class="ph ph-caret-right"></i>
-                                <?php endif; ?>
-                            </td>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Rol</th>
+                            <th style="text-align: center;">Usuarios Asignados</th>
+                            <th style="text-align: center;">Módulos Activos</th>
+                            <th style="width: 50px;"></th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($roles_summary as $rs): ?>
+                                <?php
+                                $is_super_role = ($rs['id'] == 1);
+                                $row_style = $is_super_role ? "opacity: 0.7; cursor: not-allowed; background: rgba(0,0,0,0.02);" : "cursor: pointer; transition: background 0.2s;";
+                                $onclick = $is_super_role ? "" : "window.location.href='?tab=modules&subtab=roles&target_role_id={$rs['id']}'";
+                                ?>
+                                <tr onclick="<?php echo $onclick; ?>" style="<?php echo $row_style; ?>"
+                                    class="<?php echo $is_super_role ? '' : 'hover-row'; ?>">
+                                    <td style="font-weight: 500; font-size: 0.95rem;">
+                                        <?php if ($is_super_role): ?>
+                                                <i class="ph-fill ph-lock-key" style="color: var(--warning); margin-right: 0.5rem;"></i>
+                                        <?php else: ?>
+                                                <i class="ph ph-shield" style="color: var(--text-muted); margin-right: 0.5rem;"></i>
+                                        <?php endif; ?>
+                                        <?php echo htmlspecialchars($rs['name']); ?>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="badge" style="background: var(--bg-hover); color: var(--text-main);">
+                                            <i class="ph-bold ph-users" style="font-size: 0.8rem; margin-right: 4px;"></i>
+                                            <?php echo $rs['user_count']; ?>
+                                        </span>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="badge" style="background: rgba(var(--success-rgb), 0.1); color: var(--success);">
+                                            <?php echo $rs['id'] == 1 ? 'Todos' : $rs['module_count']; ?>
+                                        </span>
+                                    </td>
+                                    <td style="color: var(--text-muted);">
+                                        <?php if (!$is_super_role): ?>
+                                                <i class="ph ph-caret-right"></i>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
     <?php endif; ?>
 </div>
 
@@ -971,244 +983,264 @@ require_once '../../includes/sidebar.php';
 <!-- TAB: MODULES -->
 <div id="tab-modules" style="display: <?php echo $active_tab == 'modules' ? 'block' : 'none'; ?>;">
     <?php if (!can_access_module('settings_modules', $pdo) && !can_access_module('settings', $pdo)): ?>
-        <div class="card">
-            <div class="text-center p-4">Acceso denegado a Control de Módulos.</div>
-        </div>
+            <div class="card">
+                <div class="text-center p-4">Acceso denegado a Control de Módulos.</div>
+            </div>
     <?php else: ?>
 
-        <?php
-        $subtab = isset($_GET['subtab']) ? $_GET['subtab'] : 'roles';
-        ?>
-
-        <!-- Sub-Tabs Navigation & Toolbar -->
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
-            <!-- Pills -->
-            <div style="display: flex; gap: 0.25rem; background: var(--bg-hover); padding: 0.35rem; border-radius: 8px;">
-                <a href="?tab=modules&subtab=roles"
-                    class="btn btn-sm <?php echo $subtab === 'roles' ? 'btn-primary' : 'btn-text'; ?>"
-                    style="<?php echo $subtab !== 'roles' ? 'color: var(--text-secondary);' : ''; ?>">
-                    <i class="ph ph-identification-badge"></i> Por Roles (General)
-                </a>
-                <a href="?tab=modules&subtab=users"
-                    class="btn btn-sm <?php echo $subtab === 'users' ? 'btn-primary' : 'btn-text'; ?>"
-                    style="<?php echo $subtab !== 'users' ? 'color: var(--text-secondary);' : ''; ?>">
-                    <i class="ph ph-user-gear"></i> Por Usuario (Excepciones)
-                </a>
-            </div>
-
-            <!-- Right Toolbar (Context) -->
-            <div id="modules-toolbar">
-                <?php if ($subtab === 'users' && isset($_GET['target_user_id'])): ?>
-                    <?php
-                    $t_uid = intval($_GET['target_user_id']);
-                    $stmtH = $pdo->prepare("SELECT username, r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?");
-                    $stmtH->execute([$t_uid]);
-                    $hUser = $stmtH->fetch();
-                    ?>
-                    <?php if ($hUser): ?>
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <span style="font-size: 0.9rem; color: var(--text-muted);">
-                                Editando excepciones de: <strong
-                                    style="color: var(--text-main); font-weight: 600;"><?php echo htmlspecialchars($hUser['username']); ?></strong>
-                            </span>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <span class="badge"
-                                    style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary);">
-                                    <i class="ph-fill ph-shield-star" style="margin-right: 4px; color: var(--primary);"></i>
-                                    <?php echo htmlspecialchars($hUser['role_name']); ?>
-                                </span>
-                                <a href="?tab=modules&subtab=users" class="btn btn-sm btn-icon btn-text"
-                                    title="Cerrar y volver a lista" style="color: var(--text-muted);">
-                                    <i class="ph ph-x"></i>
-                                </a>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- SUB-TAB: ROLES (The Grid -> Cards) -->
-        <?php if ($subtab === 'roles'): ?>
             <?php
-            // Prepare Data for Roles View
-            $target_role_id = isset($_GET['target_role_id']) ? intval($_GET['target_role_id']) : 0;
-
-            // Default to first editable role if not selected
-            if ($target_role_id === 0 && count($users_roles_edit) > 0) {
-                $target_role_id = $users_roles_edit[array_key_first($users_roles_edit)]['id'];
-            }
-
-            // Define Modules Layout (Reused)
-            $modules_config = [
-                'dashboard' => ['label' => 'Dashboard', 'cat' => 'Sistema', 'icon' => 'ph-squares-four'],
-                'history' => ['label' => 'Historial', 'cat' => 'Sistema', 'icon' => 'ph-clock-counter-clockwise'],
-
-                'clients' => ['label' => 'Clientes', 'cat' => 'Gestión', 'icon' => 'ph-users'],
-                'clients_delete' => ['label' => 'Eliminar Clientes', 'cat' => 'Gestión', 'icon' => 'ph-trash'],
-                'equipment' => ['label' => 'Equipos', 'cat' => 'Gestión', 'icon' => 'ph-desktop'],
-                'equipment_entry' => ['label' => 'Reg. Entrada', 'cat' => 'Gestión', 'icon' => 'ph-download-simple'],
-                'equipment_exit' => ['label' => 'Reg. Salida', 'cat' => 'Gestión', 'icon' => 'ph-upload-simple'],
-                'tools' => ['label' => 'Herramientas', 'cat' => 'Gestión', 'icon' => 'ph-wrench'],
-                'services' => ['label' => 'Servicios', 'cat' => 'Gestión', 'icon' => 'ph-briefcase'],
-                'assign_equipment' => ['label' => 'Reasignar Equipos', 'cat' => 'Gestión', 'icon' => 'ph-user-switch'],
-                'warranties' => ['label' => 'Garantías', 'cat' => 'Gestión', 'icon' => 'ph-shield-check'],
-                'new_warranty' => ['label' => 'Nueva Garantía', 'cat' => 'Gestión', 'icon' => 'ph-plus-circle'],
-
-                'users' => ['label' => 'Usuarios', 'cat' => 'Administración', 'icon' => 'ph-user-gear'],
-                'users_delete' => ['label' => 'Eliminar Usuarios', 'cat' => 'Administración', 'icon' => 'ph-trash'],
-                'reports' => ['label' => 'Reportes', 'cat' => 'Administración', 'icon' => 'ph-chart-bar'],
-                'settings' => ['label' => 'Config. Sistema', 'cat' => 'Administración', 'icon' => 'ph-gear'],
-                'settings_general' => ['label' => 'Conf. General', 'cat' => 'Administración', 'icon' => 'ph-sliders'],
-                'settings_roles' => ['label' => 'Roles', 'cat' => 'Administración', 'icon' => 'ph-shield-check'],
-                'settings_modules' => ['label' => 'Módulos', 'cat' => 'Administración', 'icon' => 'ph-squares-four'],
-                'settings_users' => ['label' => 'Usuarios (Admin)', 'cat' => 'Administración', 'icon' => 'ph-users-three'],
-                'settings_restore' => ['label' => 'Restaurar', 'cat' => 'Administración', 'icon' => 'ph-warning-octagon'],
-                're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left'],
-                'view_all_entries' => ['label' => 'Ver equipos de todos', 'cat' => 'Gestión', 'icon' => 'ph-eye'],
-                'surveys' => ['label' => 'Levantamientos', 'cat' => 'Proyecto', 'icon' => 'ph-clipboard'],
-                'surveys_add' => ['label' => 'Nuevo Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-plus-circle'],
-                'surveys_edit' => ['label' => 'Editar Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-pencil-simple'],
-                'surveys_delete' => ['label' => 'Eliminar Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-trash'],
-                'surveys_view_all' => ['label' => 'Ver lvt. de todos', 'cat' => 'Proyecto', 'icon' => 'ph-eye'],
-                'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
-                'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
-            ];
-
-            // Group by Category
-            $grouped_modules = [];
-            foreach ($modules_config as $key => $info) {
-                if (isset($defined_modules[$key])) {
-                    $grouped_modules[$info['cat']][$key] = $info;
-                }
-            }
+            $subtab = isset($_GET['subtab']) ? $_GET['subtab'] : 'roles';
             ?>
-            <div class="card" style="max-width: 100%;">
-                <div style="margin-bottom: 2rem;">
-                    <h3 class="mb-2">Matriz de Acceso a Módulos</h3>
-                    <p class="text-muted">Seleccione un rol y defina sus permisos globales. Estos permisos aplican a todos los
-                        usuarios con este rol, a menos que tengan excepciones.</p>
 
-                    <!-- ROLE SELECTOR -->
-                    <div style="margin-top: 1.5rem; max-width: 400px;">
-                        <label class="form-label">Seleccionar Rol</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <select class="form-control"
-                                onchange="window.location.href='?tab=modules&subtab=roles&target_role_id='+this.value">
-                                <?php foreach ($users_roles_edit as $r): ?>
-                                    <option value="<?php echo $r['id']; ?>" <?php echo $target_role_id == $r['id'] ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($r['name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
+            <!-- Sub-Tabs Navigation & Toolbar -->
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <!-- Pills -->
+                <div style="display: flex; gap: 0.25rem; background: var(--bg-hover); padding: 0.35rem; border-radius: 8px;">
+                    <a href="?tab=modules&subtab=roles"
+                        class="btn btn-sm <?php echo $subtab === 'roles' ? 'btn-primary' : 'btn-text'; ?>"
+                        style="<?php echo $subtab !== 'roles' ? 'color: var(--text-secondary);' : ''; ?>">
+                        <i class="ph ph-identification-badge"></i> Por Roles (General)
+                    </a>
+                    <a href="?tab=modules&subtab=users"
+                        class="btn btn-sm <?php echo $subtab === 'users' ? 'btn-primary' : 'btn-text'; ?>"
+                        style="<?php echo $subtab !== 'users' ? 'color: var(--text-secondary);' : ''; ?>">
+                        <i class="ph ph-user-gear"></i> Por Usuario (Excepciones)
+                    </a>
                 </div>
 
-                <form method="POST">
-                    <input type="hidden" name="action" value="update_permissions">
-                    <input type="hidden" name="role_id" value="<?php echo $target_role_id; ?>">
-
-                    <div class="permissions-container">
-                        <?php foreach ($grouped_modules as $category => $modules): ?>
-                            <div class="category-section">
-                                <h4 class="category-title"><?php echo htmlspecialchars($category); ?></h4>
-                                <div class="modules-grid">
-                                    <?php foreach ($modules as $mod_key => $mod_info): ?>
-                                        <?php
-                                        $p_code = 'module_' . $mod_key;
-                                        $has_perm = isset($current_perms[$target_role_id][$p_code]);
-                                        ?>
-                                        <div class="module-card <?php echo $has_perm ? 'allow' : ''; ?>">
-                                            <div class="module-header" style="justify-content: space-between;">
-                                                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                                    <div class="module-icon">
-                                                        <i class="ph <?php echo $mod_info['icon']; ?>"></i>
-                                                    </div>
-                                                    <div class="module-name">
-                                                        <?php echo htmlspecialchars($mod_info['label']); ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Role Toggles (Binary) -->
-                                            <div class="segmented-control">
-                                                <label class="segment <?php echo $has_perm ? 'active' : ''; ?>">
-                                                    <input type="radio" name="perms[<?php echo $p_code; ?>]" value="1" <?php echo $has_perm ? 'checked' : ''; ?>>
-                                                    <span>Permitir</span>
-                                                </label>
-                                                <label class="segment <?php echo !$has_perm ? 'active' : ''; ?>">
-                                                    <input type="radio" name="perms[<?php echo $p_code; ?>]" value="0" <?php echo !$has_perm ? 'checked' : ''; ?>>
-                                                    <span>Denegar</span>
-                                                </label>
-                                            </div>
+                <!-- Right Toolbar (Context) -->
+                <div id="modules-toolbar">
+                    <?php if ($subtab === 'users' && isset($_GET['target_user_id'])): ?>
+                            <?php
+                            $t_uid = intval($_GET['target_user_id']);
+                            $stmtH = $pdo->prepare("SELECT username, r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?");
+                            $stmtH->execute([$t_uid]);
+                            $hUser = $stmtH->fetch();
+                            ?>
+                            <?php if ($hUser): ?>
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <span style="font-size: 0.9rem; color: var(--text-muted);">
+                                            Editando excepciones de: <strong
+                                                style="color: var(--text-main); font-weight: 600;"><?php echo htmlspecialchars($hUser['username']); ?></strong>
+                                        </span>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span class="badge"
+                                                style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary);">
+                                                <i class="ph-fill ph-shield-star" style="margin-right: 4px; color: var(--primary);"></i>
+                                                <?php echo htmlspecialchars($hUser['role_name']); ?>
+                                            </span>
+                                            <a href="?tab=modules&subtab=users" class="btn btn-sm btn-icon btn-text"
+                                                title="Cerrar y volver a lista" style="color: var(--text-muted);">
+                                                <i class="ph ph-x"></i>
+                                            </a>
                                         </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <div
-                        style="margin-top: 2rem; display: flex; justify-content: flex-end; position: sticky; bottom: 0; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border-color); padding: 1.5rem; margin: 0 -1.5rem -1.5rem -1.5rem; z-index: 100; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-                        <button type="submit" class="btn btn-primary" style="min-width: 200px;">
-                            <i class="ph ph-floppy-disk"></i> Guardar Permisos del Rol
-                        </button>
-                    </div>
-                </form>
+                                    </div>
+                            <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
 
-            <!-- SUB-TAB: USER EXCEPTIONS -->
-        <?php elseif ($subtab === 'users'): ?>
-            <?php
-            $target_user_id = isset($_GET['target_user_id']) ? intval($_GET['target_user_id']) : 0;
+            <!-- SUB-TAB: ROLES (The Grid -> Cards) -->
+            <?php if ($subtab === 'roles'): ?>
+                    <?php
+                    // Prepare Data for Roles View
+                    $target_role_id = isset($_GET['target_role_id']) ? intval($_GET['target_role_id']) : 0;
 
-            // Define Modules Layout (Reused)
-            $modules_config = [
-                'dashboard' => ['label' => 'Dashboard', 'cat' => 'Sistema', 'icon' => 'ph-squares-four'],
-                'history' => ['label' => 'Historial', 'cat' => 'Sistema', 'icon' => 'ph-clock-counter-clockwise'],
+                    // Default to first editable role if not selected
+                    if ($target_role_id === 0 && count($users_roles_edit) > 0) {
+                        $target_role_id = $users_roles_edit[array_key_first($users_roles_edit)]['id'];
+                    }
 
-                'clients' => ['label' => 'Clientes', 'cat' => 'Gestión', 'icon' => 'ph-users'],
-                'clients_delete' => ['label' => 'Eliminar Clientes', 'cat' => 'Gestión', 'icon' => 'ph-trash'],
-                'equipment' => ['label' => 'Equipos', 'cat' => 'Gestión', 'icon' => 'ph-desktop'],
-                'equipment_entry' => ['label' => 'Reg. Entrada', 'cat' => 'Gestión', 'icon' => 'ph-download-simple'],
-                'equipment_exit' => ['label' => 'Reg. Salida', 'cat' => 'Gestión', 'icon' => 'ph-upload-simple'],
-                'tools' => ['label' => 'Herramientas', 'cat' => 'Gestión', 'icon' => 'ph-wrench'],
-                'services' => ['label' => 'Servicios', 'cat' => 'Gestión', 'icon' => 'ph-briefcase'],
-                'warranties' => ['label' => 'Garantías', 'cat' => 'Gestión', 'icon' => 'ph-shield-check'],
-                'new_warranty' => ['label' => 'Nueva Garantía', 'cat' => 'Gestión', 'icon' => 'ph-plus-circle'],
-                'assign_equipment' => ['label' => 'Asignar / Reasignar', 'cat' => 'Gestión', 'icon' => 'ph-user-switch'],
+                    // Define Modules Layout (Reused)
+                    $modules_config = [
+                        'dashboard' => ['label' => 'Dashboard', 'cat' => 'Sistema', 'icon' => 'ph-squares-four'],
+                        'history' => ['label' => 'Historial', 'cat' => 'Sistema', 'icon' => 'ph-clock-counter-clockwise'],
 
-                'users' => ['label' => 'Usuarios', 'cat' => 'Administración', 'icon' => 'ph-user-gear'],
-                'reports' => ['label' => 'Reportes', 'cat' => 'Administración', 'icon' => 'ph-chart-bar'],
-                'settings' => ['label' => 'Config. Sistema', 'cat' => 'Administración', 'icon' => 'ph-gear'],
-                'settings_general' => ['label' => 'Conf. General', 'cat' => 'Administración', 'icon' => 'ph-sliders'],
-                'settings_roles' => ['label' => 'Roles', 'cat' => 'Administración', 'icon' => 'ph-shield-check'],
-                'settings_modules' => ['label' => 'Módulos', 'cat' => 'Administración', 'icon' => 'ph-squares-four'],
-                'settings_users' => ['label' => 'Usuarios (Admin)', 'cat' => 'Administración', 'icon' => 'ph-users-three'],
-                'settings_restore' => ['label' => 'Restaurar', 'cat' => 'Administración', 'icon' => 'ph-warning-octagon'],
-                're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left'],
-                'view_all_entries' => ['label' => 'Ver equipos de todos', 'cat' => 'Gestión', 'icon' => 'ph-eye'],
-                'surveys' => ['label' => 'Levantamientos', 'cat' => 'Proyecto', 'icon' => 'ph-clipboard'],
-                'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
-                'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
-            ];
+                        'clients' => ['label' => 'Clientes', 'cat' => 'Gestión', 'icon' => 'ph-users'],
+                        'clients_delete' => ['label' => 'Eliminar Clientes', 'cat' => 'Gestión', 'icon' => 'ph-trash'],
+                        'equipment' => ['label' => 'Equipos', 'cat' => 'Gestión', 'icon' => 'ph-desktop'],
+                        'equipment_entry' => ['label' => 'Reg. Entrada', 'cat' => 'Gestión', 'icon' => 'ph-download-simple'],
+                        'equipment_exit' => ['label' => 'Reg. Salida', 'cat' => 'Gestión', 'icon' => 'ph-upload-simple'],
+                        'tools' => ['label' => 'Herramientas', 'cat' => 'Gestión', 'icon' => 'ph-wrench'],
+                        'services' => ['label' => 'Servicios', 'cat' => 'Gestión', 'icon' => 'ph-briefcase'],
+                        'assign_equipment' => ['label' => 'Reasignar Equipos', 'cat' => 'Gestión', 'icon' => 'ph-user-switch'],
+                        'warranties' => ['label' => 'Garantías', 'cat' => 'Gestión', 'icon' => 'ph-shield-check'],
+                        'new_warranty' => ['label' => 'Nueva Garantía', 'cat' => 'Gestión', 'icon' => 'ph-plus-circle'],
 
-            // Group by Category (Reused Logic)
-            $grouped_modules = [];
-            foreach ($modules_config as $key => $info) {
-                if (isset($defined_modules[$key])) {
-                    $grouped_modules[$info['cat']][$key] = $info;
-                }
-            }
-            ?>
+                        'users' => ['label' => 'Usuarios', 'cat' => 'Administración', 'icon' => 'ph-user-gear'],
+                        'users_delete' => ['label' => 'Eliminar Usuarios', 'cat' => 'Administración', 'icon' => 'ph-trash'],
+                        'reports' => ['label' => 'Reportes', 'cat' => 'Administración', 'icon' => 'ph-chart-bar'],
+                        'settings' => ['label' => 'Config. Sistema', 'cat' => 'Administración', 'icon' => 'ph-gear'],
+                        'settings_general' => ['label' => 'Conf. General', 'cat' => 'Administración', 'icon' => 'ph-sliders'],
+                        'settings_roles' => ['label' => 'Roles', 'cat' => 'Administración', 'icon' => 'ph-shield-check'],
+                        'settings_modules' => ['label' => 'Módulos', 'cat' => 'Administración', 'icon' => 'ph-squares-four'],
+                        'settings_users' => ['label' => 'Usuarios (Admin)', 'cat' => 'Administración', 'icon' => 'ph-users-three'],
+                        'settings_restore' => ['label' => 'Restaurar', 'cat' => 'Administración', 'icon' => 'ph-warning-octagon'],
+                        're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left'],
+                        'view_all_entries' => ['label' => 'Ver equipos de todos', 'cat' => 'Gestión', 'icon' => 'ph-eye'],
+                        'surveys' => ['label' => 'Levantamientos', 'cat' => 'Proyecto', 'icon' => 'ph-clipboard'],
+                        'surveys_add' => ['label' => 'Nuevo Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-plus-circle'],
+                        'surveys_edit' => ['label' => 'Editar Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-pencil-simple'],
+                        'surveys_delete' => ['label' => 'Eliminar Levantamiento', 'cat' => 'Proyecto', 'icon' => 'ph-trash'],
+                        'surveys_view_all' => ['label' => 'Ver lvt. de todos', 'cat' => 'Proyecto', 'icon' => 'ph-eye'],
+                        'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
+                        'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
 
-            <!-- VIEW STATE: TABLE (NO SELECTION) -->
-            <?php if (!$target_user_id): ?>
-                <?php
-                // Fetch Users with Role Names and Module Counts
-                $stmtAllUsers = $pdo->query("
+                        'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
+                        'comisiones_add' => ['label' => 'Crear Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-plus-circle'],
+                        'comisiones_edit' => ['label' => 'Editar Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-pencil-simple'],
+                        'comisiones_delete' => ['label' => 'Eliminar Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-trash'],
+
+                        'viaticos' => ['label' => 'Viáticos', 'cat' => 'Finanzas', 'icon' => 'ph-piggy-bank'],
+                        'viaticos_add' => ['label' => 'Crear Viático', 'cat' => 'Finanzas', 'icon' => 'ph-plus-circle'],
+                        'viaticos_edit' => ['label' => 'Editar Viático', 'cat' => 'Finanzas', 'icon' => 'ph-pencil-simple'],
+                        'viaticos_delete' => ['label' => 'Eliminar Viático', 'cat' => 'Finanzas', 'icon' => 'ph-trash'],
+                    ];
+
+                    // Group by Category
+                    $grouped_modules = [];
+                    foreach ($modules_config as $key => $info) {
+                        if (isset($defined_modules[$key])) {
+                            $grouped_modules[$info['cat']][$key] = $info;
+                        }
+                    }
+                    ?>
+                    <div class="card" style="max-width: 100%;">
+                        <div style="margin-bottom: 2rem;">
+                            <h3 class="mb-2">Matriz de Acceso a Módulos</h3>
+                            <p class="text-muted">Seleccione un rol y defina sus permisos globales. Estos permisos aplican a todos los
+                                usuarios con este rol, a menos que tengan excepciones.</p>
+
+                            <!-- ROLE SELECTOR -->
+                            <div style="margin-top: 1.5rem; max-width: 400px;">
+                                <label class="form-label">Seleccionar Rol</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <select class="form-control"
+                                        onchange="window.location.href='?tab=modules&subtab=roles&target_role_id='+this.value">
+                                        <?php foreach ($users_roles_edit as $r): ?>
+                                                <option value="<?php echo $r['id']; ?>" <?php echo $target_role_id == $r['id'] ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($r['name']); ?>
+                                                </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="POST">
+                            <input type="hidden" name="action" value="update_permissions">
+                            <input type="hidden" name="role_id" value="<?php echo $target_role_id; ?>">
+
+                            <div class="permissions-container">
+                                <?php foreach ($grouped_modules as $category => $modules): ?>
+                                        <div class="category-section">
+                                            <h4 class="category-title"><?php echo htmlspecialchars($category); ?></h4>
+                                            <div class="modules-grid">
+                                                <?php foreach ($modules as $mod_key => $mod_info): ?>
+                                                        <?php
+                                                        $p_code = 'module_' . $mod_key;
+                                                        $has_perm = isset($current_perms[$target_role_id][$p_code]);
+                                                        ?>
+                                                        <div class="module-card <?php echo $has_perm ? 'allow' : ''; ?>">
+                                                            <div class="module-header" style="justify-content: space-between;">
+                                                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                                                    <div class="module-icon">
+                                                                        <i class="ph <?php echo $mod_info['icon']; ?>"></i>
+                                                                    </div>
+                                                                    <div class="module-name">
+                                                                        <?php echo htmlspecialchars($mod_info['label']); ?>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Role Toggles (Binary) -->
+                                                            <div class="segmented-control">
+                                                                <label class="segment <?php echo $has_perm ? 'active' : ''; ?>">
+                                                                    <input type="radio" name="perms[<?php echo $p_code; ?>]" value="1" <?php echo $has_perm ? 'checked' : ''; ?>>
+                                                                    <span>Permitir</span>
+                                                                </label>
+                                                                <label class="segment <?php echo !$has_perm ? 'active' : ''; ?>">
+                                                                    <input type="radio" name="perms[<?php echo $p_code; ?>]" value="0" <?php echo !$has_perm ? 'checked' : ''; ?>>
+                                                                    <span>Denegar</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <div
+                                style="margin-top: 2rem; display: flex; justify-content: flex-end; position: sticky; bottom: 0; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border-color); padding: 1.5rem; margin: 0 -1.5rem -1.5rem -1.5rem; z-index: 100; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                                <button type="submit" class="btn btn-primary" style="min-width: 200px;">
+                                    <i class="ph ph-floppy-disk"></i> Guardar Permisos del Rol
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- SUB-TAB: USER EXCEPTIONS -->
+            <?php elseif ($subtab === 'users'): ?>
+                    <?php
+                    $target_user_id = isset($_GET['target_user_id']) ? intval($_GET['target_user_id']) : 0;
+
+                    // Define Modules Layout (Reused)
+                    $modules_config = [
+                        'dashboard' => ['label' => 'Dashboard', 'cat' => 'Sistema', 'icon' => 'ph-squares-four'],
+                        'history' => ['label' => 'Historial', 'cat' => 'Sistema', 'icon' => 'ph-clock-counter-clockwise'],
+
+                        'clients' => ['label' => 'Clientes', 'cat' => 'Gestión', 'icon' => 'ph-users'],
+                        'clients_delete' => ['label' => 'Eliminar Clientes', 'cat' => 'Gestión', 'icon' => 'ph-trash'],
+                        'equipment' => ['label' => 'Equipos', 'cat' => 'Gestión', 'icon' => 'ph-desktop'],
+                        'equipment_entry' => ['label' => 'Reg. Entrada', 'cat' => 'Gestión', 'icon' => 'ph-download-simple'],
+                        'equipment_exit' => ['label' => 'Reg. Salida', 'cat' => 'Gestión', 'icon' => 'ph-upload-simple'],
+                        'tools' => ['label' => 'Herramientas', 'cat' => 'Gestión', 'icon' => 'ph-wrench'],
+                        'services' => ['label' => 'Servicios', 'cat' => 'Gestión', 'icon' => 'ph-briefcase'],
+                        'warranties' => ['label' => 'Garantías', 'cat' => 'Gestión', 'icon' => 'ph-shield-check'],
+                        'new_warranty' => ['label' => 'Nueva Garantía', 'cat' => 'Gestión', 'icon' => 'ph-plus-circle'],
+                        'assign_equipment' => ['label' => 'Asignar / Reasignar', 'cat' => 'Gestión', 'icon' => 'ph-user-switch'],
+
+                        'users' => ['label' => 'Usuarios', 'cat' => 'Administración', 'icon' => 'ph-user-gear'],
+                        'reports' => ['label' => 'Reportes', 'cat' => 'Administración', 'icon' => 'ph-chart-bar'],
+                        'settings' => ['label' => 'Config. Sistema', 'cat' => 'Administración', 'icon' => 'ph-gear'],
+                        'settings_general' => ['label' => 'Conf. General', 'cat' => 'Administración', 'icon' => 'ph-sliders'],
+                        'settings_roles' => ['label' => 'Roles', 'cat' => 'Administración', 'icon' => 'ph-shield-check'],
+                        'settings_modules' => ['label' => 'Módulos', 'cat' => 'Administración', 'icon' => 'ph-squares-four'],
+                        'settings_users' => ['label' => 'Usuarios (Admin)', 'cat' => 'Administración', 'icon' => 'ph-users-three'],
+                        'settings_restore' => ['label' => 'Restaurar', 'cat' => 'Administración', 'icon' => 'ph-warning-octagon'],
+                        're_enter_workshop' => ['label' => 'Reingresar', 'cat' => 'Gestión', 'icon' => 'ph-arrow-u-down-left'],
+                        'view_all_entries' => ['label' => 'Ver equipos de todos', 'cat' => 'Gestión', 'icon' => 'ph-eye'],
+                        'surveys' => ['label' => 'Levantamientos', 'cat' => 'Proyecto', 'icon' => 'ph-clipboard'],
+                        'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
+                        'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
+
+                        'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
+                        'comisiones_add' => ['label' => 'Crear Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-plus-circle'],
+                        'comisiones_edit' => ['label' => 'Editar Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-pencil-simple'],
+                        'comisiones_delete' => ['label' => 'Eliminar Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-trash'],
+
+                        'viaticos' => ['label' => 'Viáticos', 'cat' => 'Finanzas', 'icon' => 'ph-piggy-bank'],
+                        'viaticos_add' => ['label' => 'Crear Viático', 'cat' => 'Finanzas', 'icon' => 'ph-plus-circle'],
+                        'viaticos_edit' => ['label' => 'Editar Viático', 'cat' => 'Finanzas', 'icon' => 'ph-pencil-simple'],
+                        'viaticos_delete' => ['label' => 'Eliminar Viático', 'cat' => 'Finanzas', 'icon' => 'ph-trash'],
+                    ];
+
+                    // Group by Category (Reused Logic)
+                    $grouped_modules = [];
+                    foreach ($modules_config as $key => $info) {
+                        if (isset($defined_modules[$key])) {
+                            $grouped_modules[$info['cat']][$key] = $info;
+                        }
+                    }
+                    ?>
+
+                    <!-- VIEW STATE: TABLE (NO SELECTION) -->
+                    <?php if (!$target_user_id): ?>
+                            <?php
+                            // Fetch Users with Role Names and Module Counts
+                            $stmtAllUsers = $pdo->query("
                     SELECT 
                         u.id, u.username, u.email, u.status, u.role_id, 
                         r.name as role_name,
@@ -1218,194 +1250,194 @@ require_once '../../includes/sidebar.php';
                     WHERE u.status = 'active'
                     ORDER BY u.role_id ASC, u.username ASC
                 ");
-                $all_users = $stmtAllUsers->fetchAll();
-                ?>
-                <div class="card">
-                    <div style="margin-bottom: 2rem;">
-                        <h3 class="mb-2">Usuarios del Sistema</h3>
-                        <p class="text-muted">Seleccione un usuario de la lista para gestionar sus permisos específicos.</p>
-                    </div>
+                            $all_users = $stmtAllUsers->fetchAll();
+                            ?>
+                            <div class="card">
+                                <div style="margin-bottom: 2rem;">
+                                    <h3 class="mb-2">Usuarios del Sistema</h3>
+                                    <p class="text-muted">Seleccione un usuario de la lista para gestionar sus permisos específicos.</p>
+                                </div>
 
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th style="width: 50px;"></th>
-                                <th>Usuario</th>
-                                <th>Rol</th>
-                                <th style="text-align: center;">Módulos</th>
-                                <th>Estado</th>
-                                <th style="width: 50px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($all_users as $u): ?>
-                                <?php
-                                $is_super = ($u['id'] == 1);
-                                $row_style = $is_super ? "opacity: 0.7; cursor: not-allowed; background: rgba(0,0,0,0.02);" : "cursor: pointer;";
-                                $onclick = $is_super ? "" : "window.location.href='?tab=modules&subtab=users&target_user_id={$u['id']}'";
-                                ?>
-                                <tr onclick="<?php echo $onclick; ?>" style="<?php echo $row_style; ?>">
-                                    <td>
-                                        <div class="avatar" style="width: 32px; height: 32px; font-size: 0.9rem;">
-                                            <?php if ($is_super): ?>
-                                                <i class="ph-fill ph-lock-key" style="color: var(--warning);"></i>
-                                            <?php else: ?>
-                                                <?php echo strtoupper(substr($u['username'], 0, 1)); ?>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div style="font-weight: 500; color: var(--text-main);">
-                                            <?php echo htmlspecialchars($u['username']); ?>
-                                        </div>
-                                        <div style="font-size: 0.8rem; color: var(--text-muted);">
-                                            <?php echo htmlspecialchars($u['email']); ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge"><?php echo htmlspecialchars($u['role_name']); ?></span>
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <span class="badge" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary);">
-                                            <?php echo ($u['id'] == 1) ? 'Todos' : $u['role_module_count']; ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?php if ($u['status'] == 'active'): ?>
-                                            <span class="status-badge status-green"
-                                                style="display: inline-flex; align-items: center; gap: 4px;">
-                                                <i class="ph-fill ph-toggle-right" style="font-size: 1.1em;"></i> Activo
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="status-badge status-gray"
-                                                style="display: inline-flex; align-items: center; gap: 4px;">
-                                                <i class="ph-fill ph-toggle-left" style="font-size: 1.1em;"></i> Inactivo
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="color: var(--text-muted);">
-                                        <?php if (!$is_super): ?>
-                                            <i class="ph ph-caret-right"></i>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- VIEW STATE: DETAIL (USER SELECTED) -->
-            <?php else: ?>
-                <?php
-                // Fetch Selected User Details
-                $stmtTU = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-                $stmtTU->execute([$target_user_id]);
-                $target_user = $stmtTU->fetch();
-
-                if ($target_user) {
-                    // SECURITY: Prevent editing SuperAdmin (ID 1)
-                    if ($target_user['id'] == 1) {
-                        echo '<div class="alert alert-danger">No se pueden modificar los permisos del SuperAdmin.</div>';
-                        $target_user = false; // Disable form render
-                    } else {
-                        $target_role_id = $target_user['role_id'];
-                    }
-                }
-                ?>
-
-                <?php if ($target_user): ?>
-                    <div class="card">
-                        <form method="POST">
-                            <input type="hidden" name="action" value="update_user_permissions">
-                            <input type="hidden" name="user_id" value="<?php echo $target_user_id; ?>">
-
-                            <div class="permissions-container">
-                                <?php foreach ($grouped_modules as $category => $modules): ?>
-                                    <div class="category-section">
-                                        <h4 class="category-title"><?php echo htmlspecialchars($category); ?></h4>
-                                        <div class="modules-grid">
-                                            <?php foreach ($modules as $mod_key => $mod_info): ?>
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;"></th>
+                                            <th>Usuario</th>
+                                            <th>Rol</th>
+                                            <th style="text-align: center;">Módulos</th>
+                                            <th>Estado</th>
+                                            <th style="width: 50px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($all_users as $u): ?>
                                                 <?php
-                                                // Determine Role Access
-                                                $perm_code = 'module_' . $mod_key;
-                                                $stmtRolePerm = $pdo->prepare("
+                                                $is_super = ($u['id'] == 1);
+                                                $row_style = $is_super ? "opacity: 0.7; cursor: not-allowed; background: rgba(0,0,0,0.02);" : "cursor: pointer;";
+                                                $onclick = $is_super ? "" : "window.location.href='?tab=modules&subtab=users&target_user_id={$u['id']}'";
+                                                ?>
+                                                <tr onclick="<?php echo $onclick; ?>" style="<?php echo $row_style; ?>">
+                                                    <td>
+                                                        <div class="avatar" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                                                            <?php if ($is_super): ?>
+                                                                    <i class="ph-fill ph-lock-key" style="color: var(--warning);"></i>
+                                                            <?php else: ?>
+                                                                    <?php echo strtoupper(substr($u['username'], 0, 1)); ?>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div style="font-weight: 500; color: var(--text-main);">
+                                                            <?php echo htmlspecialchars($u['username']); ?>
+                                                        </div>
+                                                        <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                                            <?php echo htmlspecialchars($u['email']); ?>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge"><?php echo htmlspecialchars($u['role_name']); ?></span>
+                                                    </td>
+                                                    <td style="text-align: center;">
+                                                        <span class="badge" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary);">
+                                                            <?php echo ($u['id'] == 1) ? 'Todos' : $u['role_module_count']; ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($u['status'] == 'active'): ?>
+                                                                <span class="status-badge status-green"
+                                                                    style="display: inline-flex; align-items: center; gap: 4px;">
+                                                                    <i class="ph-fill ph-toggle-right" style="font-size: 1.1em;"></i> Activo
+                                                                </span>
+                                                        <?php else: ?>
+                                                                <span class="status-badge status-gray"
+                                                                    style="display: inline-flex; align-items: center; gap: 4px;">
+                                                                    <i class="ph-fill ph-toggle-left" style="font-size: 1.1em;"></i> Inactivo
+                                                                </span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td style="color: var(--text-muted);">
+                                                        <?php if (!$is_super): ?>
+                                                                <i class="ph ph-caret-right"></i>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- VIEW STATE: DETAIL (USER SELECTED) -->
+                    <?php else: ?>
+                            <?php
+                            // Fetch Selected User Details
+                            $stmtTU = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+                            $stmtTU->execute([$target_user_id]);
+                            $target_user = $stmtTU->fetch();
+
+                            if ($target_user) {
+                                // SECURITY: Prevent editing SuperAdmin (ID 1)
+                                if ($target_user['id'] == 1) {
+                                    echo '<div class="alert alert-danger">No se pueden modificar los permisos del SuperAdmin.</div>';
+                                    $target_user = false; // Disable form render
+                                } else {
+                                    $target_role_id = $target_user['role_id'];
+                                }
+                            }
+                            ?>
+
+                            <?php if ($target_user): ?>
+                                    <div class="card">
+                                        <form method="POST">
+                                            <input type="hidden" name="action" value="update_user_permissions">
+                                            <input type="hidden" name="user_id" value="<?php echo $target_user_id; ?>">
+
+                                            <div class="permissions-container">
+                                                <?php foreach ($grouped_modules as $category => $modules): ?>
+                                                        <div class="category-section">
+                                                            <h4 class="category-title"><?php echo htmlspecialchars($category); ?></h4>
+                                                            <div class="modules-grid">
+                                                                <?php foreach ($modules as $mod_key => $mod_info): ?>
+                                                                        <?php
+                                                                        // Determine Role Access
+                                                                        $perm_code = 'module_' . $mod_key;
+                                                                        $stmtRolePerm = $pdo->prepare("
                                                     SELECT COUNT(*) FROM role_permissions rp 
                                                     JOIN permissions p ON rp.permission_id = p.id 
                                                     WHERE rp.role_id = ? AND p.code = ?
                                                 ");
-                                                $stmtRolePerm->execute([$target_role_id, $perm_code]);
-                                                $role_has_access = $stmtRolePerm->fetchColumn() > 0;
+                                                                        $stmtRolePerm->execute([$target_role_id, $perm_code]);
+                                                                        $role_has_access = $stmtRolePerm->fetchColumn() > 0;
 
-                                                // Determine User Override
-                                                // Fetch strict value from DB
-                                                $stmtUserPerm = $pdo->prepare("SELECT is_enabled FROM user_custom_modules WHERE user_id = ? AND module_name = ?");
-                                                $stmtUserPerm->execute([$target_user_id, $mod_key]);
-                                                $override = $stmtUserPerm->fetchColumn();
-                                                // $override will be 1, 0, or false (null)
-                        
-                                                // Current Selection State
-                                                // If override is present (1 or 0), use it. Else 'inherit'.
-                                                $current_val = 'inherit';
-                                                if ($override !== false) {
-                                                    $current_val = $override == 1 ? 'allow' : 'deny';
-                                                }
-                                                ?>
+                                                                        // Determine User Override
+                                                                        // Fetch strict value from DB
+                                                                        $stmtUserPerm = $pdo->prepare("SELECT is_enabled FROM user_custom_modules WHERE user_id = ? AND module_name = ?");
+                                                                        $stmtUserPerm->execute([$target_user_id, $mod_key]);
+                                                                        $override = $stmtUserPerm->fetchColumn();
+                                                                        // $override will be 1, 0, or false (null)
+                                                
+                                                                        // Current Selection State
+                                                                        // If override is present (1 or 0), use it. Else 'inherit'.
+                                                                        $current_val = 'inherit';
+                                                                        if ($override !== false) {
+                                                                            $current_val = $override == 1 ? 'allow' : 'deny';
+                                                                        }
+                                                                        ?>
 
-                                                <div
-                                                    class="module-card <?php echo $current_val === 'inherit' ? ($role_has_access ? 'inherit-allow' : 'inherit-deny') : $current_val; ?>">
-                                                    <div class="module-header" style="justify-content: space-between;">
-                                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                                            <div class="module-icon">
-                                                                <i class="ph <?php echo $mod_info['icon']; ?>"></i>
-                                                            </div>
-                                                            <div>
-                                                                <div class="module-name"><?php echo htmlspecialchars($mod_info['label']); ?>
-                                                                </div>
+                                                                        <div
+                                                                            class="module-card <?php echo $current_val === 'inherit' ? ($role_has_access ? 'inherit-allow' : 'inherit-deny') : $current_val; ?>">
+                                                                            <div class="module-header" style="justify-content: space-between;">
+                                                                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                                                                    <div class="module-icon">
+                                                                                        <i class="ph <?php echo $mod_info['icon']; ?>"></i>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <div class="module-name"><?php echo htmlspecialchars($mod_info['label']); ?>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="role-status">
+                                                                                    <?php if ($role_has_access): ?>
+                                                                                            <span class="text-xs text-success"><i class="ph-bold ph-check"></i> Por Rol:
+                                                                                                Sí</span>
+                                                                                    <?php else: ?>
+                                                                                            <span class="text-xs text-muted"><i class="ph-bold ph-x"></i> Por Rol: No</span>
+                                                                                    <?php endif; ?>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="segmented-control">
+                                                                                <label class="segment <?php echo $current_val === 'inherit' ? 'active' : ''; ?>">
+                                                                                    <input type="radio" name="perms[<?php echo $mod_key; ?>]" value="inherit" <?php echo $current_val === 'inherit' ? 'checked' : ''; ?>>
+                                                                                    <span>Heredar</span>
+                                                                                </label>
+                                                                                <label class="segment <?php echo $current_val === 'allow' ? 'active' : ''; ?>">
+                                                                                    <input type="radio" name="perms[<?php echo $mod_key; ?>]" value="1" <?php echo $current_val === 'allow' ? 'checked' : ''; ?>>
+                                                                                    <span>Permitir</span>
+                                                                                </label>
+                                                                                <label class="segment <?php echo $current_val === 'deny' ? 'active' : ''; ?>">
+                                                                                    <input type="radio" name="perms[<?php echo $mod_key; ?>]" value="0" <?php echo $current_val === 'deny' ? 'checked' : ''; ?>>
+                                                                                    <span>Denegar</span>
+                                                                                </label>
+                                                                            </div>
+                                                                        </div>
+                                                                <?php endforeach; ?>
                                                             </div>
                                                         </div>
-                                                        <div class="role-status">
-                                                            <?php if ($role_has_access): ?>
-                                                                <span class="text-xs text-success"><i class="ph-bold ph-check"></i> Por Rol:
-                                                                    Sí</span>
-                                                            <?php else: ?>
-                                                                <span class="text-xs text-muted"><i class="ph-bold ph-x"></i> Por Rol: No</span>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
 
-                                                    <div class="segmented-control">
-                                                        <label class="segment <?php echo $current_val === 'inherit' ? 'active' : ''; ?>">
-                                                            <input type="radio" name="perms[<?php echo $mod_key; ?>]" value="inherit" <?php echo $current_val === 'inherit' ? 'checked' : ''; ?>>
-                                                            <span>Heredar</span>
-                                                        </label>
-                                                        <label class="segment <?php echo $current_val === 'allow' ? 'active' : ''; ?>">
-                                                            <input type="radio" name="perms[<?php echo $mod_key; ?>]" value="1" <?php echo $current_val === 'allow' ? 'checked' : ''; ?>>
-                                                            <span>Permitir</span>
-                                                        </label>
-                                                        <label class="segment <?php echo $current_val === 'deny' ? 'active' : ''; ?>">
-                                                            <input type="radio" name="perms[<?php echo $mod_key; ?>]" value="0" <?php echo $current_val === 'deny' ? 'checked' : ''; ?>>
-                                                            <span>Denegar</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
+                                            <div
+                                                style="margin-top: 2rem; display: flex; justify-content: flex-end; position: sticky; bottom: 0; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 1.5rem; margin: 0 -1.5rem -1.5rem -1.5rem; border-top: 1px solid var(--border-color); z-index: 100; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                                                <button type="submit" class="btn btn-primary" style="min-width: 200px;">
+                                                    <i class="ph ph-floppy-disk"></i> Guardar Excepciones
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
-                                <?php endforeach; ?>
-                            </div>
-
-                            <div
-                                style="margin-top: 2rem; display: flex; justify-content: flex-end; position: sticky; bottom: 0; background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 1.5rem; margin: 0 -1.5rem -1.5rem -1.5rem; border-top: 1px solid var(--border-color); z-index: 100; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-                                <button type="submit" class="btn btn-primary" style="min-width: 200px;">
-                                    <i class="ph ph-floppy-disk"></i> Guardar Excepciones
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                <?php endif; ?>
-            <?php endif; // End Target User check ?>
-        <?php endif; // End Subtab check ?>
-    </div>
+                            <?php endif; ?>
+                    <?php endif; // End Target User check ?>
+            <?php endif; // End Subtab check ?>
+        </div>
 <?php endif; ?>
 
 <style>
@@ -1510,262 +1542,262 @@ require_once '../../includes/sidebar.php';
 <!-- TAB: USERS -->
 <div id="tab-users" style="display: <?php echo $active_tab == 'users' ? 'block' : 'none'; ?>;">
     <?php if (!can_access_module('settings_users', $pdo) && !can_access_module('settings', $pdo)): ?>
-        <div class="card">
-            <div class="text-center p-4">Acceso denegado a Gestión de Usuarios.</div>
-        </div>
+            <div class="card">
+                <div class="text-center p-4">Acceso denegado a Gestión de Usuarios.</div>
+            </div>
     <?php else: ?>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <div>
-                <h3>Usuarios del Sistema</h3>
-                <p class="text-muted">Administración de accesos y roles de personal.</p>
-            </div>
-            <div style="display: flex; gap: 1rem;">
-                <div class="input-group" style="width: 300px;">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar usuario, email o rol...">
-                    <i class="ph ph-magnifying-glass input-icon"></i>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h3>Usuarios del Sistema</h3>
+                    <p class="text-muted">Administración de accesos y roles de personal.</p>
                 </div>
-                <a href="../users/add.php" class="btn btn-primary">
-                    <i class="ph ph-user-plus"></i> Nuevo Usuario
-                </a>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Buscar usuario, email o rol...">
+                        <i class="ph ph-magnifying-glass input-icon"></i>
+                    </div>
+                    <a href="../users/add.php" class="btn btn-primary">
+                        <i class="ph ph-user-plus"></i> Nuevo Usuario
+                    </a>
+                </div>
             </div>
-        </div>
 
-        <div class="card">
-            <div class="table-container">
-                <table id="usersTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Usuario</th>
-                            <th>Email</th>
-                            <th>Rol</th>
-                            <th>Estado</th>
-                            <th>Fecha Registro</th>
-                            <th style="width: 50px;"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (count($users) > 0): ?>
-                            <?php foreach ($users as $user): ?>
-                                <?php
-                                $is_super_user = ($user['id'] == 1);
-                                $row_style = $is_super_user ? "opacity: 0.7; cursor: not-allowed; background: rgba(0,0,0,0.02);" : "cursor: pointer; transition: background 0.2s;";
-                                $onclick = $is_super_user ? "" : "window.location.href='../users/edit.php?id={$user['id']}'";
-                                ?>
-                                <tr onclick="<?php echo $onclick; ?>" style="<?php echo $row_style; ?>"
-                                    class="<?php echo $is_super_user ? '' : 'hover-row'; ?>">
-                                    <td><strong>#<?php echo str_pad($user['id'], 2, '0', STR_PAD_LEFT); ?></strong></td>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                            <div class="user-avatar-sm" style="width: 32px; height: 32px; font-size: 0.9rem;">
-                                                <?php if ($is_super_user): ?>
-                                                    <i class="ph-fill ph-lock-key" style="color: var(--warning);"></i>
-                                                <?php else: ?>
-                                                    <?php echo strtoupper(substr($user['username'], 0, 1)); ?>
-                                                <?php endif; ?>
-                                            </div>
-                                            <span class="font-medium"><?php echo htmlspecialchars($user['username']); ?></span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <?php echo $user['email'] ? htmlspecialchars($user['email']) : '<span class="text-muted">-</span>'; ?>
-                                    </td>
-                                    <td>
-                                        <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);">
-                                            <?php echo htmlspecialchars($user['role_name']); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?php
-                                        $statusConfig = [
-                                            'active' => ['color' => 'green', 'label' => 'Activo'],
-                                            'inactive' => ['color' => 'gray', 'label' => 'Inactivo']
-                                        ];
-                                        $config = $statusConfig[$user['status']] ?? ['color' => 'gray', 'label' => $user['status']];
-                                        ?>
-                                        <span class="status-badge status-<?php echo $config['color']; ?>">
-                                            <?php echo $config['label']; ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>
-                                    <td style="text-align: center; color: var(--text-muted); white-space: nowrap;">
-
-                                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
-                                            <?php if (can_access_module('users_delete', $pdo) && !$is_super_user && $user['id'] != $_SESSION['user_id']): ?>
-                                                <button type="button" class="btn-icon btn-icon-danger"
-                                                    onclick='event.stopPropagation(); openDeleteModal(<?php echo $user['id']; ?>, <?php echo json_encode($user['username']); ?>);'
-                                                    title="Eliminar Usuario"
-                                                    style="background: none; border: none; cursor: pointer; color: var(--danger);">
-                                                    <i class="ph ph-trash"></i>
-                                                </button>
-                                            <?php endif; ?>
-
-                                            <?php if (!$is_super_user): ?>
-                                                <i class="ph ph-caret-right"></i>
-                                            <?php endif; ?>
-                                        </div>
-
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+            <div class="card">
+                <div class="table-container">
+                    <table id="usersTable">
+                        <thead>
                             <tr>
-                                <td colspan="7" class="text-center" style="padding: 3rem;">
-                                    <div style="margin-bottom: 1rem; color: var(--text-secondary);">
-                                        <i class="ph ph-users" style="font-size: 3rem;"></i>
-                                    </div>
-                                    <h3 style="margin-bottom: 0.5rem;">No hay usuarios registrados</h3>
-                                    <p class="text-muted">Comienza agregando nuevos usuarios al sistema.</p>
-                                </td>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Fecha Registro</th>
+                                <th style="width: 50px;"></th>
                             </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php if (count($users) > 0): ?>
+                                    <?php foreach ($users as $user): ?>
+                                            <?php
+                                            $is_super_user = ($user['id'] == 1);
+                                            $row_style = $is_super_user ? "opacity: 0.7; cursor: not-allowed; background: rgba(0,0,0,0.02);" : "cursor: pointer; transition: background 0.2s;";
+                                            $onclick = $is_super_user ? "" : "window.location.href='../users/edit.php?id={$user['id']}'";
+                                            ?>
+                                            <tr onclick="<?php echo $onclick; ?>" style="<?php echo $row_style; ?>"
+                                                class="<?php echo $is_super_user ? '' : 'hover-row'; ?>">
+                                                <td><strong>#<?php echo str_pad($user['id'], 2, '0', STR_PAD_LEFT); ?></strong></td>
+                                                <td>
+                                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                                        <div class="user-avatar-sm" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                                                            <?php if ($is_super_user): ?>
+                                                                    <i class="ph-fill ph-lock-key" style="color: var(--warning);"></i>
+                                                            <?php else: ?>
+                                                                    <?php echo strtoupper(substr($user['username'], 0, 1)); ?>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <span class="font-medium"><?php echo htmlspecialchars($user['username']); ?></span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <?php echo $user['email'] ? htmlspecialchars($user['email']) : '<span class="text-muted">-</span>'; ?>
+                                                </td>
+                                                <td>
+                                                    <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);">
+                                                        <?php echo htmlspecialchars($user['role_name']); ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    $statusConfig = [
+                                                        'active' => ['color' => 'green', 'label' => 'Activo'],
+                                                        'inactive' => ['color' => 'gray', 'label' => 'Inactivo']
+                                                    ];
+                                                    $config = $statusConfig[$user['status']] ?? ['color' => 'gray', 'label' => $user['status']];
+                                                    ?>
+                                                    <span class="status-badge status-<?php echo $config['color']; ?>">
+                                                        <?php echo $config['label']; ?>
+                                                    </span>
+                                                </td>
+                                                <td><?php echo date('d/m/Y', strtotime($user['created_at'])); ?></td>
+                                                <td style="text-align: center; color: var(--text-muted); white-space: nowrap;">
+
+                                                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                                                        <?php if (can_access_module('users_delete', $pdo) && !$is_super_user && $user['id'] != $_SESSION['user_id']): ?>
+                                                                <button type="button" class="btn-icon btn-icon-danger"
+                                                                    onclick='event.stopPropagation(); openDeleteModal(<?php echo $user['id']; ?>, <?php echo json_encode($user['username']); ?>);'
+                                                                    title="Eliminar Usuario"
+                                                                    style="background: none; border: none; cursor: pointer; color: var(--danger);">
+                                                                    <i class="ph ph-trash"></i>
+                                                                </button>
+                                                        <?php endif; ?>
+
+                                                        <?php if (!$is_super_user): ?>
+                                                                <i class="ph ph-caret-right"></i>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                </td>
+                                            </tr>
+                                    <?php endforeach; ?>
+                            <?php else: ?>
+                                    <tr>
+                                        <td colspan="7" class="text-center" style="padding: 3rem;">
+                                            <div style="margin-bottom: 1rem; color: var(--text-secondary);">
+                                                <i class="ph ph-users" style="font-size: 3rem;"></i>
+                                            </div>
+                                            <h3 style="margin-bottom: 0.5rem;">No hay usuarios registrados</h3>
+                                            <p class="text-muted">Comienza agregando nuevos usuarios al sistema.</p>
+                                        </td>
+                                    </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
     <?php endif; ?>
 </div>
 
 <!-- TAB: RESTORE -->
 <div id="tab-restore" style="display: <?php echo $active_tab == 'restore' ? 'block' : 'none'; ?>;">
     <?php if (!can_access_module('settings_restore', $pdo) && !can_access_module('settings', $pdo)): ?>
-        <div class="card">
-            <div class="text-center p-4">Acceso denegado a Restaurar Sistema.</div>
-        </div>
+            <div class="card">
+                <div class="text-center p-4">Acceso denegado a Restaurar Sistema.</div>
+            </div>
     <?php else: ?>
 
-        <!-- Success/Error Messages -->
-        <?php if (isset($_GET['msg']) && $_GET['msg'] == 'restored'): ?>
-            <div class="alert alert-success"
-                style="margin-bottom: 1.5rem; background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid var(--success);">
-                <i class="ph ph-check-circle"></i> Base de datos restaurada correctamente.
-            </div>
-        <?php endif; ?>
-        <?php if (isset($_GET['error'])): ?>
-            <div class="alert alert-danger"
-                style="margin-bottom: 1.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger);">
-                <i class="ph ph-warning"></i> Error en la operación: <?php echo htmlspecialchars($_GET['error']); ?>
-            </div>
-        <?php endif; ?>
-
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; align-items: stretch;">
-
-            <!-- BACKUP SECTION -->
-            <div class="card card-premium purple">
-                <div class="icon-box">
-                    <i class="ph ph-database"></i>
-                </div>
-                <h3>Respaldo de BD</h3>
-                <p>Descarga una copia SQL de seguridad para proteger tu información.</p>
-                <form method="POST" style="margin-top: auto;">
-                    <input type="hidden" name="action" value="backup_db">
-                    <button type="submit" class="btn btn-premium btn-premium-purple">
-                        <i class="ph ph-download-simple"></i> Descargar (.sql)
-                    </button>
-                </form>
-            </div>
-
-            <!-- RESTORE SECTION -->
-            <div class="card card-premium yellow">
-                <div class="icon-box">
-                    <i class="ph ph-upload-simple"></i>
-                </div>
-                <h3>Restaurar BD</h3>
-                <p>Importar archivo SQL. Esta acción sobrescribirá los datos actuales.</p>
-                <form method="POST" id="restoreForm" enctype="multipart/form-data" onsubmit="confirmRestore(event)"
-                    style="margin-top: auto;">
-                    <input type="hidden" name="action" value="restore_db">
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <input type="file" name="backup_file" class="form-control" accept=".sql" required
-                            style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
-                        <button type="submit" class="btn btn-premium btn-premium-outline">
-                            <i class="ph ph-arrow-counter-clockwise"></i> Restaurar
-                        </button>
+            <!-- Success/Error Messages -->
+            <?php if (isset($_GET['msg']) && $_GET['msg'] == 'restored'): ?>
+                    <div class="alert alert-success"
+                        style="margin-bottom: 1.5rem; background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid var(--success);">
+                        <i class="ph ph-check-circle"></i> Base de datos restaurada correctamente.
                     </div>
-                </form>
+            <?php endif; ?>
+            <?php if (isset($_GET['error'])): ?>
+                    <div class="alert alert-danger"
+                        style="margin-bottom: 1.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger);">
+                        <i class="ph ph-warning"></i> Error en la operación: <?php echo htmlspecialchars($_GET['error']); ?>
+                    </div>
+            <?php endif; ?>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; align-items: stretch;">
+
+                <!-- BACKUP SECTION -->
+                <div class="card card-premium purple">
+                    <div class="icon-box">
+                        <i class="ph ph-database"></i>
+                    </div>
+                    <h3>Respaldo de BD</h3>
+                    <p>Descarga una copia SQL de seguridad para proteger tu información.</p>
+                    <form method="POST" style="margin-top: auto;">
+                        <input type="hidden" name="action" value="backup_db">
+                        <button type="submit" class="btn btn-premium btn-premium-purple">
+                            <i class="ph ph-download-simple"></i> Descargar (.sql)
+                        </button>
+                    </form>
+                </div>
+
+                <!-- RESTORE SECTION -->
+                <div class="card card-premium yellow">
+                    <div class="icon-box">
+                        <i class="ph ph-upload-simple"></i>
+                    </div>
+                    <h3>Restaurar BD</h3>
+                    <p>Importar archivo SQL. Esta acción sobrescribirá los datos actuales.</p>
+                    <form method="POST" id="restoreForm" enctype="multipart/form-data" onsubmit="confirmRestore(event)"
+                        style="margin-top: auto;">
+                        <input type="hidden" name="action" value="restore_db">
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <input type="file" name="backup_file" class="form-control" accept=".sql" required
+                                style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
+                            <button type="submit" class="btn btn-premium btn-premium-outline">
+                                <i class="ph ph-arrow-counter-clockwise"></i> Restaurar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- IMPORT SECTION -->
+                <div class="card card-premium blue">
+                    <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-400);">
+                        <i class="ph ph-file-csv"></i>
+                    </div>
+                    <h3>Importar Bodega</h3>
+                    <p>Carga masiva de registros (CSV). Ideal para migraciones o cargas iniciales de datos.</p>
+                    <div style="margin-top: auto;">
+                        <a href="import_warranties.php" class="btn btn-premium"
+                            style="background: var(--primary-500); color: white; border: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
+                            <i class="ph ph-rocket-launch"></i> Iniciar Importador
+                        </a>
+                    </div>
+                </div>
+                <!-- DANGER ZONE (Factory Reset) -->
+                <div class="card card-premium red">
+                    <div class="icon-box">
+                        <i class="ph ph-warning-octagon"></i>
+                    </div>
+                    <h3>Reset de Fábrica</h3>
+                    <p>Elimina clientes, equipos y órdenes. Mantiene usuarios y config.</p>
+                    <form method="POST" id="factoryResetForm"
+                        style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <input type="hidden" name="action" value="system_restore">
+                        <input type="password" name="admin_password" class="form-control" placeholder="Pass de SuperAdmin"
+                            required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
+                        <button type="button" onclick="confirmFactoryReset()" class="btn btn-premium btn-premium-danger">
+                            <i class="ph ph-trash"></i> Eliminar Todo
+                        </button>
+                    </form>
+                </div>
+
             </div>
 
-            <!-- IMPORT SECTION -->
-            <div class="card card-premium blue">
-                <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-400);">
-                    <i class="ph ph-file-csv"></i>
-                </div>
-                <h3>Importar Bodega</h3>
-                <p>Carga masiva de registros (CSV). Ideal para migraciones o cargas iniciales de datos.</p>
-                <div style="margin-top: auto;">
-                    <a href="import_warranties.php" class="btn btn-premium"
-                        style="background: var(--primary-500); color: white; border: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
-                        <i class="ph ph-rocket-launch"></i> Iniciar Importador
-                    </a>
-                </div>
-            </div>
-            <!-- DANGER ZONE (Factory Reset) -->
-            <div class="card card-premium red">
-                <div class="icon-box">
-                    <i class="ph ph-warning-octagon"></i>
-                </div>
-                <h3>Reset de Fábrica</h3>
-                <p>Elimina clientes, equipos y órdenes. Mantiene usuarios y config.</p>
-                <form method="POST" id="factoryResetForm"
-                    style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
-                    <input type="hidden" name="action" value="system_restore">
-                    <input type="password" name="admin_password" class="form-control" placeholder="Pass de SuperAdmin"
-                        required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
-                    <button type="button" onclick="confirmFactoryReset()" class="btn btn-premium btn-premium-danger">
-                        <i class="ph ph-trash"></i> Eliminar Todo
-                    </button>
-                </form>
-            </div>
-
-        </div>
-
-        <script>
-            function confirmRestore(e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: '¿Restaurar Base de Datos?',
-                    text: 'Se sobrescribirá TODA la información actual con la del archivo seleccionado. Esta acción es irreversible.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#eab308',
-                    cancelButtonColor: '#6b7280',
-                    confirmButtonText: 'Sí, restaurar',
-                    cancelButtonText: 'Cancelar',
-                    background: '#1e293b',
-                    color: '#fff'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        document.getElementById('restoreForm').submit();
-                    }
-                });
-            }
-
-            function confirmFactoryReset() {
-                const pass = document.querySelector('input[name="admin_password"]').value;
-                if (!pass) {
-                    Swal.fire('Error', 'Ingrese la contraseña de SuperAdmin', 'error');
-                    return;
+            <script>
+                function confirmRestore(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: '¿Restaurar Base de Datos?',
+                        text: 'Se sobrescribirá TODA la información actual con la del archivo seleccionado. Esta acción es irreversible.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#eab308',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Sí, restaurar',
+                        cancelButtonText: 'Cancelar',
+                        background: '#1e293b',
+                        color: '#fff'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('restoreForm').submit();
+                        }
+                    });
                 }
 
-                Swal.fire({
-                    title: '¿RESET DE FÁBRICA?',
-                    text: '¡ESTA ACCIÓN ELIMINARÁ TODOS LOS DATOS! (Clientes, Equipos, Órdenes, etc). Solo quedarán los usuarios y configuraciones.',
-                    icon: 'error',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ef4444',
-                    cancelButtonColor: '#6b7280',
-                    confirmButtonText: 'SÍ, BORRAR TODO',
-                    cancelButtonText: 'Cancelar',
-                    background: '#1e293b',
-                    color: '#fff',
-                    focusCancel: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        document.getElementById('factoryResetForm').submit();
+                function confirmFactoryReset() {
+                    const pass = document.querySelector('input[name="admin_password"]').value;
+                    if (!pass) {
+                        Swal.fire('Error', 'Ingrese la contraseña de SuperAdmin', 'error');
+                        return;
                     }
-                });
-            }
-        </script>
+
+                    Swal.fire({
+                        title: '¿RESET DE FÁBRICA?',
+                        text: '¡ESTA ACCIÓN ELIMINARÁ TODOS LOS DATOS! (Clientes, Equipos, Órdenes, etc). Solo quedarán los usuarios y configuraciones.',
+                        icon: 'error',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'SÍ, BORRAR TODO',
+                        cancelButtonText: 'Cancelar',
+                        background: '#1e293b',
+                        color: '#fff',
+                        focusCancel: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('factoryResetForm').submit();
+                        }
+                    });
+                }
+            </script>
     <?php endif; ?>
 </div>
 </div>

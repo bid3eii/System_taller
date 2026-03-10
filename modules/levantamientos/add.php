@@ -13,13 +13,16 @@ if (!can_access_module('surveys_add', $pdo)) {
 $error = '';
 $success = '';
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $client_name = clean($_POST['client_name'] ?? '');
     $title = clean($_POST['title']);
     $general_description = clean($_POST['general_description']);
     $scope_activities = $_POST['scope_activities']; // Can contain HTML if using rich text
     $estimated_time = clean($_POST['estimated_time']);
-    $personnel_required = clean($_POST['personnel_required']);
+
+    $personnel_required = clean($_POST['personnel_required'] ?? '');
+
     $user_id = $_SESSION['user_id'];
 
     // Materials arrays
@@ -186,7 +189,7 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label">Personal Requerido</label>
                     <div class="input-group">
                         <input type="text" name="personnel_required" class="form-control"
-                            placeholder="Ej. 1 técnico especializado (mínimo)">
+                            placeholder="Ej. 2 Técnicos, o 1 Especialista">
                         <i class="ph ph-users input-icon"></i>
                     </div>
                 </div>
@@ -205,14 +208,9 @@ require_once '../../includes/sidebar.php';
         <!-- 4. Materials Requirement -->
         <div class="card" style="margin-bottom: 2rem;">
             <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ph ph-list-dashes" style="font-size: 1.2rem; color: var(--success);"></i>
-                    <h3 style="margin: 0; color: var(--text-primary);">Requerimientos y Materiales</h3>
-                </div>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="addMaterialRow()">
-                    <i class="ph ph-plus"></i> Añadir Ítem
-                </button>
+                style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                <i class="ph ph-list-dashes" style="font-size: 1.2rem; color: var(--success);"></i>
+                <h3 style="margin: 0; color: var(--text-primary);">Requerimientos y Materiales</h3>
             </div>
 
             <div class="table-container">
@@ -255,16 +253,31 @@ require_once '../../includes/sidebar.php';
                     </tbody>
                 </table>
             </div>
+            <!-- Bottom Add Row Button -->
+            <div style="margin-top: 1rem; text-align: center;">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addMaterialRow()">
+                    <i class="ph ph-plus"></i> Añadir Ítem
+                </button>
+            </div>
         </div>
 
-        <div
-            style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; position: sticky; bottom: 2rem; z-index: 10;">
-            <a href="index.php" class="btn btn-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary" style="box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
-                <i class="ph ph-floppy-disk"></i> Guardar Borrador
-            </button>
-        </div>
+        <!-- Spacer so form content doesn't hide behind the fixed bar -->
+        <div style="height: 5rem;"></div>
     </form>
+
+    <!-- Fixed action bar pinned to bottom of screen -->
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+                background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(12px);
+                border-top: 1px solid rgba(255,255,255,0.07);
+                padding: 0.85rem 2rem;
+                display: flex; justify-content: flex-end; gap: 0.85rem; align-items: center;
+                box-shadow: 0 -4px 24px rgba(0,0,0,0.4);">
+        <a href="index.php" class="btn btn-secondary" style="min-width: 110px; text-align: center;">Cancelar</a>
+        <button form="surveyForm" type="submit" class="btn btn-primary"
+            style="min-width: 160px; box-shadow: 0 4px 12px rgba(99,102,241,0.35); font-weight: 600;">
+            <i class="ph ph-floppy-disk"></i> Guardar Borrador
+        </button>
+    </div>
 </div>
 
 <script>
@@ -310,6 +323,7 @@ require_once '../../includes/sidebar.php';
     }
 
 </script>
+
 
 <?php
 require_once '../../includes/footer.php';
