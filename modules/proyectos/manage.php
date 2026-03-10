@@ -936,7 +936,7 @@ require_once '../../includes/sidebar.php';
     /* Custom Dark Theme for Choices.js to match System Taller */
     .choices__inner {
         background-color: var(--bg-card, #1e1e2d);
-        border: 1px solid rgba(255,255,255,0.05);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         border-radius: 8px;
         color: var(--text-primary, #e2e8f0);
         min-height: 48px;
@@ -949,20 +949,35 @@ require_once '../../includes/sidebar.php';
     }
 
     .choices__list--dropdown {
-        background-color: var(--bg-darker, #1e1e2d);
-        border: 1px solid var(--border-color, #323248);
-        color: var(--text-primary, #e2e8f0);
+        background-color: var(--bg-darker, #1e1e2d) !important;
+        border: 1px solid var(--border-color, #323248) !important;
+        color: var(--text-primary, #e2e8f0) !important;
         word-break: break-all;
         z-index: 100;
+    }
+
+    .choices__list--dropdown .choices__list {
+        background-color: var(--bg-darker, #1e1e2d) !important;
+    }
+
+    .choices__list--dropdown .choices__item {
+        color: var(--text-primary, #e2e8f0) !important;
+        background-color: var(--bg-darker, #1e1e2d) !important;
+    }
+
+    .choices__list--dropdown .choices__item--choice {
+        color: var(--text-primary, #e2e8f0) !important;
+        background-color: var(--bg-darker, #1e1e2d) !important;
     }
 
     .choices__list--dropdown .choices__item--selectable {
         padding-right: 10px;
     }
 
+    .choices__list--dropdown .choices__item.is-highlighted,
     .choices__list--dropdown .choices__item--selectable.is-highlighted {
-        background-color: var(--primary-color, #6366f1);
-        color: white;
+        background-color: var(--primary-color, #6366f1) !important;
+        color: white !important;
     }
 
     .choices[data-type*="select-multiple"] .choices__button {
@@ -971,12 +986,12 @@ require_once '../../includes/sidebar.php';
     }
 
     .choices__input {
-        background-color: transparent;
-        color: var(--text-primary, #e2e8f0);
+        background-color: transparent !important;
+        color: var(--text-primary, #e2e8f0) !important;
     }
 
     .choices__input::placeholder {
-        color: #94a3b8;
+        color: #94a3b8 !important;
     }
 
     .choices[data-type*="select-multiple"] .choices__list--dropdown {
