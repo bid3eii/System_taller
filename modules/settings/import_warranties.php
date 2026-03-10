@@ -54,8 +54,23 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
     }
     $header_map = array_flip($headers);
 
-    // 2. Skip to offset (considering we already read the header)
+    // 2. Skip to offset and detect encoding
     $current_line_idx = 0;
+    $encoding = 'UTF-8';
+    
+    // Detect encoding from the first record (just after header)
+    $first_record = fgets($handle);
+    if ($first_record !== false) {
+        if (function_exists('mb_detect_encoding')) {
+            $encoding = mb_detect_encoding($first_record, 'UTF-8, ISO-8859-1, Windows-1252', true) ?: 'UTF-8';
+        }
+        rewind($handle);
+        fgets($handle); // Skip header again
+    } else {
+        rewind($handle);
+        fgets($handle);
+    }
+
     while ($current_line_idx < $offset && fgets($handle) !== false) {
         $current_line_idx++;
     }
@@ -69,6 +84,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
         $pdo->beginTransaction();
         
         while ($count < $limit && ($line = fgets($handle)) !== false) {
+            if ($encoding !== 'UTF-8') {
+                $line = iconv($encoding, 'UTF-8//IGNORE', $line);
+            }
             $line = trim($line, "\r\n");
             if ($line === '') continue;
             

@@ -107,13 +107,42 @@ try {
     // Handle error quietly
 }
 
-// Pagination for Delivered Services (History)
+// Permission and Search
+$can_view_all = has_permission('module_view_all_entries', $pdo);
+$search = isset($_GET['search']) ? clean($_GET['search']) : '';
 $limit = 50;
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-if ($page < 1) $page = 1;
-$offset = ($page - 1) * $limit;
 
-// 1. Fetch Active Services (Always manageable number)
+// Pagination for Active Services
+$page_act = isset($_GET['page_act']) ? (int)$_GET['page_act'] : 1;
+if ($page_act < 1) $page_act = 1;
+$offset_act = ($page_act - 1) * $limit;
+
+// Pagination for Delivered Services (History)
+$page_del = isset($_GET['page_del']) ? (int)$_GET['page_del'] : 1;
+if ($page_del < 1) $page_del = 1;
+$offset_del = ($page_del - 1) * $limit;
+
+// 1. Fetch Active Services
+$whereActive = "WHERE so.service_type = 'service' AND so.status != 'delivered'";
+$paramsActive = [];
+
+if (!$can_view_all) {
+    $whereActive .= " AND so.assigned_tech_id = ?";
+    $paramsActive[] = $_SESSION['user_id'];
+}
+
+if ($search) {
+    $whereActive .= " AND (c.name LIKE ? OR e.model LIKE ? OR e.serial_number LIKE ? OR so.display_id LIKE ? OR so.owner_name LIKE ?)";
+    $srch = "%$search%";
+    $paramsActive = array_merge($paramsActive, [$srch, $srch, $srch, $srch, $srch]);
+}
+
+// Get Total Count for Active
+$countActStmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders so LEFT JOIN clients c ON so.client_id = c.id LEFT JOIN equipments e ON so.equipment_id = e.id $whereActive");
+$countActStmt->execute($paramsActive);
+$totalActive = $countActStmt->fetchColumn();
+$totalPages_act = ceil($totalActive / $limit);
+
 $sqlActive = "
     SELECT 
         so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.payment_status,
@@ -126,16 +155,12 @@ $sqlActive = "
     LEFT JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
-    WHERE so.service_type = 'service' AND so.status != 'delivered'
+    $whereActive
+    ORDER BY so.entry_date DESC
+    LIMIT $limit OFFSET $offset_act
 ";
-
-if (!$can_view_all) {
-    $sqlActive .= " AND so.assigned_tech_id = " . intval($_SESSION['user_id']);
-}
-$sqlActive .= " ORDER BY so.entry_date DESC";
-
 $stmtActive = $pdo->prepare($sqlActive);
-$stmtActive->execute();
+$stmtActive->execute($paramsActive);
 $activeServices = $stmtActive->fetchAll();
 
 // 2. Fetch Delivered Services with Pagination
@@ -147,11 +172,17 @@ if (!$can_view_all) {
     $paramsDelivered[] = $_SESSION['user_id'];
 }
 
+if ($search) {
+    $whereDelivered .= " AND (c.name LIKE ? OR e.model LIKE ? OR e.serial_number LIKE ? OR so.display_id LIKE ? OR so.owner_name LIKE ?)";
+    $srch = "%$search%";
+    $paramsDelivered = array_merge($paramsDelivered, [$srch, $srch, $srch, $srch, $srch]);
+}
+
 // Get Total Count for Delivered
-$countStmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders so $whereDelivered");
-$countStmt->execute($paramsDelivered);
-$totalDelivered = $countStmt->fetchColumn();
-$totalPages = ceil($totalDelivered / $limit);
+$countDelStmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders so LEFT JOIN clients c ON so.client_id = c.id LEFT JOIN equipments e ON so.equipment_id = e.id $whereDelivered");
+$countDelStmt->execute($paramsDelivered);
+$totalDelivered = $countDelStmt->fetchColumn();
+$totalPages_del = ceil($totalDelivered / $limit);
 
 $sqlDelivered = "
     SELECT 
@@ -167,7 +198,7 @@ $sqlDelivered = "
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     $whereDelivered
     ORDER BY so.entry_date DESC
-    LIMIT $limit OFFSET $offset
+    LIMIT $limit OFFSET $offset_del
 ";
 
 $stmtDelivered = $pdo->prepare($sqlDelivered);
@@ -350,6 +381,34 @@ require_once '../../includes/sidebar.php';
                 </tbody>
             </table>
         </div>
+        <!-- Pagination for Active Services -->
+        <?php if ($totalPages_act > 1): ?>
+            <div style="padding: 1.5rem; display: flex; justify-content: center; gap: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card); border-radius: 0 0 12px 12px;">
+                <?php 
+                $start = max(1, $page_act - 2);
+                $end = min($totalPages_act, $page_act + 2);
+                $qStr = "&search=".urlencode($search)."&page_del=".$page_del;
+                
+                if ($page_act > 1): ?>
+                    <a href="?page_act=1<?php echo $qStr; ?>" class="btn btn-sm btn-secondary">«</a>
+                    <a href="?page_act=<?php echo $page_act - 1; ?><?php echo $qStr; ?>" class="btn btn-sm btn-secondary">‹</a>
+                <?php endif; ?>
+
+                <?php for ($i = $start; $i <= $end; $i++): ?>
+                    <a href="?page_act=<?php echo $i; ?><?php echo $qStr; ?>" class="btn btn-sm <?php echo $i == $page_act ? 'btn-primary' : 'btn-secondary'; ?>" style="<?php echo $i == $page_act ? 'pointer-events: none;' : ''; ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($page_act < $totalPages_act): ?>
+                    <a href="?page_act=<?php echo $page_act + 1; ?><?php echo $qStr; ?>" class="btn btn-sm btn-secondary">›</a>
+                    <a href="?page_act=<?php echo $totalPages_act; ?><?php echo $qStr; ?>" class="btn btn-sm btn-secondary">»</a>
+                <?php endif; ?>
+            </div>
+            <div style="text-align: center; padding-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card);">
+                Mostrando <?php echo count($activeServices); ?> de <?php echo $totalActive; ?> servicios activos
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- DELIVERED HISTORY TABLE -->
@@ -466,30 +525,31 @@ require_once '../../includes/sidebar.php';
         </div>
 
         <!-- Pagination UI for History -->
-        <?php if ($totalPages > 1): ?>
+        <?php if ($totalPages_del > 1): ?>
             <div style="padding: 1.5rem; display: flex; justify-content: center; gap: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card);">
                 <?php 
-                $start = max(1, $page - 2);
-                $end = min($totalPages, $page + 2);
+                $start = max(1, $page_del - 2);
+                $end = min($totalPages_del, $page_del + 2);
+                $qStr = "&search=".urlencode($search)."&page_act=".$page_act;
                 
-                if ($page > 1): ?>
-                    <a href="?page=1" class="btn btn-sm btn-secondary" title="Primera página">«</a>
-                    <a href="?page=<?php echo $page - 1; ?>" class="btn btn-sm btn-secondary" title="Anterior">‹</a>
+                if ($page_del > 1): ?>
+                    <a href="?page_del=1<?php echo $qStr; ?>" class="btn btn-sm btn-secondary">«</a>
+                    <a href="?page_del=<?php echo $page_del - 1; ?><?php echo $qStr; ?>" class="btn btn-sm btn-secondary">‹</a>
                 <?php endif; ?>
 
                 <?php for ($i = $start; $i <= $end; $i++): ?>
-                    <a href="?page=<?php echo $i; ?>" class="btn btn-sm <?php echo $i == $page ? 'btn-primary' : 'btn-secondary'; ?>" style="<?php echo $i == $page ? 'pointer-events: none;' : ''; ?>">
+                    <a href="?page_del=<?php echo $i; ?><?php echo $qStr; ?>" class="btn btn-sm <?php echo $i == $page_del ? 'btn-primary' : 'btn-secondary'; ?>" style="<?php echo $i == $page_del ? 'pointer-events: none;' : ''; ?>">
                         <?php echo $i; ?>
                     </a>
                 <?php endfor; ?>
 
-                <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?php echo $page + 1; ?>" class="btn btn-sm btn-secondary" title="Siguiente">›</a>
-                    <a href="?page=<?php echo $totalPages; ?>" class="btn btn-sm btn-secondary" title="Última página">»</a>
+                <?php if ($page_del < $totalPages_del): ?>
+                    <a href="?page_del=<?php echo $page_del + 1; ?><?php echo $qStr; ?>" class="btn btn-sm btn-secondary">›</a>
+                    <a href="?page_del=<?php echo $totalPages_del; ?><?php echo $qStr; ?>" class="btn btn-sm btn-secondary">»</a>
                 <?php endif; ?>
             </div>
             <div style="text-align: center; padding-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card);">
-                Mostrando <?php echo count($deliveredServices); ?> de <?php echo $totalDelivered; ?> registros históricos (Pág. <?php echo $page; ?> de <?php echo $totalPages; ?>)
+                Mostrando <?php echo count($deliveredServices); ?> de <?php echo $totalDelivered; ?> servicios entregados
             </div>
         <?php endif; ?>
     </div>
