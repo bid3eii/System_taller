@@ -106,22 +106,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
             }
 
             // --- Business Logic ---
-            $serial = trim($data['Serie'] ?? '');
-            $product_code = trim($data['Codigo'] ?? '');
-            $sales_invoice = trim($data['FACTURA DE VENTA'] ?? '');
-            
-            if (empty($serial)) {
-                $errors[] = "Fila " . ($offset + $count) . ": Serie vacía.";
-                continue;
-            }
+    $serial = trim($data['Serie'] ?? '');
+    
+    // Fallback if serial is completely empty, to allow DB insertion
+    if (empty($serial)) {
+        $serial = 'S/N-' . uniqid();
+    }
 
-            // Duplicate Check
-            $stmtDup = $pdo->prepare("SELECT w.id FROM warranties w JOIN equipments e ON w.equipment_id = e.id WHERE e.serial_number = ? AND w.product_code = ? AND w.sales_invoice_number = ? LIMIT 1");
-            $stmtDup->execute([$serial, $product_code, $sales_invoice]);
-            if ($stmtDup->fetch()) {
-                $processed++; 
-                continue; 
-            }
+    // (Duplicate check removed per user request)
 
             // Client
             $client_name = trim($data['CLIENTE'] ?? '');
