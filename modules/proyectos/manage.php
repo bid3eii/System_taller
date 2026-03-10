@@ -266,6 +266,107 @@ require_once '../../includes/sidebar.php';
     .modern-table tr:hover td {
         background: rgba(255, 255, 255, 0.02);
     }
+
+    /* TinyMCE Un-reset */
+    .rich-text-content {
+        color: #cbd5e1;
+        font-size: 0.92rem;
+        line-height: 1.7;
+    }
+
+    .rich-text-content>*:first-child {
+        margin-top: 0 !important;
+    }
+
+    .rich-text-content p:empty {
+        display: none;
+    }
+
+    .rich-text-content p>br:only-child {
+        display: none;
+    }
+
+    .rich-text-content ul {
+        padding-left: 1.25rem;
+        margin: 0 0 0.5rem 0;
+        list-style-type: disc !important;
+    }
+
+    .rich-text-content ol {
+        padding-left: 1.25rem;
+        margin: 0 0 0.5rem 0;
+        list-style-type: decimal !important;
+    }
+
+    .rich-text-content li {
+        margin-bottom: 0.3rem;
+    }
+
+    .rich-text-content p {
+        margin-top: 0;
+        margin-bottom: 0.55rem;
+    }
+
+    .rich-text-content strong {
+        color: #e2e8f0;
+    }
+
+    .rich-text-content h1,
+    .rich-text-content h2,
+    .rich-text-content h3,
+    .rich-text-content h4 {
+        color: #f1f5f9;
+        margin-top: 1rem;
+        margin-bottom: 0.3rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Override inline colors injected by Microsoft Word / rich-text paste */
+    .rich-text-content span,
+    .rich-text-content p,
+    .rich-text-content li,
+    .rich-text-content div {
+        color: #cbd5e1 !important;
+    }
+
+    .rich-text-content strong,
+    .rich-text-content b {
+        color: #e2e8f0 !important;
+    }
+
+    .rich-text-content a {
+        color: #93c5fd !important;
+    }
+
+    /* Strip Word-specific MsoNormal spacing */
+    .MsoNormal,
+    .MsoListParagraph,
+    .MsoListParagraphCxSpFirst,
+    .MsoListParagraphCxSpMiddle,
+    .MsoListParagraphCxSpLast {
+        color: #cbd5e1 !important;
+        margin: 0 0 0.3rem 0 !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        text-indent: 0 !important;
+        font-family: inherit !important;
+        font-size: inherit !important;
+        background-color: transparent !important;
+    }
+
+    /* Prevent Word content from overflowing the card */
+    .rich-text-content {
+        overflow: hidden;
+        max-width: 100%;
+    }
+
+    .rich-text-content * {
+        max-width: 100%;
+        background-color: transparent !important;
+    }
 </style>
 
 <div class="animate-enter" style="max-width: 1200px; margin: 0 auto; padding-bottom: 3rem;">
@@ -735,7 +836,7 @@ require_once '../../includes/sidebar.php';
                         <div
                             style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.4rem;">
                             Descripción del Proyecto</div>
-                        <div
+                        <div class="rich-text-content"
                             style="font-weight: 400; font-size: 0.95rem; color: var(--text-primary); line-height: 1.6; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);">
                             <?php echo $survey['general_description']; ?>
                         </div>
@@ -752,7 +853,7 @@ require_once '../../includes/sidebar.php';
                         <div
                             style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.4rem;">
                             Alcance y Actividades</div>
-                        <div
+                        <div class="rich-text-content"
                             style="font-weight: 400; font-size: 0.95rem; color: var(--text-primary); line-height: 1.6; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);">
                             <?php echo $survey['scope_activities']; ?>
                         </div>
