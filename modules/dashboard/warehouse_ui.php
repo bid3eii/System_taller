@@ -130,7 +130,7 @@
 
     .wh-kpi-label {
         font-size: 0.95rem;
-        color: var(--text-muted);
+        color: var(--text-main, #ffffff) !important;
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -502,8 +502,7 @@
         const gradientGreen = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
         gradientGreen.addColorStop(0, '#34d399');
         gradientGreen.addColorStop(1, '#059669');
-
-        const gradientGray = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
+ const gradientGray = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
         gradientGray.addColorStop(0, '#94a3b8');
         gradientGray.addColorStop(1, '#475569');
 
