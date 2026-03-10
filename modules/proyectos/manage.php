@@ -687,20 +687,68 @@ require_once '../../includes/sidebar.php';
 
                         <form method="POST" style="margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
                             <input type="hidden" name="action" value="assign_tech">
-                            <select name="tech_ids[]" id="assigned_tech_ids" class="form-control" multiple>
-                                <?php
-                                $assigned_arr = array_filter(explode(',', $survey['assigned_tech_ids'] ?? ''));
-                                foreach ($techs as $t):
-                                    ?>
-                                    <option value="<?php echo $t['id']; ?>" <?php echo in_array($t['id'], $assigned_arr) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($t['username']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            
+                            <div class="custom-multi-select" style="position: relative;">
+                                <div class="form-control" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleTechDropdown(event)">
+                                    <span id="tech-select-text">Seleccionar técnicos...</span>
+                                    <i class="ph ph-caret-down"></i>
+                                </div>
+                                
+                                <div id="tech-dropdown" class="dropdown-content" style="position: absolute; top: 100%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; z-index: 1000; margin-top: 4px; display: none;">
+                                    <div style="padding: 0.5rem;">
+                                        <?php
+                                        $assigned_arr = array_filter(explode(',', $survey['assigned_tech_ids'] ?? ''));
+                                        foreach ($techs as $t):
+                                            $is_selected = in_array($t['id'], $assigned_arr);
+                                        ?>
+                                            <label class="dropdown-item" style="cursor: pointer; margin-bottom: 0; padding: 0.6rem 0.8rem;">
+                                                <input type="checkbox" name="tech_ids[]" value="<?php echo $t['id']; ?>" 
+                                                       <?php echo $is_selected ? 'checked' : ''; ?>
+                                                       onchange="updateTechSelectText()"
+                                                       style="accent-color: var(--primary-500); width: 16px; height: 16px;">
+                                                <span><?php echo htmlspecialchars($t['username']); ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">
-                                <i class="ph ph-check"></i> Asignar Seleccionados
+                                <i class="ph ph-check"></i> Guardar Asignaciones
                             </button>
                         </form>
+
+                        <script>
+                            function toggleTechDropdown(e) {
+                                e.stopPropagation();
+                                const dropdown = document.getElementById('tech-dropdown');
+                                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                            }
+                            
+                            document.addEventListener('click', function(e) {
+                                const dropdown = document.getElementById('tech-dropdown');
+                                const container = document.querySelector('.custom-multi-select');
+                                if (dropdown && container && !container.contains(e.target)) {
+                                    dropdown.style.display = 'none';
+                                }
+                            });
+
+                            function updateTechSelectText() {
+                                const checkboxes = document.querySelectorAll('input[name="tech_ids[]"]:checked');
+                                const textSpan = document.getElementById('tech-select-text');
+                                
+                                if (checkboxes.length === 0) {
+                                    textSpan.textContent = 'Seleccionar técnicos...';
+                                } else if (checkboxes.length === 1) {
+                                    textSpan.textContent = checkboxes[0].nextElementSibling.textContent;
+                                } else {
+                                    textSpan.textContent = checkboxes.length + ' técnicos seleccionados';
+                                }
+                            }
+                            
+                            // Init text
+                            document.addEventListener('DOMContentLoaded', updateTechSelectText);
+                        </script>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.2); padding: 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
@@ -914,105 +962,5 @@ require_once '../../includes/sidebar.php';
         if (e.target === this) this.style.display = 'none';
     });
 </script>
-
-<!-- Choices.js for Multiple Select -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const personnelSelect = document.getElementById('assigned_tech_ids');
-        if (personnelSelect) {
-            new Choices(personnelSelect, {
-                removeItemButton: true,
-                placeholderValue: 'Seleccionar técnicos...',
-                searchPlaceholderValue: 'Buscar personal...',
-                noResultsText: 'No se encontraron resultados',
-                itemSelectText: 'Presiona para seleccionar'
-            });
-        }
-    });
-</script>
-<style>
-    /* Custom Dark Theme for Choices.js to match System Taller */
-    .choices__inner {
-        background-color: var(--bg-card, #1e1e2d);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        color: var(--text-primary, #e2e8f0);
-        min-height: 48px;
-        padding: 7px 7px 3.75px;
-    }
-
-    .choices.is-open .choices__inner {
-        border-radius: 8px 8px 0 0;
-        border-color: var(--primary-color, #6366f1);
-    }
-
-    .choices__list--dropdown {
-        background-color: var(--bg-darker, #1e1e2d) !important;
-        border: 1px solid var(--border-color, #323248) !important;
-        color: var(--text-primary, #e2e8f0) !important;
-        word-break: break-all;
-        z-index: 100;
-    }
-
-    .choices__list--dropdown .choices__list {
-        background-color: var(--bg-darker, #1e1e2d) !important;
-    }
-
-    .choices__list--dropdown .choices__item {
-        color: var(--text-primary, #e2e8f0) !important;
-        background-color: var(--bg-darker, #1e1e2d) !important;
-    }
-
-    .choices__list--dropdown .choices__item--choice {
-        color: var(--text-primary, #e2e8f0) !important;
-        background-color: var(--bg-darker, #1e1e2d) !important;
-    }
-
-    .choices__list--dropdown .choices__item--selectable {
-        padding-right: 10px;
-    }
-
-    .choices__list--dropdown .choices__item.is-highlighted,
-    .choices__list--dropdown .choices__item--selectable.is-highlighted {
-        background-color: var(--primary-color, #6366f1) !important;
-        color: white !important;
-    }
-
-    .choices[data-type*="select-multiple"] .choices__button {
-        border-left: 1px solid rgba(255, 255, 255, 0.2);
-        margin: 0 0 0 8px;
-    }
-
-    .choices__input {
-        background-color: transparent !important;
-        color: var(--text-primary, #e2e8f0) !important;
-    }
-
-    .choices__input::placeholder {
-        color: #94a3b8 !important;
-    }
-
-    .choices[data-type*="select-multiple"] .choices__list--dropdown {
-        padding-bottom: 5px;
-    }
-
-    .choices__list--multiple .choices__item {
-        background-color: var(--primary-color, #6366f1);
-        border: 1px solid var(--primary-color, #6366f1);
-        border-radius: 4px;
-    }
-
-    .choices__group .choices__heading {
-        color: #94a3b8;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-bottom: 1px solid var(--border-color, #323248);
-        padding-bottom: 5px;
-        margin-bottom: 5px;
-    }
-</style>
 
 <?php require_once '../../includes/footer.php'; ?>
