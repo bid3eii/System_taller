@@ -78,6 +78,7 @@ $offset_del = ($page_del - 1) * $limit;
 $whereActive = "
     WHERE so.service_type = 'warranty'
       AND (w.product_code IS NULL OR w.product_code = '')
+      AND so.problem_reported != 'Garantía Registrada'
       AND so.status != 'delivered'
 ";
 $paramsActive = [];
@@ -124,6 +125,7 @@ $activeWarranties = $stmtActive->fetchAll();
 $whereDelivered = "
     WHERE so.service_type = 'warranty'
       AND (w.product_code IS NULL OR w.product_code = '')
+      AND so.problem_reported != 'Garantía Registrada'
       AND so.status = 'delivered'
 ";
 $paramsDelivered = [];
