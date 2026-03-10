@@ -59,7 +59,35 @@ if (!empty($filterType)) {
     $params[] = $filterType;
 }
 
-$sql .= " ORDER BY so.entry_date DESC LIMIT 200";
+// Pagination Logic
+$limit = 50;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $limit;
+
+// Get Total Count
+$countSql = "SELECT COUNT(*) FROM service_orders so WHERE (so.service_type != 'warranty' OR so.problem_reported != 'Garantía Registrada')";
+$countParams = [];
+
+if (!$can_view_all) {
+    $countSql .= " AND so.assigned_tech_id = ?";
+    $countParams[] = $user_id;
+}
+if (!empty($filterStatus)) {
+    $countSql .= " AND so.status = ?";
+    $countParams[] = $filterStatus;
+}
+if (!empty($filterType)) {
+    $countSql .= " AND so.service_type = ?";
+    $countParams[] = $filterType;
+}
+
+$countStmt = $pdo->prepare($countSql);
+$countStmt->execute($countParams);
+$totalRecords = $countStmt->fetchColumn();
+$totalPages = ceil($totalRecords / $limit);
+
+$sql .= " ORDER BY so.entry_date DESC LIMIT $limit OFFSET $offset";
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -255,6 +283,35 @@ require_once '../../includes/sidebar.php';
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination UI -->
+    <?php if ($totalPages > 1): ?>
+        <div style="padding: 1.5rem; display: flex; justify-content: center; gap: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card);">
+            <?php 
+            $start = max(1, $page - 2);
+            $end = min($totalPages, $page + 2);
+            $queryString = "&status=".urlencode($filterStatus)."&type=".urlencode($filterType);
+            
+            if ($page > 1): ?>
+                <a href="?page=1<?php echo $queryString; ?>" class="btn btn-sm btn-secondary" title="Primera página">«</a>
+                <a href="?page=<?php echo $page - 1; ?><?php echo $queryString; ?>" class="btn btn-sm btn-secondary" title="Anterior">‹</a>
+            <?php endif; ?>
+
+            <?php for ($i = $start; $i <= $end; $i++): ?>
+                <a href="?page=<?php echo $i; ?><?php echo $queryString; ?>" class="btn btn-sm <?php echo $i == $page ? 'btn-primary' : 'btn-secondary'; ?>" style="<?php echo $i == $page ? 'pointer-events: none;' : ''; ?>">
+                    <?php echo $i; ?>
+                </a>
+            <?php endfor; ?>
+
+            <?php if ($page < $totalPages): ?>
+                <a href="?page=<?php echo $page + 1; ?><?php echo $queryString; ?>" class="btn btn-sm btn-secondary" title="Siguiente">›</a>
+                <a href="?page=<?php echo $totalPages; ?><?php echo $queryString; ?>" class="btn btn-sm btn-secondary" title="Última página">»</a>
+            <?php endif; ?>
+        </div>
+        <div style="text-align: center; padding-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card);">
+            Mostrando <?php echo count($history); ?> de <?php echo $totalRecords; ?> registros (Pág. <?php echo $page; ?> de <?php echo $totalPages; ?>)
+        </div>
+    <?php endif; ?>
 </div>
 </div>
 

@@ -24,13 +24,27 @@ if ($search) {
     $params = ["%$search%", "%$search%"];
 }
 
+// Pagination Logic
+$limit = 50;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $limit;
+
 // Check if table exists to avoid ugly errors if SQL script didn't run
 try {
-    $stmt = $pdo->prepare("SELECT * FROM tools WHERE $where ORDER BY name ASC");
+    // Get Total Count
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM tools WHERE $where");
+    $countStmt->execute($params);
+    $totalRecords = $countStmt->fetchColumn();
+    $totalPages = ceil($totalRecords / $limit);
+
+    $stmt = $pdo->prepare("SELECT * FROM tools WHERE $where ORDER BY name ASC LIMIT $limit OFFSET $offset");
     $stmt->execute($params);
     $tools = $stmt->fetchAll();
 } catch (PDOException $e) {
     $tools = [];
+    $totalRecords = 0;
+    $totalPages = 0;
     $error = "Error al cargar herramientas. ¿Se ha ejecutado el script de base de datos? " . $e->getMessage();
 }
 ?>
@@ -131,6 +145,34 @@ try {
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination UI -->
+        <?php if ($totalPages > 1): ?>
+            <div style="padding: 1.5rem; display: flex; justify-content: center; gap: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card);">
+                <?php 
+                $start = max(1, $page - 2);
+                $end = min($totalPages, $page + 2);
+                
+                if ($page > 1): ?>
+                    <a href="?page=1&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary" title="Primera página">«</a>
+                    <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary" title="Anterior">‹</a>
+                <?php endif; ?>
+
+                <?php for ($i = $start; $i <= $end; $i++): ?>
+                    <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm <?php echo $i == $page ? 'btn-primary' : 'btn-secondary'; ?>" style="<?php echo $i == $page ? 'pointer-events: none;' : ''; ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary" title="Siguiente">›</a>
+                    <a href="?page=<?php echo $totalPages; ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary" title="Última página">»</a>
+                <?php endif; ?>
+            </div>
+            <div style="text-align: center; padding-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card);">
+                Mostrando <?php echo count($tools); ?> de <?php echo $totalRecords; ?> herramientas (Pág. <?php echo $page; ?> de <?php echo $totalPages; ?>)
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
