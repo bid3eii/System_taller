@@ -20,7 +20,7 @@ if ($page < 1) $page = 1;
 $offset = ($page - 1) * $limit;
 
 $search = isset($_GET['search']) ? clean($_GET['search']) : '';
-$where = "WHERE so.service_type = 'warranty' AND w.product_code IS NOT NULL AND w.product_code != ''";
+$where = "WHERE so.service_type = 'warranty'";
 $params = [];
 
 if (!empty($search)) {
@@ -108,7 +108,13 @@ $records = $stmt->fetchAll();
                             $statusClass = $isExpired ? 'status-red' : ($r['status'] == 'active' ? 'status-green' : 'status-gray');
                         ?>
                             <tr style="border-bottom: 1px solid var(--border-color);">
-                                <td><span class="badge"><?php echo htmlspecialchars($r['product_code']); ?></span></td>
+                                <td>
+                                    <?php if (empty(trim($r['product_code']))): ?>
+                                        <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">⚠️ Sin Código</span>
+                                    <?php else: ?>
+                                        <span class="badge"><?php echo htmlspecialchars($r['product_code']); ?></span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($r['client_name']); ?></td>
                                 <td>
                                     <strong><?php echo htmlspecialchars($r['brand'] . ' ' . $r['model']); ?></strong>

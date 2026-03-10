@@ -68,14 +68,14 @@ if ($is_warehouse) {
 
     // KPI 1: Registros de Hoy
     $today = date('Y-m-d');
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM warranties w JOIN service_orders so ON w.service_order_id = so.id WHERE DATE(so.entry_date) = ? AND w.product_code IS NOT NULL AND w.product_code != ''");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM warranties w JOIN service_orders so ON w.service_order_id = so.id WHERE DATE(so.entry_date) = ?");
     $stmt->execute([$today]);
     $kpi1_val = $stmt->fetchColumn();
     $kpi1_label = "Registros de Hoy";
     $kpi1_icon = "ph-calendar-plus";
 
     // KPI 2: Componentes Vigentes
-    $stmt = $pdo->query("SELECT SUM(CASE WHEN status = 'active' AND (end_date >= CURDATE() OR end_date IS NULL) THEN 1 ELSE 0 END) as active, SUM(CASE WHEN status = 'expired' OR end_date < CURDATE() THEN 1 ELSE 0 END) as expired FROM warranties WHERE product_code IS NOT NULL AND product_code != ''");
+    $stmt = $pdo->query("SELECT SUM(CASE WHEN status = 'active' AND (end_date >= CURDATE() OR end_date IS NULL) THEN 1 ELSE 0 END) as active, SUM(CASE WHEN status = 'expired' OR end_date < CURDATE() THEN 1 ELSE 0 END) as expired FROM warranties");
     $statusData = $stmt->fetch(PDO::FETCH_ASSOC);
     $kpi2_val = $statusData['active'] ?? 0;
     $whExpiredCount = $statusData['expired'] ?? 0;
@@ -83,7 +83,7 @@ if ($is_warehouse) {
     $kpi2_icon = "ph-check-circle";
 
     // KPI 3: Total Registros
-    $stmt = $pdo->query("SELECT COUNT(*) FROM warranties WHERE product_code IS NOT NULL AND product_code != ''");
+    $stmt = $pdo->query("SELECT COUNT(*) FROM warranties");
     $kpi3_val = $stmt->fetchColumn();
     $kpi3_label = "Total Registros";
     $kpi3_icon = "ph-database";
@@ -105,7 +105,6 @@ if ($is_warehouse) {
         JOIN service_orders so ON w.service_order_id = so.id
         JOIN clients c ON so.client_id = c.id
         JOIN equipments e ON so.equipment_id = e.id
-        WHERE w.product_code IS NOT NULL AND w.product_code != ''
         ORDER BY so.entry_date DESC
         LIMIT 10
     ");
