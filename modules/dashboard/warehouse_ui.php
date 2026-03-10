@@ -410,13 +410,15 @@
                                     </td>
                                     <td>
                                         <div style="font-weight: 500;">
-                                            <?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></div>
+                                            <?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?>
+                                        </div>
                                         <div style="font-size: 0.8rem; color: var(--text-muted);">
-                                            <?php echo htmlspecialchars($item['serial_number']); ?></div>
+                                            <?php echo htmlspecialchars($item['serial_number']); ?>
+                                        </div>
                                     </td>
                                     <td>
                                         <span class="wh-badge"
-                                            style="background: rgba(59, 130, 246, 0.15); color: var(--neon-blue); border: 1px solid rgba(59, 130, 246, 0.3);">
+                                            style="background: rgba(255, 255, 255, 0.1); color: var(--text-main); border: 1px solid rgba(255, 255, 255, 0.2);">
                                             <?php echo htmlspecialchars($item['product_code']); ?>
                                         </span>
                                     </td>
@@ -500,7 +502,7 @@
         const gradientGreen = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
         gradientGreen.addColorStop(0, '#34d399');
         gradientGreen.addColorStop(1, '#059669');
-        
+
         const gradientGray = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
         gradientGray.addColorStop(0, '#94a3b8');
         gradientGray.addColorStop(1, '#475569');
