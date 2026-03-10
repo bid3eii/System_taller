@@ -107,6 +107,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
 
             // --- Business Logic ---
     $serial = trim($data['Serie'] ?? '');
+    $product_code = trim($data['Codigo'] ?? '');
+    $sales_invoice = trim($data['FACTURA DE VENTA'] ?? '');
     
     // Fallback if serial is completely empty, to allow DB insertion
     if (empty($serial)) {
