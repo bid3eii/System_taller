@@ -19,13 +19,6 @@ $id = intval($_GET['id']);
 $error = '';
 $success = '';
 
-// Fetch active users to populate 'Personal Requerido' dropdown
-try {
-    $stmtUsers = $pdo->query("SELECT id, username, r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.status = 'active' ORDER BY r.name, u.username");
-    $active_users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $active_users = [];
-}
 
 // Fetch Survey
 $stmt = $pdo->prepare("SELECT * FROM project_surveys WHERE id = ?");
@@ -53,12 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $scope_activities = $_POST['scope_activities']; // Can contain HTML
     $estimated_time = clean($_POST['estimated_time']);
 
-    // Handle array of personnel if multiple select is used
-    if (isset($_POST['personnel_required']) && is_array($_POST['personnel_required'])) {
-        $personnel_required = clean(implode(', ', $_POST['personnel_required']));
-    } else {
-        $personnel_required = clean($_POST['personnel_required'] ?? '');
-    }
+    $personnel_required = clean($_POST['personnel_required'] ?? '');
 
     // Materials arrays
     $mat_ids = $_POST['mat_id'] ?? [];
@@ -268,18 +256,11 @@ require_once '../../includes/sidebar.php';
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group">
                     <label class="form-label">Personal Requerido</label>
-                    <div class="input-group" style="display: block;">
-                        <select name="personnel_required[]" id="personnel_required" class="form-control" multiple>
-                            <?php
-                            $selected_users = array_map('trim', explode(',', $survey['personnel_required'] ?? ''));
-                            foreach ($active_users as $u):
-                                $is_selected = in_array($u['username'], $selected_users) ? 'selected' : '';
-                                ?>
-                                <option value="<?php echo htmlspecialchars($u['username']); ?>" <?php echo $is_selected; ?>>
-                                    <?php echo htmlspecialchars($u['role_name'] . ' - ' . $u['username']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="input-group">
+                        <input type="text" name="personnel_required" class="form-control"
+                            value="<?php echo htmlspecialchars($survey['personnel_required']); ?>"
+                            placeholder="Ej. 2 Técnicos, o 1 Especialista">
+                        <i class="ph ph-users input-icon"></i>
                     </div>
                 </div>
 
@@ -418,90 +399,6 @@ require_once '../../includes/sidebar.php';
 
 </script>
 
-<!-- Choices.js for Multiple Select -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const personnelSelect = document.getElementById('personnel_required');
-        if (personnelSelect) {
-            new Choices(personnelSelect, {
-                removeItemButton: true,
-                placeholderValue: 'Seleccionar técnicos...',
-                searchPlaceholderValue: 'Buscar personal...',
-                noResultsText: 'No se encontraron resultados',
-                itemSelectText: 'Presiona para seleccionar'
-            });
-        }
-    });
-</script>
-<style>
-    /* Custom Dark Theme for Choices.js to match System Taller */
-    .choices__inner {
-        background-color: var(--bg-darker, #1e1e2d);
-        border: 1px solid var(--border-color, #323248);
-        border-radius: 8px;
-        color: var(--text-primary, #e2e8f0);
-        min-height: 48px;
-        padding: 7px 7px 3.75px;
-    }
-
-    .choices.is-open .choices__inner {
-        border-radius: 8px 8px 0 0;
-        border-color: var(--primary-color, #6366f1);
-    }
-
-    .choices__list--dropdown {
-        background-color: var(--bg-darker, #1e1e2d);
-        border: 1px solid var(--border-color, #323248);
-        color: var(--text-primary, #e2e8f0);
-        word-break: break-all;
-        z-index: 100;
-    }
-
-    .choices__list--dropdown .choices__item--selectable {
-        padding-right: 10px;
-    }
-
-    .choices__list--dropdown .choices__item--selectable.is-highlighted {
-        background-color: var(--primary-color, #6366f1);
-        color: white;
-    }
-
-    .choices[data-type*="select-multiple"] .choices__button {
-        border-left: 1px solid rgba(255, 255, 255, 0.2);
-        margin: 0 0 0 8px;
-    }
-
-    .choices__input {
-        background-color: transparent;
-        color: var(--text-primary, #e2e8f0);
-    }
-
-    .choices__input::placeholder {
-        color: #94a3b8;
-    }
-
-    .choices[data-type*="select-multiple"] .choices__list--dropdown {
-        padding-bottom: 5px;
-    }
-
-    .choices__list--multiple .choices__item {
-        background-color: var(--primary-color, #6366f1);
-        border: 1px solid var(--primary-color, #6366f1);
-        border-radius: 4px;
-    }
-
-    .choices__group .choices__heading {
-        color: #94a3b8;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-bottom: 1px solid var(--border-color, #323248);
-        padding-bottom: 5px;
-        margin-bottom: 5px;
-    }
-</style>
 
 <?php
 require_once '../../includes/footer.php';
