@@ -18,6 +18,7 @@ if (!can_access_module('history', $pdo)) {
 // 1. Get Filters
 $filterStatus = isset($_GET['status']) ? clean($_GET['status']) : '';
 $filterType = isset($_GET['type']) ? clean($_GET['type']) : '';
+$search = isset($_GET['search']) ? clean($_GET['search']) : '';
 
 // 2. Build Query
 $can_view_all = has_permission('module_view_all_entries', $pdo);
@@ -57,6 +58,12 @@ if (!empty($filterStatus)) {
 if (!empty($filterType)) {
     $sql .= " AND so.service_type = ?";
     $params[] = $filterType;
+}
+
+if ($search) {
+    $sql .= " AND (c.name LIKE ? OR e.model LIKE ? OR e.serial_number LIKE ? OR so.display_id LIKE ? OR so.owner_name LIKE ?)";
+    $srch = "%$search%";
+    $params = array_merge($params, [$srch, $srch, $srch, $srch, $srch]);
 }
 
 // Pagination Logic
