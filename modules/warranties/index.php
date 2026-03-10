@@ -59,7 +59,14 @@ try {
 
 // Fetch Warranty Service Orders
 // These are orders entered with service_type = 'warranty'
-$sql = "
+// Pagination for Delivered Warranties (History)
+$limit = 50;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $limit;
+
+// 1. Fetch Active Warranties
+$sqlActive = "
     SELECT 
         so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name,
         c.name as contact_name, c.phone,
@@ -75,31 +82,64 @@ $sql = "
     WHERE so.service_type = 'warranty'
       AND (w.product_code IS NULL OR w.product_code = '')
       AND so.problem_reported != 'Garantía Registrada'
+      AND so.status != 'delivered'
 ";
 
-// Filter by assignments if user doesn't have view_all_entries permission
-$can_view_all = can_access_module('view_all_entries', $pdo);
 if (!$can_view_all) {
-    $sql .= " AND so.assigned_tech_id = " . intval($_SESSION['user_id']);
+    $sqlActive .= " AND so.assigned_tech_id = " . intval($_SESSION['user_id']);
+}
+$sqlActive .= " ORDER BY so.created_at DESC";
+
+$stmtActive = $pdo->prepare($sqlActive);
+$stmtActive->execute();
+$activeWarranties = $stmtActive->fetchAll();
+
+// 2. Fetch Delivered Warranties with Pagination
+$whereDelivered = "
+    WHERE so.service_type = 'warranty'
+      AND (w.product_code IS NULL OR w.product_code = '')
+      AND so.problem_reported != 'Garantía Registrada'
+      AND so.status = 'delivered'
+";
+$paramsDelivered = [];
+
+if (!$can_view_all) {
+    $whereDelivered .= " AND so.assigned_tech_id = ?";
+    $paramsDelivered[] = $_SESSION['user_id'];
 }
 
-$sql .= " ORDER BY so.created_at DESC";
+// Get Total Count for Delivered
+$countStmt = $pdo->prepare("
+    SELECT COUNT(*) 
+    FROM service_orders so 
+    LEFT JOIN warranties w ON so.id = w.service_order_id 
+    $whereDelivered
+");
+$countStmt->execute($paramsDelivered);
+$totalDelivered = $countStmt->fetchColumn();
+$totalPages = ceil($totalDelivered / $limit);
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute();
-$warranties = $stmt->fetchAll();
+$sqlDelivered = "
+    SELECT 
+        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name,
+        c.name as contact_name, c.phone,
+        reg_owner.name as registered_owner_name,
+        e.brand, e.model, e.serial_number, e.type,
+        tech.username as tech_name
+    FROM service_orders so
+    LEFT JOIN clients c ON so.client_id = c.id
+    LEFT JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
+    LEFT JOIN warranties w ON so.id = w.service_order_id
+    LEFT JOIN users tech ON so.assigned_tech_id = tech.id
+    $whereDelivered
+    ORDER BY so.created_at DESC
+    LIMIT $limit OFFSET $offset
+";
 
-// Separate Active and Delivered Warranties
-$activeWarranties = [];
-$deliveredWarranties = [];
-
-foreach ($warranties as $item) {
-    if (trim(strtolower($item['status'])) == 'delivered') {
-        $deliveredWarranties[] = $item;
-    } else {
-        $activeWarranties[] = $item;
-    }
-}
+$stmtDelivered = $pdo->prepare($sqlDelivered);
+$stmtDelivered->execute($paramsDelivered);
+$deliveredWarranties = $stmtDelivered->fetchAll();
 
 $page_title = 'Gestión de Garantías';
 require_once '../../includes/header.php';
@@ -357,6 +397,34 @@ require_once '../../includes/sidebar.php';
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination UI for History -->
+        <?php if ($totalPages > 1): ?>
+            <div style="padding: 1.5rem; display: flex; justify-content: center; gap: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card);">
+                <?php 
+                $start = max(1, $page - 2);
+                $end = min($totalPages, $page + 2);
+                
+                if ($page > 1): ?>
+                    <a href="?page=1" class="btn btn-sm btn-secondary" title="Primera página">«</a>
+                    <a href="?page=<?php echo $page - 1; ?>" class="btn btn-sm btn-secondary" title="Anterior">‹</a>
+                <?php endif; ?>
+
+                <?php for ($i = $start; $i <= $end; $i++): ?>
+                    <a href="?page=<?php echo $i; ?>" class="btn btn-sm <?php echo $i == $page ? 'btn-primary' : 'btn-secondary'; ?>" style="<?php echo $i == $page ? 'pointer-events: none;' : ''; ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?php echo $page + 1; ?>" class="btn btn-sm btn-secondary" title="Siguiente">›</a>
+                    <a href="?page=<?php echo $totalPages; ?>" class="btn btn-sm btn-secondary" title="Última página">»</a>
+                <?php endif; ?>
+            </div>
+            <div style="text-align: center; padding-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card);">
+                Mostrando <?php echo count($deliveredWarranties); ?> de <?php echo $totalDelivered; ?> registros históricos (Pág. <?php echo $page; ?> de <?php echo $totalPages; ?>)
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

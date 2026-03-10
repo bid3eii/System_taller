@@ -14,15 +14,28 @@ $page_title = 'Clientes';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php'; // Actually Navbar
 
-// Search Logic
-$search = $_GET['search'] ?? '';
-$where = "1";
-$params = [];
-
 if ($search) {
     $where .= " AND (name LIKE ? OR tax_id LIKE ? OR phone LIKE ? OR email LIKE ?)";
     $params = ["%$search%", "%$search%", "%$search%", "%$search%"];
 }
+
+// Pagination Logic
+$limit = 50;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $limit;
+
+// Get Total Count
+$countStmt = $pdo->prepare("
+    SELECT COUNT(DISTINCT c.id) 
+    FROM clients c 
+    WHERE $where 
+      AND c.is_third_party = 0
+      AND c.name IS NOT NULL AND c.name != ''
+");
+$countStmt->execute($params);
+$totalRecords = $countStmt->fetchColumn();
+$totalPages = ceil($totalRecords / $limit);
 
 $stmt = $pdo->prepare("
     SELECT DISTINCT c.* 
@@ -31,6 +44,7 @@ $stmt = $pdo->prepare("
       AND c.is_third_party = 0
       AND c.name IS NOT NULL AND c.name != ''
     ORDER BY c.created_at DESC
+    LIMIT $limit OFFSET $offset
 ");
 $stmt->execute($params);
 $clients = $stmt->fetchAll();
@@ -118,6 +132,34 @@ $clients = $stmt->fetchAll();
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination UI -->
+        <?php if ($totalPages > 1): ?>
+            <div style="padding: 1.5rem; display: flex; justify-content: center; gap: 0.5rem; border-top: 1px solid var(--border-color); background: var(--bg-card);">
+                <?php 
+                $start = max(1, $page - 2);
+                $end = min($totalPages, $page + 2);
+                
+                if ($page > 1): ?>
+                    <a href="?page=1&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary" title="Primera página">«</a>
+                    <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary" title="Anterior">‹</a>
+                <?php endif; ?>
+
+                <?php for ($i = $start; $i <= $end; $i++): ?>
+                    <a href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm <?php echo $i == $page ? 'btn-primary' : 'btn-secondary'; ?>" style="<?php echo $i == $page ? 'pointer-events: none;' : ''; ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary" title="Siguiente">›</a>
+                    <a href="?page=<?php echo $totalPages; ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary" title="Última página">»</a>
+                <?php endif; ?>
+            </div>
+            <div style="text-align: center; padding-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card);">
+                Mostrando <?php echo count($clients); ?> de <?php echo $totalRecords; ?> clientes (Pág. <?php echo $page; ?> de <?php echo $totalPages; ?>)
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

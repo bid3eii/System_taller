@@ -25,6 +25,7 @@ $stmt = $pdo->prepare("
     WHERE $where 
       AND c.is_third_party = 0
     ORDER BY c.created_at DESC
+    LIMIT 100
 ");
 $stmt->execute($params);
 $clients = $stmt->fetchAll();
