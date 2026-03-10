@@ -18,7 +18,7 @@ require_once '../../includes/sidebar.php';
 $role_id = $_SESSION['role_id'];
 $user_id = $_SESSION['user_id'];
 
-$is_admin = ($role_id == 1);
+$is_admin = in_array($role_id, [1, 7]);
 $is_reception = ($role_id == 4);
 $is_tech = ($role_id == 3);
 $is_warehouse = ($role_id == 5);
