@@ -16,7 +16,7 @@ $success = '';
 if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
     header('Content-Type: application/json');
     $offset = intval($_POST['offset'] ?? 0);
-    $limit = 200; // Sync with UI recommendation for better performance on free hosting
+    $limit = 500; // Increased for local performance (was 200 for online hosting)
     $file_path = '../../temp_import.csv';
 
     if (!file_exists($file_path)) {
@@ -89,6 +89,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
             }
             $line = trim($line, "\r\n");
             if ($line === '') continue;
+            
+            // Ensure UTF-8 safety per line
+            if (!mb_check_encoding($line, 'UTF-8')) {
+                $line = mb_convert_encoding($line, 'UTF-8', 'Windows-1252');
+            }
             
             $count++;
             $cols = explode($delimiter, $line);
@@ -207,12 +212,27 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
 // Handle Upload
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     if ($_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
-        move_uploaded_file($_FILES['csv_file']['tmp_name'], '../../temp_import.csv');
-        $success = "Archivo subido correctamente. Listo para procesar.";
+        $tmp = $_FILES['csv_file']['tmp_name'];
+        $dest = '../../temp_import.csv';
         
-        // Peek at count - simple line count
-        $file_lines = file('../../temp_import.csv', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $total_records = count($file_lines) - 1; // Minus headers
+        // Read raw bytes to detect encoding
+        $raw = file_get_contents($tmp);
+        
+        // Detect and convert to UTF-8 if needed
+        $detected = mb_detect_encoding($raw, ['UTF-8', 'Windows-1252', 'ISO-8859-1', 'ASCII'], true);
+        if ($detected && $detected !== 'UTF-8') {
+            $raw = mb_convert_encoding($raw, 'UTF-8', $detected);
+        }
+        // Remove BOM if present
+        if (substr($raw, 0, 3) === "\xEF\xBB\xBF") {
+            $raw = substr($raw, 3);
+        }
+        
+        file_put_contents($dest, $raw);
+        $success = "Archivo subido correctamente (codificación: " . ($detected ?: 'UTF-8') . " → UTF-8). Listo para procesar.";
+        
+        $file_lines = file($dest, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $total_records = count($file_lines) - 1;
     } else {
         $error = "Error al subir el archivo.";
     }

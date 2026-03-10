@@ -142,7 +142,6 @@ $countActStmt = $pdo->prepare("SELECT COUNT(*) FROM service_orders so LEFT JOIN 
 $countActStmt->execute($paramsActive);
 $totalActive = $countActStmt->fetchColumn();
 $totalPages_act = ceil($totalActive / $limit);
-
 $sqlActive = "
     SELECT 
         so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.payment_status,
