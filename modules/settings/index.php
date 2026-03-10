@@ -293,6 +293,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
 
+                // -- FIX FOR OLD BACKUPS: the backup contains clients with is_third_party=1, which hides them
+                try {
+                    $pdo->exec("UPDATE clients SET is_third_party = 0 WHERE is_third_party = 1");
+                } catch (Exception $e) {
+                    // Ignore, just in case table doesn't exist yet
+                }
+
                 if (empty($errors)) {
                     header("Location: index.php?tab=restore&msg=restored");
                 } else {
