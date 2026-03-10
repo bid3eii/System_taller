@@ -528,29 +528,64 @@ require_once '../../includes/sidebar.php';
                 </div>
             </div>
 
-            <div class="glass-card" style="padding: 1.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <!-- Accordion Header (clickable) -->
+                <div onclick="toggleMaterials()" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div
-                            style="width: 44px; height: 44px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); color: var(--primary-400); display: flex; align-items: center; justify-content: center;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); color: var(--primary-400); display: flex; align-items: center; justify-content: center;">
                             <i class="ph ph-stack" style="font-size: 1.4rem;"></i>
                         </div>
                         <div>
-                            <h3 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; line-height: 1.2;">
-                                Requerimientos y Materiales</h3>
+                            <h3 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; line-height: 1.2;">Requerimientos y Materiales</h3>
                             <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">
                                 <?php echo count($materials); ?> ítems registrados
                             </p>
                         </div>
                     </div>
-                    <?php if (count($materials) > 0): ?>
-                        <button type="button" class="btn btn-secondary"
-                            onclick="document.getElementById('materialsModal').style.display='flex'">
-                            <i class="ph ph-list-magnifying-glass"></i> Ver Lista
-                        </button>
-                    <?php else: ?>
-                        <span class="text-muted" style="font-size: 0.85rem;">Vacío</span>
-                    <?php endif; ?>
+                    <i class="ph ph-caret-down" id="materials-caret" style="font-size: 1.3rem; color: var(--text-muted); transition: transform 0.25s ease;"></i>
+                </div>
+
+                <!-- Accordion Body -->
+                <div id="materials-body" style="max-height: 0; overflow: hidden; transition: max-height 0.35s ease;">
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05);">
+                        <table class="modern-table" style="margin: 0; border: none;">
+                            <thead>
+                                <tr>
+                                    <th>Descripción del Artículo</th>
+                                    <th style="width: 120px; text-align: center;">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (count($materials) > 0): ?>
+                                    <?php foreach ($materials as $item): ?>
+                                        <tr>
+                                            <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                                <div style="font-weight: 500; color: var(--text-primary);">
+                                                    <?php echo htmlspecialchars($item['item_description']); ?>
+                                                </div>
+                                                <?php if (!empty($item['notes'])): ?>
+                                                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+                                                        <?php echo htmlspecialchars($item['notes']); ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
+                                                <span style="display: inline-block; white-space: nowrap; background: rgba(52, 211, 153, 0.1); color: #34d399; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.2); font-size: 0.85rem;">
+                                                    <?php echo htmlspecialchars($item['quantity'] . ' ' . $item['unit']); ?>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted" style="padding: 2rem; border-bottom: none;">
+                                            No hay materiales registrados para este proyecto.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -851,80 +886,9 @@ require_once '../../includes/sidebar.php';
     </div>
 </div>
 
-<!-- Modal for Materials -->
-<div id="materialsModal"
-    style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 1rem;">
-    <div class="glass-card animate-enter"
-        style="width: 100%; max-width: 600px; max-height: 85vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
-        <div class="glass-card-header"
-            style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin: 0;">
-            <i class="ph ph-stack"></i>
-            <h3 class="glass-card-title">Requerimientos y Materiales</h3>
-            <button type="button" onclick="document.getElementById('materialsModal').style.display='none'"
-                class="hover-bg-light"
-                style="margin-left: auto; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); cursor: pointer; padding: 0.5rem; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;">
-                <i class="ph ph-x"
-                    style="font-size: 1.2rem; background: none; -webkit-text-fill-color: currentColor;"></i>
-            </button>
-        </div>
-        <div style="overflow-y: auto; padding: 0;">
-            <table class="modern-table" style="margin: 0; border: none;">
-                <thead>
-                    <tr>
-                        <th>Descripción del Artículo</th>
-                        <th style="width: 120px; text-align: center;">Cantidad</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (count($materials) > 0): ?>
-                        <?php foreach ($materials as $item): ?>
-                            <tr>
-                                <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                                    <div style="font-weight: 500; color: var(--text-primary);">
-                                        <?php echo htmlspecialchars($item['item_description']); ?>
-                                    </div>
-                                    <?php if (!empty($item['notes'])): ?>
-                                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
-                                            <?php echo htmlspecialchars($item['notes']); ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </td>
-                                <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
-                                    <span
-                                        style="display: inline-block; white-space: nowrap; background: rgba(52, 211, 153, 0.1); color: #34d399; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.2); font-size: 0.85rem;">
-                                        <?php echo htmlspecialchars($item['quantity'] . ' ' . $item['unit']); ?>
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="2" class="text-center text-muted" style="padding: 2rem; border-bottom: none;">
-                                No hay materiales registrados para este proyecto.
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <div
-            style="padding: 1.25rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.3); display: flex; justify-content: flex-end;">
-            <button type="button" class="btn btn-secondary hover-bg-light"
-                style="padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 500;"
-                onclick="document.getElementById('materialsModal').style.display='none'">
-                <i class="ph ph-x-circle" style="font-size: 1.1rem; margin-right: 0.25rem;"></i> Cerrar
-            </button>
-        </div>
-    </div>
-</div>
 
 
 <script>
-    // Close modals when clicking outside
-    document.getElementById('materialsModal').addEventListener('click', function (e) {
-        if (e.target === this) this.style.display = 'none';
-    });
-
     // Summary accordion toggle
     var summaryOpen = false;
     function toggleSummary() {
@@ -933,6 +897,21 @@ require_once '../../includes/sidebar.php';
         const caret = document.getElementById('summary-caret');
         if (summaryOpen) {
             body.style.maxHeight = body.scrollHeight + 600 + 'px';
+            caret.style.transform = 'rotate(180deg)';
+        } else {
+            body.style.maxHeight = '0';
+            caret.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // Materials accordion toggle
+    var materialsOpen = false;
+    function toggleMaterials() {
+        materialsOpen = !materialsOpen;
+        const body = document.getElementById('materials-body');
+        const caret = document.getElementById('materials-caret');
+        if (materialsOpen) {
+            body.style.maxHeight = body.scrollHeight + 400 + 'px';
             caret.style.transform = 'rotate(180deg)';
         } else {
             body.style.maxHeight = '0';
