@@ -465,31 +465,8 @@ if (!$is_warehouse) {
     </div>
 <?php endif; ?>
 
-<!-- CHARTS ROW -->
-<?php if (!$is_warehouse): ?>
-    <div
-        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
-        <!-- Status Chart (Everyone sees this or similar) -->
-        <div class="card" style="min-height: 400px;">
-            <h3 class="mb-4">Estado de Reparaciones</h3>
-            <div style="position: relative; height: 300px; width: 100%;">
-                <canvas id="statusChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Weekly Chart (Reception & Admin only) -->
-        <?php if ($is_reception || $is_admin): ?>
-            <div class="card" style="min-height: 400px;">
-                <h3 class="mb-4">Ingresos de la Semana</h3>
-                <div style="position: relative; height: 300px; width: 100%;">
-                    <canvas id="weeklyChart"></canvas>
-                </div>
-            </div>
-        <?php endif; ?>
-    </div>
-
-
     <!-- TECH QUICK ACTIONS -->
+    <?php if (!$is_warehouse): ?>
     <?php if (!$is_warehouse && $is_tech): ?>
         <div
             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
@@ -742,12 +719,73 @@ if (!$is_warehouse) {
     const gridColor = isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.1)';
 
     // Status Chart
-    <?php if (!$is_warehouse): ?>     const ctxStatus = document.getElementById('statusChart').getContext('2d'); new Chart(ctxStatus, {
-            type: 'doughnut', data: {
-                labels: <?php echo json_encode($chartLabels); ?>, datasets: [{
-                    data: <?php echo json_encode($chartCounts); ?>, backgroundColor: ['#3b82f6', // Blue                     '#eab308', // Yellow                     '#f97316', // Orange                     '#a855f7', // Purple                     '#22c55e', // Green                     '#ef4444'  // Red                 ],                 borderWidth: 0,                 hoverOffset: 4             }]         },         options: {             responsive: true,             maintainAspectRatio: false,             plugins: {                 legend: {                     position: 'right',                     labels: { color: textColor }                 }             },             cutout: '70%'         }     });
-                    <?php endif; ?>
-    <?php if (!$is_warehouse && ($is_reception || $is_admin || $is_tech)): ?>     // Weekly Chart     const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');     new Chart(ctxWeekly, {         type: 'bar',         data: {             labels: <?php echo json_encode($weeklyLabels); ?>,             datasets: [{                 label: '<?php echo $is_tech ? 'Equipos Listos' : 'Equipos Recibidos'; ?>',                 data: <?php echo json_encode($weeklyCounts); ?>,                 backgroundColor: '<?php echo $is_tech ? '#22c55e' : '#6366f1'; ?>',                 borderRadius: 4             }]         },         options: {             responsive: true,             maintainAspectRatio: false,             scales: {                 y: {                     beginAtZero: true,                     grid: { color: gridColor },                     ticks: { color: textColor, precision: 0 }                 },                 x: {                     grid: { display: false },                     ticks: { color: textColor }                 }             },             plugins: {                 legend: { display: false }             }         }     });
+    <?php if (!$is_warehouse): ?>
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: <?php echo json_encode($chartLabels); ?>,
+            datasets: [{
+                data: <?php echo json_encode($chartCounts); ?>,
+                backgroundColor: [
+                    '#3b82f6', // Blue
+                    '#eab308', // Yellow
+                    '#f97316', // Orange
+                    '#a855f7', // Purple
+                    '#22c55e', // Green
+                    '#ef4444'  // Red
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: textColor }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+    <?php endif; ?>
+
+    <?php if (!$is_warehouse && ($is_reception || $is_admin || $is_tech)): ?>
+    // Weekly Chart
+    const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+    new Chart(ctxWeekly, {
+        type: 'bar',
+        data: {
+            labels: <?php echo json_encode($weeklyLabels); ?>,
+            datasets: [{
+                label: '<?php echo $is_tech ? 'Equipos Listos' : 'Equipos Recibidos'; ?>',
+                data: <?php echo json_encode($weeklyCounts); ?>,
+                backgroundColor: '<?php echo $is_tech ? '#22c55e' : '#6366f1'; ?>',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, precision: 0 }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: textColor }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
     <?php endif; ?>
 </script>
 
