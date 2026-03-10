@@ -688,28 +688,27 @@ require_once '../../includes/sidebar.php';
                         <form method="POST" style="margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
                             <input type="hidden" name="action" value="assign_tech">
                             
-                            <div class="custom-multi-select" style="position: relative;">
-                                <div class="form-control" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleTechDropdown(event)">
+                            <div class="tech-multiselect-wrapper" style="position: relative;">
+                                <div class="form-control tech-select-trigger" onclick="toggleTechDropdown(event)">
                                     <span id="tech-select-text">Seleccionar técnicos...</span>
-                                    <i class="ph ph-caret-down"></i>
+                                    <i class="ph ph-caret-down" id="tech-caret"></i>
                                 </div>
                                 
-                                <div id="tech-dropdown" class="dropdown-content" style="position: absolute; top: 100%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; z-index: 1000; margin-top: 4px; display: none;">
-                                    <div style="padding: 0.5rem;">
-                                        <?php
-                                        $assigned_arr = array_filter(explode(',', $survey['assigned_tech_ids'] ?? ''));
-                                        foreach ($techs as $t):
-                                            $is_selected = in_array($t['id'], $assigned_arr);
-                                        ?>
-                                            <label class="dropdown-item" style="cursor: pointer; margin-bottom: 0; padding: 0.6rem 0.8rem;">
-                                                <input type="checkbox" name="tech_ids[]" value="<?php echo $t['id']; ?>" 
-                                                       <?php echo $is_selected ? 'checked' : ''; ?>
-                                                       onchange="updateTechSelectText()"
-                                                       style="accent-color: var(--primary-500); width: 16px; height: 16px;">
-                                                <span><?php echo htmlspecialchars($t['username']); ?></span>
-                                            </label>
-                                        <?php endforeach; ?>
-                                    </div>
+                                <div id="tech-dropdown" class="tech-dropdown-list" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; width: 100%; max-height: 250px; overflow-y: auto; z-index: 9999; background: rgb(15, 23, 42); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.4rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">
+                                    <?php
+                                    $assigned_arr = array_filter(explode(',', $survey['assigned_tech_ids'] ?? ''));
+                                    foreach ($techs as $t):
+                                        $is_selected = in_array($t['id'], $assigned_arr);
+                                    ?>
+                                        <label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem; border-radius: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.9rem; transition: background 0.15s;" onmouseover="this.style.background='rgba(99,102,241,0.15)'" onmouseout="this.style.background='transparent'">
+                                            <input type="checkbox" name="tech_ids[]" value="<?php echo $t['id']; ?>" 
+                                                   <?php echo $is_selected ? 'checked' : ''; ?>
+                                                   onchange="updateTechSelectText()"
+                                                   style="accent-color: #6366f1; width: 16px; height: 16px; flex-shrink: 0;">
+                                            <i class="ph ph-user" style="color: #6366f1; font-size: 1rem;"></i>
+                                            <span><?php echo htmlspecialchars($t['username']); ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
 
@@ -718,35 +717,60 @@ require_once '../../includes/sidebar.php';
                             </button>
                         </form>
 
+                        <style>
+                            .tech-select-trigger {
+                                cursor: pointer;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                user-select: none;
+                                transition: border-color 0.2s;
+                            }
+                            .tech-select-trigger:hover {
+                                border-color: var(--primary-500, #6366f1);
+                            }
+                            .tech-select-trigger.open {
+                                border-color: var(--primary-500, #6366f1);
+                                box-shadow: 0 0 0 4px rgba(99,102,241,0.2);
+                            }
+                        </style>
                         <script>
                             function toggleTechDropdown(e) {
                                 e.stopPropagation();
                                 const dropdown = document.getElementById('tech-dropdown');
-                                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                                const trigger = document.querySelector('.tech-select-trigger');
+                                const caret = document.getElementById('tech-caret');
+                                const isOpen = dropdown.style.display !== 'none';
+                                dropdown.style.display = isOpen ? 'none' : 'block';
+                                trigger.classList.toggle('open', !isOpen);
+                                caret.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+                                caret.style.transition = 'transform 0.2s';
                             }
                             
                             document.addEventListener('click', function(e) {
                                 const dropdown = document.getElementById('tech-dropdown');
-                                const container = document.querySelector('.custom-multi-select');
+                                const container = document.querySelector('.tech-multiselect-wrapper');
                                 if (dropdown && container && !container.contains(e.target)) {
                                     dropdown.style.display = 'none';
+                                    const trigger = document.querySelector('.tech-select-trigger');
+                                    const caret = document.getElementById('tech-caret');
+                                    if (trigger) trigger.classList.remove('open');
+                                    if (caret) { caret.style.transform = 'rotate(0deg)'; caret.style.transition = 'transform 0.2s'; }
                                 }
                             });
 
                             function updateTechSelectText() {
                                 const checkboxes = document.querySelectorAll('input[name="tech_ids[]"]:checked');
                                 const textSpan = document.getElementById('tech-select-text');
-                                
                                 if (checkboxes.length === 0) {
                                     textSpan.textContent = 'Seleccionar técnicos...';
                                 } else if (checkboxes.length === 1) {
-                                    textSpan.textContent = checkboxes[0].nextElementSibling.textContent;
+                                    textSpan.textContent = checkboxes[0].parentElement.querySelector('span').textContent.trim();
                                 } else {
                                     textSpan.textContent = checkboxes.length + ' técnicos seleccionados';
                                 }
                             }
                             
-                            // Init text
                             document.addEventListener('DOMContentLoaded', updateTechSelectText);
                         </script>
                     </div>
