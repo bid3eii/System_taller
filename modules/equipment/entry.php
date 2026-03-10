@@ -209,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $types = [$_POST['type'] ?? ''];
                 $owners = [$_POST['owner_name'] ?? ''];
                 $accessories_list = [$_POST['accessories'] ?? ''];
-                $service_types = [$_POST['service_type'] ?? 'service'];
+                $service_types = [$is_warranty_mode ? 'warranty' : ($_POST['service_type'] ?? 'service')];
                 $problems = [$_POST['problem_reported'] ?? ''];
             } else {
                 $brands = $_POST['brand'] ?? [];
@@ -947,10 +947,10 @@ require_once '../../includes/sidebar.php';
 
                                         <label class="selection-card"
                                             style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
-                                            <input type="radio" name="service_type_0" value="warranty"
+                                            <input type="radio" name="service_type_0" value="warranty_service"
                                                 style="display: none;" onchange="updateRadioSync(this, 0)">
                                             <i class="ph ph-shield-check" style="font-size: 1.1rem;"></i>
-                                            <span style="font-weight: 500;">Garantía</span>
+                                            <span style="font-weight: 500;">Serv. de Garantía</span>
                                         </label>
                                     </div>
                                 </div>

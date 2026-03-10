@@ -309,7 +309,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 exit;
             } catch (PDOException $e) {
-                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+                try {
+                    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+                } catch (Exception $fallbackE) {
+                    // Connection might already be fully dead
+                }
                 $_SESSION['restore_fatal_error'] = $e->getMessage();
                 header("Location: index.php?tab=restore&error=restore_failed");
                 exit;

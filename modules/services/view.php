@@ -96,7 +96,7 @@ if (!$order) {
 }
 
 // Redirect if it is a warranty
-if ($order['service_type'] === 'warranty') {
+if ($order['service_type'] === 'warranty_service') {
     header("Location: ../warranties/view.php?id=" . $order['id']);
     exit;
 }
@@ -545,7 +545,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             <div class="info-group">
                                 <span class="info-label">Tipo de Servicio</span>
                                 <div>
-                                    <?php if ($order['service_type'] === 'warranty'): ?>
+                                    <?php if ($order['service_type'] === 'warranty_service'): ?>
                                         <span
                                             style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.85rem; font-weight: 600; background: rgba(99, 102, 241, 0.1); color: #818cf8; padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid rgba(99, 102, 241, 0.2);">
                                             <i class="ph ph-shield-check"></i> Garantía

@@ -376,7 +376,7 @@ $diagnosis_imgs = $stmtImages->fetchAll();
                         <div class="info-grid">
                             <div class="info-item">
                                 <span class="info-label">Tipo:</span>
-                                <span class="info-value"><?php echo ($order['service_type'] == 'warranty') ? 'Garantía' : 'Servicio'; ?></span>
+                                <span class="info-value"><?php echo ($order['service_type'] == 'warranty_service') ? 'Garantía' : 'Servicio'; ?></span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">No. Caso:</span>

@@ -124,9 +124,7 @@ if ($is_warehouse) {
     $awSql = "
         SELECT COUNT(*) 
         FROM service_orders so 
-        LEFT JOIN warranties w ON so.id = w.service_order_id 
-        WHERE so.service_type = 'warranty' 
-        AND (w.product_code IS NULL OR w.product_code = '') AND so.problem_reported != 'Garantía Registrada'
+        WHERE so.service_type = 'warranty_service' 
         AND so.status NOT IN ('delivered', 'cancelled')
     ";
     if (!$can_view_all)
@@ -199,7 +197,7 @@ if ($is_warehouse) {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) FROM service_orders so
             LEFT JOIN warranties w ON so.id = w.service_order_id
-            WHERE so.assigned_tech_id = ? AND so.service_type = 'warranty' AND so.status NOT IN ('delivered', 'cancelled')
+            WHERE so.assigned_tech_id = ? AND so.service_type = 'warranty_service' AND so.status NOT IN ('delivered', 'cancelled')
             AND (w.product_code IS NULL OR w.product_code = '') 
             AND so.problem_reported != 'Garantía Registrada'
         ");

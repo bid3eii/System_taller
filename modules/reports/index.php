@@ -173,7 +173,7 @@ require_once '../../includes/sidebar.php';
                                     <div class="fw-medium"><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></div>
                                 </td>
                                 <td>
-                                    <?php if ($order['service_type'] == 'warranty'): ?>
+                                    <?php if ($order['service_type'] == 'warranty_service'): ?>
                                         <span class="badge badge-warning">Garantía</span>
                                     <?php else: ?>
                                         <span class="badge badge-blue">Servicio</span>

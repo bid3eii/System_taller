@@ -144,8 +144,8 @@ header("Expires: 0");
         <tbody>
             <?php foreach ($rows as $row): ?>
                 <?php
-                    $typeClass = ($row['service_type'] === 'warranty') ? 'type-warranty' : 'type-service';
-                    $typeLabel = ($row['service_type'] === 'warranty') ? 'Garantía' : 'Servicio';
+                    $typeClass = ($row['service_type'] === 'warranty_service') ? 'type-warranty' : 'type-service';
+                    $typeLabel = ($row['service_type'] === 'warranty_service') ? 'Garantía' : 'Servicio';
                     $invoice = $row['invoice_number'] ? $row['invoice_number'] : '-';
                     $deliveredBy = $row['delivered_by'] ? $row['delivered_by'] : '-';
                     

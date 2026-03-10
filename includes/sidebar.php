@@ -110,7 +110,7 @@
             if ($can_services)
                 $children[] = ['url' => BASE_URL . 'modules/services/index.php', 'icon' => 'ph-wrench', 'label' => 'Servicios'];
             if ($can_warranties)
-                $children[] = ['url' => BASE_URL . 'modules/warranties/index.php', 'icon' => 'ph-shield-check', 'label' => 'Garantías'];
+                $children[] = ['url' => BASE_URL . 'modules/warranties/index.php', 'icon' => 'ph-shield-check', 'label' => 'Servicio de Garantía'];
             if ($can_history)
                 $children[] = ['url' => BASE_URL . 'modules/history/index.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial General'];
 
