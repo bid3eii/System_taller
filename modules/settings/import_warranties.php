@@ -225,8 +225,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         file_put_contents($dest, $raw);
         $success = "Archivo subido correctamente (codificación: " . ($detected ?: 'UTF-8') . " → UTF-8). Listo para procesar.";
         
-        $file_lines = file($dest, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $total_records = count($file_lines) - 1;
+        // Handle Overwrite Option
+        $import_mode = $_POST['import_mode'] ?? 'append';
+        if ($import_mode === 'overwrite') {
+            try {
+                $pdo->beginTransaction();
+                // We only delete those with service_type = 'warranty'
+                $stmt = $pdo->query("SELECT id FROM service_orders WHERE service_type = 'warranty'");
+                $orders = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                
+                if (count($orders) > 0) {
+                    $orderIds = implode(',', array_map('intval', $orders));
+                    $pdo->query("DELETE FROM warranties WHERE service_order_id IN ($orderIds)");
+                    $pdo->query("DELETE FROM service_order_history WHERE service_order_id IN ($orderIds)");
+                    $pdo->query("DELETE FROM service_orders WHERE id IN ($orderIds)");
+                }
+                $pdo->commit();
+                $success .= " Se eliminó la bodega completa anterior con éxito.";
+            } catch (Exception $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                $error = "Error al borrar la bodega: " . $e->getMessage();
+            }
+        }
+
+        if (empty($error)) {
+            $file_lines = file($dest, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $total_records = count($file_lines) - 1;
+        }
     } else {
         $error = "Error al subir el archivo.";
     }
@@ -376,6 +401,27 @@ require_once '../../includes/sidebar.php';
                     <i class="ph ph-cloud-arrow-up" style="font-size: 3rem; color: var(--primary-500); margin-bottom: 1rem; display: block;"></i>
                     <label class="form-label" style="font-size: 1.1rem;">Selecciona tu archivo CSV</label>
                     <input type="file" name="csv_file" accept=".csv" required style="display: block; margin: 1.5rem auto;">
+                    
+                    <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; max-width: 500px; margin: 1.5rem auto; text-align: left;">
+                        <label class="form-label" style="display: block; margin-bottom: 1rem; color: var(--primary-400); font-weight: 600;"><i class="ph ph-warning-circle"></i> Opciones de Importación</label>
+                        
+                        <label style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.25rem; cursor: pointer;">
+                            <input type="radio" name="import_mode" value="append" checked style="margin-top: 0.25rem;">
+                            <div>
+                                <strong style="color: var(--text-primary); display: block;">Agregar a la Bodega (Recomendado)</strong>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Suma los nuevos registros a los que ya existen en el sistema sin borrar nada.</span>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer;">
+                            <input type="radio" name="import_mode" value="overwrite" style="margin-top: 0.25rem;">
+                            <div>
+                                <strong style="color: var(--danger); display: block;">Borrar todo y Reemplazar</strong>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Elimina <b>completamente</b> todos los equipos que estén actualmente en la Bodega antes de importar. (No afecta a las Garantías de Clientes).</span>
+                            </div>
+                        </label>
+                    </div>
+
                     <p class="text-muted" style="font-size: 0.85rem;">Columnas esperadas: Codigo, Descripcion, FECHA, CLIENTE, CONTACTO, RUC, DIRECCIÓN, FACTURA DE VENTA, Serie, Factura Proveedor, Fecha Proveedor, Proveedor.</p>
                 </div>
                 <div style="margin-top: 1.5rem; text-align: right;">
