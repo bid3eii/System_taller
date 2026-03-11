@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             log_audit($pdo, 'users', $user['id'], 'UPDATE', null, ['event' => 'login'], $user['id'], $_SERVER['REMOTE_ADDR']);
 
-            header("Location: ../../modules/dashboard/index.php");
+            header("Location: " . BASE_URL . "modules/dashboard/index.php");
             exit;
         } else {
             $error = "Credenciales incorrectas.";
