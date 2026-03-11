@@ -1,9 +1,9 @@
 <?php
 // modules/dashboard/index.php
 session_start();
-require_once '../../config/db.php';
-require_once '../../includes/functions.php';
-require_once '../../includes/auth.php';
+require_once dirname(__DIR__, 2) . '/config/db.php';
+require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/auth.php';
 
 // Check Dashboard Access
 if (!can_access_module('dashboard', $pdo)) {
