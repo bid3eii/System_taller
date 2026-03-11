@@ -653,7 +653,7 @@ if (!$is_warehouse) {
                                                 $label2 = ucfirst($s);
                                             }
                                             ?>
-                                            <div style="display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap;">
+                                            <div style="display: flex; gap: 0.6rem; align-items: center; white-space: nowrap;">
                                                 <span class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
                                                 
                                                 <?php if ($is_delayed && ($is_admin || $is_reception)): ?>
