@@ -653,14 +653,18 @@ if (!$is_warehouse) {
                                                 $label2 = ucfirst($s);
                                             }
                                             ?>
-                                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                                                <span
-                                                    class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
+                                            <div style="display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap;">
+                                                <span class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
+                                                
                                                 <?php if ($is_delayed && ($is_admin || $is_reception)): ?>
-                                                    <span title="Lleva <?php echo $item['days_in_shop']; ?> días en taller"
-                                                        style="color: var(--danger); font-size: 1.2rem; display: flex; align-items: center;">
-                                                        <i class="ph-fill ph-warning-circle"></i>
-                                                    </span>
+                                                    <div class="premium-tooltip-wrapper">
+                                                        <span class="alert-pulse" style="color: var(--danger); font-size: 1.1rem; display: flex; align-items: center; cursor: help;">
+                                                            <i class="ph-fill ph-warning-circle"></i>
+                                                        </span>
+                                                        <div class="premium-tooltip">
+                                                            Lleva <strong style="color: var(--danger);"><?php echo $item['days_in_shop']; ?> días</strong> en taller
+                                                        </div>
+                                                    </div>
                                                 <?php endif; ?>
                                             </div>
                                         </td>
