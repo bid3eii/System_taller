@@ -1,7 +1,7 @@
 <?php
 // modules/auth/login.php
-session_start();
 require_once '../../config/db.php';
+session_start();
 require_once '../../includes/functions.php';
 
 $error = '';
