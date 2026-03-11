@@ -1,7 +1,4 @@
-# Enable PHP error display (only for debugging, disable in production)
-php_flag display_errors off
-php_flag log_errors on
-
+# PHP error display settings removed (cannot be set via .htaccess on most shared hosting)
 # Set default file
 DirectoryIndex index.php index.html
 
