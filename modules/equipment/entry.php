@@ -210,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $owners = [$_POST['owner_name'] ?? ''];
                 $accessories_list = [$_POST['accessories'] ?? ''];
                 $service_types = [$is_warranty_mode ? 'warranty' : ($_POST['service_type'] ?? 'service')];
-                $problems = [$_POST['problem_reported'] ?? ''];
+                $problems = [$_POST['problem_reported'] ?? ($is_warranty_mode ? 'Garantía Registrada' : '')];
             } else {
                 $brands = $_POST['brand'] ?? [];
                 $models = $_POST['model'] ?? [];
@@ -272,6 +272,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtOrder->execute([$equipment_id, $client_id, $owner_item, $invoice_num, $service_type_item, $problem_item, $accessories_item, $notes, $now, $currentUserSig, $now]);
                 $order_id_new = $pdo->lastInsertId();
                 $order_ids[] = $order_id_new;
+
+                // 2.5 Bodega / Warranty Logic
+                if ($is_warranty_mode) {
+                    $product_code = clean($_POST['product_code'] ?? '');
+                    $master_invoice = clean($_POST['master_entry_invoice'] ?? '');
+                    $master_date = clean($_POST['master_entry_date'] ?? null);
+                    if (empty($master_date)) $master_date = null;
+                    $supplier = clean($_POST['supplier_name'] ?? '');
+                    $sales_invoice = clean($_POST['sales_invoice_number'] ?? '');
+                    $warranty_end_date = clean($_POST['warranty_end_date'] ?? null);
+                    if (empty($warranty_end_date)) $warranty_end_date = null;
+                    $warranty_period = clean($_POST['warranty_period'] ?? 'months');
+                    $duration_val = (int)($_POST['warranty_duration'] ?? 0);
+                    $duration_months = ($warranty_period === 'months') ? $duration_val : ($warranty_period === 'years' ? $duration_val * 12 : 0);
+
+                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, status, end_date, duration_period, duration_months, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)");
+                    $stmtW->execute([$order_id_new, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $warranty_end_date, $warranty_period, $duration_months, $now]);
+                }
 
                 // 3. History
                 $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', 'Equipo ingresado al taller', ?, ?)");
@@ -947,7 +965,7 @@ require_once '../../includes/sidebar.php';
 
                                         <label class="selection-card"
                                             style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
-                                            <input type="radio" name="service_type_0" value="warranty_service"
+                                            <input type="radio" name="service_type_0" value="warranty"
                                                 style="display: none;" onchange="updateRadioSync(this, 0)">
                                             <i class="ph ph-shield-check" style="font-size: 1.1rem;"></i>
                                             <span style="font-weight: 500;">Serv. de Garantía</span>

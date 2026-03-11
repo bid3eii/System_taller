@@ -89,7 +89,7 @@ try {
 $prefix = "reporte_general";
 if ($type === 'service') {
     $prefix = "reporte_servicios";
-} elseif ($type === 'warranty_service') {
+} elseif ($type === 'warranty') {
     $prefix = "reporte_garantias";
 }
 $filename = $prefix . "_" . date('Y-m-d_H-i') . ".xls";
@@ -174,8 +174,8 @@ header("Expires: 0");
                     ];
                     $label = $statusMap[$s] ?? ucfirst($s);
                     
-                    $typeClass = ($row['service_type'] === 'warranty_service') ? 'type-warranty' : 'type-service';
-                    $typeLabel = ($row['service_type'] === 'warranty_service') ? 'GARANTÍA' : 'SERVICIO';
+                    $typeClass = ($row['service_type'] === 'warranty') ? 'type-warranty' : 'type-service';
+                    $typeLabel = ($row['service_type'] === 'warranty') ? 'GARANTÍA' : 'SERVICIO';
                 ?>
                 <tr>
                     <td class="bold">#<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?></td>

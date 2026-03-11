@@ -86,7 +86,7 @@ if (!$order) {
     die("Orden no encontrada.");
 }
 
-if ($order['service_type'] === 'warranty_service') {
+if ($order['service_type'] === 'warranty') {
     header("Location: ../warranties/view.php?id=" . $order['id']);
     exit;
 }
@@ -265,7 +265,7 @@ require_once '../../includes/sidebar.php';
     <div class="view-header-glass">
         <div class="view-header-title">
             <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem; font-weight: normal; letter-spacing: 0.5px; text-transform: uppercase;">
-                Gestión de Servicio <?php echo $order['service_type'] == 'warranty_service' ? '(Garantía)' : ''; ?>
+                Gestión de Servicio <?php echo $order['service_type'] == 'warranty' ? '(Garantía)' : ''; ?>
             </div>
             <h1>
                 <span class="id-text">Caso <?php echo get_order_number($order); ?></span>

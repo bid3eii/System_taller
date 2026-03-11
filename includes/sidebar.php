@@ -136,7 +136,8 @@
         }
 
         // Projects (Proyectos)
-        $can_proyectos = can_access_module('proyectos', $pdo) || $_SESSION['role'] === 'superadmin' || $_SESSION['role'] === 'admin';
+        $is_admin_role = isset($_SESSION['role_id']) && in_array($_SESSION['role_id'], [1, 7]);
+        $can_proyectos = can_access_module('proyectos', $pdo) || $is_admin_role;
         $can_surveys = can_access_module('surveys', $pdo);
         $can_project_history = can_access_module('project_history', $pdo);
         $can_anexos = can_access_module('anexos', $pdo);

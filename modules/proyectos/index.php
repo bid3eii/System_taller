@@ -15,6 +15,7 @@ require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 
 $status_filter = $_GET['status'] ?? '';
+$search = trim($_GET['search'] ?? '');
 
 $where = "1=1"; 
 $params = [];

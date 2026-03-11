@@ -1,4 +1,0 @@
--- INSERT comisiones data for hosting
-SET NAMES utf8mb4;
-INSERT IGNORE INTO comisiones (id,fecha_servicio,fecha_facturacion,cliente,servicio,cantidad,tipo,lugar,factura,vendedor,caso,estado,fecha_pago,notas,tech_id,reference_id,created_at) VALUES ('1','2026-03-06',NULL,'TASH','PLOTTER HP DESINGJET T250 24\'\'','1','SERVICIO','taller','INV-TEST-01','Hugo','Servicio_#0006','PAGADA','2026-03-06',NULL,'4','6','2026-03-06 14:58:24');
-INSERT IGNORE INTO comisiones (id,fecha_servicio,fecha_facturacion,cliente,servicio,cantidad,tipo,lugar,factura,vendedor,caso,estado,fecha_pago,notas,tech_id,reference_id,created_at) VALUES ('2','2026-03-06',NULL,'YAZAKI DE NICARAGUA, S.A','ALCANCE YAZAKI PLANTA 6','1','PROYECTO',NULL,'test de factura','Juan','Proyecto_#0001','PENDIENTE',NULL,NULL,'2','1','2026-03-06 15:36:35');

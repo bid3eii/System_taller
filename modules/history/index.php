@@ -158,7 +158,7 @@ require_once '../../includes/sidebar.php';
                     <option value="">Todos los Tipos</option>
                     <option value="service" <?php echo $filterType == 'service' ? 'selected' : ''; ?>>Solo Servicios
                     </option>
-                    <option value="warranty_service" <?php echo $filterType == 'warranty_service' ? 'selected' : ''; ?>>Solo Garantías
+                    <option value="warranty" <?php echo $filterType == 'warranty' ? 'selected' : ''; ?>>Solo Garantías
                     </option>
                 </select>
             </form>

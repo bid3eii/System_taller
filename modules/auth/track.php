@@ -27,7 +27,10 @@ if ($search) {
         LEFT JOIN equipments e ON so.equipment_id = e.id
         LEFT JOIN clients co ON e.client_id = co.id
         LEFT JOIN users u ON so.assigned_tech_id = u.id
-        WHERE so.id = ? OR so.display_id = ?
+        LEFT JOIN warranties w ON so.id = w.service_order_id
+        WHERE (so.id = ? OR so.display_id = ?)
+        AND (w.product_code IS NULL OR w.product_code = '') 
+        AND so.problem_reported != 'Garantía Registrada'
     ");
     $stmt->execute([$clean_id, $clean_id]);
     $order_data = $stmt->fetch();
@@ -535,11 +538,13 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
 
     <div class="container">
         <div class="track-card">
-            <a href="login.php" class="back-btn">
-                <i class="ph-bold ph-arrow-left"></i> Volver al Inicio
+            <?php if (isset($_GET['order_id'])): ?>
+            <a href="track.php" class="back-btn" style="position: absolute; top: 2rem; left: 2.5rem; z-index: 10;">
+                <i class="ph-bold ph-arrow-left"></i> Volver a Buscar
             </a>
+            <?php endif; ?>
             
-            <div class="header">
+            <div class="header" <?php echo isset($_GET['order_id']) ? 'style="margin-top: 1rem;"' : ''; ?>>
                 <div class="logo-box">
                     <i class="ph-fill ph-magnifying-glass"></i>
                 </div>
@@ -599,10 +604,6 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
                                                 <div class="note-text"><?php echo nl2br(htmlspecialchars($n['note'])); ?></div>
                                             </div>
                                         <?php endforeach; ?>
-                                    </div>
-                                <?php elseif ($idx <= $current_index): ?>
-                                    <div class="note-tooltip">
-                                        <div class="note-text" style="text-align: center;">Sin comentarios adicionales en este paso.</div>
                                     </div>
                                 <?php endif; ?>
                             </div>

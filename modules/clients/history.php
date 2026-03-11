@@ -113,7 +113,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                             <tr>
                                 <td><?php echo date('d/m/Y', strtotime($order['created_at'])); ?></td>
                                 <td>
-                                    <?php if($order['service_type'] === 'warranty_service'): ?>
+                                    <?php if($order['service_type'] === 'warranty'): ?>
                                         <span class="badge badge-purple">Garantía</span>
                                     <?php else: ?>
                                         <span class="badge badge-blue">Servicio</span>
@@ -137,7 +137,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                                 </td>
                                 <td style="text-align: right;">
                                     <?php 
-                                        $viewLink = ($order['service_type'] === 'warranty_service') ? '../warranties/view.php' : '../services/view.php';
+                                        $viewLink = ($order['service_type'] === 'warranty') ? '../warranties/view.php' : '../services/view.php';
                                     ?>
                                     <a href="<?php echo $viewLink; ?>?id=<?php echo $order['id']; ?>" class="btn btn-sm btn-secondary">Ver Detalles</a>
                                 </td>
