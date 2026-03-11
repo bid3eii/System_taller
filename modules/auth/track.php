@@ -30,7 +30,7 @@ if ($search) {
         LEFT JOIN warranties w ON so.id = w.service_order_id
         WHERE (so.id = ? OR so.display_id = ?)
         AND (w.product_code IS NULL OR w.product_code = '') 
-        AND so.problem_reported != 'Garantía Registrada'
+        AND so.problem_reported NOT LIKE 'Garant%a Registrada'
     ");
     $stmt->execute([$clean_id, $clean_id]);
     $order_data = $stmt->fetch();

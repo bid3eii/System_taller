@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_id'])) {
 // Check permissions
 $can_view_all = can_access_module('view_all_entries', $pdo);
 $params = [];
-$where_clauses = ["so.problem_reported != 'Garantía Registrada'"];
+$where_clauses = ["so.problem_reported NOT LIKE 'Garant%a Registrada'"];
 
 if (!$can_view_all) {
     $where_clauses[] = "so.assigned_tech_id = ?";
