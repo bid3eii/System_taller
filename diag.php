@@ -41,11 +41,24 @@ foreach ($files_to_test as $file) {
     }
 }
 
-echo "<h2>Execution Test</h2>";
-echo "<p>Loading login.php directly...</p>";
+echo "<h2>Execution Test (POST)</h2>";
+echo "<p>Loading login.php directly with simulated POST data...</p>";
+
+// Simulate POST Request
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST['username'] = 'superadmin';
+$_POST['password'] = 'administrador'; // Try to trigger the same path as user
+
 try {
     require_once 'modules/auth/login.php';
 } catch (Throwable $t) {
+    echo "<div style='color:red; border:1px solid red; padding:10px;'>";
+    echo "<b>Fatal Error caught in login.php (POST context):</b><br>";
+    echo $t->getMessage() . "<br>";
+    echo "In " . $t->getFile() . " on line " . $t->getLine();
+    echo "</div>";
+}
+?>
     echo "<div style='color:red; border:1px solid red; padding:10px;'>";
     echo "<b>Fatal Error caught in login.php:</b><br>";
     echo $t->getMessage() . "<br>";
