@@ -40,4 +40,16 @@ foreach ($files_to_test as $file) {
         echo "<p style='color:red'>File $file DOES NOT EXIST.</p>";
     }
 }
+
+echo "<h2>Execution Test</h2>";
+echo "<p>Loading login.php directly...</p>";
+try {
+    require_once 'modules/auth/login.php';
+} catch (Throwable $t) {
+    echo "<div style='color:red; border:1px solid red; padding:10px;'>";
+    echo "<b>Fatal Error caught in login.php:</b><br>";
+    echo $t->getMessage() . "<br>";
+    echo "In " . $t->getFile() . " on line " . $t->getLine();
+    echo "</div>";
+}
 ?>
