@@ -22,6 +22,11 @@ if ($is_local) {
     define('BASE_URL', '/System_Taller/');
 } else {
     define('BASE_URL', '/'); // Assumes app is in root of public_html/htdocs
+    
+    // InfinityFree Session Fix (prevent Permission Denied on /php_sessions)
+    // We disable the probability of PHP's garbage collector running immediately
+    // on this user's requests to avoid the notice.
+    ini_set('session.gc_probability', 0);
 }
 
 try {
