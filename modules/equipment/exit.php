@@ -166,10 +166,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                             </td>
                             <td><?php echo htmlspecialchars($order['client_name']); ?></td>
                             <td>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <span style="padding: 0.2rem 0.5rem; background: var(--bg-hover); border-radius: 4px; font-size: 0.8rem;"><?php echo htmlspecialchars($order['type']); ?></span>
-                                    <span><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></span>
-                                </div>
+                                <span><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></span>
                             </td>
                             <td>
                                 <span class="text-sm font-medium"><?php echo htmlspecialchars($order['serial_number']); ?></span>
@@ -261,10 +258,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                                 </td>
                                 <td><?php echo htmlspecialchars($dItem['client_name']); ?></td>
                                 <td>
-                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                        <span style="padding: 0.2rem 0.5rem; background: var(--bg-hover); border-radius: 4px; font-size: 0.8rem;"><?php echo htmlspecialchars($dItem['type']); ?></span>
-                                        <span><?php echo htmlspecialchars($dItem['brand'] . ' ' . $dItem['model']); ?></span>
-                                    </div>
+                                <span><?php echo htmlspecialchars($dItem['brand'] . ' ' . $dItem['model']); ?></span>
                                 </td>
                                 <td>
                                     <span class="text-sm font-medium"><?php echo htmlspecialchars($dItem['serial_number']); ?></span>

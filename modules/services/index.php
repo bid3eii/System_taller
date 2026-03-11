@@ -469,7 +469,6 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <span class="badge"><?php echo htmlspecialchars($item['type']); ?></span>
                                         <span><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
                                     </div>
                                 </td>

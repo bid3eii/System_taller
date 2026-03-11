@@ -146,7 +146,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'process_chunk') {
             $equipment_id = $stmt->fetchColumn();
 
             if (!$equipment_id) {
-                $stmt = $pdo->prepare("INSERT INTO equipments (client_id, brand, model, submodel, serial_number, type, created_at) VALUES (?, ?, ?, ?, ?, 'PC', ?)");
+                $stmt = $pdo->prepare("INSERT INTO equipments (client_id, brand, model, submodel, serial_number, type, created_at) VALUES (?, ?, ?, ?, ?, '', ?)");
                 $stmt->execute([$client_id, $brand, '', '', $serial, get_local_datetime()]);
                 $equipment_id = $pdo->lastInsertId();
             } else {

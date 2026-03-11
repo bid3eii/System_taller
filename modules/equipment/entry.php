@@ -273,6 +273,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $order_id_new = $pdo->lastInsertId();
                 $order_ids[] = $order_id_new;
 
+                // 2.3 Manual Case Numbering (if not bulk warranty/bodega)
+                if (!$is_warranty_mode && $service_type_item === 'service') {
+                    $display_id = get_next_sequence($pdo, 'service_case');
+                    $pdo->prepare("UPDATE service_orders SET display_id = ? WHERE id = ?")->execute([$display_id, $order_id_new]);
+                }
+
                 // 2.5 Bodega / Warranty Logic
                 if ($is_warranty_mode) {
                     $product_code = clean($_POST['product_code'] ?? '');
@@ -934,9 +940,9 @@ require_once '../../includes/sidebar.php';
                                     <label class="form-label">Equipo *</label>
                                     <div class="input-group">
                                         <input type="text" name="brand[]" class="form-control" required
-                                            placeholder="Ej. NOTEBOOK DELL LATITUDE 5540, PC HP PRODESK 400...">
+                                            placeholder="Ej. NOTEBOOK DELL LATITUDE 5540, IMPRESORA HP SMART TANK...">
                                         <input type="hidden" name="model[]" value="">
-                                        <input type="hidden" name="type[]" value="PC">
+                                        <input type="hidden" name="type[]" value="">
                                         <i class="ph ph-desktop input-icon"></i>
                                     </div>
                                 </div>
