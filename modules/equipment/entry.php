@@ -273,11 +273,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $order_id_new = $pdo->lastInsertId();
                 $order_ids[] = $order_id_new;
 
-                // 2.3 Manual Case Numbering (if not bulk warranty/bodega)
-                if (!$is_warranty_mode && $service_type_item === 'service') {
-                    $display_id = get_next_sequence($pdo, 'service_case');
-                    $pdo->prepare("UPDATE service_orders SET display_id = ? WHERE id = ?")->execute([$display_id, $order_id_new]);
-                }
+                // 2.3 Manual Case Numbering (Independent sequences for Services and Warranties)
+                $seq_code = ($service_type_item === 'service') ? 'service_case' : 'warranty_case';
+                $display_id = get_next_sequence($pdo, $seq_code);
+                $pdo->prepare("UPDATE service_orders SET display_id = ? WHERE id = ?")->execute([$display_id, $order_id_new]);
 
                 // 2.5 Bodega / Warranty Logic
                 if ($is_warranty_mode) {
