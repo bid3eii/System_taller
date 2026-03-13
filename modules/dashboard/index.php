@@ -265,6 +265,26 @@ if ($is_warehouse) {
     // Recent Activity Table / Tech Pipeline
     // Techs ALWAYS see only their assigned orders
     // For Admin/Reception, 'view_all_entries' permission controls visibility
+    // --- PAGINATION LOGIC ---
+    $itemsPerPage = 12;
+    $currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+    $offset = ($currentPage - 1) * $itemsPerPage;
+
+    // Count Total (excluding delivered)
+    $countSql = "
+        SELECT COUNT(*) 
+        FROM service_orders so
+        LEFT JOIN warranties w ON so.id = w.service_order_id
+        WHERE (w.product_code IS NULL OR w.product_code = '') 
+        AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+        AND so.status != 'delivered'
+    ";
+    if (!$can_view_all) {
+        $countSql .= " AND so.assigned_tech_id = " . intval($user_id);
+    }
+    $totalRecords = $pdo->query($countSql)->fetchColumn();
+    $totalPages = ceil($totalRecords / $itemsPerPage);
+
     $recentSql = "
         SELECT 
             so.id, so.entry_date, so.status, so.service_type, so.display_id, so.owner_name, 
@@ -281,6 +301,7 @@ if ($is_warehouse) {
         LEFT JOIN users tech ON so.assigned_tech_id = tech.id
         WHERE (w.product_code IS NULL OR w.product_code = '') 
         AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+        AND so.status != 'delivered'
     ";
 
     if (!$can_view_all) {
@@ -291,11 +312,10 @@ if ($is_warehouse) {
     if ($sort == 'tech') {
         $recentSql .= " ORDER BY tech_name " . ($order == 'asc' ? 'ASC' : 'DESC');
     } else {
-        // Default sort by date
         $recentSql .= " ORDER BY so.entry_date " . ($order == 'asc' ? 'ASC' : 'DESC');
     }
 
-    $recentSql .= " LIMIT 12";
+    $recentSql .= " LIMIT $itemsPerPage OFFSET $offset";
 
     $recentItems = $pdo->query($recentSql)->fetchAll();
 }
@@ -371,6 +391,28 @@ if (!$is_warehouse) {
 
         $weeklyLabels[] = date('d/m', strtotime($date));
         $weeklyCounts[] = $stmtDaily->fetchColumn();
+    }
+}
+
+// Technician Workload Chart (Admin / Reception only)
+$techLabels = [];
+$techCounts = [];
+if ($is_admin || $is_reception) {
+    $tSql = "
+        SELECT u.username, COUNT(so.id) as total 
+        FROM service_orders so
+        JOIN users u ON so.assigned_tech_id = u.id
+        LEFT JOIN warranties w ON so.id = w.service_order_id
+        WHERE so.status NOT IN ('delivered', 'cancelled', 'ready')
+        AND (w.product_code IS NULL OR w.product_code = '') 
+        AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+        GROUP BY u.id, u.username
+        ORDER BY total DESC
+    ";
+    $techData = $pdo->query($tSql)->fetchAll();
+    foreach ($techData as $row) {
+        $techLabels[] = $row['username'];
+        $techCounts[] = (int)$row['total'];
     }
 }
 
@@ -686,6 +728,41 @@ if (!$is_warehouse) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination Controls -->
+            <?php if ($recentType != 'tools' && $totalPages >= 1): ?>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding: 0.5rem 0; border-top: 1px solid var(--border-color);">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Página <?php echo $currentPage; ?> de <?php echo $totalPages; ?> 
+                        <span style="margin-left: 0.5rem; opacity: 0.5;">(Total: <?php echo $totalRecords; ?> registros)</span>
+                    </div>
+                    <?php if ($totalPages > 1): ?>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <?php if ($currentPage > 1): ?>
+                                <a href="?page=<?php echo $currentPage - 1; ?><?php echo $sort != 'date' ? '&sort='.$sort : ''; ?><?php echo $order != 'desc' ? '&order='.$order : ''; ?>" 
+                                   class="btn btn-sm btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                                    <i class="ph ph-arrow-left"></i> Anterior
+                                </a>
+                            <?php else: ?>
+                                <button class="btn btn-sm btn-secondary" disabled style="opacity: 0.5; padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                                    <i class="ph ph-arrow-left"></i> Anterior
+                                </button>
+                            <?php endif; ?>
+
+                            <?php if ($currentPage < $totalPages): ?>
+                                <a href="?page=<?php echo $currentPage + 1; ?><?php echo $sort != 'date' ? '&sort='.$sort : ''; ?><?php echo $order != 'desc' ? '&order='.$order : ''; ?>" 
+                                   class="btn btn-sm btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                                    Siguiente <i class="ph ph-arrow-right"></i>
+                                </a>
+                            <?php else: ?>
+                                <button class="btn btn-sm btn-secondary" disabled style="opacity: 0.5; padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                                    Siguiente <i class="ph ph-arrow-right"></i>
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Right Column Wrapper -->
@@ -707,6 +784,16 @@ if (!$is_warehouse) {
                     <h3 class="mb-4"><?php echo $is_tech ? 'Mi Rendimiento (Completados)' : 'Ingresos de la Semana'; ?></h3>
                     <div style="position: relative; height: 250px; width: 100%;">
                         <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($is_admin || $is_reception): ?>
+                <!-- Tech Workload Chart -->
+                <div class="card">
+                    <h3 class="mb-4">Carga por Técnico (Equipos Activos)</h3>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="techWorkloadChart"></canvas>
                     </div>
                 </div>
             <?php endif; ?>
@@ -755,17 +842,18 @@ if (!$is_warehouse) {
     });
     <?php endif; ?>
 
-    <?php if (!$is_warehouse && ($is_reception || $is_admin || $is_tech)): ?>
-    // Weekly Chart
+    <?php if (!$is_warehouse): ?>
+    // Weekly Chart (Total entries or Tech productivity)
+    <?php if ($is_reception || $is_admin || $is_tech): ?>
     const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
     new Chart(ctxWeekly, {
         type: 'bar',
         data: {
             labels: <?php echo json_encode($weeklyLabels); ?>,
             datasets: [{
-                label: '<?php echo $is_tech ? 'Equipos Listos' : 'Equipos Recibidos'; ?>',
+                label: '<?php echo $is_tech ? "Equipos Listos" : "Equipos Recibidos"; ?>',
                 data: <?php echo json_encode($weeklyCounts); ?>,
-                backgroundColor: '<?php echo $is_tech ? '#22c55e' : '#6366f1'; ?>',
+                backgroundColor: '<?php echo $is_tech ? "#22c55e" : "#6366f1"; ?>',
                 borderRadius: 4
             }]
         },
@@ -789,6 +877,82 @@ if (!$is_warehouse) {
         }
     });
     <?php endif; ?>
+
+    // Tech Workload Chart (Admin/Reception only)
+    <?php if ($is_reception || $is_admin): ?>
+    const ctxTech = document.getElementById('techWorkloadChart').getContext('2d');
+    
+    // Create Gradient
+    const techGradient = ctxTech.createLinearGradient(0, 0, 400, 0);
+    techGradient.addColorStop(0, '#f97316'); // Orange-500
+    techGradient.addColorStop(1, '#fb923c'); // Orange-400
+
+    new Chart(ctxTech, {
+        type: 'bar',
+        data: {
+            labels: <?php echo json_encode($techLabels); ?>,
+            datasets: [{
+                label: 'Equipos Asignados',
+                data: <?php echo json_encode($techCounts); ?>,
+                backgroundColor: techGradient,
+                hoverBackgroundColor: '#ea580c', // Orange-600
+                borderRadius: 8,
+                borderSkipped: false,
+                barThickness: 32
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: { left: 10, right: 30 }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: { 
+                        color: gridColor,
+                        drawBorder: false
+                    },
+                    ticks: { 
+                        color: textColor, 
+                        precision: 0,
+                        font: { family: "'Inter', sans-serif", size: 11 }
+                    }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { 
+                        color: textColor,
+                        font: { 
+                            family: "'Inter', sans-serif", 
+                            size: 13,
+                            weight: '500'
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)', // Slate-900
+                    titleFont: { size: 13, weight: '600' },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${context.raw} equipos activos`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    <?php endif; ?>
+    <?php endif; // End !$is_warehouse ?>
 </script>
 
 <?php

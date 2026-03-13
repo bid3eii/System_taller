@@ -101,7 +101,7 @@ $totalPages_act = ceil($totalActive / $limit);
 
 $sqlActive = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name,
+        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.service_type,
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
@@ -147,7 +147,7 @@ $totalPages_del = ceil($totalDelivered / $limit);
 
 $sqlDelivered = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name,
+        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.service_type,
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,

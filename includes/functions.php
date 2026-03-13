@@ -115,17 +115,31 @@ function format_currency($amount)
 }
 
 /**
- * Returns the formatted order number, preferring display_id if set.
- * @param array $order The order record containing 'id' and optionally 'display_id'
- * @param int $padding Number of leading zeros
- * @return string
+ * Generates a formatted case number (e.g., S0001, G0001).
+ * 
+ * IMPORTANT ARCHITECTURAL NOTE: 
+ * Public search (track.php) must ALWAYS match against 'display_id' and NEVER against 
+ * 'id' to avoid collisions. Internal links use 'id'. Fallback to 'id' here is 
+ * only for display of legacy records.
  */
 function get_order_number($order, $padding = 4)
 {
     if (!$order)
         return '-';
+    
     $num = !empty($order['display_id']) ? $order['display_id'] : $order['id'];
-    return '#' . str_pad($num, $padding, '0', STR_PAD_LEFT);
+    $prefix = '';
+    
+    // Determine prefix based on service_type
+    if (isset($order['service_type'])) {
+        if ($order['service_type'] === 'warranty') {
+            $prefix = 'G';
+        } else {
+            $prefix = 'S';
+        }
+    }
+    
+    return '#' . $prefix . str_pad($num, $padding, '0', STR_PAD_LEFT);
 }
 
 /**

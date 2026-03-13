@@ -489,30 +489,6 @@ if (empty($exit_doc_number)) {
             ?>
         </div>
 
-        <div class="section-header">RESULTADOS DEL SERVICIO</div>
-        <div class="section-box" style="margin-bottom: 10px; font-size: 10px; padding: 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <?php foreach ($equipmentData as $item): 
-                    $order = $item['order'];
-                ?>
-                <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td colspan="2" style="background: #f9f9f9; padding: 3px 5px; font-weight: bold; border-bottom: 1px solid #ddd;">
-                        <?php echo get_order_number($order, 5); ?> - <?php echo htmlspecialchars($order['brand']); ?>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width: 50%; padding: 5px; border-right: 1px solid var(--border-color); vertical-align: top;">
-                        <div style="font-weight: bold; margin-bottom: 2px;">DIAGNÓSTICO (#<?php echo $order['diagnosis_number'] ?: '-'; ?>)</div>
-                        <?php echo $item['diagnosis_notes'] ? nl2br(htmlspecialchars($item['diagnosis_notes'])) : '-'; ?>
-                    </td>
-                    <td style="width: 50%; padding: 5px; vertical-align: top;">
-                        <div style="font-weight: bold; margin-bottom: 2px;">REPARACIÓN (#<?php echo $order['repair_number'] ?: '-'; ?>)</div>
-                        <?php echo $item['repair_notes'] ? nl2br(htmlspecialchars($item['repair_notes'])) : '-'; ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </table>
-        </div>
 
         <div class="bottom-section">
             <!-- COMENTARIOS -->

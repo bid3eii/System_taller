@@ -95,6 +95,10 @@ if (!$order) {
     die("Orden no encontrada.");
 }
 
+// Prepare consolidated display names
+$display_client_name = !empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name']);
+$display_order_number = get_order_number($order);
+
 // Check Access Permissions for this Specific Order
 $can_view_all = can_access_module('view_all_entries', $pdo);
 if (!$can_view_all && $order['assigned_tech_id'] != $_SESSION['user_id']) {
@@ -534,12 +538,12 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                             <!-- Readonly Info -->
                                             <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
                                                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
-                                                    <span style="font-weight: bold; color: var(--p-primary);">Caso #<?php echo str_pad($order['id'], 4, '0', STR_PAD_LEFT); ?></span>
+                                                    <span style="font-weight: bold; color: var(--p-primary);">Caso <?php echo $display_order_number; ?></span>
                                                     <?php if($order['diagnosis_number']): ?>
                                                         <span style="color: #fbbf24;">Diag #<?php echo str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT); ?></span>
                                                     <?php endif; ?>
                                                 </div>
-                                                <div style="font-weight: bold; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($order['client_name']); ?></div>
+                                                <div style="font-weight: bold; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($display_client_name); ?></div>
                                                 <div style="font-size: 0.85rem; color: var(--p-text-muted);">
                                                     <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
                                                 </div>
@@ -579,13 +583,13 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                             <!-- Readonly Info (Client/Device) -->
                                             <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
                                                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
-                                                    <span style="font-weight: bold; color: var(--p-primary);">Caso #<?php echo str_pad($order['id'], 4, '0', STR_PAD_LEFT); ?></span>
+                                                    <span style="font-weight: bold; color: var(--p-primary);">Caso <?php echo $display_order_number; ?></span>
                                                     <!-- Repair number is generated AFTER saving, so we don't show it here yet unless it already exists -->
                                                     <?php if($order['repair_number']): ?>
                                                         <span style="color: #34d399;">Rep #<?php echo str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT); ?></span>
                                                     <?php endif; ?>
                                                 </div>
-                                                <div style="font-weight: bold; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($order['client_name']); ?></div>
+                                                <div style="font-weight: bold; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($display_client_name); ?></div>
                                                 <div style="font-size: 0.85rem; color: var(--p-text-muted);">
                                                     <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
                                                 </div>
@@ -710,14 +714,24 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                         }
                                         if(btnConfirmRepair) {
                                             btnConfirmRepair.addEventListener('click', function() {
-                                                // Transfer note to main form
                                                 if(repairNoteModal.value.trim() !== "") {
-                                                    // Append or set
                                                     progressNote.value = repairNoteModal.value;
                                                 }
                                                 form.submit();
                                             });
                                         }
+
+                                        // Modal Click-outside to close
+                                        [diagModal, repairModal].forEach(function(modal) {
+                                            if(modal) {
+                                                modal.addEventListener('click', function(e) {
+                                                    if (e.target === modal) {
+                                                        modal.style.display = 'none';
+                                                        statusSelect.value = previousStatus;
+                                                    }
+                                                });
+                                            }
+                                        });
                                     }
 
                                     // Spare Parts Logic (Inside Repair Modal)

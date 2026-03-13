@@ -9,44 +9,63 @@ $history_data = [];
 $error = '';
 
 if ($search) {
-    // Clean input: remove common prefixes and symbols
-    $raw_input = strtoupper($search);
-    $digits_only = str_replace(['CASO', 'ORD-', '#', ' '], '', $raw_input);
-    $clean_id = ltrim($digits_only, '0'); 
-
-    if (empty($clean_id)) $clean_id = '0'; // Fallback
-
-    $stmt = $pdo->prepare("
-        SELECT so.*, 
-               c.name as contact_name, 
-               co.name as registered_owner_name,
-               e.brand, e.model, 
-               u.username as tech_full_name
-        FROM service_orders so
-        LEFT JOIN clients c ON so.client_id = c.id
-        LEFT JOIN equipments e ON so.equipment_id = e.id
-        LEFT JOIN clients co ON e.client_id = co.id
-        LEFT JOIN users u ON so.assigned_tech_id = u.id
-        LEFT JOIN warranties w ON so.id = w.service_order_id
-        WHERE (so.id = ? OR so.display_id = ?)
-        AND (w.product_code IS NULL OR w.product_code = '') 
-        AND so.problem_reported NOT LIKE 'Garant%a Registrada'
-    ");
-    $stmt->execute([$clean_id, $clean_id]);
-    $order_data = $stmt->fetch();
-
-    if ($order_data) {
-        // Enforce strict digit matching
-        // A case is #000001. We accept "1" or "000001", but NOT "01", "001", etc.
-        $padded_id = get_order_number($order_data);
-        $raw_id = (string)(!empty($order_data['display_id']) ? $order_data['display_id'] : $order_data['id']);
-
-        if ($digits_only !== str_replace('#', '', $padded_id) && $digits_only !== str_replace('0', '', ltrim($digits_only, '0')) && $digits_only !== $raw_id) {
-            $order_data = null;
-            $error = "Número de caso inválido. Ingrese el número exacto (ej: $padded_id o $raw_id).";
-        }
+    // 1. Raw cleaning
+    $raw_input = strtoupper(trim($search));
+    $clean_search = ltrim($raw_input, '#'); // Remove leading # if present
+    
+    // 2. Identify Prefix (Mandatory)
+    $db_service_type = null;
+    $digits_part = '';
+    
+    if (strpos($clean_search, 'G') === 0) {
+        $db_service_type = 'warranty';
+        $digits_part = substr($clean_search, 1);
+    } elseif (strpos($clean_search, 'S') === 0) {
+        $db_service_type = 'service';
+        $digits_part = substr($clean_search, 1);
+    } else {
+        // No prefix? Reject immediately
+        $error = "Formato de búsqueda inválido. Debe incluir la letra inicial (ej: S0001 o G0001).";
     }
 
+    if (!$error) {
+        $clean_id = ltrim($digits_part, '0');
+        if (empty($clean_id)) $clean_id = '0';
+
+        // 3. Query with service_type filter
+        // We match display_id, or id if display_id is null (fallback for legacy records)
+        $query = "
+            SELECT so.*,
+                   c.name as contact_name, 
+                   co.name as registered_owner_name,
+                   e.brand, e.model, 
+                   u.username as tech_full_name
+            FROM service_orders so
+            LEFT JOIN clients c ON so.client_id = c.id
+            LEFT JOIN equipments e ON so.equipment_id = e.id
+            LEFT JOIN clients co ON e.client_id = co.id
+            LEFT JOIN users u ON so.assigned_tech_id = u.id
+            WHERE (so.display_id = ? OR (so.display_id IS NULL AND so.id = ?)) 
+            AND so.service_type = ?
+        ";
+        
+        $stmt = $pdo->prepare($query);
+        $stmt->execute([$clean_id, $clean_id, $db_service_type]);
+        $order_data = $stmt->fetch();
+
+        if ($order_data) {
+            // 4. Final strict check against generated number
+            $official_number = get_order_number($order_data); // e.g. "#G0007"
+            $official_clean = str_replace('#', '', $official_number); // "G0007"
+
+            if ($clean_search !== $official_clean) {
+                $order_data = null;
+                $error = "Número de caso incorrecto. Asegúrese de incluir todos los dígitos (ej: $official_clean).";
+            }
+        } else {
+            $error = "No se encontró ningún caso con ese número y tipo.";
+        }
+    }
     if ($order_data) {
         // Fetch History for the Stepper Notes
         $stmtH = $pdo->prepare("
@@ -67,7 +86,7 @@ if ($search) {
                 'user' => $h['user_name']
             ];
         }
-    } else {
+    } elseif ($search && !$error) {
         $error = "No se encontró ninguna orden con ese número.";
     }
 }
@@ -554,7 +573,7 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
 
             <form method="GET" action="">
                 <div class="input-wrapper">
-                    <input type="text" name="order_id" class="form-control" placeholder="Ingresa # de Orden o Caso" value="<?php echo htmlspecialchars($search); ?>" required autofocus>
+                    <input type="text" name="order_id" class="form-control" placeholder="Ej: S0001 o G0001" value="<?php echo htmlspecialchars($search); ?>" required autofocus>
                     <i class="ph-fill ph-hash input-icon"></i>
                 </div>
                 <button type="submit" class="btn-track">
