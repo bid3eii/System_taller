@@ -25,6 +25,7 @@ if (!$can_view_all) {
 $sql = "
     SELECT 
         so.id, 
+        so.display_id,
         so.service_type,
         TRIM(so.status) as status, 
         so.entry_date, 
@@ -157,7 +158,7 @@ require_once '../../includes/sidebar.php';
                     <tbody>
                         <?php foreach ($orders as $order): ?>
                             <tr data-status="<?php echo strtolower($order['status']); ?>" data-type="<?php echo strtolower($order['service_type']); ?>">
-                                <td><span class="badge-tag"><?php echo get_order_number($order, 5); ?></span></td>
+                                <td><span class="badge-tag"><?php echo get_order_number($order); ?></span></td>
                                 <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                                 <td>
                                     <div class="fw-medium">
