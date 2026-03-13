@@ -555,12 +555,12 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
 
                                             <div style="margin-bottom: 1rem;">
                                                 <label style="display: block; margin-bottom: 0.5rem; color: var(--p-text-muted); font-size: 0.85rem;">Procedimiento</label>
-                                                <textarea name="diagnosis_procedure" id="diag_procedure" class="modern-textarea" rows="4" placeholder="Describe las pruebas realizadas..."></textarea>
+                                                <textarea name="diagnosis_procedure" id="diag_procedure" class="modern-textarea" rows="4" placeholder="Describe las pruebas realizadas..." autocomplete="off"></textarea>
                                             </div>
 
                                             <div style="margin-bottom: 1rem;">
                                                 <label style="display: block; margin-bottom: 0.5rem; color: var(--p-text-muted); font-size: 0.85rem;">Conclusión / Solución</label>
-                                                <textarea name="diagnosis_conclusion" id="diag_conclusion" class="modern-textarea" rows="4" placeholder="Conclusión técnica..."></textarea>
+                                                <textarea name="diagnosis_conclusion" id="diag_conclusion" class="modern-textarea" rows="4" placeholder="Conclusión técnica..." autocomplete="off"></textarea>
                                             </div>
                                             
                                             <div style="margin-bottom: 1.5rem;">
@@ -757,7 +757,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                 <?php if($autoPrintDiagnosis): ?>
                     <script>
                         document.addEventListener("DOMContentLoaded", function() {
-                            window.location.href = '../services/print_diagnosis.php?id=<?php echo $id; ?>&autoprint=1';
+                            window.location.replace('../services/print_diagnosis.php?id=<?php echo $id; ?>&autoprint=1');
                         });
                     </script>
                 <?php endif; ?>

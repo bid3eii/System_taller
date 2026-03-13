@@ -314,11 +314,18 @@ $diagnosis_imgs = $stmtImages->fetchAll();
 
     <script>
         function goBack() {
-             if (document.referrer.includes('/reports/')) {
+            // Priority 1: If we came from reports, go back there
+            if (document.referrer.includes('/reports/')) {
                 window.location.href = '../reports/index.php';
-            } else {
-                window.location.href = 'view.php?id=<?php echo $id; ?>';
+                return;
             }
+            
+            // Priority 2: Go to the specific view based on service_type
+            <?php if ($order['service_type'] === 'warranty'): ?>
+                window.location.href = '../warranties/view.php?id=<?php echo $id; ?>';
+            <?php else: ?>
+                window.location.href = 'view.php?id=<?php echo $id; ?>';
+            <?php endif; ?>
         }
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
