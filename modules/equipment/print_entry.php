@@ -16,15 +16,38 @@ $ids_str = $_GET['ids'] ?? null;
 if (!$id && $num) {
     // Strip prefix (G, S, #) and leading zeros for robust lookup
     $clean_num = ltrim(strtoupper(trim($num)), '#');
-    if (strpos($clean_num, 'S') === 0 || strpos($clean_num, 'G') === 0) {
+    $service_type_filter = null;
+    
+    if (strpos($clean_num, 'S') === 0) {
+        $service_type_filter = 'service';
+        $clean_num = substr($clean_num, 1);
+    } elseif (strpos($clean_num, 'G') === 0) {
+        $service_type_filter = 'warranty';
         $clean_num = substr($clean_num, 1);
     }
     $clean_num = ltrim($clean_num, '0') ?: '0';
 
-    // FIX: Only search by display_id when 'num' is provided to avoid collision with internal auto-increment IDs
-    $stmtId = $pdo->prepare("SELECT id FROM service_orders WHERE display_id = ? LIMIT 1");
-    $stmtId->execute([$clean_num]);
-    $id = $stmtId->fetchColumn();
+    if ($service_type_filter) {
+        $stmtId = $pdo->prepare("SELECT id FROM service_orders WHERE display_id = ? AND service_type = ? LIMIT 1");
+        $stmtId->execute([$clean_num, $service_type_filter]);
+        $id = $stmtId->fetchColumn();
+        
+        if (!$id && is_numeric($clean_num)) {
+            $stmtIdFallback = $pdo->prepare("SELECT id FROM service_orders WHERE id = ? AND service_type = ? AND (display_id IS NULL OR display_id = '' OR display_id = '0') LIMIT 1");
+            $stmtIdFallback->execute([$clean_num, $service_type_filter]);
+            $id = $stmtIdFallback->fetchColumn();
+        }
+    } else {
+        $stmtId = $pdo->prepare("SELECT id FROM service_orders WHERE display_id = ? LIMIT 1");
+        $stmtId->execute([$clean_num]);
+        $id = $stmtId->fetchColumn();
+        
+        if (!$id && is_numeric($clean_num)) {
+            $stmtIdFallback = $pdo->prepare("SELECT id FROM service_orders WHERE id = ? AND (display_id IS NULL OR display_id = '' OR display_id = '0') LIMIT 1");
+            $stmtIdFallback->execute([$clean_num]);
+            $id = $stmtIdFallback->fetchColumn();
+        }
+    }
 }
 
 if (!$id && !$ids_str) {
