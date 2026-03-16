@@ -714,7 +714,7 @@ if ($is_admin || $is_reception) {
                                             <?php 
                                             $module = ($item['service_type'] == 'warranty') ? 'warranties' : 'services';
                                             ?>
-                                            <a href="../<?php echo $module; ?>/view.php?num=<?php echo $item['display_id']; ?>" class="btn-icon">
+                                            <a href="../<?php echo $module; ?>/view.php?num=<?php echo urlencode(get_order_number($item)); ?>" class="btn-icon">
                                                 <i class="ph ph-caret-right"></i>
                                             </a>
                                         </td>

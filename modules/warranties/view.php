@@ -40,6 +40,13 @@ if (!$id && $num) {
     $stmtId = $pdo->prepare("SELECT id FROM service_orders WHERE display_id = ? AND service_type = 'warranty' LIMIT 1");
     $stmtId->execute([$clean_num]);
     $id = $stmtId->fetchColumn();
+
+    if (!$id && is_numeric($clean_num)) {
+        // Fallback to searching by ID for legacy records that have no display_id
+        $stmtIdFallback = $pdo->prepare("SELECT id FROM service_orders WHERE id = ? AND service_type = 'warranty' AND (display_id IS NULL OR display_id = '' OR display_id = '0') LIMIT 1");
+        $stmtIdFallback->execute([$clean_num]);
+        $id = $stmtIdFallback->fetchColumn();
+    }
 }
 
 if (!$id) {

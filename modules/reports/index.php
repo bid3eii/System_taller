@@ -215,18 +215,18 @@ require_once '../../includes/sidebar.php';
                                         </button>
                                         <div class="report-dropdown-menu">
                                             <div class="dropdown-header">DOCUMENTOS</div>
-                                            <a href="../equipment/print_entry.php?num=<?php echo $order['display_id']; ?>" class="dropdown-item">
+                                            <a href="../equipment/print_entry.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
                                                 <i class="ph-fill ph-file-text" style="color: var(--primary);"></i> Hoja de Entrada
                                             </a>
                                             
                                             <?php if (!empty($order['diagnosis_number'])): ?>
-                                            <a href="../services/print_diagnosis.php?num=<?php echo $order['display_id']; ?>" class="dropdown-item">
+                                            <a href="../services/print_diagnosis.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
                                                 <i class="ph-fill ph-stethoscope" style="color: #a855f7;"></i> Diagnóstico
                                             </a>
                                             <?php endif; ?>
 
                                             <?php if (in_array($order['status'], ['repaired', 'delivered', 'ready'])): ?>
-                                            <a href="../equipment/print_delivery.php?num=<?php echo $order['display_id']; ?>" class="dropdown-item">
+                                            <a href="../equipment/print_delivery.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
                                                 <i class="ph-fill ph-check-circle" style="color: #10b981;"></i> Hoja de Salida
                                             </a>
                                             <?php endif; ?>

@@ -338,9 +338,9 @@ $diagnosis_imgs = $stmtImages->fetchAll();
             
             // Priority 2: Go to the specific view based on service_type
             <?php if ($order['service_type'] === 'warranty'): ?>
-                window.location.href = '../warranties/view.php?num=<?php echo $order['display_id']; ?>';
+                window.location.href = '../warranties/view.php?num=<?php echo urlencode(get_order_number($order)); ?>';
             <?php else: ?>
-                window.location.href = 'view.php?num=<?php echo $order['display_id']; ?>';
+                window.location.href = 'view.php?num=<?php echo urlencode(get_order_number($order)); ?>';
             <?php endif; ?>
         }
         document.addEventListener("DOMContentLoaded", function() {
