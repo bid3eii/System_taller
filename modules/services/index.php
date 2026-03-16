@@ -269,7 +269,7 @@ require_once '../../includes/sidebar.php';
                     <?php if (count($activeServices) > 0): ?>
                         <?php foreach ($activeServices as $item): ?>
                             <tr class="clickable-row" style="cursor: pointer;"
-                                onclick="window.location.href='view.php?num=<?php echo $item['display_id']; ?>'">
+                                onclick="window.location.href='view.php?num=<?php echo urlencode(get_order_number($item)); ?>'">
                                 <td>
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>
@@ -455,7 +455,7 @@ require_once '../../includes/sidebar.php';
                     <?php if (count($deliveredServices) > 0): ?>
                         <?php foreach ($deliveredServices as $item): ?>
                             <tr class="clickable-row" style="opacity: 0.7; cursor: pointer;"
-                                onclick="window.location.href='view.php?num=<?php echo $item['display_id']; ?>'">
+                                onclick="window.location.href='view.php?num=<?php echo urlencode(get_order_number($item)); ?>'">
                                 <td>
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>

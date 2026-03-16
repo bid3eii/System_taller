@@ -375,7 +375,7 @@ if (isset($_SESSION['error'])) {
                                     $origin_link = "../levantamientos/view.php?id=" . $c['reference_id'];
                                  elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
                                      $module = ($c['service_type'] === 'warranty') ? 'warranties' : 'services';
-                                     $origin_link = "../$module/view.php?num=" . $c['display_id'];
+                                     $origin_link = "../$module/view.php?num=" . urlencode(get_order_number($c));
                                  }
                                 $tipoColor  = $c['tipo'] === 'PROYECTO' ? 'rgba(99,102,241,0.15)' : 'rgba(16,185,129,0.15)';
                                 $tipoText   = $c['tipo'] === 'PROYECTO' ? '#818cf8' : '#34d399';

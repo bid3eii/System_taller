@@ -283,7 +283,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="print_delivery.php?num=<?php echo $dItem['display_id']; ?>" class="btn-icon" title="Imprimir Comprobante">
+                                    <a href="print_delivery.php?num=<?php echo urlencode(get_order_number($dItem)); ?>" class="btn-icon" title="Imprimir Comprobante">
                                         <i class="ph ph-printer"></i>
                                     </a>
                                 </td>
