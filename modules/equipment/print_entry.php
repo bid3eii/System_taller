@@ -10,10 +10,25 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $id = $_GET['id'] ?? null;
+$num = $_GET['num'] ?? null;
 $ids_str = $_GET['ids'] ?? null;
 
+if (!$id && $num) {
+    // Strip prefix (G, S, #) and leading zeros for robust lookup
+    $clean_num = ltrim(strtoupper(trim($num)), '#');
+    if (strpos($clean_num, 'S') === 0 || strpos($clean_num, 'G') === 0) {
+        $clean_num = substr($clean_num, 1);
+    }
+    $clean_num = ltrim($clean_num, '0') ?: '0';
+
+    // FIX: Only search by display_id when 'num' is provided to avoid collision with internal auto-increment IDs
+    $stmtId = $pdo->prepare("SELECT id FROM service_orders WHERE display_id = ? LIMIT 1");
+    $stmtId->execute([$clean_num]);
+    $id = $stmtId->fetchColumn();
+}
+
 if (!$id && !$ids_str) {
-    die("ID no especificado.");
+    die("ID o Número de Caso no especificado o no encontrado.");
 }
 
 $order_ids = $ids_str ? explode(',', $ids_str) : [$id];
@@ -38,11 +53,13 @@ $stmt = $pdo->prepare("
         so.*, so.display_id,
         c.name as contact_name, c.phone, c.email, c.tax_id, c.address,
         e.brand, e.model, e.submodel, e.serial_number, e.type as equipment_type,
-        co.name as registered_owner_name
+        co.name as registered_owner_name,
+        w.sales_invoice_number
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN clients co ON e.client_id = co.id
+    LEFT JOIN warranties w ON so.id = w.service_order_id
     WHERE so.id IN ($placeholders)
     ORDER BY so.id ASC
 ");
@@ -166,6 +183,12 @@ if (empty($doc_number)) {
                     <div class="info-row"><div class="info-label">Fecha:</div><div class="info-val"><?php echo date('d/m/Y h:i:s A', strtotime($first_order['entry_date'])); ?></div></div>
                     <?php if(count($orders) === 1): ?>
                         <div class="info-row"><div class="info-label">Caso #:</div><div class="info-val" style="color: #2563eb; font-weight: bold;"><?php echo get_order_number($orders[0]); ?></div></div>
+                    <?php endif; ?>
+                    <?php 
+                        $invoice_display = !empty($first_order['invoice_number']) ? $first_order['invoice_number'] : ($first_order['sales_invoice_number'] ?? '');
+                        if(!empty($invoice_display)): 
+                    ?>
+                        <div class="info-row"><div class="info-label">Factura:</div><div class="info-val" style="font-weight: bold;"><?php echo htmlspecialchars($invoice_display); ?></div></div>
                     <?php endif; ?>
                     <div class="info-row"><div class="info-label">Cliente:</div><div class="info-val"><?php 
                         $final_client = trim(!empty($first_order['owner_name']) ? $first_order['owner_name'] : (!empty($first_order['registered_owner_name']) ? $first_order['registered_owner_name'] : $first_order['contact_name']));

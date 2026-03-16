@@ -244,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $service_type_item = clean($service_types[$i] ?? 'service');
 
                 $notes = clean($_POST['entry_notes'] ?? '');
-                $invoice_num = clean($_POST['invoice_number'] ?? '');
+                $invoice_num = clean($_POST['invoice_number'][$i] ?? '');
 
                 // 1. Equipment Logic
                 $stmtEqCheck = $pdo->prepare("SELECT id, client_id FROM equipments WHERE serial_number = ? LIMIT 1");
@@ -914,7 +914,7 @@ require_once '../../includes/sidebar.php';
                             </div>
 
                             <div class="modern-grid" style="grid-template-columns: repeat(6, 1fr);">
-                                <div class="form-group" style="grid-column: span 3;">
+                                <div class="form-group" style="grid-column: span 2;">
                                     <label class="form-label">Serie (S/N) *</label>
                                     <div class="input-group">
                                         <input type="text" name="serial_number[]" class="form-control serial-input" required
@@ -925,7 +925,16 @@ require_once '../../includes/sidebar.php';
                                         style="font-size:0.85rem; margin-top:0.4rem; font-weight: 500;"></div>
                                 </div>
 
-                                <div class="form-group" style="grid-column: span 3;">
+                                <div class="form-group" style="grid-column: span 2;">
+                                    <label class="form-label">Factura</label>
+                                    <div class="input-group">
+                                        <input type="text" name="invoice_number[]" class="form-control invoice-input"
+                                            placeholder="No. Factura">
+                                        <i class="ph ph-file-text input-icon"></i>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="grid-column: span 2;">
                                     <label class="form-label">Cliente Registrado (S/N)</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control registered-client-input" readonly
@@ -1056,15 +1065,7 @@ require_once '../../includes/sidebar.php';
                         </div>
 
                         <div class="modern-grid"
-                            style="grid-template-columns: 1fr 1fr; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
-                            <div class="form-group">
-                                <label class="form-label">Número de Factura (Opcional)</label>
-                                <div class="input-group">
-                                    <input type="text" name="invoice_number" class="form-control"
-                                        placeholder="Factura de referencia">
-                                    <i class="ph ph-file-text input-icon"></i>
-                                </div>
-                            </div>
+                            style="grid-template-columns: 1fr; border-top: 1px dashed var(--border-color); padding-top: 1.5rem;">
                             <div class="form-group">
                                 <label class="form-label">Observaciones Generales</label>
                                 <div class="input-group">
@@ -1369,10 +1370,17 @@ require_once '../../includes/sidebar.php';
                                 if (!block.querySelector('[name="brand[]"]').value) block.querySelector('[name="brand[]"]').value = data.data.brand || '';
 
                                 const clientInput = block.querySelector('.registered-client-input');
+                                const invoiceInput = block.querySelector('.invoice-input');
+                                
                                 if (clientInput) {
                                     let owner = data.data.owner_name || data.data.original_owner || data.data.client_name;
                                     clientInput.value = owner || 'Sin cliente registrado';
                                     clientInput.style.color = owner ? 'var(--primary-light)' : 'var(--text-muted)';
+                                }
+
+                                if (invoiceInput && data.data.invoice) {
+                                    invoiceInput.value = data.data.invoice;
+                                    invoiceInput.style.borderColor = 'var(--success)';
                                 }
 
                                 if (data.status === 'valid') {
@@ -1385,7 +1393,12 @@ require_once '../../includes/sidebar.php';
                             } else {
                                 statusDiv.innerHTML = '<span style="color:var(--primary-500);"><i class="ph ph-sparkle"></i> Equipo nuevo en taller</span>';
                                 const clientInput = block.querySelector('.registered-client-input');
+                                const invoiceInput = block.querySelector('.invoice-input');
                                 if (clientInput) clientInput.value = '';
+                                if (invoiceInput) {
+                                    invoiceInput.value = '';
+                                    invoiceInput.style.borderColor = '';
+                                }
                             }
                         })
                         .catch(e => {
@@ -1416,6 +1429,7 @@ require_once '../../includes/sidebar.php';
                     equipmentBlocks.forEach((block, i) => {
                         const serial = block.querySelector('[name="serial_number[]"]').value;
                         const equipo = block.querySelector('[name="brand[]"]').value;
+                        const factura = block.querySelector('[name="invoice_number[]"]').value;
                         const problem = block.querySelector('[name="problem_reported[]"]').value;
 
                         const row = document.createElement('tr');
@@ -1424,7 +1438,7 @@ require_once '../../includes/sidebar.php';
                             <td style="padding: 0.75rem;">${i + 1}</td>
                             <td style="padding: 0.75rem;">
                                 <strong>${equipo}</strong><br>
-                                <span class="text-muted" style="font-size: 0.75rem;">S/N: ${serial}</span>
+                                <span class="text-muted" style="font-size: 0.75rem;">S/N: ${serial} ${factura ? '| Fact: ' + factura : ''}</span>
                             </td>
                             <td style="padding: 0.75rem;">${problem}</td>
                         `;

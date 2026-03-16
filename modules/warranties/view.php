@@ -11,8 +11,39 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $id = $_GET['id'] ?? null;
+$num = $_GET['num'] ?? null;
+
+if ($id && !$num) {
+    // If we only have 'id', redirect to canonical 'num' URL for UI consistency
+    $stmtNum = $pdo->prepare("SELECT display_id FROM service_orders WHERE id = ? LIMIT 1");
+    $stmtNum->execute([$id]);
+    $dispId = $stmtNum->fetchColumn();
+    if ($dispId) {
+        $params = $_GET;
+        unset($params['id']);
+        $params['num'] = $dispId;
+        header("Location: view.php?" . http_build_query($params));
+        exit;
+    }
+}
+
+if (!$id && $num) {
+    // If we have 'num' (display_id) but no 'id', find the internal ID first
+    // Strip prefix (G, S, #) and leading zeros for robust lookup
+    $clean_num = ltrim(strtoupper(trim($num)), '#');
+    if (strpos($clean_num, 'S') === 0 || strpos($clean_num, 'G') === 0) {
+        $clean_num = substr($clean_num, 1);
+    }
+    $clean_num = ltrim($clean_num, '0') ?: '0';
+
+    // FIX: Only search by display_id when 'num' is provided to avoid collision with internal auto-increment IDs
+    $stmtId = $pdo->prepare("SELECT id FROM service_orders WHERE display_id = ? AND service_type = 'warranty' LIMIT 1");
+    $stmtId->execute([$clean_num]);
+    $id = $stmtId->fetchColumn();
+}
+
 if (!$id) {
-    die("ID no especificado.");
+    die("ID o Número de Caso no especificado o no encontrado.");
 }
 
 // Handle Success/Print Messages from Redirect

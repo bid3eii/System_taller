@@ -57,6 +57,7 @@ if (!$is_admin && $status_filter) {
 $where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
 $stmt_str = "SELECT c.*, u.username as tech_name,
+                    so.display_id, so.service_type,
                     CASE 
                         WHEN c.tipo = 'SERVICIO' AND so.invoice_number IS NOT NULL AND so.invoice_number != '' THEN so.invoice_number
                         WHEN c.tipo = 'PROYECTO' AND ps.invoice_number IS NOT NULL AND ps.invoice_number != '' THEN ps.invoice_number
@@ -372,8 +373,10 @@ if (isset($_SESSION['error'])) {
                                 $origin_link = '#';
                                 if ($c['tipo'] === 'PROYECTO' && !empty($c['reference_id']))
                                     $origin_link = "../levantamientos/view.php?id=" . $c['reference_id'];
-                                elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id']))
-                                    $origin_link = "../services/view.php?id=" . $c['reference_id'];
+                                 elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
+                                     $module = ($c['service_type'] === 'warranty') ? 'warranties' : 'services';
+                                     $origin_link = "../$module/view.php?num=" . $c['display_id'];
+                                 }
                                 $tipoColor  = $c['tipo'] === 'PROYECTO' ? 'rgba(99,102,241,0.15)' : 'rgba(16,185,129,0.15)';
                                 $tipoText   = $c['tipo'] === 'PROYECTO' ? '#818cf8' : '#34d399';
                                 $tipoBorder = $c['tipo'] === 'PROYECTO' ? 'rgba(99,102,241,0.3)' : 'rgba(16,185,129,0.3)';
@@ -384,7 +387,13 @@ if (isset($_SESSION['error'])) {
                                     <td>
                                         <a href="<?php echo htmlspecialchars($origin_link); ?>" title="Ir al Origen" onclick="event.stopPropagation();"
                                            style="color: #60a5fa; text-decoration: none; font-weight: 600; font-size: 1.05rem;">
-                                            <?php echo htmlspecialchars($c['caso']); ?> <i class="ph ph-link-simple" style="font-size: 0.8rem;"></i>
+                                            <?php 
+                                            if ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
+                                                echo htmlspecialchars(get_order_number($c));
+                                            } else {
+                                                echo htmlspecialchars($c['caso']);
+                                            }
+                                            ?> <i class="ph ph-link-simple" style="font-size: 0.8rem;"></i>
                                         </a><br>
                                         <span class="badge" style="font-size:.70rem; margin-top:.4rem; padding:.2rem .6rem; border-radius:4px; border:1px solid <?php echo $tipoBorder; ?>; background:<?php echo $tipoColor; ?>; color:<?php echo $tipoText; ?>; display:inline-flex; align-items:center; gap:.3rem; letter-spacing:.5px;">
                                             <i class="ph <?php echo $tipoIcon; ?>" style="font-size:.85rem;"></i>

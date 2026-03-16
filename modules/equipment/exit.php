@@ -15,7 +15,7 @@ if (!can_access_module('equipment', $pdo) && !can_access_module('equipment_exit'
 // Status 'ready' implies repairs are done and costs calculated.
 $stmt = $pdo->prepare("
     SELECT 
-        so.id, so.status, so.final_cost, so.invoice_number,
+        so.id, so.display_id, so.service_type, so.status, so.final_cost, so.invoice_number,
         c.id as client_id,
         c.name as client_name, 
         e.brand, e.model, e.serial_number, e.type
@@ -229,7 +229,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                         // Fetch History (Delivered Orders)
                         $stmtDelivered = $pdo->prepare("
                             SELECT 
-                                so.id, so.status, so.final_cost, so.exit_date, so.invoice_number,
+                                so.id, so.display_id, so.service_type, so.status, so.final_cost, so.exit_date, so.invoice_number,
                                 c.name as client_name, 
                                 e.brand, e.model, e.serial_number, e.type,
                                 u.username as delivered_by
@@ -283,7 +283,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="print_delivery.php?id=<?php echo $dItem['id']; ?>" class="btn-icon" title="Imprimir Comprobante">
+                                    <a href="print_delivery.php?num=<?php echo $dItem['display_id']; ?>" class="btn-icon" title="Imprimir Comprobante">
                                         <i class="ph ph-printer"></i>
                                     </a>
                                 </td>
