@@ -12,23 +12,23 @@ if (!can_access_module('proyectos', $pdo) && $_SESSION['role'] !== 'superadmin' 
 
 $id = $_GET['id'] ?? 0;
 
-$stmt = $pdo->prepare("
+$stmt_survey = $pdo->prepare("
     SELECT ps.*, u.username as tech_name 
     FROM project_surveys ps
     LEFT JOIN users u ON ps.user_id = u.id
     WHERE ps.id = ?
 ");
-$stmt->execute([$id]);
-$survey = $stmt->fetch();
+$stmt_survey->execute([$id]);
+$survey = $stmt_survey->fetch();
 
 if (!$survey) {
     die("Proyecto no encontrado.");
 }
 
 // Fetch materials
-$stmt = $pdo->prepare("SELECT * FROM project_materials WHERE survey_id = ? ORDER BY id ASC");
-$stmt->execute([$id]);
-$materials = $stmt->fetchAll();
+$stmt_materials = $pdo->prepare("SELECT * FROM project_materials WHERE survey_id = ? ORDER BY id ASC");
+$stmt_materials->execute([$id]);
+$materials = $stmt_materials->fetchAll();
 
 // Fetch active technicians for assignment
 $stmt_techs = $pdo->prepare("SELECT id, username FROM users WHERE role_id = 3 AND status = 'active' ORDER BY username ASC");
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         $proj['client_name'],
                         $proj['title'],
                         $tech_name,
-                        "Proyecto_#" . str_pad($id, 4, '0', STR_PAD_LEFT),
+                        "#P" . str_pad($id, 4, '0', STR_PAD_LEFT),
                         $tid,
                         $id
                     ]);
@@ -98,8 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
             // -------------------------------------------------------------
 
-            $stmt->execute([$id]);
-            $survey = $stmt->fetch();
+            $stmt_survey->execute([$id]);
+            $survey = $stmt_survey->fetch();
         } else {
             $_SESSION['error_msg'] = "Error al asignar personal.";
         }
@@ -108,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         if ($stmt_update->execute([$id])) {
             $_SESSION['success_msg'] = "Personal desasignado.";
             $pdo->prepare("DELETE FROM comisiones WHERE reference_id = ? AND tipo = 'PROYECTO' AND estado = 'PENDIENTE'")->execute([$id]);
-            $stmt->execute([$id]);
-            $survey = $stmt->fetch();
+            $stmt_survey->execute([$id]);
+            $survey = $stmt_survey->fetch();
         } else {
             $_SESSION['error_msg'] = "Error al quitar personal.";
         }

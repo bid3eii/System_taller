@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $comision = $stmt_com->fetch();
 
                 $stmt_s = $pdo->prepare("
-                    SELECT c.name as client_name, e.brand, e.model, so.payment_status, so.invoice_number
+                    SELECT c.name as client_name, e.brand, e.model, so.id, so.display_id, so.service_type, so.payment_status, so.invoice_number
                     FROM service_orders so
                     LEFT JOIN clients c ON so.client_id = c.id
                     LEFT JOIN equipments e ON so.equipment_id = e.id
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         $serv['client_name'],
                         $servicio_desc,
                         $tech_name,
-                        "Servicio_#" . str_pad($order_id, 4, '0', STR_PAD_LEFT),
+                        get_order_number($serv),
                         $initial_status,
                         $tech_id,
                         $order_id,
@@ -269,7 +269,7 @@ require_once '../../includes/sidebar.php';
                     <?php if (count($activeServices) > 0): ?>
                         <?php foreach ($activeServices as $item): ?>
                             <tr class="clickable-row" style="cursor: pointer;"
-                                onclick="window.location.href='view.php?id=<?php echo $item['id']; ?>'">
+                                onclick="window.location.href='view.php?num=<?php echo $item['display_id']; ?>'">
                                 <td>
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>
@@ -455,7 +455,7 @@ require_once '../../includes/sidebar.php';
                     <?php if (count($deliveredServices) > 0): ?>
                         <?php foreach ($deliveredServices as $item): ?>
                             <tr class="clickable-row" style="opacity: 0.7; cursor: pointer;"
-                                onclick="window.location.href='view.php?id=<?php echo $item['id']; ?>'">
+                                onclick="window.location.href='view.php?num=<?php echo $item['display_id']; ?>'">
                                 <td>
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>

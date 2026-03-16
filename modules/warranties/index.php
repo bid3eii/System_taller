@@ -232,7 +232,7 @@ require_once '../../includes/sidebar.php';
                     <?php if (count($activeWarranties) > 0): ?>
                         <?php foreach ($activeWarranties as $item): ?>
                             <tr class="clickable-row" style="cursor: pointer;"
-                                onclick="window.location.href='view.php?id=<?php echo $item['id']; ?>'">
+                                onclick="window.location.href='view.php?num=<?php echo $item['display_id']; ?>'">
                                 <td>
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>
@@ -403,7 +403,7 @@ require_once '../../includes/sidebar.php';
                     <?php if (count($deliveredWarranties) > 0): ?>
                         <?php foreach ($deliveredWarranties as $item): ?>
                             <tr class="clickable-row" style="opacity: 0.7; cursor: pointer;"
-                                onclick="window.location.href='view.php?id=<?php echo $item['id']; ?>'">
+                                onclick="window.location.href='view.php?num=<?php echo $item['display_id']; ?>'">
                                 <td>
                                     <strong><?php echo get_order_number($item); ?></strong>
                                 </td>

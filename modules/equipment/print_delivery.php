@@ -10,8 +10,24 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $id = $_GET['id'] ?? null;
+$num = $_GET['num'] ?? null;
+
+if (!$id && $num) {
+    // Strip prefix (G, S, #) and leading zeros for robust lookup
+    $clean_num = ltrim(strtoupper(trim($num)), '#');
+    if (strpos($clean_num, 'S') === 0 || strpos($clean_num, 'G') === 0) {
+        $clean_num = substr($clean_num, 1);
+    }
+    $clean_num = ltrim($clean_num, '0') ?: '0';
+
+    // FIX: Only search by display_id when 'num' is provided to avoid collision with internal auto-increment IDs
+    $stmtId = $pdo->prepare("SELECT id FROM service_orders WHERE display_id = ? LIMIT 1");
+    $stmtId->execute([$clean_num]);
+    $id = $stmtId->fetchColumn();
+}
+
 if (!$id) {
-    die("ID no especificado.");
+    die("ID o Número de Caso no especificado o no encontrado.");
 }
 
 // Fetch Settings
