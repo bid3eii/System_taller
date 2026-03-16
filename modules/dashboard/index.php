@@ -711,7 +711,10 @@ if ($is_admin || $is_reception) {
                                             </div>
                                         </td>
                                         <td style="padding: 0.75rem; width: 1%; white-space: nowrap; text-align: right;">
-                                            <a href="../services/view.php?id=<?php echo $item['id']; ?>" class="btn-icon">
+                                            <?php 
+                                            $module = ($item['service_type'] == 'warranty') ? 'warranties' : 'services';
+                                            ?>
+                                            <a href="../<?php echo $module; ?>/view.php?num=<?php echo $item['display_id']; ?>" class="btn-icon">
                                                 <i class="ph ph-caret-right"></i>
                                             </a>
                                         </td>
