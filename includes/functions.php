@@ -128,6 +128,12 @@ function get_order_number($order, $padding = 4)
         return '-';
     
     $num = !empty($order['display_id']) ? $order['display_id'] : $order['id'];
+    
+    // If the display_id already starts with a letter (like 'B10927'), return it directly with #
+    if (is_string($num) && preg_match('/^[a-zA-Z]/', $num)) {
+        return '#' . $num;
+    }
+
     $prefix = '';
     
     // Determine prefix based on service_type
