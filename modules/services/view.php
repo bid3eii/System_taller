@@ -726,17 +726,31 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                     Estado</label>
                                 <select name="status" id="statusSelect" class="modern-select">
                                     <?php
-                                    $allStatuses = [
+                                    $status_options = [
                                         'received' => 'Recibido',
                                         'diagnosing' => 'En Revisión/Diagnóstico',
                                         'pending_approval' => 'En Espera',
                                         'in_repair' => 'En Reparación',
-                                        'ready' => 'Listo',
-                                        'delivered' => 'Entregado',
-                                        'cancelled' => 'Cancelado',
+                                        'ready' => 'Listo'
                                     ];
-                                    foreach ($allStatuses as $val => $label): ?>
-                                        <option value="<?php echo $val; ?>" <?php echo $order['status'] === $val ? 'selected' : ''; ?>>
+                                    $statusOrder = array_keys($status_options);
+                                    $currentIndex = array_search($order['status'], $statusOrder);
+                                    $isSuperAdmin = isset($_SESSION['role_name']) && strtolower($_SESSION['role_name']) === 'superadmin';
+                                    
+                                    foreach ($status_options as $val => $label): 
+                                        $loopIndex = array_search($val, $statusOrder);
+                                        // Disable previous statuses EXCEPT if standard flow (don't disable Cancelado unless delivered)
+                                        $isDisabled = false;
+                                        if (!$isSuperAdmin && $currentIndex !== false && $loopIndex !== false) {
+                                            if ($val === 'cancelled') {
+                                                $isDisabled = ($order['status'] === 'delivered');
+                                            } else {
+                                                // Disable if it's a previous step, but allow keeping current or moving forward
+                                                $isDisabled = ($loopIndex < $currentIndex);
+                                            }
+                                        }
+                                    ?>
+                                        <option value="<?php echo $val; ?>" <?php echo $order['status'] === $val ? 'selected' : ''; echo $isDisabled ? ' disabled' : ''; ?>>
                                             <?php echo $label; ?>
                                         </option>
                                     <?php endforeach; ?>

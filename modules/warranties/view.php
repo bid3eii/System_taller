@@ -164,9 +164,7 @@ $statusLabels = [
     'diagnosing' => 'En Revisión/Diagnóstico',
     'pending_approval' => 'En Espera',
     'in_repair' => 'En Reparación',
-    'ready' => 'Listo',
-    'delivered' => 'Entregado',
-    'cancelled' => 'Cancelado'
+    'ready' => 'Listo'
 ];
 // View Logic
 $view_mode = $_GET['view_mode'] ?? 'current';
@@ -549,9 +547,20 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Nuevo Estado</label>
                             <select name="status" id="statusSelect" class="modern-select">
-                                <?php foreach($statusLabels as $key => $label): ?>
-                                    <?php if($key !== 'delivered' && $key !== 'cancelled'): ?>
-                                        <option value="<?php echo $key; ?>" <?php echo $order['status'] === $key ? 'selected' : ''; ?>>
+                                <?php 
+                                $statusOrder = array_keys($statusLabels);
+                                $currentIndex = array_search($order['status'], $statusOrder);
+                                $isSuperAdmin = isset($_SESSION['role_name']) && strtolower($_SESSION['role_name']) === 'superadmin';
+                                
+                                foreach($statusLabels as $key => $label): 
+                                    if($key !== 'delivered' && $key !== 'cancelled'): 
+                                        $loopIndex = array_search($key, $statusOrder);
+                                        $isDisabled = false;
+                                        if (!$isSuperAdmin && $currentIndex !== false && $loopIndex !== false) {
+                                            $isDisabled = ($loopIndex < $currentIndex);
+                                        }
+                                ?>
+                                        <option value="<?php echo $key; ?>" <?php echo $order['status'] === $key ? 'selected' : ''; echo $isDisabled ? ' disabled' : ''; ?>>
                                             <?php echo $label; ?>
                                         </option>
                                     <?php endif; ?>

@@ -448,17 +448,6 @@ if (isset($_SESSION['error'])) {
                                                             '<?php echo addslashes(htmlspecialchars($c['vendedor'] ?? '')); ?>'
                                                         )">
                                                         <i class="ph ph-check"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                                <?php if (can_access_module('comisiones_delete', $pdo)): ?>
-                                                    <form action="delete.php" method="POST" style="display:inline;"
-                                                        onsubmit="return confirm('¿Está seguro de eliminar esta comisión de forma permanente?');">
-                                                        <input type="hidden" name="id" value="<?php echo $c['id']; ?>">
-                                                        <button type="submit" class="btn btn-secondary"
-                                                            style="color:var(--danger); border-color:var(--danger);" title="Eliminar">
-                                                            <i class="ph ph-trash"></i>
-                                                        </button>
-                                                    </form>
                                                 <?php endif; ?>
                                             </div>
                                         </td>
@@ -595,10 +584,12 @@ if (isset($_SESSION['error'])) {
                 <?php foreach ($comisiones as $c): ?>
                     <?php
                     $origin_link = '#';
-                    if ($c['tipo'] === 'PROYECTO' && !empty($c['reference_id']))
+                    if ($c['tipo'] === 'PROYECTO' && !empty($c['reference_id'])) {
                         $origin_link = "../levantamientos/view.php?id=" . $c['reference_id'];
-                    elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id']))
-                        $origin_link = "../services/view.php?id=" . $c['reference_id'];
+                    } elseif ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
+                        $module = ($c['service_type'] === 'warranty') ? 'warranties' : 'services';
+                        $origin_link = "../$module/view.php?num=" . urlencode(get_order_number($c));
+                    }
 
                     $tipo_class = $c['tipo'] === 'PROYECTO' ? 'com-badge-proyecto' : 'com-badge-servicio';
                     $tipo_icon = $c['tipo'] === 'PROYECTO' ? 'ph-buildings' : 'ph-wrench';
@@ -609,7 +600,13 @@ if (isset($_SESSION['error'])) {
                         <div class="com-card-left">
                             <div class="com-meta">
                                 <a href="<?php echo htmlspecialchars($origin_link); ?>" class="com-caso" onclick="event.stopPropagation()">
-                                    <?php echo htmlspecialchars($c['caso']); ?> <i class="ph ph-link-simple" style="font-size:.8rem;"></i>
+                                    <?php 
+                                    if ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
+                                        echo htmlspecialchars(get_order_number($c));
+                                    } else {
+                                        echo htmlspecialchars($c['caso']);
+                                    }
+                                    ?> <i class="ph ph-link-simple" style="font-size:.8rem;"></i>
                                 </a>
                                 <span class="com-badge <?php echo $tipo_class; ?>">
                                     <i class="ph <?php echo $tipo_icon; ?>"></i> <?php echo $c['tipo']; ?>
