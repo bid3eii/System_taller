@@ -92,8 +92,8 @@ if ($order['service_type'] === 'warranty') {
 }
 
 $can_view_all = can_access_module('view_all_entries', $pdo);
-if (!$can_view_all && $order['assigned_tech_id'] != $_SESSION['user_id']) {
-    die("Acceso denegado. No tienes permiso para gestionar este caso.");
+if (!can_access_module('manage_services', $pdo)) {
+    die("Acceso denegado. Esta página es exclusiva para gestión administrativa.");
 }
 
 $statusLabels = [

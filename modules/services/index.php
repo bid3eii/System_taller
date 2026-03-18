@@ -261,7 +261,9 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="6">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <?php if (can_access_module('manage_services', $pdo)): ?>
                         <th>Finanzas</th>
+                        <?php endif; ?>
                         <th style="text-align: right;">Acciones</th>
                     </tr>
                 </thead>
@@ -345,6 +347,7 @@ require_once '../../includes/sidebar.php';
                                         <?php echo $label; ?>
                                     </span>
                                 </td>
+                                <?php if (can_access_module('manage_services', $pdo)): ?>
                                 <td>
                                     <?php
                                     $paymentMaps = [
@@ -358,11 +361,19 @@ require_once '../../includes/sidebar.php';
                                         <?php echo strtoupper($pLbl); ?>
                                     </span>
                                 </td>
+                                <?php endif; ?>
                                 <td style="text-align: right;" onclick="event.stopPropagation();">
-                                    <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-primary"
-                                        style="padding: 0.4rem 1rem; font-size: 0.85rem;">
-                                        <i class="ph ph-gear"></i> Gestionar
-                                    </a>
+                                    <?php if (can_access_module('manage_services', $pdo)): ?>
+                                        <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-primary"
+                                            style="padding: 0.4rem 1rem; font-size: 0.85rem;">
+                                            <i class="ph ph-gear"></i> Gestionar
+                                        </a>
+                                    <?php else: ?>
+                                        <a href="view.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
+                                            style="padding: 0.4rem 1rem; font-size: 0.85rem;">
+                                            <i class="ph ph-eye"></i> Ver Detalle
+                                        </a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -447,7 +458,9 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="6">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <?php if (can_access_module('manage_services', $pdo)): ?>
                         <th>Finanzas</th>
+                        <?php endif; ?>
                         <th style="text-align: right;">Acciones</th>
                     </tr>
                 </thead>
@@ -490,6 +503,7 @@ require_once '../../includes/sidebar.php';
                                 <td>
                                     <span class="status-badge status-gray">Entregado</span>
                                 </td>
+                                <?php if (can_access_module('manage_services', $pdo)): ?>
                                 <td>
                                     <?php
                                     $paymentMaps = [
@@ -503,6 +517,7 @@ require_once '../../includes/sidebar.php';
                                         <?php echo strtoupper($pLbl); ?>
                                     </span>
                                 </td>
+                                <?php endif; ?>
                                 <td style="text-align: right;" onclick="event.stopPropagation();">
                                     <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
                                         style="padding: 0.4rem 1rem; font-size: 0.85rem;">

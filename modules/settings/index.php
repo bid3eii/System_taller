@@ -28,6 +28,7 @@ $defined_modules = [
     'equipment_exit' => 'Registrar Salida',
     'tools' => 'Gestión de Herramientas',
     'services' => 'Gestión de Servicios',
+    'manage_services' => 'Gestión de Servicios (Facturación)',
     'assign_equipment' => 'Asignar / Reasignar Equipos',
     'warranties' => 'Gestión de Garantías',
     'new_warranty' => 'Registrar Nueva Garantía',
@@ -1099,6 +1100,7 @@ require_once '../../includes/sidebar.php';
                         'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
 
                         'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
+                        'manage_services' => ['label' => 'Cierre / Facturación', 'cat' => 'Finanzas', 'icon' => 'ph-receipt'],
                         'comisiones_add' => ['label' => 'Crear Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-plus-circle'],
                         'comisiones_edit' => ['label' => 'Editar Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-pencil-simple'],
                         'comisiones_delete' => ['label' => 'Eliminar Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-trash'],
@@ -1228,6 +1230,7 @@ require_once '../../includes/sidebar.php';
                         'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
 
                         'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
+                        'manage_services' => ['label' => 'Cierre / Facturación', 'cat' => 'Finanzas', 'icon' => 'ph-receipt'],
                         'comisiones_add' => ['label' => 'Crear Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-plus-circle'],
                         'comisiones_edit' => ['label' => 'Editar Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-pencil-simple'],
                         'comisiones_delete' => ['label' => 'Eliminar Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-trash'],

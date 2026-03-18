@@ -25,7 +25,7 @@ $stmt = $pdo->prepare("
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
-    LEFT JOIN users u ON so.user_id = u.id
+    LEFT JOIN users u ON so.authorized_by_user_id = u.id
     LEFT JOIN clients co ON e.client_id = co.id
     WHERE so.id = ?
 ");
@@ -399,7 +399,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
             <div class="signature-block">
                 <div class="signature-line"></div>
                 <div class="signature-name">
-                    <?php echo htmlspecialchars($order['client_name']); ?>
+                    <?php echo htmlspecialchars($final_client); ?>
                 </div>
                 <div class="signature-role">Firma del Cliente</div>
             </div>

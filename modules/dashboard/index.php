@@ -126,7 +126,7 @@ if ($is_warehouse) {
         FROM service_orders so 
         WHERE so.service_type = 'warranty' 
         AND so.status NOT IN ('delivered', 'cancelled')
-        AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+        AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
     ";
     if (!$can_view_all)
         $awSql .= " AND so.assigned_tech_id = " . intval($user_id);
@@ -142,9 +142,9 @@ if ($is_warehouse) {
             FROM service_orders so
             LEFT JOIN warranties w ON so.id = w.service_order_id
             WHERE so.assigned_tech_id = ? 
-            AND so.status = 'received'
+            AND so.status IN ('received', 'diagnosing', 'pending_approval')
             AND (w.product_code IS NULL OR w.product_code = '') 
-            AND so.problem_reported != 'Garantía Registrada'
+            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         ");
         $stmt->execute([$user_id]);
         $kpi1_val = $stmt->fetchColumn();
@@ -167,9 +167,9 @@ if ($is_warehouse) {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) FROM service_orders so
             LEFT JOIN warranties w ON so.id = w.service_order_id
-            WHERE so.assigned_tech_id = ? AND so.status = 'in_repair'
+            WHERE so.assigned_tech_id = ? AND so.status IN ('in_repair', 'ready')
             AND (w.product_code IS NULL OR w.product_code = '') 
-            AND so.problem_reported != 'Garantía Registrada'
+            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         ");
         $stmt->execute([$user_id]);
         $kpi2_val = $stmt->fetchColumn();
@@ -185,7 +185,7 @@ if ($is_warehouse) {
             LEFT JOIN warranties w ON so.id = w.service_order_id
             WHERE so.assigned_tech_id = ? AND so.status IN ('ready', 'delivered') AND so.exit_date >= ?
             AND (w.product_code IS NULL OR w.product_code = '') 
-            AND so.problem_reported != 'Garantía Registrada'
+            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         ");
         $stmt->execute([$user_id, $startOfWeek]);
         $kpi3_val = $stmt->fetchColumn();
@@ -200,7 +200,7 @@ if ($is_warehouse) {
             LEFT JOIN warranties w ON so.id = w.service_order_id
             WHERE so.assigned_tech_id = ? AND so.service_type = 'warranty' AND so.status NOT IN ('delivered', 'cancelled')
             AND (w.product_code IS NULL OR w.product_code = '') 
-            AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         ");
         $stmt->execute([$user_id]);
         $kpi4_val = $stmt->fetchColumn();
@@ -221,7 +221,7 @@ if ($is_warehouse) {
             LEFT JOIN warranties w ON so.id = w.service_order_id
             WHERE so.status = 'ready'
             AND (w.product_code IS NULL OR w.product_code = '') 
-            AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         ";
         $stmt = $pdo->query($k3Sql);
         $kpi3_val = $stmt->fetchColumn();
@@ -236,7 +236,7 @@ if ($is_warehouse) {
             LEFT JOIN warranties w ON so.id = w.service_order_id
             WHERE so.status = 'delivered'
             AND (w.product_code IS NULL OR w.product_code = '') 
-            AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         ";
         $stmt = $pdo->query($k4Sql);
         $kpi4_val = $stmt->fetchColumn();
@@ -253,7 +253,7 @@ if ($is_warehouse) {
         LEFT JOIN warranties w ON so.id = w.service_order_id
         WHERE so.status NOT IN ('delivered', 'cancelled')
         AND (w.product_code IS NULL OR w.product_code = '') 
-        AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+        AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
     ";
     if (!$can_view_all) {
         // Users without view_all_entries only see their assigned orders
@@ -276,7 +276,7 @@ if ($is_warehouse) {
         FROM service_orders so
         LEFT JOIN warranties w ON so.id = w.service_order_id
         WHERE (w.product_code IS NULL OR w.product_code = '') 
-        AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+        AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         AND so.status != 'delivered'
     ";
     if (!$can_view_all) {
@@ -368,7 +368,7 @@ if (!$is_warehouse) {
                 WHERE DATE(so.exit_date) = ? AND so.status IN ('ready', 'delivered')
                 AND so.assigned_tech_id = ?
                 AND (w.product_code IS NULL OR w.product_code = '') 
-                AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+                AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
             ";
             $stmtDaily = $pdo->prepare($wSql);
             $stmtDaily->execute([$date, $user_id]);
@@ -380,7 +380,7 @@ if (!$is_warehouse) {
                 LEFT JOIN warranties w ON so.id = w.service_order_id
                 WHERE DATE(so.entry_date) = ?
                 AND (w.product_code IS NULL OR w.product_code = '') 
-                AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+                AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
             ";
             if (!$can_view_all) {
                 $wSql .= " AND so.assigned_tech_id = " . intval($user_id);
@@ -405,7 +405,7 @@ if ($is_admin || $is_reception) {
         LEFT JOIN warranties w ON so.id = w.service_order_id
         WHERE so.status NOT IN ('delivered', 'cancelled', 'ready')
         AND (w.product_code IS NULL OR w.product_code = '') 
-        AND so.problem_reported NOT LIKE 'Garant%a Registrada'
+        AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         GROUP BY u.id, u.username
         ORDER BY total DESC
     ";

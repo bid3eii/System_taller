@@ -15,13 +15,15 @@ if (!can_access_module('equipment', $pdo) && !can_access_module('equipment_exit'
 // Status 'ready' implies repairs are done and costs calculated.
 $stmt = $pdo->prepare("
     SELECT 
-        so.id, so.display_id, so.service_type, so.status, so.final_cost, so.invoice_number,
+        so.id, so.display_id, so.service_type, so.status, so.final_cost, so.invoice_number, so.owner_name,
         c.id as client_id,
         c.name as client_name, 
+        co.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients co ON e.client_id = co.id
     WHERE so.status IN ('ready') 
     ORDER BY so.created_at DESC
 ");
@@ -80,7 +82,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                     
                     foreach ($orders as $order) {
                         if ($order['client_id'] == $clientId) {
-                            $clientName = $order['client_name'];
+                            $clientName = trim(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['client_name']));
                             $equipmentList[] = $order['brand'] . ' ' . $order['model'];
                         }
                     }
@@ -164,7 +166,12 @@ require_once '../../includes/sidebar.php'; // Navbar
                                     <span class="text-muted">-</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo htmlspecialchars($order['client_name']); ?></td>
+                            <td>
+                                <?php 
+                                    $final_client = trim(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['client_name']));
+                                    echo htmlspecialchars($final_client); 
+                                ?>
+                            </td>
                             <td>
                                 <span><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></span>
                             </td>
@@ -229,13 +236,15 @@ require_once '../../includes/sidebar.php'; // Navbar
                         // Fetch History (Delivered Orders)
                         $stmtDelivered = $pdo->prepare("
                             SELECT 
-                                so.id, so.display_id, so.service_type, so.status, so.final_cost, so.exit_date, so.invoice_number,
+                                so.id, so.display_id, so.service_type, so.status, so.final_cost, so.exit_date, so.invoice_number, so.owner_name,
                                 c.name as client_name, 
+                                co.name as registered_owner_name,
                                 e.brand, e.model, e.serial_number, e.type,
                                 u.username as delivered_by
                             FROM service_orders so
                             JOIN clients c ON so.client_id = c.id
                             JOIN equipments e ON so.equipment_id = e.id
+                            LEFT JOIN clients co ON e.client_id = co.id
                             LEFT JOIN users u ON so.authorized_by_user_id = u.id
                             WHERE so.status = 'delivered'
                             ORDER BY so.exit_date DESC
@@ -256,7 +265,12 @@ require_once '../../includes/sidebar.php'; // Navbar
                                         <span class="text-muted">-</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?php echo htmlspecialchars($dItem['client_name']); ?></td>
+                                <td>
+                                    <?php 
+                                        $final_client_d = trim(!empty($dItem['owner_name']) ? $dItem['owner_name'] : (!empty($dItem['registered_owner_name']) ? $dItem['registered_owner_name'] : $dItem['client_name']));
+                                        echo htmlspecialchars($final_client_d); 
+                                    ?>
+                                </td>
                                 <td>
                                 <span><?php echo htmlspecialchars($dItem['brand'] . ' ' . $dItem['model']); ?></span>
                                 </td>

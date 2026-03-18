@@ -84,7 +84,7 @@ if (isset($_GET['edit'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate inputs
     $client_id = $_POST['client_id'] ?? '';
-    $invoice_number = clean($_POST['invoice_number'] ?? ''); // Standard Invoice implies 'Factura de Venta' usually, but in warranty mode we have specific fields
+    // $invoice_number is processed later to handle both single and multi-row scenarios
 
     // In Warranty mode, we map:
     // Code -> product_code (warranties)
@@ -211,6 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $accessories_list = [$_POST['accessories'] ?? ''];
                 $service_types = [$is_warranty_mode ? 'warranty' : ($_POST['service_type'] ?? 'service')];
                 $problems = [$_POST['problem_reported'] ?? ($is_warranty_mode ? 'Garantía Registrada' : '')];
+                $invoice_numbers = [is_array($_POST['invoice_number'] ?? '') ? ($_POST['invoice_number'][0] ?? '') : ($_POST['invoice_number'] ?? '')];
             } else {
                 $brands = $_POST['brand'] ?? [];
                 $models = $_POST['model'] ?? [];
@@ -220,6 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $accessories_list = $_POST['accessories'] ?? [];
                 $service_types = $_POST['service_type'] ?? [];
                 $problems = $_POST['problem_reported'] ?? [];
+                $invoice_numbers = is_array($_POST['invoice_number'] ?? '') ? $_POST['invoice_number'] : [];
             }
 
             $order_ids = [];
@@ -244,7 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $service_type_item = clean($service_types[$i] ?? 'service');
 
                 $notes = clean($_POST['entry_notes'] ?? '');
-                $invoice_num = clean($_POST['invoice_number'][$i] ?? '');
+                $invoice_num = clean($invoice_numbers[$i] ?? '');
 
                 // 1. Equipment Logic
                 $stmtEqCheck = $pdo->prepare("SELECT id, client_id FROM equipments WHERE serial_number = ? LIMIT 1");
@@ -914,6 +916,29 @@ require_once '../../includes/sidebar.php';
                             </div>
 
                             <div class="modern-grid" style="grid-template-columns: repeat(6, 1fr);">
+                                <div class="form-group" style="grid-column: span 6;">
+                                    <label class="form-label">Tipo de Ingreso *</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <label class="selection-card active"
+                                            style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; border: 1.5px solid var(--primary-500); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: rgba(59, 130, 246, 0.05); color: var(--primary-500);">
+                                            <input type="radio" name="service_type_0" value="service" checked
+                                                style="display: none;" onchange="updateRadioSync(this, 0)">
+                                            <input type="hidden" name="service_type[]" value="service"
+                                                id="service_type_hidden_0">
+                                            <i class="ph ph-wrench" style="font-size: 1.1rem;"></i>
+                                            <span style="font-weight: 500;">Servicio / Reparación</span>
+                                        </label>
+
+                                        <label class="selection-card"
+                                            style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
+                                            <input type="radio" name="service_type_0" value="warranty"
+                                                style="display: none;" onchange="updateRadioSync(this, 0)">
+                                            <i class="ph ph-shield-check" style="font-size: 1.1rem;"></i>
+                                            <span style="font-weight: 500;">Serv. de Garantía</span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <div class="form-group" style="grid-column: span 2;">
                                     <label class="form-label">Serie (S/N) *</label>
                                     <div class="input-group">
@@ -964,28 +989,7 @@ require_once '../../includes/sidebar.php';
                                     </div>
                                 </div>
 
-                                <div class="form-group" style="grid-column: span 6;">
-                                    <label class="form-label">Tipo de Ingreso *</label>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                        <label class="selection-card active"
-                                            style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; border: 1.5px solid var(--primary-500); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: rgba(59, 130, 246, 0.05); color: var(--primary-500);">
-                                            <input type="radio" name="service_type_0" value="service" checked
-                                                style="display: none;" onchange="updateRadioSync(this, 0)">
-                                            <input type="hidden" name="service_type[]" value="service"
-                                                id="service_type_hidden_0">
-                                            <i class="ph ph-wrench" style="font-size: 1.1rem;"></i>
-                                            <span style="font-weight: 500;">Servicio / Reparación</span>
-                                        </label>
 
-                                        <label class="selection-card"
-                                            style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--bg-body);">
-                                            <input type="radio" name="service_type_0" value="warranty"
-                                                style="display: none;" onchange="updateRadioSync(this, 0)">
-                                            <i class="ph ph-shield-check" style="font-size: 1.1rem;"></i>
-                                            <span style="font-weight: 500;">Serv. de Garantía</span>
-                                        </label>
-                                    </div>
-                                </div>
 
                                 <div class="form-group" style="grid-column: span 6;">
                                     <label class="form-label">Problema Reportado *</label>

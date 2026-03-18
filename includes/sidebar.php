@@ -69,7 +69,8 @@
                 'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment') !== false && strpos($_SERVER['REQUEST_URI'], 'type=warranty') === false),
                 'children' => [
                     ['url' => BASE_URL . 'modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'],
-                    ['url' => BASE_URL . 'modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida']
+                    ['url' => BASE_URL . 'modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida'],
+                    ['url' => BASE_URL . 'modules/equipment/history.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial S/N']
                 ]
             ];
         }
