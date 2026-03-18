@@ -55,6 +55,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($selected_tools as $tool_id) {
                 $qty = isset($quantities[$tool_id]) ? (int)$quantities[$tool_id] : 1;
                 if ($qty > 0) {
+                    // Check if requested quantity exceeds available quantity
+                    $stmt_check_current = $pdo->prepare("SELECT quantity FROM tools WHERE id = ?");
+                    $stmt_check_current->execute([$tool_id]);
+                    $current_qty = $stmt_check_current->fetchColumn();
+
+                    if ($qty > $current_qty) {
+                        $pdo->rollBack();
+                        $error = "Error: Ha intentado asignar una cantidad mayor al stock disponible de alguna herramienta.";
+                        break; 
+                    }
+
                     $stmt_item->execute([$assignment_id, $tool_id, $qty]);
                     
                     // Update quantity
@@ -71,10 +82,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            $pdo->commit();
-            $success = 'Asignación creada correctamente.';
-            echo "<script>window.location.href = 'assignments.php';</script>";
-            exit;
+            if ($error === '') {
+                $pdo->commit();
+                $success = 'Asignación creada correctamente.';
+                echo "<script>window.location.href = 'assignments.php';</script>";
+                exit;
+            }
+
 
         } catch (PDOException $e) {
             $pdo->rollBack();
@@ -205,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </td>
                                 <td><?php echo htmlspecialchars($tool['description']); ?></td>
                                 <td>
-                                    <span class="badge" style="background: var(--bg-hover);">
+                                    <span class="badge available-badge" data-original="<?php echo htmlspecialchars($tool['quantity']); ?>" style="background: var(--bg-hover);">
                                         <?php echo htmlspecialchars($tool['quantity']); ?> 
                                     </span>
                                 </td>
@@ -276,9 +290,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.style.backgroundColor = 'var(--bg-hover)';
             } else {
                 row.style.backgroundColor = '';
+                // Reset quantity text when unchecked
+                qtyInput.value = 1; 
             }
+            
+            // Update badge text
+            updateAvailableBadge(index);
         });
     });
+
+    // Handle Quantity Inputs
+    toolQuantities.forEach((input, index) => {
+        input.addEventListener('input', function() {
+            updateAvailableBadge(index);
+        });
+    });
+
+    function updateAvailableBadge(index) {
+        const checkbox = toolCheckboxes[index];
+        const qtyInput = toolQuantities[index];
+        const row = checkbox.closest('tr');
+        const badge = row.querySelector('.available-badge');
+        
+        let originalQty = parseInt(badge.getAttribute('data-original')) || 0;
+        
+        if (checkbox.checked) {
+            let assigningQty = parseInt(qtyInput.value) || 0;
+            if (assigningQty < 0) assigningQty = 0;
+            
+            // Prevent entering more than available
+            if (assigningQty > originalQty) {
+                assigningQty = originalQty;
+                qtyInput.value = originalQty;
+            }
+            
+            let remaining = originalQty - assigningQty;
+            badge.textContent = remaining;
+            
+            if (remaining === 0) {
+                badge.style.background = 'var(--warning)';
+                badge.style.color = '#fff';
+            } else {
+                badge.style.background = 'var(--bg-hover)';
+                badge.style.color = '';
+            }
+        } else {
+            badge.textContent = originalQty;
+            badge.style.background = 'var(--bg-hover)';
+            badge.style.color = '';
+        }
+    }
 
     // Handle Select All
     if (selectAllInfo) {

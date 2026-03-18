@@ -78,6 +78,8 @@ try {
             box-sizing: border-box;
             margin: 20px;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
         }
 
         /* Print Override */
@@ -308,22 +310,24 @@ try {
         <div style="font-weight: bold; font-size: 10px; margin-bottom: 2px;">OBSERVACIÓN:</div>
         <div class="observations"><?php echo nl2br(htmlspecialchars($assignment['observations'])); ?></div>
 
-        <div class="legal-text">
-            El encargado del proyecto es responsable del cuido de las herramientas, cualquier perdida de alguna de ellas se evaluará cobro de la misma. De igual forma si sobrase material y el encargado no realiza devolución se evaluará sanción para todo el equipo de trabajo.<br>
-            El encargado deberá realizar pruebas de las herramientas antes de salir de la empresa, si no lo hace y alguna de las herramientas presenta falla, la responsabilidad recae sobre el equipo de trabajo. NO APLICA, SE ASOCIA A LA CLAUSALA SIGUIENTE<br><br>
-            <em>Revisar el estado de las herramientas, si alguna de las herramientas fue probada en taller y funcionaba correctamente y esta se daña en el proyecto el responsable está en la obligación de notificarlo, sino informarse del daño de la herramienta se le hará cobro de la misma al equipo de trabajo.</em>
-        </div>
-
-        <div style="font-size: 10px; margin-top: 5px; color: #666;">
-            <strong>B:</strong> Bueno, <strong>R:</strong> Regular, <strong>D:</strong> Dañado
-        </div>
-
-        <div class="signatures">
-            <div class="signature-box">
-                <div class="signature-line">Entrega</div>
+        <div style="margin-top: auto;">
+            <div class="legal-text">
+                El encargado del proyecto es responsable del cuido de las herramientas, cualquier perdida de alguna de ellas se evaluará cobro de la misma. De igual forma si sobrase material y el encargado no realiza devolución se evaluará sanción para todo el equipo de trabajo.<br>
+                El encargado deberá realizar pruebas de las herramientas antes de salir de la empresa, si no lo hace y alguna de las herramientas presenta falla, la responsabilidad recae sobre el equipo de trabajo. NO APLICA, SE ASOCIA A LA CLAUSALA SIGUIENTE<br><br>
+                <em>Revisar el estado de las herramientas, si alguna de las herramientas fue probada en taller y funcionaba correctamente y esta se daña en el proyecto el responsable está en la obligación de notificarlo, sino informarse del daño de la herramienta se le hará cobro de la misma al equipo de trabajo.</em>
             </div>
-            <div class="signature-box">
-                <div class="signature-line">Recibe</div>
+
+            <div style="font-size: 10px; margin-top: 5px; color: #666;">
+                <strong>B:</strong> Bueno, <strong>R:</strong> Regular, <strong>D:</strong> Dañado
+            </div>
+
+            <div class="signatures">
+                <div class="signature-box">
+                    <div class="signature-line">Entrega</div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line">Recibe</div>
+                </div>
             </div>
         </div>
     </div>
