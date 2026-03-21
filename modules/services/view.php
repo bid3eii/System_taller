@@ -859,7 +859,9 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                                 <option value="Mantenimiento General">Mantenimiento General</option>
                                                 <option value="Limpieza Interna">Limpieza Interna</option>
                                                 <option value="Instalación Windows">Instalación Windows</option>
+                                                <option value="otro">Otro</option>
                                             </select>
+                                            <input type="text" id="partCustomName" placeholder="¿Qué repuesto?" class="modern-input" style="display: none; flex: 1.5; font-size: 0.85rem; padding: 0.5rem; border-color: var(--p-primary);">
                                             <input type="text" id="partSN" placeholder="S/N" class="modern-input" style="flex: 1; font-size: 0.85rem; padding: 0.5rem;">
                                             <button type="button" id="btnAddPart" style="background: var(--p-border); color: white; border: none; padding: 0 0.75rem; border-radius: 6px; cursor: pointer; font-size: 1.2rem; height: 38px;">+</button>
                                         </div>
@@ -986,14 +988,35 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             }
 
                             if (btnAddPart && partSelect && repairNoteModal) {
+                                partSelect.addEventListener('change', function() {
+                                    if (this.value === 'otro') {
+                                        this.style.display = 'none';
+                                        var customInput = document.getElementById('partCustomName');
+                                        if (customInput) {
+                                            customInput.style.display = 'block';
+                                            customInput.focus();
+                                        }
+                                    }
+                                });
+
                                 btnAddPart.addEventListener('click', function() {
-                                    var val = partSelect.value;
+                                    var customInput = document.getElementById('partCustomName');
+                                    var isOtro = (partSelect.value === 'otro');
+                                    var val = isOtro ? (customInput ? customInput.value.trim() : "") : partSelect.value;
+                                    
                                     var sn = partSN ? partSN.value.trim() : "";
                                     if(val) {
                                         var entry = "Se utiliza repuesto: " + val;
                                         if(sn) entry += " (S/N: " + sn + ")";
                                         repairNoteModal.value = (repairNoteModal.value ? repairNoteModal.value + "\n" : "") + entry;
+                                        
+                                        // Reset
                                         partSelect.value = "";
+                                        partSelect.style.display = 'block';
+                                        if(customInput) {
+                                            customInput.value = "";
+                                            customInput.style.display = 'none';
+                                        }
                                         if(partSN) partSN.value = "";
                                     }
                                 });
