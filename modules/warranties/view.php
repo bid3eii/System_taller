@@ -97,7 +97,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $note .= "\n\n[Diagnóstico]\nProcedimiento: $proc\nConclusión: $conc";
             }
 
-            update_service_status($pdo, $id, $new_status, $note, $_SESSION['user_id']);
+            // Handle Replacement Serial
+            $new_serial = null;
+            if ($new_status === 'reemplazo') {
+                $new_serial = clean($_POST['new_serial'] ?? '');
+            }
+
+            update_service_status($pdo, $id, $new_status, $note, $_SESSION['user_id'], $new_serial);
             
             // Redirect to prevent form resubmission
             $redirectUrl = "view.php?id=$id&msg=success";
@@ -164,6 +170,7 @@ $statusLabels = [
     'diagnosing' => 'En Revisión/Diagnóstico',
     'pending_approval' => 'En Espera',
     'in_repair' => 'En Reparación',
+    'reemplazo' => 'Reemplazo (Equipo Nuevo)',
     'ready' => 'Listo'
 ];
 // View Logic
@@ -693,6 +700,33 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                         </div>
                                     </div>
 
+                                    <!-- Replacement Modal -->
+                                    <div id="replacementModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+                                        <div style="background: var(--p-bg-card); padding: 2rem; border-radius: 16px; width: 90%; max-width: 500px; border: 1px solid var(--p-border);">
+                                            <h2 style="margin-top: 0; color: var(--p-primary); margin-bottom: 1.5rem;">Reemplazo de Equipo</h2>
+                                            
+                                            <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                                <div style="font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.25rem;">S/N Actual:</div>
+                                                <div style="font-weight: bold; font-family: monospace;"><?php echo htmlspecialchars($order['serial_number']); ?></div>
+                                            </div>
+
+                                            <div style="margin-bottom: 1.5rem;">
+                                                <label style="display: block; font-size: 0.9rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Nuevo Número de Serie</label>
+                                                <input type="text" name="new_serial" id="new_serial_input" class="modern-input" placeholder="Ingresa el S/N del equipo nuevo" autocomplete="off">
+                                            </div>
+
+                                            <div style="margin-bottom: 1.5rem;">
+                                                <label style="display: block; font-size: 0.85rem; color: var(--p-text-muted); margin-bottom: 0.5rem;">Nota de Reemplazo</label>
+                                                <textarea id="replacementNoteModal" class="modern-textarea" rows="3" placeholder="Ej. Se entrega equipo nuevo por garantía..."></textarea>
+                                            </div>
+
+                                            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                                                <button type="button" id="btnCancelReplace" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--p-border); color: var(--p-text-main);">Cancelar</button>
+                                                <button type="button" id="btnConfirmReplace" class="btn btn-primary" style="background: #3b82f6; border-color: #3b82f6;">Confirmar Reemplazo</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </form>
                             </div>
                             
@@ -719,6 +753,10 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                     var btnCancelDiag = document.getElementById('btnCancelDiag');
                                     var btnConfirmRepair = document.getElementById('btnConfirmRepair');
                                     var btnCancelRepair = document.getElementById('btnCancelRepair');
+                                    var replacementModal = document.getElementById('replacementModal');
+                                    var replacementNoteModal = document.getElementById('replacementNoteModal');
+                                    var btnConfirmReplace = document.getElementById('btnConfirmReplace');
+                                    var btnCancelReplace = document.getElementById('btnCancelReplace');
 
                                     var previousStatus = statusSelect ? statusSelect.value : '';
                                     var form = statusSelect ? statusSelect.closest('form') : null;
@@ -735,9 +773,13 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                                 repairModal.style.display = 'flex';
                                                 // Pre-fill modal note if needed, or clear it
                                                 repairNoteModal.value = ""; 
+                                            } else if (this.value === 'reemplazo') {
+                                                replacementModal.style.display = 'flex';
+                                                replacementNoteModal.value = "";
                                             } else {
                                                 diagModal.style.display = 'none';
                                                 repairModal.style.display = 'none';
+                                                replacementModal.style.display = 'none';
                                             }
                                         });
 
@@ -771,7 +813,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                         }
 
                                         // Modal Click-outside to close
-                                        [diagModal, repairModal].forEach(function(modal) {
+                                        [diagModal, repairModal, replacementModal].forEach(function(modal) {
                                             if(modal) {
                                                 modal.addEventListener('click', function(e) {
                                                     if (e.target === modal) {
@@ -781,6 +823,28 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                                 });
                                             }
                                         });
+
+                                        if(btnCancelReplace) {
+                                            btnCancelReplace.addEventListener('click', function() {
+                                                replacementModal.style.display = 'none';
+                                                statusSelect.value = previousStatus;
+                                            });
+                                        }
+                                        if(btnConfirmReplace) {
+                                            btnConfirmReplace.addEventListener('click', function() {
+                                                var newSerial = document.getElementById('new_serial_input').value.trim();
+                                                if(!newSerial) {
+                                                    alert("Por favor ingresa el nuevo número de serie.");
+                                                    return;
+                                                }
+                                                if(replacementNoteModal.value.trim() !== "") {
+                                                    progressNote.value = replacementNoteModal.value;
+                                                } else {
+                                                    progressNote.value = "Se realiza reemplazo de equipo.";
+                                                }
+                                                form.submit();
+                                            });
+                                        }
                                     }
 
                                     // Spare Parts Logic (Inside Repair Modal)

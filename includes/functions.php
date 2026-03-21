@@ -182,7 +182,7 @@ function get_next_sequence($pdo, $code)
 /**
  * Update Service Order Status and Assign Numbers
  */
-function update_service_status($pdo, $order_id, $new_status, $note, $user_id)
+function update_service_status($pdo, $order_id, $new_status, $note, $user_id, $new_serial = null)
 {
     // Check if we started the transaction or if the caller did
     $transactionStarted = false;
@@ -193,12 +193,21 @@ function update_service_status($pdo, $order_id, $new_status, $note, $user_id)
 
     try {
         // Get current info locked
-        $stmt = $pdo->prepare("SELECT status, diagnosis_number, repair_number, exit_doc_number FROM service_orders WHERE id = ? FOR UPDATE");
+        $stmt = $pdo->prepare("SELECT equipment_id, status, diagnosis_number, repair_number, exit_doc_number FROM service_orders WHERE id = ? FOR UPDATE");
         $stmt->execute([$order_id]);
         $order = $stmt->fetch();
 
         if (!$order) {
             throw new Exception("Orden no encontrada");
+        }
+
+        // If new serial is provided, update the equipment record
+        if (!empty($new_serial)) {
+            $stmtUpdEquip = $pdo->prepare("UPDATE equipments SET serial_number = ? WHERE id = ?");
+            $stmtUpdEquip->execute([$new_serial, $order['equipment_id']]);
+            
+            // Append change to note
+            $note = "[EQUIPO REEMPLAZADO] Nuevo S/N: $new_serial\n" . $note;
         }
 
         // Updates array
