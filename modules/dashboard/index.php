@@ -446,14 +446,14 @@ if ($is_admin || $is_reception) {
             <!-- Cards -->
             <?php
             $cards = [
-                [$kpi1_val, $kpi1_label, $kpi1_icon, $kpi1_color, $kpi1_bg],
-                [$kpi2_val, $kpi2_label, $kpi2_icon, $kpi2_color, $kpi2_bg],
-                [$kpi3_val, $kpi3_label, $kpi3_icon, $kpi3_color, $kpi3_bg],
-                [$kpi4_val, $kpi4_label, $kpi4_icon, $kpi4_color, $kpi4_bg]
+                [$kpi1_val, $kpi1_label, $kpi1_icon, $kpi1_color, $kpi1_bg, 'card-premium-blue'],
+                [$kpi2_val, $kpi2_label, $kpi2_icon, $kpi2_color, $kpi2_bg, 'card-premium-orange'],
+                [$kpi3_val, $kpi3_label, $kpi3_icon, $kpi3_color, $kpi3_bg, 'card-premium-green'],
+                [$kpi4_val, $kpi4_label, $kpi4_icon, $kpi4_color, $kpi4_bg, 'card-premium-purple']
             ];
 
             foreach ($cards as $card):
-                list($val, $lbl, $icon, $col, $bg) = $card;
+                list($val, $lbl, $icon, $col, $bg, $premiumClass) = $card;
                 if (empty($lbl))
                     continue;
 
@@ -463,39 +463,39 @@ if ($is_admin || $is_reception) {
 
                 switch ($lbl) {
                     case 'Servicios en Taller':
-                    case 'Equipos en Taller': // Fallback
-                        $cardUrl = '../services/index.php?status=active'; // Assuming filter support or just index
+                    case 'Equipos en Taller':
+                    case 'Pendientes Diagnóstico':
+                        $cardUrl = '../services/index.php?status=active';
                         break;
                     case 'Garantías en Taller':
+                    case 'En Reparación (Activos)':
+                    case 'Garantías Activas (Urgentes)':
                         $cardUrl = '../warranties/index.php';
                         break;
                     case 'Listos para Entrega':
-                        $cardUrl = '../equipment/exit.php'; // Or delivery module
+                    case 'Completos esta semana':
+                        $cardUrl = '../equipment/exit.php';
                         break;
                     case 'Total Entregados':
                         $cardUrl = '../history/index.php';
-                        break;
-                    case 'Mis Asignaciones':
-                    case 'Equipos Asignados':
-                        $cardUrl = '../services/index.php'; // Tech view
                         break;
                     default:
                         $isClickable = false;
                 }
                 ?>
                 <?php if ($isClickable): ?>
-                    <a href="<?php echo $cardUrl; ?>" class="card stat-card"
-                        style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s;">
+                    <a href="<?php echo $cardUrl; ?>" class="card stat-card <?php echo $premiumClass; ?>"
+                        style="text-decoration: none; color: inherit; display: block;">
                     <?php else: ?>
-                        <div class="card stat-card">
+                        <div class="card stat-card <?php echo $premiumClass; ?>">
                         <?php endif; ?>
-                        <div style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
-                            <div class="stat-icon" style="background: <?php echo $bg; ?>; color: <?php echo $col; ?>;">
-                                <i class="ph <?php echo $icon; ?>"></i>
-                            </div>
-                            <div class="stat-value" style="color: var(--text-main);"><?php echo $val; ?></div>
-                            <div class="stat-label" style="color: var(--text-muted);"><?php echo $lbl; ?></div>
+                        
+                        <div class="stat-icon" style="background: <?php echo $bg; ?>; color: <?php echo $col; ?>;">
+                            <i class="ph <?php echo $icon; ?>"></i>
                         </div>
+                        <div class="stat-value"><?php echo $val; ?></div>
+                        <div class="stat-label"><?php echo $lbl; ?></div>
+                        
                         <?php if ($isClickable): ?>
                     </a>
                 <?php else: ?>

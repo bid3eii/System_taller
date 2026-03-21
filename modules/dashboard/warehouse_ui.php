@@ -61,80 +61,7 @@
         left: 200%;
     }
 
-    /* KPI Cards Specific */
-    .wh-kpis {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .wh-kpi-inner {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .wh-kpi-icon {
-        width: 64px;
-        height: 64px;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1);
-    }
-
-    .wh-kpi-icon.blue {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.05));
-        color: var(--neon-blue);
-        border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-
-    .wh-kpi-icon.orange {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.05));
-        color: var(--neon-orange);
-        border: 1px solid rgba(245, 158, 11, 0.2);
-    }
-
-    .wh-kpi-icon.green {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.05));
-        color: var(--neon-green);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-
-    .wh-kpi-data {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .wh-kpi-value {
-        font-size: 2.5rem;
-        font-weight: 800;
-        line-height: 1;
-        margin-bottom: 0.25rem;
-        background: linear-gradient(to right, #fff, #94a3b8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-family: 'Inter', sans-serif;
-        letter-spacing: -1px;
-    }
-
-    body.light-mode .wh-kpi-value {
-        background: linear-gradient(to right, #0f172a, #475569);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .wh-kpi-label {
-        font-size: 0.95rem;
-        color: var(--text-main, #ffffff) !important;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
+    /* KPI Cards Specific - Removed and replaced by global stat-card */
 
     /* Main Content Grid */
     .wh-grid {
@@ -322,47 +249,29 @@
 <div class="wh-dashboard">
 
     <!-- Premium KPIs -->
-    <div class="wh-kpis">
-        <a href="../equipment/entry.php?type=warranty" class="wh-card" style="text-decoration: none;">
-            <div class="wh-kpi-inner">
-                <div class="wh-kpi-icon blue">
-                    <i class="ph <?php echo $kpi1_icon; ?>"></i>
-                </div>
-                <div class="wh-kpi-data">
-                    <span class="wh-kpi-value">
-                        <?php echo $kpi1_val; ?>
-                    </span>
-                    <span class="wh-kpi-label"><?php echo $kpi1_label; ?></span>
-                </div>
+    <div class="stats-grid">
+        <a href="../equipment/entry.php?type=warranty" class="card stat-card card-premium-blue" style="text-decoration: none;">
+            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                <i class="ph <?php echo $kpi1_icon; ?>"></i>
             </div>
+            <div class="stat-value"><?php echo $kpi1_val; ?></div>
+            <div class="stat-label"><?php echo $kpi1_label; ?></div>
         </a>
 
-        <a href="../warranties/database.php" class="wh-card" style="text-decoration: none;">
-            <div class="wh-kpi-inner">
-                <div class="wh-kpi-icon green">
-                    <i class="ph <?php echo $kpi2_icon; ?>"></i>
-                </div>
-                <div class="wh-kpi-data">
-                    <span class="wh-kpi-value">
-                        <?php echo $kpi2_val; ?>
-                    </span>
-                    <span class="wh-kpi-label"><?php echo $kpi2_label; ?></span>
-                </div>
+        <a href="../warranties/database.php" class="card stat-card card-premium-green" style="text-decoration: none;">
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                <i class="ph <?php echo $kpi2_icon; ?>"></i>
             </div>
+            <div class="stat-value"><?php echo $kpi2_val; ?></div>
+            <div class="stat-label"><?php echo $kpi2_label; ?></div>
         </a>
 
-        <a href="../warranties/database.php" class="wh-card" style="text-decoration: none;">
-            <div class="wh-kpi-inner">
-                <div class="wh-kpi-icon orange">
-                    <i class="ph <?php echo $kpi3_icon; ?>"></i>
-                </div>
-                <div class="wh-kpi-data">
-                    <span class="wh-kpi-value">
-                        <?php echo $kpi3_val; ?>
-                    </span>
-                    <span class="wh-kpi-label"><?php echo $kpi3_label; ?></span>
-                </div>
+        <a href="../warranties/database.php" class="card stat-card card-premium-orange" style="text-decoration: none;">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                <i class="ph <?php echo $kpi3_icon; ?>"></i>
             </div>
+            <div class="stat-value"><?php echo $kpi3_val; ?></div>
+            <div class="stat-label"><?php echo $kpi3_label; ?></div>
         </a>
     </div>
 

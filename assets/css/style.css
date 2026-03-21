@@ -378,35 +378,69 @@ body.light-mode .card:hover {
 .stat-card {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: flex-start; /* Align to left by default */
+  justify-content: flex-start;
   height: 100%;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.05); /* Default subtle background */
 }
 
 /* Light mode stat icon backgrounds */
 body.light-mode .stat-icon {
-  background-color: rgba(99, 102, 241, 0.1) !important;
+  background-color: rgba(0, 0, 0, 0.05) !important;
 }
 
 .stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+  line-height: 1;
+}
+
+body.light-mode .stat-value {
+  color: var(--slate-900);
 }
 
 .stat-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-size: 0.9rem;
+  color: var(--slate-400);
+  font-weight: 500;
+}
+
+/* Premium Glow Effects */
+.card-premium-blue {
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1) !important;
+}
+.card-premium-purple {
+  border-color: rgba(168, 85, 247, 0.3) !important;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.1) !important;
+}
+.card-premium-orange {
+  border-color: rgba(249, 115, 22, 0.3) !important;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.1) !important;
+}
+.card-premium-green {
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.1) !important;
+}
+.card-premium-yellow {
+  border-color: rgba(234, 179, 8, 0.3) !important;
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.1) !important;
 }
 
 /* Buttons */
