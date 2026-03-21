@@ -59,6 +59,7 @@ $defined_modules = [
     'surveys_view_all' => 'Ver Levantamientos de Todos',
     'project_history' => 'Historial Proyectos',
     'anexos' => 'Anexos Yazaki',
+    'proyectos' => 'Gestión de Proyectos',
 ];
 
 try {
@@ -1098,6 +1099,7 @@ require_once '../../includes/sidebar.php';
                         'surveys_view_all' => ['label' => 'Ver lvt. de todos', 'cat' => 'Proyecto', 'icon' => 'ph-eye'],
                         'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
                         'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
+                        'proyectos' => ['label' => 'Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-kanban'],
 
                         'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
                         'manage_services' => ['label' => 'Cierre / Facturación', 'cat' => 'Finanzas', 'icon' => 'ph-receipt'],
@@ -1228,6 +1230,7 @@ require_once '../../includes/sidebar.php';
                         'surveys' => ['label' => 'Levantamientos', 'cat' => 'Proyecto', 'icon' => 'ph-clipboard'],
                         'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
                         'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
+                        'proyectos' => ['label' => 'Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-kanban'],
 
                         'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
                         'manage_services' => ['label' => 'Cierre / Facturación', 'cat' => 'Finanzas', 'icon' => 'ph-receipt'],
