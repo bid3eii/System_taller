@@ -6,7 +6,8 @@ require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 
 // Check permission
-if (!can_access_module('proyectos', $pdo) && $_SESSION['role'] !== 'superadmin' && $_SESSION['role'] !== 'admin') {
+$user_role = $_SESSION['role'] ?? $_SESSION['role_name'] ?? '';
+if (!can_access_module('proyectos', $pdo) && $user_role !== 'superadmin' && $user_role !== 'admin') {
     die("Acceso denegado.");
 }
 
@@ -29,6 +30,17 @@ if (!$survey) {
 $stmt_materials = $pdo->prepare("SELECT * FROM project_materials WHERE survey_id = ? ORDER BY id ASC");
 $stmt_materials->execute([$id]);
 $materials = $stmt_materials->fetchAll();
+
+// Fetch tools assigned to this project name
+$stmtTools = $pdo->prepare("
+    SELECT ta.id AS assignment_id, t.name, tai.quantity, tai.status, ta.assigned_to
+    FROM tool_assignments ta
+    JOIN tool_assignment_items tai ON ta.id = tai.assignment_id
+    JOIN tools t ON tai.tool_id = t.id
+    WHERE ta.project_name = ?
+");
+$stmtTools->execute([$survey['title']]);
+$assigned_tools = $stmtTools->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch active technicians for assignment
 $stmt_techs = $pdo->prepare("SELECT id, username FROM users WHERE role_id = 3 AND status = 'active' ORDER BY username ASC");
@@ -447,7 +459,7 @@ require_once '../../includes/sidebar.php';
         <!-- LEFT COLUMN: Content Heavy -->
         <div style="display: flex; flex-direction: column;">
 
-            <div class="glass-card" style="padding: 0; margin-bottom: 2rem; overflow: hidden;">
+            <div class="glass-card" style="padding: 0; margin-bottom: 1.2rem; overflow: hidden;">
                 <!-- Accordion Header (clickable) -->
                 <div id="summary-header" onclick="toggleSummary()" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -528,7 +540,7 @@ require_once '../../includes/sidebar.php';
                 </div>
             </div>
 
-            <div class="glass-card" style="padding: 0; overflow: hidden;">
+            <div class="glass-card" style="padding: 0; margin-bottom: 1.2rem; overflow: hidden;">
                 <!-- Accordion Header (clickable) -->
                 <div onclick="toggleMaterials()" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -589,6 +601,90 @@ require_once '../../includes/sidebar.php';
                 </div>
             </div>
 
+            <!-- Herramientas Accordion -->
+            <div class="glass-card" style="padding: 0; margin-bottom: 1.2rem; overflow: hidden;">
+                <div onclick="toggleTools()" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                            <i class="ph ph-wrench" style="font-size: 1.4rem;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: var(--text-primary); font-size: 1.1rem; line-height: 1.2;">Herramientas Cargadas</h3>
+                            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">
+                                <?php echo count($assigned_tools); ?> ítems en uso
+                            </p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <?php if (count($assigned_tools) > 0): ?>
+                            <?php 
+                            $distinct_assignments = array_unique(array_column($assigned_tools, 'assignment_id'));
+                            foreach($distinct_assignments as $a_id): ?>
+                                <a href="../tools/print_assignment.php?id=<?php echo $a_id; ?>" target="_blank" onclick="event.stopPropagation();" class="btn btn-sm" style="background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 0.25rem 0.5rem; text-decoration: none;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" title="Imprimir Acta #<?php echo $a_id; ?>">
+                                    <i class="ph ph-printer"></i> #<?php echo str_pad($a_id, 4, '0', STR_PAD_LEFT); ?>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+
+                        <a href="../tools/assign.php?project=<?php echo urlencode($survey['title']); ?>" onclick="event.stopPropagation();" class="btn btn-sm" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 4px; padding: 0.25rem 0.5rem; text-decoration: none;" onmouseover="this.style.background='rgba(245, 158, 11, 0.25)'" onmouseout="this.style.background='rgba(245, 158, 11, 0.15)'">
+                            <i class="ph ph-plus-circle"></i> Asignar
+                        </a>
+
+                        <i class="ph ph-caret-down" id="tools-caret" style="font-size: 1.3rem; color: var(--text-muted); transition: transform 0.25s ease; margin-left: 0.5rem;"></i>
+                    </div>
+                </div>
+
+                <div id="tools-body" style="max-height: 0; overflow: hidden; transition: max-height 0.35s ease;">
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05);">
+                        <table class="modern-table" style="margin: 0; border: none;">
+                            <thead>
+                                <tr>
+                                    <th>Herramienta</th>
+                                    <th>Asignado A</th>
+                                    <th style="width: 120px; text-align: center;">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (count($assigned_tools) > 0): ?>
+                                    <?php foreach ($assigned_tools as $tool): ?>
+                                        <tr>
+                                            <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                                <div style="font-weight: 500; color: var(--text-primary);">
+                                                    <?php echo htmlspecialchars($tool['name']); ?>
+                                                </div>
+                                            </td>
+                                            <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: var(--text-muted);">
+                                                <?php echo htmlspecialchars($tool['assigned_to']); ?>
+                                                <br>
+                                                <?php 
+                                                    $statusColor = $tool['status'] === 'returned' ? '#34d399' : '#fbbf24';
+                                                    $statusText = $tool['status'] === 'returned' ? 'Devuelto' : 'En Uso';
+                                                ?>
+                                                <span style="font-size: 0.75rem; color: <?php echo $statusColor; ?>; font-weight: 600;">
+                                                    <?php echo $statusText; ?>
+                                                </span>
+                                            </td>
+                                            <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
+                                                <span style="display: inline-block; white-space: nowrap; background: rgba(245, 158, 11, 0.1); color: #fbbf24; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.85rem;">
+                                                    <?php echo (int)$tool['quantity']; ?>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted" style="padding: 2rem; border-bottom: none; font-size: 0.9rem;">
+                                            No hay herramientas registradas para este proyecto.<br>
+                                            <span style="font-size: 0.8rem; opacity: 0.7; color: var(--text-muted);">(Nota: Se consultan emparejando el nombre exacto del proyecto: "<?php echo htmlspecialchars($survey['title']); ?>")</span>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- RIGHT COLUMN: Workflow Controls -->
@@ -596,21 +692,32 @@ require_once '../../includes/sidebar.php';
 
             <!-- ESTADO DEL PROYECTO -->
             <div class="action-card"
-                style="margin-bottom: 1.5rem; background: var(--bg-card); border: 1px solid rgba(99, 102, 241, 0.2);">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(99, 102, 241, 0.2); margin-bottom: 1.5rem; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                <!-- Animated background glow -->
+                <div style="position: absolute; top: -50px; left: -50px; width: 100px; height: 100px; background: rgba(99, 102, 241, 0.15); border-radius: 50%; filter: blur(40px); pointer-events: none;"></div>
+
+                <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
                     <div
-                        style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.2); color: var(--primary-400); display: flex; align-items: center; justify-content: center;">
-                        <i class="ph ph-kanban" style="font-size: 1.2rem;"></i>
+                        style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.05)); border: 1px solid rgba(99, 102, 241, 0.3); color: #818cf8; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 5px rgba(255,255,255,0.1);">
+                        <i class="ph ph-kanban" style="font-size: 1.4rem;"></i>
                     </div>
-                    <h4 style="margin: 0; color: var(--text-primary); font-size: 1rem;">Estado del Proyecto</h4>
+                    <div>
+                        <h4 style="margin: 0; color: #f8fafc; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.3px;">Estado del Proyecto</h4>
+                        <p style="margin: 0; color: #94a3b8; font-size: 0.8rem; margin-top: 0.2rem;">Fase y progreso operativo</p>
+                    </div>
                 </div>
 
                 <form method="POST" action="update_status.php" id="form-status"
-                    style="display: flex; flex-direction: column; gap: 1rem;">
+                    style="display: flex; flex-direction: column; gap: 1.2rem;">
                     <input type="hidden" name="id" value="<?php echo $survey['id']; ?>">
 
-                    <div>
-                        <select name="status" class="modern-select">
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02);">
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #cbd5e1; text-transform: uppercase; margin-bottom: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">
+                            <i class="ph ph-flag" style="color: #94a3b8; font-size: 1rem;"></i> Etapa Actual
+                        </label>
+                        <select name="status" class="modern-select"
+                            style="border-color: rgba(99, 102, 241, 0.4); width: 100%; background-color: rgba(15, 23, 42, 0.8); font-size: 0.95rem; padding: 0.85rem 1rem; border-radius: 8px; color: #f8fafc; cursor: pointer; transition: border-color 0.2s ease;">
                             <option value="draft" <?php echo $survey['status'] == 'draft' ? 'selected' : ''; ?>>
                                 📝 Borrador / En Levantamiento
                             </option>
@@ -629,82 +736,119 @@ require_once '../../includes/sidebar.php';
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary"
-                        style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 600; font-size: 0.95rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);">
-                        Actualizar Estado Operativo
+                    <button type="submit"
+                        style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem; font-weight: 600; font-size: 1rem; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none; box-shadow: 0 4px 15px rgba(99,102,241,0.3); cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.3px;"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(99,102,241,0.4)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(99,102,241,0.3)';">
+                        <i class="ph ph-arrows-clockwise" style="font-size: 1.2rem;"></i> Actualizar Estado Operativo
                     </button>
                 </form>
             </div>
 
             <!-- ESTADO FINANCIERO -->
             <div class="action-card"
-                style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.8)); border-color: rgba(16, 185, 129, 0.2); margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 1.5rem; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                <!-- Animated background glow -->
+                <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(16, 185, 129, 0.15); border-radius: 50%; filter: blur(40px); pointer-events: none;"></div>
+                
+                <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
                     <div
-                        style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.2); color: #34d399; display: flex; align-items: center; justify-content: center;">
-                        <i class="ph ph-currency-circle-dollar" style="font-size: 1.2rem;"></i>
+                        style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 5px rgba(255,255,255,0.1);">
+                        <i class="ph ph-currency-circle-dollar" style="font-size: 1.4rem;"></i>
                     </div>
-                    <h4 style="margin: 0; color: var(--text-primary); font-size: 1rem;">Finanzas y Comisión</h4>
+                    <div>
+                        <h4 style="margin: 0; color: #f8fafc; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.3px;">Finanzas y Comisión</h4>
+                        <p style="margin: 0; color: #94a3b8; font-size: 0.8rem; margin-top: 0.2rem;">Gestión de pagos y liquidación</p>
+                    </div>
                 </div>
 
                 <?php if ($survey['payment_status'] === 'pagado'): ?>
                     <!-- Already paid: show clean confirmation block -->
                     <div
-                        style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem;">
                         <div
-                            style="width: 44px; height: 44px; border-radius: 50%; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            style="width: 44px; height: 44px; border-radius: 50%; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 15px rgba(16,185,129,0.2);">
                             <i class="ph ph-check-circle" style="font-size: 1.5rem; color: #34d399;"></i>
                         </div>
                         <div>
-                            <div style="font-weight: 700; color: #34d399; font-size: 1rem;">Ciclo Financiero Cerrado</div>
-                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">Este proyecto ya
-                                fue liquidado. Revisa el módulo de <strong>Comisiones</strong> para pagar al técnico.</div>
+                            <div style="font-weight: 700; color: #34d399; font-size: 1rem; letter-spacing: 0.3px;">Ciclo Financiero Cerrado</div>
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.3rem; line-height: 1.4;">Este proyecto ya fue liquidado. Revisa el módulo de <strong>Comisiones</strong> para pagar al técnico.</div>
                             <?php if (!empty($survey['invoice_number'])): ?>
-                                <div
-                                    style="margin-top: 0.5rem; font-size: 0.85rem; color: #fbbf24; font-weight: 500; display: flex; align-items: center; gap: 0.3rem;">
-                                    <i class="ph ph-receipt"></i> Factura:
-                                    <?php echo htmlspecialchars($survey['invoice_number']); ?>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem;">
+                                    <div
+                                        style="font-size: 0.85rem; color: #fbbf24; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(251,191,36,0.1); padding: 0.3rem 0.6rem; border-radius: 4px; border: 1px solid rgba(251,191,36,0.2);">
+                                        <i class="ph ph-receipt"></i> Factura: <?php echo htmlspecialchars($survey['invoice_number']); ?>
+                                    </div>
+                                    <?php if (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 1): ?>
+                                        <button class="btn btn-sm" style="background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 0.2rem 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)';" onmouseout="this.style.background='rgba(255,255,255,0.05)';" onclick="event.preventDefault(); document.getElementById('edit_invoice_form').style.display='flex'; this.style.display='none';">
+                                            <i class="ph ph-pencil-simple"></i> Editar
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
+                                <?php if (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 1): ?>
+                                    <form id="edit_invoice_form" method="POST" action="update_invoice_number.php" style="display: none; align-items: center; gap: 0.5rem; margin-top: 0.6rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px; border: 1px dashed rgba(251,191,36,0.3);">
+                                        <input type="hidden" name="id" value="<?php echo $survey['id']; ?>">
+                                        <input type="text" name="invoice_number" value="<?php echo htmlspecialchars($survey['invoice_number']); ?>" style="flex-grow: 1; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(251,191,36,0.3); color: white; border-radius: 4px; padding: 0.4rem 0.6rem; font-size: 0.85rem; outline: none;" required>
+                                        <button type="submit" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1e293b; border: none; border-radius: 4px; padding: 0.4rem 0.8rem; cursor: pointer; font-weight: 700; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(251,191,36,0.3);">
+                                            Guardar
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
                     <a href="../comisiones/index.php?search=<?php echo urlencode($survey['title']); ?>"
-                        class="btn btn-secondary"
-                        style="width: 100%; justify-content: center; border-color: rgba(16,185,129,0.3); color: #34d399;">
-                        <i class="ph ph-arrow-square-out"></i> Ver en Comisiones
+                        style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem; font-weight: 600; font-size: 0.95rem; border-radius: 8px; background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.3); text-decoration: none; transition: all 0.2s ease;"
+                        onmouseover="this.style.background='rgba(16,185,129,0.2)'"
+                        onmouseout="this.style.background='rgba(16,185,129,0.1)'">
+                        <i class="ph ph-arrow-square-out" style="font-size: 1.2rem;"></i> Ver en Comisiones
                     </a>
                 <?php else: ?>
                     <form method="POST" action="update_payment_status.php" id="form-payment-status"
-                        style="display: flex; flex-direction: column; gap: 1rem;">
+                        style="display: flex; flex-direction: column; gap: 1.2rem;">
                         <input type="hidden" name="id" value="<?php echo $survey['id']; ?>">
-                        <div>
+                        
+                        <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02);">
                             <label
-                                style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 600;">Estado
-                                de Pago</label>
+                                style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #cbd5e1; text-transform: uppercase; margin-bottom: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">
+                                <i class="ph ph-wallet" style="color: #94a3b8; font-size: 1rem;"></i> Estado de Pago
+                            </label>
                             <select name="payment_status" id="payment_status_select" class="modern-select"
-                                style="border-color: rgba(16, 185, 129, 0.3); width: 100%;">
-                                <option value="pendiente" <?php echo $survey['payment_status'] === 'pendiente' ? 'selected' : ''; ?>>⏳ Facturación Pendiente</option>
-                                <option value="pagado" <?php echo $survey['payment_status'] === 'pagado' ? 'selected' : ''; ?>>✅ Liquidado / Pagado</option>
+                                style="border-color: rgba(16, 185, 129, 0.4); width: 100%; background-color: rgba(15, 23, 42, 0.8); font-size: 0.95rem; padding: 0.85rem 1rem; border-radius: 8px; color: #f8fafc; cursor: pointer; transition: border-color 0.2s ease;">
+                                <option value="pendiente" <?php echo $survey['payment_status'] === 'pendiente' ? 'selected' : ''; ?>>⏳ Facturación Pendiente (Sin cobro activo)</option>
+                                <option value="credito" <?php echo $survey['payment_status'] === 'credito' ? 'selected' : ''; ?>>💳 Facturado a Crédito (Pendiente de Pago)</option>
+                                <option value="pagado" <?php echo in_array($survey['payment_status'], ['pagado', 'contado']) ? 'selected' : ''; ?>>✅ Facturado y Pagado (Liquidación Total)</option>
                             </select>
                         </div>
-                        <div id="invoice_field_container" style="display: none;">
+                        
+                        <div id="invoice_field_container" style="display: none; background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02);">
                             <label
-                                style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 600;">Número
-                                de Factura</label>
+                                style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #cbd5e1; text-transform: uppercase; margin-bottom: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">
+                                <i class="ph ph-receipt" style="color: #94a3b8; font-size: 1rem;"></i> Número de Factura
+                            </label>
                             <input type="text" name="invoice_number" id="invoice_number_input" class="modern-input"
-                                placeholder="Ej. F001-000234" style="border-color: rgba(16, 185, 129, 0.2); width: 100%;">
+                                placeholder="Ej. F001-000234" value="<?php echo htmlspecialchars($survey['invoice_number'] ?? ''); ?>" style="border: 1px solid rgba(16, 185, 129, 0.3); width: 100%; background: rgba(15, 23, 42, 0.8); color: #fff; padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.2s ease;"
+                                onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='rgba(16, 185, 129, 0.3)'">
                         </div>
-                        <button type="button" class="btn btn-success" id="btn-actualizar-pagos"
-                            style="width: 100%; justify-content: center; padding: 0.75rem; font-weight: 600; box-shadow: 0 4px 12px rgba(16,185,129,0.25);"
-                            onclick="confirmPaymentChange(event)">
-                            Actualizar Pagos / Comisiones
+
+                        <button type="submit" id="btn-actualizar-pagos"
+                            style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem; font-weight: 600; font-size: 1rem; border-radius: 8px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 4px 15px rgba(16,185,129,0.3); cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.3px;"
+                            onclick="return confirmPaymentChange(event);"
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(16,185,129,0.4)';"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(16,185,129,0.3)';">
+                            <i class="ph ph-arrows-clockwise" style="font-size: 1.2rem;"></i> Actualizar Pagos / Comisiones
                         </button>
                     </form>
                     <script>
                         document.getElementById('payment_status_select').addEventListener('change', function () {
                             const invoiceContainer = document.getElementById('invoice_field_container');
-                            if (this.value === 'pagado') {
+                            if (this.value !== 'pendiente') {
                                 invoiceContainer.style.display = 'block';
+                                // Add a subtle animation when showing
+                                invoiceContainer.animate([
+                                    { opacity: 0, transform: 'translateY(-10px)' },
+                                    { opacity: 1, transform: 'translateY(0)' }
+                                ], { duration: 300, fill: 'forwards', easing: 'ease-out' });
                             } else {
                                 invoiceContainer.style.display = 'none';
                             }
@@ -752,54 +896,51 @@ require_once '../../includes/sidebar.php';
                         return true;
                     }
                 </script>
-
-                <?php if ($survey['payment_status'] === 'pagado'): ?>
-                    <div
-                        style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px; font-size: 0.8rem; color: #94a3b8; display: flex; gap: 0.5rem; border-left: 2px solid #10b981;">
-                        <i class="ph ph-info" style="color: #34d399; font-size: 1.1rem; flex-shrink: 0;"></i>
-                        <div>Proyecto pagado y ciclo financiero cerrado. Revise el módulo de Comisiones para pagarle al
-                            técnico.</div>
-                    </div>
-                <?php endif; ?>
             </div>
 
             <!-- MANO DE OBRA Y PERSONAL (Moved from Left Column) -->
             <div class="action-card"
-                style="background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
-                    <div
-                        style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: var(--text-muted); display: flex; align-items: center; justify-content: center;">
-                        <i class="ph ph-users" style="font-size: 1.2rem;"></i>
-                    </div>
-                    <h4 style="margin: 0; color: var(--text-primary); font-size: 1rem;">Personal y Tiempo Requerido</h4>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <div
-                        style="background: rgba(0,0,0,0.2); padding: 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
-                        <div
-                            style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem;">
-                            Personal Asignado</div>
+                style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 1.5rem; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                <!-- Animated background glow -->
+                <div style="position: absolute; bottom: -50px; right: -50px; width: 100px; height: 100px; background: rgba(255, 255, 255, 0.05); border-radius: 50%; filter: blur(40px); pointer-events: none;"></div>
 
-                        <form method="POST" style="margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 5px rgba(255,255,255,0.05);">
+                        <i class="ph ph-users" style="font-size: 1.4rem;"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0; color: #f8fafc; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.3px;">Personal y Tiempo</h4>
+                        <p style="margin: 0; color: #94a3b8; font-size: 0.8rem; margin-top: 0.2rem;">Asignación de recursos</p>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02);">
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #cbd5e1; text-transform: uppercase; margin-bottom: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">
+                            <i class="ph ph-user-gear" style="color: #94a3b8; font-size: 1rem;"></i> Personal Asignado
+                        </label>
+
+                        <form method="POST" style="margin: 0; display: flex; flex-direction: column; gap: 1rem;">
                             <input type="hidden" name="action" value="assign_tech">
                             
                             <div class="tech-multiselect-wrapper" style="position: relative;">
-                                <div class="form-control tech-select-trigger" onclick="toggleTechDropdown(event)">
-                                    <span id="tech-select-text">Seleccionar técnicos...</span>
+                                <div class="form-control tech-select-trigger" onclick="toggleTechDropdown(event)" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; padding: 0.85rem 1rem; border-radius: 8px;">
+                                    <span id="tech-select-text" style="font-size: 0.95rem;">Seleccionar técnicos...</span>
                                     <i class="ph ph-caret-down" id="tech-caret"></i>
                                 </div>
                                 
-                                <div id="tech-dropdown" class="tech-dropdown-list" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; width: 100%; max-height: 250px; overflow-y: auto; z-index: 9999; background: rgb(15, 23, 42); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.4rem; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">
+                                <div id="tech-dropdown" class="tech-dropdown-list" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; width: 100%; max-height: 250px; overflow-y: auto; z-index: 9999; background: rgb(15, 23, 42); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.7);">
                                     <?php
                                     $assigned_arr = array_filter(explode(',', $survey['assigned_tech_ids'] ?? ''));
                                     foreach ($techs as $t):
                                         $is_selected = in_array($t['id'], $assigned_arr);
                                     ?>
-                                        <label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem; border-radius: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.9rem; transition: background 0.15s;" onmouseover="this.style.background='rgba(99,102,241,0.15)'" onmouseout="this.style.background='transparent'">
+                                        <label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem; border-radius: 8px; cursor: pointer; color: #cbd5e1; font-size: 0.9rem; transition: background 0.15s;" onmouseover="this.style.background='rgba(99,102,241,0.15)'; this.style.color='#f8fafc';" onmouseout="this.style.background='transparent'; this.style.color='#cbd5e1';">
                                             <input type="checkbox" name="tech_ids[]" value="<?php echo $t['id']; ?>" 
                                                    <?php echo $is_selected ? 'checked' : ''; ?>
                                                    onchange="updateTechSelectText()"
-                                                   style="accent-color: #6366f1; width: 16px; height: 16px; flex-shrink: 0;">
+                                                   style="accent-color: #6366f1; width: 16px; height: 16px; flex-shrink: 0; cursor: pointer;">
                                             <i class="ph ph-user" style="color: #6366f1; font-size: 1rem;"></i>
                                             <span><?php echo htmlspecialchars($t['username']); ?></span>
                                         </label>
@@ -807,8 +948,11 @@ require_once '../../includes/sidebar.php';
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">
-                                <i class="ph ph-check"></i> Guardar Asignaciones
+                            <button type="submit"
+                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem; font-weight: 600; font-size: 0.95rem; border-radius: 8px; background: rgba(255,255,255,0.05); color: #f8fafc; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.3px;"
+                                onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.2)';"
+                                onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)';">
+                                <i class="ph ph-check" style="font-size: 1.1rem;"></i> Guardar Asignaciones
                             </button>
                         </form>
 
@@ -822,12 +966,17 @@ require_once '../../includes/sidebar.php';
                                 transition: border-color 0.2s;
                             }
                             .tech-select-trigger:hover {
-                                border-color: var(--primary-500, #6366f1);
+                                border-color: rgba(99,102,241,0.5) !important;
                             }
                             .tech-select-trigger.open {
-                                border-color: var(--primary-500, #6366f1);
-                                box-shadow: 0 0 0 4px rgba(99,102,241,0.2);
+                                border-color: var(--primary-500, #6366f1) !important;
+                                box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
                             }
+                            /* Custom Scrollbar for dropdown */
+                            .tech-dropdown-list::-webkit-scrollbar { width: 6px; }
+                            .tech-dropdown-list::-webkit-scrollbar-track { background: transparent; }
+                            .tech-dropdown-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+                            .tech-dropdown-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
                         </style>
                         <script>
                             function toggleTechDropdown(e) {
@@ -836,9 +985,19 @@ require_once '../../includes/sidebar.php';
                                 const trigger = document.querySelector('.tech-select-trigger');
                                 const caret = document.getElementById('tech-caret');
                                 const isOpen = dropdown.style.display !== 'none';
-                                dropdown.style.display = isOpen ? 'none' : 'block';
+                                
+                                if (!isOpen) {
+                                    dropdown.style.display = 'block';
+                                    dropdown.animate([
+                                        { opacity: 0, transform: 'translateY(-10px)' },
+                                        { opacity: 1, transform: 'translateY(0)' }
+                                    ], { duration: 200, fill: 'forwards', easing: 'ease-out' });
+                                } else {
+                                    dropdown.style.display = 'none';
+                                }
+                                
                                 trigger.classList.toggle('open', !isOpen);
-                                caret.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+                                caret.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
                                 caret.style.transition = 'transform 0.2s';
                             }
                             
@@ -869,13 +1028,14 @@ require_once '../../includes/sidebar.php';
                             document.addEventListener('DOMContentLoaded', updateTechSelectText);
                         </script>
                     </div>
-                    <div
-                        style="background: rgba(0,0,0,0.2); padding: 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
-                        <div
-                            style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem;">
-                            Tiempo Estimado</div>
-                        <div style="font-weight: 600; color: #fbbf24; font-size: 0.95rem;">
-                            <?php echo !empty($survey['estimated_time']) ? htmlspecialchars($survey['estimated_time']) : '<span class="text-muted" style="font-style: italic;">No especificado</span>'; ?>
+                    
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.02);">
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #cbd5e1; text-transform: uppercase; margin-bottom: 0.6rem; font-weight: 600; letter-spacing: 0.5px;">
+                            <i class="ph ph-clock" style="color: #94a3b8; font-size: 1rem;"></i> Tiempo Estimado
+                        </label>
+                        <div style="font-weight: 600; color: #fbbf24; font-size: 0.95rem; align-items: center; display: inline-flex; gap: 0.5rem; background: rgba(251,191,36,0.1); padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid rgba(251,191,36,0.2);">
+                            <?php echo !empty($survey['estimated_time']) ? htmlspecialchars($survey['estimated_time']) : '<span style="color: rgba(251,191,36,0.6); font-style: italic; font-weight: 400; font-size: 0.85rem;">No especificado</span>'; ?>
                         </div>
                     </div>
                 </div>
@@ -911,6 +1071,21 @@ require_once '../../includes/sidebar.php';
         const body = document.getElementById('materials-body');
         const caret = document.getElementById('materials-caret');
         if (materialsOpen) {
+            body.style.maxHeight = body.scrollHeight + 400 + 'px';
+            caret.style.transform = 'rotate(180deg)';
+        } else {
+            body.style.maxHeight = '0';
+            caret.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // Tools accordion toggle
+    var toolsOpen = false;
+    function toggleTools() {
+        toolsOpen = !toolsOpen;
+        const body = document.getElementById('tools-body');
+        const caret = document.getElementById('tools-caret');
+        if (toolsOpen) {
             body.style.maxHeight = body.scrollHeight + 400 + 'px';
             caret.style.transform = 'rotate(180deg)';
         } else {

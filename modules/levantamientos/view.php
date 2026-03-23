@@ -49,6 +49,17 @@ $stmtM = $pdo->prepare("SELECT * FROM project_materials WHERE survey_id = ? ORDE
 $stmtM->execute([$id]);
 $materials = $stmtM->fetchAll();
 
+// Fetch Tools (Internal)
+$stmtT = $pdo->prepare("
+    SELECT pt.*, t.name as inventory_name 
+    FROM project_survey_tools pt 
+    LEFT JOIN tools t ON pt.tool_id = t.id 
+    WHERE pt.survey_id = ? 
+    ORDER BY pt.id ASC
+");
+$stmtT->execute([$id]);
+$tools = $stmtT->fetchAll();
+
 // Fetch Audit Logs (Bitácora)
 $stmtAudit = $pdo->prepare("
     SELECT a.*, u.username as action_user 
@@ -76,7 +87,9 @@ $sData = $statusMaps[$survey['status']] ?? ['Desconocido', 'gray', 'ph-question'
 
 $paymentMaps = [
     'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
-    'pagado' => ['Pagado', 'success', 'ph-money']
+    'credito' => ['Crédito', 'orange', 'ph-credit-card'],
+    'contado' => ['Contado', 'blue', 'ph-money'],
+    'pagado' => ['Pagado', 'success', 'ph-check-circle']
 ];
 $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-question'];
 ?>
@@ -453,10 +466,14 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                 </a>
             <?php endif; ?>
 
-            <a href="print.php?id=<?php echo $survey['id']; ?>" target="_blank" class="btn btn-secondary"
-                style="white-space: nowrap; font-size: 0.875rem;">
-                <i class="ph ph-printer"></i> Imprimir
+            <div style="display: flex; gap: 0.75rem;">
+            <a href="print.php?id=<?php echo $survey['id']; ?>" target="_blank" class="btn btn-secondary">
+                <i class="ph ph-printer"></i> Imprimir Propuesta
             </a>
+            <a href="print_tools.php?id=<?php echo $survey['id']; ?>" target="_blank" class="btn btn-secondary" style="border-color: var(--warning); color: var(--warning);">
+                <i class="ph ph-wrench"></i> Imprimir Herramientas (Interno)
+            </a>
+        </div>
 
             <?php if (can_access_module('anexos', $pdo)): ?>
                 <a href="../anexos/create.php?survey_id=<?php echo $survey['id']; ?>" class="btn btn-primary"
@@ -500,6 +517,23 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                 <div
                     style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     <?php echo htmlspecialchars($survey['tech_name']); ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card"
+            style="margin-bottom: 0; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <div
+                style="width: 40px; height: 40px; border-radius: 10px; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="ph ph-user-tag" style="font-size: 1.3rem; color: var(--primary-400);"></i>
+            </div>
+            <div style="min-width: 0;">
+                <div
+                    style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.2rem;">
+                    Vendedor</div>
+                <div
+                    style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <?php echo htmlspecialchars($survey['vendedor'] ?: 'No asignado'); ?>
                 </div>
             </div>
         </div>
@@ -708,6 +742,61 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                 </div>
 
             </div><!-- end 2-col grid -->
+
+            <!-- Internal Tools Section -->
+            <?php if (count($tools) > 0): ?>
+                <div class="glass-card" style="margin-top: 1.5rem; border-left: 3px solid var(--warning);">
+                    <div class="glass-card-header">
+                        <i class="ph ph-wrench" style="color: var(--warning);"></i>
+                        <h3 class="glass-card-title">Herramientas Requeridas (Uso Interno)</h3>
+            <!-- Requerimiento de Herramientas (Uso Interno) -->
+            <div class="glass-card" style="margin-top: 2rem; border-left: 4px solid var(--warning); padding: 1.5rem; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; right: 0; padding: 0.5rem 1rem; background: rgba(245, 158, 11, 0.1); color: var(--warning); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-bottom-left-radius: 12px;">
+                    Logística / Interno
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; color: #f8fafc; display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem;">
+                        <div style="width: 36px; height: 36px; background: rgba(245, 158, 11, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                            <i class="ph ph-wrench" style="color: var(--warning); font-size: 1.25rem;"></i>
+                        </div>
+                        Herramientas Requeridas
+                    </h3>
+                    <p style="margin: 0.5rem 0 0 0; color: #94a3b8; font-size: 0.9rem;">
+                        Listado de herramientas necesarias para la ejecución técnica de este proyecto.
+                    </p>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                        <?php foreach ($tools as $t): ?>
+                            <?php 
+                                $isManual = empty($t['tool_id']);
+                                $display_name = $isManual ? $t['tool_name'] : $t['inventory_name'];
+                                $qty = $t['quantity'];
+                                $notes = $t['notes'];
+                            ?>
+                            <div class="tool-card" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 1rem; position: relative; transition: all 0.2s;">
+                                <div style="background: rgba(245, 158, 11, 0.1); border-radius: 8px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative;">
+                                    <i class="ph ph-wrench" style="color: var(--warning); font-size: 1.25rem;"></i>
+                                    <?php if ($isManual): ?><i class="ph-fill ph-warning" style="position: absolute; bottom: -4px; right: -4px; color: var(--danger); font-size: 0.85rem;" title="Ingreso manual"></i><?php endif; ?>
+                                </div>
+                                <div style="flex: 1; overflow: hidden;">
+                                    <h4 style="margin: 0; color: #f1f5f9; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;"><?php echo htmlspecialchars($display_name ?? ''); ?></h4>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                                        <span style="font-size: 0.75rem; color: var(--warning); background: rgba(245, 158, 11, 0.15); padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600;">Cant: <?php echo htmlspecialchars($qty); ?></span>
+                                        <?php if ($notes): ?><span style="font-size: 0.8rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="ph ph-text-align-left"></i> <?php echo htmlspecialchars($notes); ?></span><?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); font-style: italic;">
+                <i class="ph ph-info"></i> Esta lista es para coordinación logística interna y no se incluye en la impresión para el cliente.
+            </p>
+            <?php endif; ?>
 
         </div><!-- end left column -->
         <!-- RIGHT: Audit Log Timeline -->

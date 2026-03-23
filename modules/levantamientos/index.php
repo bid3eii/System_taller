@@ -42,8 +42,7 @@ if ($search) {
 $sql = "
     SELECT 
         ps.*, 
-        u.username as tech_name,
-        (SELECT COUNT(*) FROM project_materials pm WHERE pm.survey_id = ps.id) as materials_count
+        u.username as tech_name
     FROM project_surveys ps
     LEFT JOIN users u ON ps.user_id = u.id
     WHERE $where AND ps.status IN ('draft', 'submitted')
@@ -92,11 +91,10 @@ $surveys = $stmt->fetchAll();
                         <th>Fecha</th>
                         <th>Cliente</th>
                         <th>Título del Proyecto</th>
-                        <th>Técnico</th>
-                        <th>Materiales</th>
-                        <th>Progreso</th>
-                        <th>Pago</th>
-                        <th>Acciones</th>
+                        <th style="padding: 1rem; text-align: center; color: var(--text-secondary);">Vendedor</th>
+                        <th style="padding: 1rem; text-align: center; color: var(--text-secondary);">Técnico</th>
+                        <th style="padding: 1rem; text-align: center; color: var(--text-secondary);">Progreso</th>
+                        <th style="padding: 1rem; text-align: center; color: var(--text-secondary); width: 100px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -126,13 +124,11 @@ $surveys = $stmt->fetchAll();
                                         <?php echo htmlspecialchars($item['title']); ?>
                                     </div>
                                 </td>
-                                <td>
-                                    <?php echo htmlspecialchars($item['tech_name']); ?>
+                                <td style="text-align: center;">
+                                    <?php echo htmlspecialchars($item['vendedor'] ?? '-'); ?>
                                 </td>
-                                <td>
-                                    <span class="badge" style="background: var(--bg-hover); color: var(--text-secondary);">
-                                        <?php echo $item['materials_count']; ?> items
-                                    </span>
+                                <td style="text-align: center;">
+                                    <?php echo htmlspecialchars($item['tech_name']); ?>
                                 </td>
                                 <td>
                                     <?php
@@ -151,19 +147,6 @@ $surveys = $stmt->fetchAll();
                                     </span>
                                 </td>
                                 <td>
-                                    <?php
-                                    $paymentMaps = [
-                                        'pendiente' => ['Pendiente', 'gray'],
-                                        'pagado' => ['Pagado', 'green']
-                                    ];
-                                    $pCol = $paymentMaps[$item['payment_status']][1] ?? 'gray';
-                                    $pLbl = $paymentMaps[$item['payment_status']][0] ?? $item['payment_status'];
-                                    ?>
-                                    <span class="status-badge status-<?php echo $pCol; ?>">
-                                        <?php echo strtoupper($pLbl); ?>
-                                    </span>
-                                </td>
-                                <td>
                                     <div style="display: flex; gap: 0.3rem;">
                                         <a href="view.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
                                             style="padding: 0.4rem; font-size: 1rem;" title="Ver Detalle"><i
@@ -172,7 +155,7 @@ $surveys = $stmt->fetchAll();
                                             class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem;"
                                             title="Imprimir/PDF"><i class="ph ph-printer"></i></a>
 
-                                        <?php if (can_access_module('surveys_edit', $pdo) && in_array($item['status'], ['draft', 'submitted']) && $item['payment_status'] !== 'pagado'): ?>
+                                        <?php if (can_access_module('surveys_edit', $pdo) && in_array($item['status'], ['draft', 'submitted'])): ?>
                                             <a href="edit.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
                                                 style="padding: 0.4rem; font-size: 1rem;" title="Editar"><i
                                                     class="ph ph-pencil-simple"></i></a>

@@ -21,13 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description']);
     $quantity = (int)$_POST['quantity'];
     $status = $_POST['status'];
+    $physical_condition = $_POST['physical_condition'] ?? 'good';
 
     if (empty($name)) {
         $error = 'El nombre es obligatorio.';
     } else {
         try {
-            $stmt = $pdo->prepare("INSERT INTO tools (name, description, quantity, status, created_at) VALUES (?, ?, ?, ?, ?)");
-            if ($stmt->execute([$name, $description, $quantity, $status, get_local_datetime()])) {
+            $stmt = $pdo->prepare("INSERT INTO tools (name, description, quantity, status, physical_condition, created_at) VALUES (?, ?, ?, ?, ?, ?)");
+            if ($stmt->execute([$name, $description, $quantity, $status, $physical_condition, get_local_datetime()])) {
                 $success = 'Herramienta agregada correctamente.';
                 // Redirect after success
                 echo "<script>window.location.href = 'index.php';</script>";
@@ -42,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<div class="animate-enter">
+<div class="animate-enter" style="max-width: 800px; margin: 0 auto;">
     <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
         <a href="index.php" class="btn btn-secondary btn-icon"><i class="ph ph-arrow-left"></i></a>
         <div>
@@ -59,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
     <?php endif; ?>
 
-    <div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card">
         <div style="padding: 1.5rem;">
             <form method="POST">
                 <div class="form-group box-input">
@@ -72,19 +73,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <textarea name="description" class="form-control" rows="3" placeholder="Detalles adicionales..."></textarea>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                     <div class="form-group box-input">
                         <label class="form-label">Cantidad *</label>
                         <input type="number" name="quantity" class="form-control" value="1" min="0" required>
                     </div>
 
                     <div class="form-group box-input">
-                        <label class="form-label">Estado</label>
+                        <label class="form-label">Disponibilidad</label>
                         <select name="status" class="form-control">
                             <option value="available">Disponible</option>
                             <option value="assigned">Asignado</option>
                             <option value="maintenance">Mantenimiento</option>
                             <option value="lost">Extraviado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group box-input">
+                        <label class="form-label">Condición Física</label>
+                        <select name="physical_condition" class="form-control">
+                            <option value="new">Nuevo (Sin usar)</option>
+                            <option value="good" selected>Bueno (Operativo)</option>
+                            <option value="fair">Regular (Desgastado)</option>
+                            <option value="bad">Malo (Requiere Cambio)</option>
+                            <option value="damaged">Dañado (Inoperativo)</option>
                         </select>
                     </div>
                 </div>

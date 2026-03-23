@@ -492,6 +492,10 @@ if (!$date_format || strpos($date_format, '%') !== false) {
                         <p class="meta-val" style="text-transform: capitalize;"><?php echo $date_format; ?></p>
                     </div>
                     <div class="meta-group">
+                        <span class="meta-label">Asesor Comercial</span>
+                        <p class="meta-val"><?php echo htmlspecialchars($survey['vendedor'] ?: 'N/A'); ?></p>
+                    </div>
+                    <div class="meta-group">
                         <span class="meta-label">Responsable Técnico</span>
                         <p class="meta-val"><?php echo htmlspecialchars($survey['tech_name']); ?></p>
                     </div>

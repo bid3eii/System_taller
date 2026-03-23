@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $estimated_time = clean($_POST['estimated_time']);
 
     $personnel_required = clean($_POST['personnel_required'] ?? '');
+    $vendedor = clean($_POST['vendedor'] ?? '');
 
     // Materials arrays
     $mat_ids = $_POST['mat_id'] ?? [];
@@ -54,6 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mat_quantities = $_POST['mat_quantity'] ?? [];
     $mat_units = $_POST['mat_unit'] ?? [];
     $mat_notes = $_POST['mat_notes'] ?? [];
+
+    // Tools arrays (Internal Use)
+    $tool_ids = $_POST['tool_id'] ?? [];
+    $tool_names_manual = $_POST['tool_name_manual'] ?? [];
+    $tool_quantities = $_POST['tool_quantity'] ?? [];
+    $tool_notes = $_POST['tool_notes'] ?? [];
 
     if (empty($client_name) || empty($title)) {
         $error = "El cliente y el título son obligatorios.";
@@ -67,26 +74,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtOldMat->execute([$id]);
             $old_materials = $stmtOldMat->fetchAll(PDO::FETCH_ASSOC);
 
+            $stmtOldTools = $pdo->prepare("SELECT * FROM project_survey_tools WHERE survey_id = ? ORDER BY id ASC");
+            $stmtOldTools->execute([$id]);
+            $old_tools = $stmtOldTools->fetchAll(PDO::FETCH_ASSOC);
+
             $old_state = [
                 'client_name' => $survey['client_name'],
                 'title' => $survey['title'],
+                'vendedor' => $survey['vendedor'],
                 'general_description' => $survey['general_description'],
                 'scope_activities' => $survey['scope_activities'],
                 'estimated_time' => $survey['estimated_time'],
                 'personnel_required' => $survey['personnel_required'],
-                'materials' => $old_materials
+                'materials' => $old_materials,
+                'tools' => $old_tools
             ];
 
             // 1. Update Survey
             $stmtU = $pdo->prepare("
                 UPDATE project_surveys 
-                SET client_name = ?, title = ?, general_description = ?, scope_activities = ?, estimated_time = ?, personnel_required = ?
+                SET client_name = ?, title = ?, vendedor = ?, general_description = ?, scope_activities = ?, estimated_time = ?, personnel_required = ?
                 WHERE id = ?
             ");
 
             $stmtU->execute([
                 $client_name,
                 $title,
+                $vendedor,
                 $general_description,
                 $scope_activities,
                 $estimated_time,
@@ -124,17 +138,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            // 4. Clear old tools
+            $pdo->prepare("DELETE FROM project_survey_tools WHERE survey_id = ?")->execute([$id]);
+
+            // 5. Insert Tools & Build New State
+            $new_tools = [];
+            if (!empty($tool_ids) || !empty($tool_names_manual)) {
+                $stmtTool = $pdo->prepare("
+                    INSERT INTO project_survey_tools (survey_id, tool_id, tool_name, quantity, notes) 
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+
+                $max_tools = max(count($tool_ids), count($tool_names_manual));
+                for ($i = 0; $i < $max_tools; $i++) {
+                    $t_id = !empty($tool_ids[$i]) ? intval($tool_ids[$i]) : null;
+                    $t_manual = clean($tool_names_manual[$i] ?? '');
+                    
+                    if ($t_id !== null || !empty($t_manual)) {
+                        $t_qty = !empty($tool_quantities[$i]) ? intval($tool_quantities[$i]) : 1;
+                        $t_notes = clean($tool_notes[$i] ?? '');
+
+                        $stmtTool->execute([$id, $t_id, $t_manual, $t_qty, $t_notes]);
+
+                        $new_tools[] = [
+                            'tool_id' => $t_id,
+                            'tool_name' => $t_manual,
+                            'quantity' => $t_qty,
+                            'notes' => $t_notes
+                        ];
+                    }
+                }
+            }
+
             $new_state = [
                 'client_name' => $client_name,
                 'title' => $title,
+                'vendedor' => $vendedor,
                 'general_description' => $general_description,
                 'scope_activities' => $scope_activities,
                 'estimated_time' => $estimated_time,
                 'personnel_required' => $personnel_required,
-                'materials' => $new_materials
+                'materials' => $new_materials,
+                'tools' => $new_tools
             ];
 
-            // 4. Log Audit Action
+            // 6. Log Audit Action
             log_audit($pdo, 'project_surveys', $id, 'EDICION', $old_state, $new_state);
 
             $pdo->commit();
@@ -152,6 +200,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmtM = $pdo->prepare("SELECT * FROM project_materials WHERE survey_id = ? ORDER BY id ASC");
 $stmtM->execute([$id]);
 $materials = $stmtM->fetchAll();
+
+// Fetch existing tools
+$stmtT = $pdo->prepare("
+    SELECT pt.*, t.name as inventory_name 
+    FROM project_survey_tools pt 
+    LEFT JOIN tools t ON pt.tool_id = t.id 
+    WHERE pt.survey_id = ? 
+    ORDER BY pt.id ASC
+");
+$stmtT->execute([$id]);
+$tools_list = $stmtT->fetchAll();
+
+// Fetch tools for dropdown
+$available_tools = $pdo->query("SELECT id, name FROM tools WHERE status = 'available' ORDER BY name ASC")->fetchAll();
 
 $page_title = 'Editar Levantamiento';
 require_once '../../includes/header.php';
@@ -227,6 +289,16 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label">Descripción General del Proyecto</label>
                     <textarea name="general_description" class="form-control"
                         rows="3"><?php echo htmlspecialchars($survey['general_description']); ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Vendedor Asignado</label>
+                    <div class="input-group">
+                        <input type="text" name="vendedor" class="form-control" 
+                            value="<?php echo htmlspecialchars($survey['vendedor'] ?? ''); ?>"
+                            placeholder="Nombre del Vendedor">
+                        <i class="ph ph-user-tag input-icon"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -349,9 +421,163 @@ require_once '../../includes/sidebar.php';
             </div>
         </div>
 
+        <!-- 5. Tool Requirement (Internal Use) -->
+
+        <div class="glass-card" style="margin-top: 2rem; border-left: 4px solid var(--warning); padding: 1.5rem; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; right: 0; padding: 0.5rem 1rem; background: rgba(245, 158, 11, 0.1); color: var(--warning); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-bottom-left-radius: 12px;">
+                Borrador / Logística
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="margin: 0; color: #f8fafc; display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem;">
+                    <div style="width: 36px; height: 36px; background: rgba(245, 158, 11, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="ph ph-wrench" style="color: var(--warning); font-size: 1.25rem;"></i>
+                    </div>
+                    Requerimiento de Herramientas
+                </h3>
+                <p style="margin: 0.5rem 0 0 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.4;">
+                    Seleccione herramientas del inventario o ingrese manualmente las necesarias para la ejecución técnica.
+                </p>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4 style="margin: 0; color: #f8fafc; font-size: 1.05rem;">Herramientas Seleccionadas</h4>
+                        <p style="margin: 0.25rem 0 0 0; color: #94a3b8; font-size: 0.85rem;">Lista de herramientas para la solicitud.</p>
+                    </div>
+                    <button type="button" class="btn btn-sm" onclick="openToolModal()" style="background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px dashed var(--warning); border-radius: 20px; transition: all 0.2s;" onmouseover="this.style.background='rgba(245, 158, 11, 0.2)'" onmouseout="this.style.background='rgba(245, 158, 11, 0.1)'">
+                        <i class="ph ph-plus-circle"></i> Agregar Herramienta
+                    </button>
+                </div>
+
+                <div id="toolsCardContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                    <?php if (count($tools_list) > 0): ?>
+                        <?php foreach ($tools_list as $t): ?>
+                            <?php 
+                                $isManual = empty($t['tool_id']);
+                                $display_id = $t['tool_id'];
+                                $display_name = $isManual ? $t['tool_name'] : $t['inventory_name'];
+                                $qty = $t['quantity'];
+                                $notes = $t['notes'];
+                            ?>
+                            <div class="tool-card">
+                                <div style="background: rgba(245, 158, 11, 0.1); border-radius: 8px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative;">
+                                    <i class="ph ph-wrench" style="color: var(--warning); font-size: 1.25rem;"></i>
+                                    <?php if ($isManual): ?><i class="ph-fill ph-warning" style="position: absolute; bottom: -4px; right: -4px; color: var(--danger); font-size: 0.85rem;" title="Ingreso manual"></i><?php endif; ?>
+                                </div>
+                                <div style="flex: 1; overflow: hidden;">
+                                    <h4 style="margin: 0; color: #f1f5f9; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;"><?php echo htmlspecialchars($display_name ?? ''); ?></h4>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                                        <span style="font-size: 0.75rem; color: var(--warning); background: rgba(245, 158, 11, 0.15); padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600;">Cant: <?php echo htmlspecialchars($qty); ?></span>
+                                        <?php if ($notes): ?><span style="font-size: 0.8rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="ph ph-text-align-left"></i> <?php echo htmlspecialchars($notes); ?></span><?php endif; ?>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-icon" style="color: #64748b; background: rgba(0,0,0,0.2); border-radius: 50%; padding: 0.4rem; transition: all 0.2s;" onclick="this.closest('.tool-card').remove()" onmouseover="this.style.color='var(--danger)'; this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.color='#64748b'; this.style.background='rgba(0,0,0,0.2)'" title="Eliminar">
+                                    <i class="ph ph-x" style="font-size: 1rem;"></i>
+                                </button>
+                                <input type="hidden" name="tool_id[]" value="<?php echo htmlspecialchars($display_id ?? ''); ?>">
+                                <input type="hidden" name="tool_name_manual[]" value="<?php echo htmlspecialchars($isManual ? $display_name : ''); ?>">
+                                <input type="hidden" name="tool_quantity[]" value="<?php echo htmlspecialchars($qty); ?>">
+                                <input type="hidden" name="tool_notes[]" value="<?php echo htmlspecialchars($notes ?? ''); ?>">
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <style>
+                @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+                .tool-list-item:hover { background: rgba(245, 158, 11, 0.1) !important; color: var(--warning) !important; }
+                .tool-list-item.selected { background: rgba(245, 158, 11, 0.15) !important; border-left: 3px solid var(--warning); color: var(--warning) !important; font-weight: 600; }
+                
+                .tool-card {
+                    background: rgba(0,0,0,0.3);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 10px;
+                    padding: 0.75rem 1rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    transition: all 0.2s;
+                    position: relative;
+                }
+                .tool-card:hover { border-color: rgba(245, 158, 11, 0.3); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+                
+                #toolList::-webkit-scrollbar { width: 6px; }
+                #toolList::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+                #toolList::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+                #toolList::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+            </style>
+        </div>
+
         <!-- Spacer so form content doesn't hide behind the fixed bar -->
         <div style="height: 5rem;"></div>
     </form>
+
+    <!-- Modal for Tool Selection -->
+    <div id="toolModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="width: 100%; max-width: 500px; padding: 0; margin: 1rem; overflow: hidden; animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+            <div style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);">
+                <h3 style="margin: 0; color: #f8fafc; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="ph ph-wrench" style="color: var(--warning);"></i> Añadir Herramienta
+                </h3>
+                <button type="button" class="btn-icon" onclick="closeToolModal()" style="color: #94a3b8;"><i class="ph ph-x" style="font-size: 1.25rem;"></i></button>
+            </div>
+            
+            <div style="padding: 1.5rem;">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.2); padding: 0.35rem; border-radius: 8px;">
+                    <button type="button" id="tabInvBtn" onclick="switchToolTab('inv')" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; background: rgba(245, 158, 11, 0.1); color: var(--warning);">Desde Inventario</button>
+                    <button type="button" id="tabManBtn" onclick="switchToolTab('man')" style="flex: 1; padding: 0.6rem; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; background: transparent; color: #94a3b8; transition: all 0.2s;">Ingreso Manual</button>
+                </div>
+
+                <div id="tabInv">
+                    <div style="position: relative; margin-bottom: 1rem;">
+                        <i class="ph ph-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none;"></i>
+                        <input type="text" id="toolSearch" class="form-control" placeholder="Buscar en inventario..." style="width: 100%; padding-left: 2.5rem; background: rgba(15, 23, 42, 0.5); border-color: rgba(255,255,255,0.1);" oninput="filterTools()">
+                    </div>
+                    
+                    <div id="toolList" style="height: 220px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.2);">
+                        <?php foreach ($available_tools as $at): ?>
+                            <div class="tool-list-item" data-id="<?php echo $at['id']; ?>" data-name="<?php echo htmlspecialchars($at['name']); ?>" onclick="selectToolItem(this)" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); transition: all 0.2s; color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem;">
+                                <i class="ph ph-circle sel-icon" style="color: #64748b; font-size: 1.1rem;"></i>
+                                <?php echo htmlspecialchars($at['name']); ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <input type="hidden" id="modalToolId">
+                    <input type="hidden" id="modalToolName">
+                </div>
+
+                <div id="tabMan" style="display: none; height: 265px;">
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; display: block; font-weight: 500;">Nombre de la herramienta</label>
+                        <input type="text" id="modalManualName" class="form-control" placeholder="Ej: Taladro percutor..." style="width: 100%; background: rgba(15, 23, 42, 0.5); border-color: rgba(255,255,255,0.1);">
+                    </div>
+                    <div style="background: rgba(245, 158, 11, 0.05); border: 1px dashed rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem; text-align: center;">
+                        <i class="ph ph-info" style="color: var(--warning); font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem;">Utilice esta opción únicamente si la herramienta no se encuentra registrada en el inventario oficial.</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="flex: 1;">
+                        <label style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; display: block; font-weight: 500;">Cantidad</label>
+                        <input type="number" id="modalQty" class="form-control" value="1" min="1" style="width: 100%; background: rgba(15, 23, 42, 0.5); border-color: rgba(255,255,255,0.1); text-align: center;">
+                    </div>
+                    <div style="flex: 2;">
+                        <label style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; display: block; font-weight: 500;">Notas (Opcional)</label>
+                        <input type="text" id="modalNotes" class="form-control" placeholder="Observaciones..." style="width: 100%; background: rgba(15, 23, 42, 0.5); border-color: rgba(255,255,255,0.1);">
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" onclick="addToolFromModal()" style="width: 100%; display: flex; justify-content: center; gap: 0.5rem; padding: 0.85rem; font-weight: 600; font-size: 1rem; box-shadow: 0 4px 12px rgba(99,102,241,0.25);">
+                    <i class="ph ph-plus-circle" style="font-size: 1.2rem;"></i> Agregar a la Solicitud
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Fixed action bar pinned to bottom of screen -->
     <div style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
@@ -397,6 +623,119 @@ require_once '../../includes/sidebar.php';
         }
     }
 
+    function openToolModal() {
+        document.getElementById('toolModal').style.display = 'flex';
+        // Reset form
+        document.getElementById('toolSearch').value = '';
+        filterTools();
+        document.querySelectorAll('.tool-list-item').forEach(el => {
+            el.classList.remove('selected');
+            el.querySelector('.sel-icon').classList.replace('ph-check-circle', 'ph-circle');
+            el.querySelector('.sel-icon').style.color = '#64748b';
+        });
+        document.getElementById('modalToolId').value = '';
+        document.getElementById('modalToolName').value = '';
+        document.getElementById('modalManualName').value = '';
+        document.getElementById('modalQty').value = '1';
+        document.getElementById('modalNotes').value = '';
+        switchToolTab('inv');
+        document.getElementById('toolSearch').focus();
+    }
+
+    function closeToolModal() {
+        document.getElementById('toolModal').style.display = 'none';
+    }
+
+    function switchToolTab(tab) {
+        if (tab === 'inv') {
+            document.getElementById('tabInv').style.display = 'block';
+            document.getElementById('tabMan').style.display = 'none';
+            document.getElementById('tabInvBtn').style.background = 'rgba(245, 158, 11, 0.1)';
+            document.getElementById('tabInvBtn').style.color = 'var(--warning)';
+            document.getElementById('tabManBtn').style.background = 'transparent';
+            document.getElementById('tabManBtn').style.color = '#94a3b8';
+        } else {
+            document.getElementById('tabInv').style.display = 'none';
+            document.getElementById('tabMan').style.display = 'block';
+            document.getElementById('tabManBtn').style.background = 'rgba(245, 158, 11, 0.1)';
+            document.getElementById('tabManBtn').style.color = 'var(--warning)';
+            document.getElementById('tabInvBtn').style.background = 'transparent';
+            document.getElementById('tabInvBtn').style.color = '#94a3b8';
+            document.getElementById('modalManualName').focus();
+        }
+    }
+
+    function filterTools() {
+        const q = document.getElementById('toolSearch').value.toLowerCase();
+        document.querySelectorAll('.tool-list-item').forEach(el => {
+            if (el.dataset.name.toLowerCase().includes(q)) el.style.display = 'flex';
+            else el.style.display = 'none';
+        });
+    }
+
+    function selectToolItem(el) {
+        document.querySelectorAll('.tool-list-item').forEach(e => {
+            e.classList.remove('selected');
+            e.querySelector('.sel-icon').classList.replace('ph-check-circle', 'ph-circle');
+            e.querySelector('.sel-icon').style.color = '#64748b';
+        });
+        el.classList.add('selected');
+        el.querySelector('.sel-icon').classList.replace('ph-circle', 'ph-check-circle');
+        el.querySelector('.sel-icon').style.color = 'var(--warning)';
+        
+        document.getElementById('modalToolId').value = el.dataset.id;
+        document.getElementById('modalToolName').value = el.dataset.name;
+    }
+
+    function addToolFromModal() {
+        const isManual = document.getElementById('tabMan').style.display === 'block';
+        let id = '', name = '';
+        
+        if (isManual) {
+            name = document.getElementById('modalManualName').value.trim();
+            if (!name) { alert('Ingrese el nombre de la herramienta'); return; }
+        } else {
+            id = document.getElementById('modalToolId').value;
+            name = document.getElementById('modalToolName').value;
+            if (!id) { alert('Seleccione una herramienta del inventario'); return; }
+        }
+        
+        const qty = document.getElementById('modalQty').value || 1;
+        const notes = document.getElementById('modalNotes').value.trim();
+        
+        renderToolCard(id, name, qty, notes);
+        closeToolModal();
+    }
+
+    function renderToolCard(id, name, qty, notes) {
+        const container = document.getElementById('toolsCardContainer');
+        const manualName = id === '' ? name : '';
+        const isManual = id === '';
+        
+        const cardHTML = `
+            <div class="tool-card">
+                <div style="background: rgba(245, 158, 11, 0.1); border-radius: 8px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative;">
+                    <i class="ph ph-wrench" style="color: var(--warning); font-size: 1.25rem;"></i>
+                    ${isManual ? '<i class="ph-fill ph-warning" style="position: absolute; bottom: -4px; right: -4px; color: var(--danger); font-size: 0.85rem;" title="Ingreso manual"></i>' : ''}
+                </div>
+                <div style="flex: 1; overflow: hidden;">
+                    <h4 style="margin: 0; color: #f1f5f9; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">${name}</h4>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                        <span style="font-size: 0.75rem; color: var(--warning); background: rgba(245, 158, 11, 0.15); padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600;">Cant: ${qty}</span>
+                        ${notes ? `<span style="font-size: 0.8rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="ph ph-text-align-left"></i> ${notes}</span>` : ''}
+                    </div>
+                </div>
+                <button type="button" class="btn-icon" style="color: #64748b; background: rgba(0,0,0,0.2); border-radius: 50%; padding: 0.4rem; transition: all 0.2s;" onclick="this.closest('.tool-card').remove()" onmouseover="this.style.color='var(--danger)'; this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.color='#64748b'; this.style.background='rgba(0,0,0,0.2)'" title="Eliminar">
+                    <i class="ph ph-x" style="font-size: 1rem;"></i>
+                </button>
+                <input type="hidden" name="tool_id[]" value="${id}">
+                <input type="hidden" name="tool_name_manual[]" value="${manualName}">
+                <input type="hidden" name="tool_quantity[]" value="${qty}">
+                <input type="hidden" name="tool_notes[]" value="${notes}">
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', cardHTML);
+    }
 </script>
 
 

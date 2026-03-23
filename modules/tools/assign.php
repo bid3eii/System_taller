@@ -18,12 +18,14 @@ $success = '';
 
 // Check if tools table exists
 try {
-    $stmt = $pdo->query("SELECT * FROM tools WHERE status != 'lost' ORDER BY name ASC");
+    $stmt = $pdo->query("SELECT * FROM tools WHERE status = 'available' AND quantity > 0 ORDER BY name ASC");
     $tools = $stmt->fetchAll();
 } catch (PDOException $e) {
     $tools = [];
     $error = "Error al cargar herramientas: " . $e->getMessage();
 }
+
+$prefilled_project = $_GET['project'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $project_name = trim($_POST['project_name']);
@@ -145,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- Project Info -->
                     <div class="form-group box-input">
                         <label class="form-label">Proyecto *</label>
-                        <input type="text" name="project_name" class="form-control" required placeholder="Nombre del proyecto" autofocus>
+                        <input type="text" name="project_name" class="form-control" required placeholder="Nombre del proyecto" value="<?php echo htmlspecialchars($prefilled_project); ?>" autofocus>
                     </div>
 
                     <div class="form-group box-input">

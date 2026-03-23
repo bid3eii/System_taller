@@ -38,6 +38,8 @@ $sql = "
         e.brand, 
         e.model, 
         e.type as equipment_type,
+        e.serial_number,
+        so.assigned_tech_id,
         u.username as tech_name
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
@@ -55,6 +57,9 @@ try {
 } catch (PDOException $e) {
     die("Error al cargar los datos: " . $e->getMessage());
 }
+
+// Fetch Technicians for filter
+$techs = $pdo->query("SELECT u.id, u.username FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name LIKE '%técnico%' OR r.name LIKE '%tecnico%' ORDER BY u.username ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 // Group orders by client for multi-equipment delivery detection
 $clientGroups = [];
@@ -115,6 +120,27 @@ require_once '../../includes/sidebar.php';
             <i class="ph ph-caret-down select-caret"></i>
         </div>
 
+        <div class="select-wrapper">
+            <select id="techFilter" class="premium-select">
+                <option value="all">Todos los Técnicos</option>
+                <?php foreach($techs as $t): ?>
+                    <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['username']); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <i class="ph ph-caret-down select-caret"></i>
+        </div>
+
+        <div class="input-group-date">
+            <div class="date-input-wrapper">
+                <label class="date-label">Desde</label>
+                <input type="date" id="startDate" class="premium-input-date">
+            </div>
+            <div class="date-input-wrapper">
+                <label class="date-label">Hasta</label>
+                <input type="date" id="endDate" class="premium-input-date">
+            </div>
+        </div>
+
         <button onclick="exportToExcel()" class="premium-btn-success" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; white-space: nowrap;">
             <i class="ph ph-microsoft-excel-logo" style="font-size: 1.2rem;"></i>
             <span>Exportar Excel</span>
@@ -157,9 +183,13 @@ require_once '../../includes/sidebar.php';
                     </thead>
                     <tbody>
                         <?php foreach ($orders as $order): ?>
-                            <tr data-status="<?php echo strtolower($order['status']); ?>" data-type="<?php echo strtolower($order['service_type']); ?>">
-                                <td><span class="badge-tag"><?php echo get_order_number($order); ?></span></td>
-                                <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
+                                <tr data-status="<?php echo strtolower($order['status']); ?>" 
+                                    data-type="<?php echo strtolower($order['service_type']); ?>" 
+                                    data-date="<?php echo date('Y-m-d', strtotime($order['entry_date'])); ?>"
+                                    data-tech="<?php echo $order['assigned_tech_id'] ?? 'none'; ?>"
+                                    data-serial="<?php echo strtolower($order['serial_number'] ?? ''); ?>">
+                                    <td><span class="badge-tag"><?php echo get_order_number($order); ?></span></td>
+                                    <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                                 <td>
                                     <div class="fw-medium">
                                         <?php 
@@ -264,8 +294,8 @@ require_once '../../includes/sidebar.php';
 /* PREMIUM UI SYSTEM */
 .premium-filter-bar {
     display: grid;
-    grid-template-columns: 1fr 200px 200px 180px;
-    gap: 1rem;
+    grid-template-columns: 1.5fr 1fr 0.8fr 1fr 1.5fr 1fr;
+    gap: 0.75rem;
     background: rgba(var(--bg-card-rgb), 0.4);
     backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
@@ -273,6 +303,49 @@ require_once '../../includes/sidebar.php';
     border-radius: 18px;
     margin-bottom: 2rem;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.input-group-date {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.date-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.date-label {
+    position: absolute;
+    top: -8px;
+    left: 10px;
+    background: #1e1e2d; /* Match your card background */
+    padding: 0 5px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    z-index: 1;
+    border-radius: 4px;
+}
+
+body.light-mode .date-label {
+    background: white;
+}
+
+.premium-input-date {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.6rem 0.5rem;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.premium-input-date:focus {
+    border-color: var(--primary);
+    outline: none;
 }
 
 .search-input-wrapper {
@@ -597,6 +670,9 @@ body.light-mode .premium-action-btn:hover i {
 const searchInput = document.getElementById('searchInput');
 const statusFilter = document.getElementById('statusFilter');
 const typeFilter = document.getElementById('typeFilter');
+const techFilter = document.getElementById('techFilter'); // Added techFilter
+const startDate = document.getElementById('startDate'); // Renamed from startDateInput
+const endDate = document.getElementById('endDate');     // Renamed from endDateInput
 const table = document.getElementById('reportsTable');
 const sortableHeaders = document.querySelectorAll('.sortable');
 const tbody = table.querySelector('tbody');
@@ -687,43 +763,57 @@ sortableHeaders.forEach(header => {
 // Filter functionality
 function filterTable() {
     const searchTerm = searchInput.value.toLowerCase();
-    const statusValue = statusFilter.value;
-    const typeValue = typeFilter.value;
+    const statusValue = statusFilter.value.toLowerCase();
+    const typeValue = typeFilter.value.toLowerCase();
+    const techValue = techFilter.value.toLowerCase(); // Added techValue
+    const start = startDate.value;
+    const end = endDate.value;
 
-    originalRows.forEach(row => {
+    originalRows.forEach(row => { // Use originalRows for filtering
         if(row.cells.length < 2) return;
 
         const rowText = row.innerText.toLowerCase();
         const rowStatus = row.getAttribute('data-status');
         const rowType = row.getAttribute('data-type');
+        const rowDate = row.getAttribute('data-date'); // YYYY-MM-DD
+        const rowTech = row.getAttribute('data-tech'); // Added rowTech
+        const rowSerial = row.getAttribute('data-serial'); // Added rowSerial
 
-        const matchesSearch = rowText.includes(searchTerm);
+        const matchesSearch = rowText.includes(searchTerm) || (rowSerial && rowSerial.includes(searchTerm)); // Include serial in search
         const matchesType = typeValue === 'all' || rowType === typeValue;
+        const matchesTech = techValue === 'all' || rowTech === techValue; // Added tech filter
+
+        // Date range filter
+        let matchesDate = true;
+        if (start && rowDate < start) matchesDate = false;
+        if (end && rowDate > end) matchesDate = false;
         
-        // Logical filter
+        // Logical filter for status
         let matchesStatus = false;
         if (statusValue === 'all') {
             matchesStatus = true;
         } else {
-            // Check for exact match or mapped status groups 
-            // The data-status attribute in the row contains the exact status from DB
             if (rowStatus === statusValue) {
                 matchesStatus = true;
             }
-            // Handle logical mapping if needed (e.g. 'diagnosing' in filter vs 'diagnosing' in DB)
         }
 
-        if (matchesSearch && matchesStatus && matchesType) {
+        if (matchesSearch && matchesStatus && matchesType && matchesTech && matchesDate) { // Added matchesTech
             row.style.display = '';
         } else {
             row.style.display = 'none';
         }
     });
+    // Assuming updateCounter() is defined elsewhere or will be added.
+    // updateCounter(); 
 }
 
-searchInput.addEventListener('keyup', filterTable);
+searchInput.addEventListener('input', filterTable); // Changed to 'input' for real-time
 statusFilter.addEventListener('change', filterTable);
 typeFilter.addEventListener('change', filterTable);
+techFilter.addEventListener('change', filterTable); // Added techFilter listener
+startDate.addEventListener('change', filterTable);
+endDate.addEventListener('change', filterTable);
 
 // Dropdown Handler with Smart Positioning
 function toggleReportDropdown(btn) {
@@ -814,21 +904,17 @@ setInterval(function() {
 }, 10000); // 10 seconds
 
 // Export to Excel Function
-function exportToExcel() {
-    const search = document.getElementById('searchInput').value;
-    const status = document.getElementById('statusFilter').value;
-    const type = document.getElementById('typeFilter').value;
+window.exportToExcel = function() {
+    const search = searchInput.value;
+    const status = statusFilter.value;
+    const type = typeFilter.value;
+    const tech = techFilter.value; // Added tech
+    const start = startDate.value;
+    const end = endDate.value;
     
-    // Construct URL with parameters
-    const params = new URLSearchParams({
-        search: search,
-        status: status,
-        type: type
-    });
-    
-    // Redirect to export script to trigger download
-    window.location.href = 'export.php?' + params.toString();
-}
+    let url = `export.php?search=${encodeURIComponent(search)}&status=${status}&type=${type}&tech_id=${tech}&start=${start}&end=${end}`;
+    window.location.href = url;
+};
 </script>
 
 <style>

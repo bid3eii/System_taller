@@ -82,7 +82,8 @@ try {
                         <th>Nombre</th>
                         <th>Descripción</th>
                         <th>Cantidad</th>
-                        <th>Estado</th>
+                        <th>Asignación</th>
+                        <th>Condición Física</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -123,6 +124,30 @@ try {
                                 ?>
                                 <span class="badge" style="background: <?php echo $color; ?>20; color: <?php echo $color; ?>;">
                                     <?php echo $label; ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php
+                                $cond = $tool['physical_condition'] ?? 'good';
+                                $cond_colors = [
+                                    'new' => 'var(--info)',
+                                    'good' => 'var(--success)',
+                                    'fair' => 'var(--warning)',
+                                    'bad' => 'var(--danger)',
+                                    'damaged' => 'var(--accent)'
+                                ];
+                                $cond_labels = [
+                                    'new' => 'Nuevo',
+                                    'good' => 'Bueno',
+                                    'fair' => 'Regular',
+                                    'bad' => 'Reemplazar',
+                                    'damaged' => 'Dañado'
+                                ];
+                                $c_color = $cond_colors[$cond] ?? 'var(--text-secondary)';
+                                $c_label = $cond_labels[$cond] ?? ucfirst($cond);
+                                ?>
+                                <span class="badge" style="background: <?php echo $c_color; ?>20; color: <?php echo $c_color; ?>;">
+                                    <?php echo $c_label; ?>
                                 </span>
                             </td>
                             <td>

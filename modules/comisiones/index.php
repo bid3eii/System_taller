@@ -10,7 +10,7 @@ if (!can_access_module('comisiones', $pdo)) {
     die("Acceso denegado.");
 }
 
-$page_title = 'Comisiones';
+$page_title = 'Panel de Incentivos';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 
@@ -142,14 +142,14 @@ if (isset($_SESSION['error'])) {
             <div>
                 <h1 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                     <i class="ph ph-coins" style="color: var(--primary-500);"></i>
-                    Comisiones por Proyecto
+                    Panel de Incentivos
                 </h1>
                 <p class="text-muted">Registro y control de pagos a técnicos</p>
             </div>
             <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
                 <?php if (can_access_module('comisiones_add', $pdo)): ?>
                         <a href="add.php" class="btn btn-primary" style="display: flex; gap: 0.5rem; align-items: center;">
-                            <i class="ph ph-plus"></i> Nueva Comisión Manual
+                            <i class="ph ph-plus"></i> Nuevo Incentivo Manual
                         </a>
                 <?php endif; ?>
                 <?php
@@ -163,7 +163,7 @@ if (isset($_SESSION['error'])) {
                 ?>
                 <a href="<?php echo $export_url; ?>" class="btn btn-secondary"
                    style="display: flex; gap: 0.5rem; align-items: center; border-color: rgba(16,185,129,0.4); color: #34d399;"
-                   title="Exportar comisiones visibles como archivo Excel/CSV para RRHH">
+                   title="Exportar incentivos visibles como archivo Excel/CSV para RRHH">
                     <i class="ph ph-export"></i> Exportar para RRHH
                 </a>
             </div>
@@ -437,7 +437,7 @@ if (isset($_SESSION['error'])) {
                                                 <?php if ($c['estado'] === 'PENDIENTE'): ?>
                                                     <button type="button" class="btn btn-secondary"
                                                         style="color:var(--success); border-color:var(--success);"
-                                                        title="Liquidar Comisión"
+                                                        title="Liquidar Incentivo"
                                                         onclick="openPayModal(
                                                             <?php echo $c['id']; ?>,
                                                             '<?php echo addslashes(htmlspecialchars($c['caso'])); ?>',
@@ -530,7 +530,7 @@ if (isset($_SESSION['error'])) {
             <div>
                 <h1 style="margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;">
                     <i class="ph ph-coins" style="color:var(--primary-500);"></i>
-                    Mis Comisiones
+                    Mis Incentivos
                 </h1>
                 <p class="text-muted">Historial de pagos asignados a ti, <?php echo $username_display; ?></p>
             </div>
@@ -552,7 +552,7 @@ if (isset($_SESSION['error'])) {
             <div class="kpi-card" style="border-color:rgba(99,102,241,.2);">
                 <div class="kpi-label"><i class="ph ph-list-numbers"></i> Total</div>
                 <div class="kpi-value" style="color:#a5b4fc;"><?php echo $tech_total; ?></div>
-                <div style="font-size:.8rem;color:#64748b;">Comisiones totales</div>
+                <div style="font-size:.8rem;color:#64748b;">Incentivos totales</div>
             </div>
             <div class="kpi-card" style="border-color:rgba(245,158,11,.2);">
                 <div class="kpi-label"><i class="ph ph-hourglass"></i> Por Cobrar</div>
@@ -655,7 +655,7 @@ if (isset($_SESSION['error'])) {
         <?php else: ?>
                 <div class="empty-state">
                     <i class="ph ph-coins"></i>
-                    <p>No hay comisiones <?php echo $active_tab_status ? 'con estado ' . $active_tab_status : ''; ?> registradas.</p>
+                    <p>No hay incentivos <?php echo $active_tab_status ? 'con estado ' . $active_tab_status : ''; ?> registrados.</p>
                 </div>
         <?php endif; ?>
 
@@ -743,14 +743,14 @@ if (isset($_SESSION['error'])) {
     <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); border-radius:1rem; padding:2rem; width:90%; max-width:520px; box-shadow:0 25px 50px rgba(0,0,0,0.5);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div>
-                <h2 style="margin:0; font-size:1.25rem; color:#f1f5f9;"><i class="ph ph-currency-circle-dollar" style="color:#10b981;"></i> Liquidar Comisión</h2>
+                <h2 style="margin:0; font-size:1.25rem; color:#f1f5f9;"><i class="ph ph-currency-circle-dollar" style="color:#10b981;"></i> Liquidar Incentivo</h2>
                 <p id="modalSubtitle" style="margin:0.25rem 0 0; font-size:0.85rem; color:#64748b;"></p>
             </div>
             <button onclick="closePayModal()" style="background:transparent; border:none; color:#64748b; font-size:1.5rem; cursor:pointer; line-height:1;">×</button>
         </div>
 
         <div style="background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.25); border-radius:8px; padding:1rem; margin-bottom:1.5rem;">
-            <p style="margin:0; font-size:0.85rem; color:#fbbf24;"><i class="ph ph-warning"></i> El <strong>Nº de Factura</strong> es obligatorio para poder liquidar la comisión.</p>
+            <p style="margin:0; font-size:0.85rem; color:#fbbf24;"><i class="ph ph-warning"></i> El <strong>Nº de Factura</strong> es obligatorio para poder liquidar el incentivo.</p>
         </div>
 
         <form id="payForm" method="POST" action="save_and_pay.php" onsubmit="return validatePayForm(event)">

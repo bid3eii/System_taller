@@ -154,9 +154,13 @@
             if ($can_viaticos)
                 $proj_children[] = ['url' => BASE_URL . 'modules/viaticos/index.php', 'icon' => 'ph-money', 'label' => 'Viáticos'];
             if ($can_comisiones)
-                $proj_children[] = ['url' => BASE_URL . 'modules/comisiones/index.php', 'icon' => 'ph-coins', 'label' => 'Comisiones'];
+                $proj_children[] = ['url' => BASE_URL . 'modules/comisiones/index.php', 'icon' => 'ph-coins', 'label' => 'Panel de Incentivos'];
             if ($can_anexos)
                 $proj_children[] = ['url' => BASE_URL . 'modules/anexos/index.php', 'icon' => 'ph-file-pdf', 'label' => 'Anexos Yazaki'];
+
+            if (can_access_module('reporte_facturas', $pdo) || $is_admin_role)
+                $proj_children[] = ['url' => BASE_URL . 'modules/proyectos/reporte_facturas.php', 'icon' => 'ph-receipt', 'label' => 'Reporte de Facturas'];
+
             if ($can_project_history)
                 $proj_children[] = ['url' => BASE_URL . 'modules/project_history/index.php', 'icon' => 'ph-books', 'label' => 'Historial Proyectos'];
 

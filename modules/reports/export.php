@@ -14,6 +14,9 @@ if (!isset($_SESSION['user_id'])) {
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $status = isset($_GET['status']) ? $_GET['status'] : 'all';
 $type   = isset($_GET['type'])   ? $_GET['type']   : 'all';
+$tech_id = isset($_GET['tech_id']) ? $_GET['tech_id'] : 'all';
+$start_date = isset($_GET['start']) ? $_GET['start'] : '';
+$end_date   = isset($_GET['end'])   ? $_GET['end'] : '';
 
 // 2. Build Query
 $sql = "
@@ -26,6 +29,7 @@ $sql = "
         reg_owner.name as registered_owner_name,
         e.brand, 
         e.model, 
+        e.serial_number,
         e.type as equipment_type,
         so.service_type,
         so.status, 
@@ -59,6 +63,21 @@ if ($status !== 'all' && !empty($status)) {
     $params[] = $status;
 }
 
+if ($tech_id !== 'all' && !empty($tech_id)) {
+    $sql .= " AND so.assigned_tech_id = ?";
+    $params[] = $tech_id;
+}
+
+if (!empty($start_date)) {
+    $sql .= " AND so.entry_date >= ?";
+    $params[] = $start_date . " 00:00:00";
+}
+
+if (!empty($end_date)) {
+    $sql .= " AND so.entry_date <= ?";
+    $params[] = $end_date . " 23:59:59";
+}
+
 if (!empty($search)) {
     $term = "%$search%";
     $sql .= " AND (
@@ -66,13 +85,15 @@ if (!empty($search)) {
         c.name LIKE ? OR 
         c.phone LIKE ? OR 
         e.brand LIKE ? OR 
-        e.model LIKE ?
+        e.model LIKE ? OR
+        e.serial_number LIKE ?
     )";
     $params[] = $term; // id
     $params[] = $term; // name
     $params[] = $term; // phone
     $params[] = $term; // brand
     $params[] = $term; // model
+    $params[] = $term; // serial
 }
 
 $sql .= " ORDER BY so.entry_date DESC";

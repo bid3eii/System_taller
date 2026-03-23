@@ -156,6 +156,8 @@ $surveys = $stmt->fetchAll();
                                     <?php
                                     $paymentMaps = [
                                         'pendiente' => ['Pendiente Fact.', 'gray'],
+                                        'credito' => ['Crédito', 'orange'],
+                                        'contado' => ['Contado', 'blue'],
                                         'pagado' => ['Pagado', 'green']
                                     ];
                                     $pCol = $paymentMaps[$item['payment_status']][1] ?? 'gray';

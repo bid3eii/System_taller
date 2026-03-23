@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payment_status = $_POST['payment_status'];
     $invoice_number = trim($_POST['invoice_number'] ?? '');
 
-    if (!in_array($payment_status, ['pendiente', 'pagado'])) {
+    if (!in_array($payment_status, ['pendiente', 'credito', 'pagado'])) {
         die("Estado no válido");
     }
 

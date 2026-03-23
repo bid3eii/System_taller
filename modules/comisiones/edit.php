@@ -7,7 +7,7 @@ require_once '../../includes/auth.php';
 
 // Check permission
 if (!can_access_module('comisiones_edit', $pdo)) {
-    $_SESSION['error'] = "No tienes permiso para editar comisiones.";
+    $_SESSION['error'] = "No tienes permiso para editar incentivos.";
     header("Location: index.php");
     exit;
 }
@@ -25,7 +25,7 @@ $stmt->execute([$id]);
 $comision = $stmt->fetch();
 
 if (!$comision) {
-    $_SESSION['error'] = "La comisión no existe.";
+    $_SESSION['error'] = "El incentivo no existe.";
     header("Location: index.php");
     exit;
 }
@@ -70,11 +70,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id
         ]);
 
-        $_SESSION['success'] = "Comisión actualizada exitosamente.";
+        $_SESSION['success'] = "Incentivo actualizado exitosamente.";
         header("Location: view.php?id=" . $id);
         exit;
     } catch (PDOException $e) {
-        $error = "Error al actualizar la comisión: " . $e->getMessage();
+        $error = "Error al actualizar el incentivo: " . $e->getMessage();
     }
 }
 
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmtT = $pdo->query("SELECT id, username FROM users WHERE role_id = 3 AND status = 'active' ORDER BY username");
 $technicians = $stmtT->fetchAll();
 
-$page_title = 'Editar Comisión #' . str_pad($comision['id'], 5, '0', STR_PAD_LEFT);
+$page_title = 'Editar Incentivo #' . str_pad($comision['id'], 5, '0', STR_PAD_LEFT);
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 ?>
@@ -92,7 +92,7 @@ require_once '../../includes/sidebar.php';
         <div>
             <h1 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                 <i class="ph ph-pencil-simple" style="color: var(--primary);"></i>
-                Editar Comisión #
+                Editar Incentivo #
                 <?php echo str_pad($comision['id'], 5, '0', STR_PAD_LEFT); ?>
             </h1>
             <p class="text-muted">Modifica los detalles, técnico asignado o monto (cuota).</p>
@@ -111,8 +111,8 @@ require_once '../../includes/sidebar.php';
             style="background: var(--bg-surface); margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; border: 1px solid var(--border-color);">
             <i class="ph ph-info" style="font-size: 1.5rem; color: var(--primary);"></i>
             <div>
-                <strong style="display: block;">Comisión Generada Automáticamente</strong>
-                <span class="text-muted">Esta comisión está enlazada al
+                <strong style="display: block;">Incentivo Generado Automáticamente</strong>
+                <span class="text-muted">Este incentivo está enlazado al
                     <?php echo $comision['tipo'] === 'PROYECTO' ? 'Levantamiento' : 'Servicio'; ?> ID:
                     <?php echo $comision['reference_id']; ?>. Modifica la cuota con precaución.
                 </span>

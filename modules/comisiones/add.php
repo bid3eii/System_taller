@@ -50,11 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tech_id
         ]);
 
-        $_SESSION['success'] = "Comisión manual registrada correctamente.";
+        $_SESSION['success'] = "Incentivo manual registrado correctamente.";
         header("Location: index.php");
         exit;
     } catch (PDOException $e) {
-        $error = "Error al registrar la comisión: " . $e->getMessage();
+        $error = "Error al registrar el incentivo: " . $e->getMessage();
     }
 }
 
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmtT = $pdo->query("SELECT id, username FROM users WHERE role_id = 3 AND status = 'active' ORDER BY username");
 $technicians = $stmtT->fetchAll();
 
-$page_title = 'Nueva Comisión Manual';
+$page_title = 'Nuevo Incentivo Manual';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 ?>
@@ -72,9 +72,9 @@ require_once '../../includes/sidebar.php';
         <div>
             <h1 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                 <i class="ph ph-plus-circle" style="color: var(--primary);"></i>
-                Nueva Comisión Manual
+                Nuevo Incentivo Manual
             </h1>
-            <p class="text-muted">Ingresa los datos de la comisión que deseas asignar.</p>
+            <p class="text-muted">Ingresa los datos del incentivo que deseas asignar.</p>
         </div>
         <a href="index.php" class="btn btn-secondary"><i class="ph ph-arrow-left"></i> Volver</a>
     </div>
@@ -162,7 +162,7 @@ require_once '../../includes/sidebar.php';
 
             <div style="text-align: right;">
                 <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
-                    <i class="ph ph-floppy-disk"></i> Guardar Comisión
+                    <i class="ph ph-floppy-disk"></i> Guardar Incentivo
                 </button>
             </div>
         </form>
