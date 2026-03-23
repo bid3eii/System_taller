@@ -59,9 +59,33 @@ $error_msg = '';
 $autoPrintDiagnosis = isset($_GET['print']) && $_GET['print'] == '1'; 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $new_status = clean($_POST['status']);
-    $note = clean($_POST['note']);
+    // Handle Convert Warranty to Service
+    if ($_POST['action'] === 'convert_to_service') {
+        try {
+            $pdo->beginTransaction();
+
+            // Change service_type from warranty to service
+            $stmtConvert = $pdo->prepare("UPDATE service_orders SET service_type = 'service' WHERE id = ? AND service_type = 'warranty'");
+            $stmtConvert->execute([$id]);
+
+            // Log in history using the correct columns (action, notes)
+            $convertNote = "[Conversión] Tipo cambiado de Garantía a Servicio. Motivo: Garantía vencida o no aplica.";
+            $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, ?, ?, ?, ?)")
+                ->execute([$id, 'convert_to_service', $convertNote, $_SESSION['user_id'], get_local_datetime()]);
+
+            $pdo->commit();
+            header("Location: ../services/view.php?id=$id&msg=success");
+            exit;
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $error_msg = "Error al convertir: " . $e->getMessage();
+        }
+    }
+
+    $new_status = clean($_POST['status'] ?? '');
+    $note = clean($_POST['note'] ?? '');
     
+    if (!empty($new_status)) {
     try {
         // Handle Diagnosis Fields if Status is Diagnosing
         if ($new_status === 'diagnosing') {
@@ -105,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     } catch (Exception $e) {
         $error_msg = "Error al actualizar: " . $e->getMessage();
+    }
     }
 }
 
@@ -459,13 +484,23 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             </div>
 
                             <!-- Service Type Indicator -->
-                             <div class="info-group">
+                            <div class="info-group">
                                 <span class="info-label">Tipo de Servicio</span>
-                                <div>
+                                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                                     <?php if($order['service_type'] === 'warranty'): ?>
                                         <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.85rem; font-weight: 600; background: rgba(99, 102, 241, 0.1); color: #818cf8; padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid rgba(99, 102, 241, 0.2);">
                                             <i class="ph ph-shield-check"></i> Garantía
                                         </span>
+                                        <?php 
+                                        $is_admin_convert = isset($_SESSION['role_id']) && in_array($_SESSION['role_id'], [1, 7]);
+                                        if ($is_admin_convert): ?>
+                                        <button type="button" onclick="convertToService()" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 600; background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.25); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.2)'" onmouseout="this.style.background='rgba(245,158,11,0.1)'">
+                                            <i class="ph ph-arrows-left-right"></i> Convertir a Servicio
+                                        </button>
+                                        <form id="convertForm" method="POST" style="display:none;">
+                                            <input type="hidden" name="action" value="convert_to_service">
+                                        </form>
+                                        <?php endif; ?>
                                     <?php else: ?>
                                         <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.85rem; font-weight: 600; background: rgba(59, 130, 246, 0.1); color: #60a5fa; padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.2);">
                                             <i class="ph ph-wrench"></i> Servicio
@@ -866,4 +901,25 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
         </div>
     </div>
 </div>
+<script>
+function convertToService() {
+    Swal.fire({
+        title: '¿Convertir a Servicio?',
+        html: 'Este equipo dejará de aparecer en <b>Garantías</b> y pasará al módulo de <b>Servicios</b>.<br><br>El cambio quedará registrado en el historial del caso.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, convertir',
+        cancelButtonText: 'Cancelar',
+        background: '#1e293b',
+        color: '#fff'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('convertForm').submit();
+        }
+    });
+}
+</script>
+
 <?php require_once '../../includes/footer.php'; ?>
