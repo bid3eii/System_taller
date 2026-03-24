@@ -45,7 +45,7 @@ if ($search) {
             LEFT JOIN equipments e ON so.equipment_id = e.id
             LEFT JOIN clients co ON e.client_id = co.id
             LEFT JOIN users u ON so.assigned_tech_id = u.id
-            WHERE (so.display_id = ? OR (so.display_id IS NULL AND so.id = ?)) 
+            WHERE (so.display_id = ? OR ((so.display_id IS NULL OR so.display_id = '' OR so.display_id = '0') AND so.id = ?)) 
             AND so.service_type = ?
         ";
         
