@@ -40,7 +40,7 @@ $sql = "
     LEFT JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
     LEFT JOIN users u ON so.assigned_tech_id = u.id
-    WHERE 1=1
+    WHERE so.problem_reported NOT LIKE 'Garant%a Registrada'
 ";
 
 $params = [];
