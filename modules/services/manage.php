@@ -20,8 +20,65 @@ $success_msg = isset($_GET['msg']) && $_GET['msg'] === 'success' ? "Estado actua
 $error_msg = '';
 $autoPrintDiagnosis = isset($_GET['print']) && $_GET['print'] == '1';
 
+// Handle Delete Diagnosis Image via GET
+if (isset($_GET['delete_img']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $imgId = intval($_GET['delete_img']);
+    try {
+        $stmtCheck = $pdo->prepare("SELECT image_path FROM diagnosis_images WHERE id = ? AND service_order_id = ?");
+        $stmtCheck->execute([$imgId, $id]);
+        $imgData = $stmtCheck->fetch();
+        if ($imgData) {
+            $filePath = '../../' . $imgData['image_path'];
+            if (file_exists($filePath)) unlink($filePath);
+            $pdo->prepare("DELETE FROM diagnosis_images WHERE id = ?")->execute([$imgId]);
+        }
+        header("Location: manage.php?id=$id&msg=success");
+        exit;
+    } catch (Exception $e) {
+        $error_msg = "Error al eliminar imagen: " . $e->getMessage();
+    }
+}
+
 // Handle POST actions for status
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // Handle Edit Diagnosis
+    if ($_POST['action'] === 'edit_diagnosis') {
+        try {
+            $proc = clean($_POST['diagnosis_procedure'] ?? '');
+            $conc = clean($_POST['diagnosis_conclusion'] ?? '');
+
+            $stmtUpd = $pdo->prepare("UPDATE service_orders SET diagnosis_procedure = ?, diagnosis_conclusion = ? WHERE id = ?");
+            $stmtUpd->execute([$proc, $conc, $id]);
+
+            // Handle new images
+            if (isset($_FILES['diagnosis_images']) && !empty($_FILES['diagnosis_images']['name'][0])) {
+                $uploadDir = '../../uploads/diagnosis/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+
+                foreach ($_FILES['diagnosis_images']['tmp_name'] as $key => $tmp_name) {
+                    if ($_FILES['diagnosis_images']['error'][$key] === 0) {
+                        $fileName = time() . '_' . $key . '_' . basename($_FILES['diagnosis_images']['name'][$key]);
+                        $targetPath = $uploadDir . $fileName;
+                        if (move_uploaded_file($tmp_name, $targetPath)) {
+                            $stmtImg = $pdo->prepare("INSERT INTO diagnosis_images (service_order_id, image_path) VALUES (?, ?)");
+                            $stmtImg->execute([$id, 'uploads/diagnosis/' . $fileName]);
+                        }
+                    }
+                }
+            }
+
+            // Log edit in history
+            $editNote = "[Diagnóstico Editado]\nProcedimiento: $proc\nConclusión: $conc";
+            $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, ?, ?, ?, ?)")
+                ->execute([$id, 'edit_diagnosis', $editNote, $_SESSION['user_id'], get_local_datetime()]);
+
+            header("Location: manage.php?id=$id&msg=success");
+            exit;
+        } catch (Exception $e) {
+            $error_msg = "Error al editar diagnóstico: " . $e->getMessage();
+        }
+    }
+
     if ($_POST['action'] === 'update_status') {
         $new_status = clean($_POST['status']);
         $note = clean($_POST['note']);
@@ -90,6 +147,11 @@ if ($order['service_type'] === 'warranty') {
     header("Location: ../warranties/view.php?id=" . $order['id']);
     exit;
 }
+
+// Fetch diagnosis images
+$stmtDiagImages = $pdo->prepare("SELECT id, image_path FROM diagnosis_images WHERE service_order_id = ? ORDER BY id ASC");
+$stmtDiagImages->execute([$id]);
+$diagImages = $stmtDiagImages->fetchAll();
 
 $can_view_all = can_access_module('view_all_entries', $pdo);
 if (!can_access_module('manage_services', $pdo)) {
@@ -345,6 +407,104 @@ require_once '../../includes/sidebar.php';
                     </div>
                 </div>
             </div>
+
+            <!-- Diagnosis Section (if exists) -->
+            <?php if (!empty($order['diagnosis_procedure']) || !empty($order['diagnosis_conclusion'])): ?>
+            <div class="glass-card" style="border-left: 4px solid #fbbf24;">
+                <div class="glass-card-header" style="justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="ph ph-stethoscope" style="font-size: 1.5rem; color: #fbbf24; -webkit-text-fill-color: #fbbf24;"></i>
+                        <h2 class="glass-card-title">Diagnóstico</h2>
+                        <?php if($order['diagnosis_number']): ?>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">#<?php echo str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <button type="button" onclick="document.getElementById('editDiagModal').style.display='flex'" 
+                            style="font-size: 0.8rem; padding: 0.3rem 0.75rem; background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.25); border-radius: 6px; cursor: pointer;">
+                        <i class="ph ph-pencil-simple"></i> Editar
+                    </button>
+                </div>
+
+                <?php if (!empty($order['diagnosis_procedure'])): ?>
+                <div style="margin-bottom: 1rem;">
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Procedimiento</div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; color: #e2e8f0; font-size: 0.95rem; line-height: 1.5;">
+                        <?php echo nl2br(htmlspecialchars($order['diagnosis_procedure'])); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($order['diagnosis_conclusion'])): ?>
+                <div style="margin-bottom: 1rem;">
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Conclusión / Solución</div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; color: #e2e8f0; font-size: 0.95rem; line-height: 1.5;">
+                        <?php echo nl2br(htmlspecialchars($order['diagnosis_conclusion'])); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($diagImages)): ?>
+                <div>
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">Evidencia Fotográfica</div>
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <?php foreach ($diagImages as $img): ?>
+                            <a href="<?php echo BASE_URL . $img['image_path']; ?>" target="_blank" style="display: block; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                                <img src="<?php echo BASE_URL . $img['image_path']; ?>" alt="Evidencia" style="width: 100%; height: 100%; object-fit: cover;">
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Edit Diagnosis Modal -->
+            <div id="editDiagModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+                <div style="background: var(--bg-card); padding: 2rem; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-color);">
+                    <h2 style="margin-top: 0; color: #fbbf24; margin-bottom: 1.5rem;"><i class="ph ph-pencil-simple"></i> Editar Diagnóstico</h2>
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="action" value="edit_diagnosis">
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Procedimiento</label>
+                            <textarea name="diagnosis_procedure" class="modern-textarea" rows="4"><?php echo htmlspecialchars($order['diagnosis_procedure'] ?? ''); ?></textarea>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Conclusión / Solución</label>
+                            <textarea name="diagnosis_conclusion" class="modern-textarea" rows="4"><?php echo htmlspecialchars($order['diagnosis_conclusion'] ?? ''); ?></textarea>
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Imágenes</label>
+                            <?php if (!empty($diagImages)): ?>
+                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                                    <?php foreach ($diagImages as $img): ?>
+                                        <div style="position: relative; width: 80px; height: 80px;">
+                                            <img src="<?php echo BASE_URL . $img['image_path']; ?>" alt="Evidencia" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                                            <button type="button" onclick="deleteDiagImage(<?php echo $img['id']; ?>)" 
+                                                    style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: 2px solid var(--bg-card); cursor: pointer; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; padding: 0;">
+                                                ×
+                                            </button>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            <input type="file" name="diagnosis_images[]" multiple accept="image/*" class="modern-input">
+                        </div>
+                        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                            <button type="button" onclick="document.getElementById('editDiagModal').style.display='none'" class="btn btn-secondary">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" style="background: #fbbf24; border-color: #fbbf24; color: #000;"><i class="ph ph-check"></i> Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <script>
+                document.getElementById('editDiagModal')?.addEventListener('click', function(e) {
+                    if (e.target === this) this.style.display = 'none';
+                });
+                function deleteDiagImage(imgId) {
+                    if (!confirm('¿Eliminar esta imagen?')) return;
+                    window.location.href = window.location.pathname + '?id=<?php echo $id; ?>&delete_img=' + imgId;
+                }
+            </script>
+            <?php endif; ?>
 
             <!-- Operational Status Update -->
             <?php if ($order['status'] !== 'delivered'): ?>

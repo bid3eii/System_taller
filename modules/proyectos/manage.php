@@ -453,6 +453,31 @@ require_once '../../includes/sidebar.php';
         </div>
     </div>
 
+    <!-- MESSAGES -->
+    <?php if (isset($_SESSION['success_msg'])): ?>
+        <div style="background: rgba(16, 185, 129, 0.1); color: #6ee7b7; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 0.75rem;">
+            <i class="ph ph-check-circle" style="font-size: 1.25rem;"></i>
+            <span><?php echo $_SESSION['success_msg']; unset($_SESSION['success_msg']); ?></span>
+        </div>
+    <?php elseif (isset($_SESSION['success_message'])): ?>
+        <div style="background: rgba(16, 185, 129, 0.1); color: #6ee7b7; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 0.75rem;">
+            <i class="ph ph-check-circle" style="font-size: 1.25rem;"></i>
+            <span><?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?></span>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error_msg'])): ?>
+        <div style="background: rgba(239, 68, 68, 0.1); color: #fca5a5; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(239, 68, 68, 0.2); display: flex; align-items: center; gap: 0.75rem;">
+            <i class="ph ph-warning-circle" style="font-size: 1.25rem;"></i>
+            <span><?php echo $_SESSION['error_msg']; unset($_SESSION['error_msg']); ?></span>
+        </div>
+    <?php elseif (isset($_SESSION['error_message'])): ?>
+        <div style="background: rgba(239, 68, 68, 0.1); color: #fca5a5; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(239, 68, 68, 0.2); display: flex; align-items: center; gap: 0.75rem;">
+            <i class="ph ph-warning-circle" style="font-size: 1.25rem;"></i>
+            <span><?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?></span>
+        </div>
+    <?php endif; ?>
+
     <!-- MAIN GRID LAYOUT -->
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
 

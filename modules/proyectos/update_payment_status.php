@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payment_status = $_POST['payment_status'];
     $invoice_number = trim($_POST['invoice_number'] ?? '');
 
-    if (!in_array($payment_status, ['pendiente', 'credito', 'pagado'])) {
+    if (!in_array($payment_status, ['pendiente', 'credito', 'contado', 'pagado'])) {
         die("Estado no válido");
     }
 
@@ -69,13 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             log_audit($pdo, $id, 'project_surveys', 'UPDATE STATUS', $project['payment_status'], $payment_status);
 
-            $_SESSION['success_message'] = "Estado de pago actualizado exitosamente.";
+            $_SESSION['success_msg'] = "Estado de pago actualizado exitosamente.";
         }
 
         $pdo->commit();
     } catch (Exception $e) {
-        $pdo->rollBack();
-        $_SESSION['error_message'] = "Error: " . $e->getMessage();
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        $_SESSION['error_msg'] = "Error: " . $e->getMessage();
     }
 }
 
