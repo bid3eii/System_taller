@@ -78,13 +78,33 @@ if ($search) {
         $stmtH->execute([$order_data['id']]);
         $history_raw = $stmtH->fetchAll();
         
+        // Map actions to stepper keys
+        $action_mapping = [
+            'delivered' => 'ready',
+            'edit_diagnosis' => 'diagnosing',
+            'diagnosing' => 'diagnosing',
+            'received' => 'received',
+            'pending_approval' => 'pending_approval',
+            'in_repair' => 'in_repair',
+            'ready' => 'ready'
+        ];
+
         // Group notes by action (status change) to show in tooltip
         foreach($history_raw as $h) {
-            $history_data[$h['action']][] = [
-                'date' => date('d/m H:i', strtotime($h['created_at'])),
-                'note' => $h['notes'],
-                'user' => $h['user_name']
-            ];
+            $target_key = $action_mapping[$h['action']] ?? $h['action'];
+            
+            // Strip automatic technical blocks to show only manual "Nota de Progreso"
+            $clean_note = $h['notes'];
+            $parts = explode('[Diagnóstico', $clean_note);
+            $clean_note = trim($parts[0]);
+
+            if (!empty($clean_note)) {
+                $history_data[$target_key][] = [
+                    'date' => date('d/m H:i', strtotime($h['created_at'])),
+                    'note' => $clean_note,
+                    'user' => $h['user_name']
+                ];
+            }
         }
     } elseif ($search && !$error) {
         $error = "No se encontró ninguna orden con ese número.";

@@ -184,6 +184,9 @@ function get_next_sequence($pdo, $code)
  */
 function update_service_status($pdo, $order_id, $new_status, $note, $user_id)
 {
+    if (empty(trim($note))) {
+        throw new Exception("La Nota de Progreso es obligatoria.");
+    }
     // Check if we started the transaction or if the caller did
     $transactionStarted = false;
     if (!$pdo->inTransaction()) {
