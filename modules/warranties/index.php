@@ -199,8 +199,8 @@ require_once '../../includes/sidebar.php';
 
             </div>
         </div>
-        <div class="table-container">
-            <table id="activeTable">
+        <div class="table-container" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <table id="activeTable" style="width: 100%; min-width: 1200px; table-layout: auto;">
                 <thead>
                     <tr>
                         <th class="sortable" data-column="0">
@@ -371,8 +371,8 @@ require_once '../../includes/sidebar.php';
                 <i class="ph ph-magnifying-glass input-icon"></i>
             </div>
         </div>
-        <div class="table-container">
-            <table id="historyTable">
+        <div class="table-container" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <table id="historyTable" style="width: 100%; min-width: 1200px; table-layout: auto;">
                 <thead>
                     <tr>
                         <th class="sortable" data-column="0">
