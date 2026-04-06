@@ -223,7 +223,7 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="5">
                             Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
-                        <th class="sortable" data-column="6">
+                        <th class="sortable" data-column="6" style="min-width: 120px;">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
                     </tr>
@@ -251,7 +251,7 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td>
                                     <span
-                                        class="text-sm font-medium"><?php echo htmlspecialchars($item['serial_number']); ?></span>
+                                        class="text-sm font-medium" style="white-space: nowrap;"><?php echo htmlspecialchars($item['serial_number']); ?></span>
                                 </td>
                                 <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
                                     title="<?php echo htmlspecialchars($item['problem_reported']); ?>">
@@ -259,7 +259,7 @@ require_once '../../includes/sidebar.php';
                                 </td>
 
                                 <!-- Assigned Technician -->
-                                <td onclick="event.stopPropagation();">
+                                <td onclick="event.stopPropagation();" style="white-space: nowrap; min-width: 140px;">
                                     <?php if ($item['tech_name']): ?>
                                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                                             <span
@@ -285,7 +285,7 @@ require_once '../../includes/sidebar.php';
                                         <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
-                                <td>
+                                <td style="min-width: 130px;">
                                     <?php
                                     $statusColors = [
                                         'received' => 'blue',
@@ -310,7 +310,7 @@ require_once '../../includes/sidebar.php';
                                     ];
                                     $label = $statusLabels[$item['status']] ?? $item['status'];
                                     ?>
-                                    <span class="status-badge status-<?php echo $color; ?>">
+                                    <span class="status-badge status-<?php echo $color; ?>" style="display: inline-flex; white-space: nowrap;">
                                         <?php echo $label; ?>
                                     </span>
                                 </td>
