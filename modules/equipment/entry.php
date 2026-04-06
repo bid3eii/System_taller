@@ -161,7 +161,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $is_third = $is_warranty_mode ? 0 : 1;
 
-    if (empty($client_id) && !empty($c_name)) {
+    if ($is_warranty_mode && empty($client_id) && empty($c_name)) {
+        // Automatic Bodega Assignment
+        $stmtBodega = $pdo->prepare("SELECT id FROM clients WHERE name = 'Bodega - Inventario' LIMIT 1");
+        $stmtBodega->execute();
+        $bodega = $stmtBodega->fetch();
+        if ($bodega) {
+            $client_id = $bodega['id'];
+        } else {
+            $stmtNewB = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, is_third_party, created_at) VALUES ('Bodega - Inventario', 'N/A', '', '', 'Bodega Local', 0, ?)");
+            $stmtNewB->execute([get_local_datetime()]);
+            $client_id = $pdo->lastInsertId();
+        }
+    } elseif (empty($client_id) && !empty($c_name)) {
         // Find Existing by Name or Tax ID to prevent duplicates
         $stmtCheck = $pdo->prepare("SELECT id FROM clients WHERE name = ? OR (tax_id = ? AND tax_id != '') LIMIT 1");
         $stmtCheck->execute([$c_name, $c_tax]);
@@ -636,12 +648,12 @@ require_once '../../includes/sidebar.php';
                     <div class="modern-grid" style="grid-template-columns: repeat(2, 1fr);">
                         <!-- Fila 1 -->
                         <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Nombre Completo *</label>
+                            <label class="form-label">Nombre Completo <?php echo $is_warranty_mode ? '(Opcional)' : '*'; ?></label>
                             <div class="input-group">
                                 <input type="hidden" name="client_id"
                                     value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
                                 <input type="text" name="client_name_input" class="form-control"
-                                    placeholder="Nombre completo del cliente" required
+                                    placeholder="Nombre completo del cliente" <?php echo $is_warranty_mode ? '' : 'required'; ?>
                                     value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>"
                                     autocomplete="off">
                                 <i class="ph ph-user input-icon" style="color: var(--primary-500);"></i>
@@ -650,10 +662,10 @@ require_once '../../includes/sidebar.php';
 
                         <!-- Fila 2 -->
                         <div class="form-group">
-                            <label class="form-label">Cédula/RUC *</label>
+                            <label class="form-label">Cédula/RUC <?php echo $is_warranty_mode ? '' : '*'; ?></label>
                             <div class="input-group">
                                 <input type="text" name="client_tax_id" class="form-control"
-                                    placeholder="Número de identificación" required
+                                    placeholder="Número de identificación" <?php echo $is_warranty_mode ? '' : 'required'; ?>
                                     value="<?php echo $edit_order ? ($edit_order['tax_id'] ?? '') : ''; ?>"
                                     autocomplete="off">
                                 <i class="ph ph-address-book input-icon"></i>
@@ -661,10 +673,10 @@ require_once '../../includes/sidebar.php';
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Teléfono *</label>
+                            <label class="form-label">Teléfono <?php echo $is_warranty_mode ? '' : '*'; ?></label>
                             <div class="input-group">
                                 <input type="text" name="client_phone" class="form-control" placeholder="Ej. 5555-4444"
-                                    required
+                                    <?php echo $is_warranty_mode ? '' : 'required'; ?>
                                     value="<?php echo $edit_order ? htmlspecialchars($edit_order['phone'] ?? '') : ''; ?>">
                                 <i class="ph ph-phone input-icon"></i>
                             </div>
