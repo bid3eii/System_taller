@@ -200,7 +200,7 @@ require_once '../../includes/sidebar.php';
             </div>
         </div>
         <div class="table-container" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
-            <table id="activeTable" style="width: 100%; min-width: 1200px; table-layout: auto;">
+            <table id="activeTable" style="width: 100%; min-width: 1000px; table-layout: auto;">
                 <thead>
                     <tr>
                         <th class="sortable" data-column="0">
@@ -218,7 +218,7 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="3">
                             No. Serie <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
-                        <th>Falla Reportada</th>
+                        <!-- Falla Reportada column removed -->
                         <!-- Technical Column -->
                         <th class="sortable" data-column="5">
                             Técnico <i class="ph ph-caret-up-down sort-icon"></i>
@@ -253,10 +253,7 @@ require_once '../../includes/sidebar.php';
                                     <span
                                         class="text-sm font-medium" style="white-space: nowrap;"><?php echo htmlspecialchars($item['serial_number']); ?></span>
                                 </td>
-                                <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                                    title="<?php echo htmlspecialchars($item['problem_reported']); ?>">
-                                    <?php echo htmlspecialchars($item['problem_reported']); ?>
-                                </td>
+                                <!-- Falla Reportada column removed -->
 
                                 <!-- Assigned Technician -->
                                 <td onclick="event.stopPropagation();" style="white-space: nowrap; min-width: 140px;">
@@ -372,7 +369,7 @@ require_once '../../includes/sidebar.php';
             </div>
         </div>
         <div class="table-container" style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
-            <table id="historyTable" style="width: 100%; min-width: 1200px; table-layout: auto;">
+            <table id="historyTable" style="width: 100%; min-width: 1000px; table-layout: auto;">
                 <thead>
                     <tr>
                         <th class="sortable" data-column="0">
@@ -390,7 +387,6 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="3">
                             No. Serie <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
-                        <th>Falla Reportada</th>
                         <th class="sortable" data-column="5">
                             Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
@@ -424,10 +420,7 @@ require_once '../../includes/sidebar.php';
                                     <span
                                         class="text-sm font-medium"><?php echo htmlspecialchars($item['serial_number']); ?></span>
                                 </td>
-                                <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                                    title="<?php echo htmlspecialchars($item['problem_reported']); ?>">
-                                    <?php echo htmlspecialchars($item['problem_reported']); ?>
-                                </td>
+                                <!-- Falla Reportada column removed -->
                                 <td>
                                     <?php if ($item['tech_name']): ?>
                                         <span class="text-sm"><?php echo htmlspecialchars($item['tech_name']); ?></span>
