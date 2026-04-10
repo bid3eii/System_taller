@@ -202,6 +202,7 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td>
                                     <div class="fw-medium"><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></div>
+                                    <div class="text-xs text-muted" style="opacity: 0.7;">S/N: <?php echo htmlspecialchars($order['serial_number'] ?: '-'); ?></div>
                                 </td>
                                 <td>
                                     <?php if ($order['service_type'] == 'warranty'): ?>

@@ -169,6 +169,7 @@ header("Expires: 0");
                 <th style="width: 150px;">Equipo</th>
                 <th style="width: 120px;">Marca</th>
                 <th style="width: 150px;">Modelo</th>
+                <th style="width: 150px;">Serie</th>
                 <th style="width: 100px;">Tipo</th>
                 <th style="width: 120px;">Estado</th>
                 <th style="width: 100px;">Diagnóstico</th>
@@ -212,6 +213,7 @@ header("Expires: 0");
                     <td><?php echo htmlspecialchars($row['equipment_type']); ?></td>
                     <td><?php echo htmlspecialchars($row['brand']); ?></td>
                     <td><?php echo htmlspecialchars($row['model']); ?></td>
+                    <td><?php echo htmlspecialchars($row['serial_number']); ?></td>
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
                     <td class="<?php echo $sClass; ?>"><?php echo $label; ?></td>
                     <td><?php echo !empty($row['diagnosis_number']) ? '#'.str_pad($row['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></td>
