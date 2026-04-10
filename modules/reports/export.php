@@ -166,9 +166,7 @@ header("Expires: 0");
                 <th style="width: 100px;">Fecha</th>
                 <th style="width: 200px;">Cliente</th>
                 <th style="width: 120px;">Teléfono</th>
-                <th style="width: 150px;">Equipo</th>
-                <th style="width: 120px;">Marca</th>
-                <th style="width: 150px;">Modelo</th>
+                <th style="width: 200px;">Equipo</th>
                 <th style="width: 150px;">Serie</th>
                 <th style="width: 100px;">Tipo</th>
                 <th style="width: 120px;">Estado</th>
@@ -210,9 +208,7 @@ header("Expires: 0");
                         ?>
                     </td>
                     <td><?php echo htmlspecialchars($row['client_phone']); ?></td>
-                    <td><?php echo htmlspecialchars($row['equipment_type']); ?></td>
-                    <td><?php echo htmlspecialchars($row['brand']); ?></td>
-                    <td><?php echo htmlspecialchars($row['model']); ?></td>
+                    <td class="text-left"><?php echo htmlspecialchars($row['brand'] . ' ' . $row['model']); ?></td>
                     <td><?php echo htmlspecialchars($row['serial_number']); ?></td>
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
                     <td class="<?php echo $sClass; ?>"><?php echo $label; ?></td>
