@@ -22,6 +22,7 @@ $end_date   = isset($_GET['end'])   ? $_GET['end'] : '';
 $sql = "
     SELECT 
         so.id, 
+        so.display_id,
         so.entry_date, 
         so.owner_name,
         c.name as contact_name, 
@@ -198,7 +199,7 @@ header("Expires: 0");
                     $typeLabel = ($row['service_type'] === 'warranty') ? 'GARANTÍA' : 'SERVICIO';
                 ?>
                 <tr>
-                    <td class="bold">#<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?></td>
+                    <td class="bold"><?php echo get_order_number($row); ?></td>
                     <td><?php echo date('d/m/Y', strtotime($row['entry_date'])); ?></td>
                     <td class="text-left bold">
                         <?php 
