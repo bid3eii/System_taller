@@ -15,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $equipment_id = clean($_POST['equipment_id'] ?? '');
     
     $product_code = clean($_POST['product_code'] ?? '');
-    $brand = clean($_POST['brand'] ?? '');
-    $model = clean($_POST['model'] ?? '');
+    $equipment_name = clean($_POST['equipment_name'] ?? '');
     $serial = clean($_POST['serial_number'] ?? '');
     $sales_invoice = clean($_POST['sales_invoice_number'] ?? '');
     $warranty_months = (int)clean($_POST['warranty_months'] ?? 0);
+    $edit_reason = clean($_POST['edit_reason'] ?? 'Sin motivo especificado');
 
     if (empty($service_order_id) || empty($equipment_id)) {
         die("Error: IDs de referencia no encontrados.");
@@ -28,9 +28,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
 
-        // 1. Update Equipment details
-        $stmtE = $pdo->prepare("UPDATE equipments SET brand = ?, model = ?, serial_number = ? WHERE id = ?");
-        $stmtE->execute([$brand, $model, $serial, $equipment_id]);
+        $return_to = clean($_POST['return_to'] ?? 'database.php');
+
+        // 0. Fetch OLD values for audit log
+        $stmtOld = $pdo->prepare("
+            SELECT e.brand, e.model, e.serial_number, w.product_code, w.sales_invoice_number, w.duration_months
+            FROM service_orders so
+            JOIN equipments e ON so.equipment_id = e.id
+            JOIN warranties w ON w.service_order_id = so.id
+            WHERE so.id = ?
+        ");
+        $stmtOld->execute([$service_order_id]);
+        $old_data = $stmtOld->fetch(PDO::FETCH_ASSOC);
+
+        // 1. Update Equipment details (Saving in brand, model stays empty for consistency with new entry style)
+        $stmtE = $pdo->prepare("UPDATE equipments SET brand = ?, model = '', serial_number = ? WHERE id = ?");
+        $stmtE->execute([$equipment_name, $serial, $equipment_id]);
 
         // 2. Fetch current warranty dates for recalculation
         $stmtW_orig = $pdo->prepare("SELECT start_date, master_entry_date FROM warranties WHERE service_order_id = ?");
@@ -40,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Recalculate end_date based on months
         $end_date = null;
         if ($warranty_months > 0) {
-            // Use existing start_date, or master_entry_date, or today if everything is empty
             $base_date_str = (!empty($currW['start_date']) && $currW['start_date'] != '0000-00-00') ? $currW['start_date'] : 
                             ((!empty($currW['master_entry_date']) && $currW['master_entry_date'] != '0000-00-00') ? $currW['master_entry_date'] : date('Y-m-d'));
             
@@ -53,15 +65,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmtW = $pdo->prepare("UPDATE warranties SET product_code = ?, sales_invoice_number = ?, duration_months = ?, end_date = ? WHERE service_order_id = ?");
         $stmtW->execute([$product_code, $sales_invoice, $warranty_months, $end_date, $service_order_id]);
 
-        // 4. Log in History
-        $stmtLog = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");
-        $history_notes = "Registro editado por SuperAdmin. Cambios realizados en Equipamiento/Garantía.";
-        $stmtLog->execute([$service_order_id, $history_notes, $_SESSION['user_id'], get_local_datetime()]);
+        // 4. Log in Audit and History
+        $new_data = [
+            'brand' => $equipment_name,
+            'serial_number' => $serial,
+            'product_code' => $product_code,
+            'sales_invoice_number' => $sales_invoice,
+            'duration_months' => $warranty_months,
+            'end_date' => $end_date
+        ];
+        
+        log_audit($pdo, 'warranties/equipments', $service_order_id, 'UPDATE', $old_data, $new_data, $edit_reason);
+
+        $history_notes = "Registro editado por SuperAdmin. Motivo: " . $edit_reason;
+        $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");
+        $stmtH->execute([$service_order_id, $history_notes, $_SESSION['user_id'], get_local_datetime()]);
 
         $pdo->commit();
-        header("Location: database.php?msg=updated");
+        header("Location: " . $return_to . "?msg=updated");
         exit;
-
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();

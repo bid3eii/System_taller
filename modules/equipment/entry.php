@@ -867,6 +867,7 @@ require_once '../../includes/sidebar.php';
                                     <i class="ph ph-identification-card input-icon"></i>
                                 </div>
                                 <div class="search-results" id="client_tax_results_std"></div>
+                                <small id="cedula-validation-msg" class="text-muted" style="display: none; font-size: 0.75rem; margin-top: 5px;"></small>
                             </div>
 
                             <div class="form-group">
@@ -1048,7 +1049,7 @@ require_once '../../includes/sidebar.php';
                                 style="background: var(--bg-body); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color);">
                                 <h4
                                     style="margin: 0 0 1rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary-600);">
-                                    <i class="ph ph-user-circle" style="font-size: 1.2rem;"></i> Datos del Cliente
+                                    <i class="ph ph-user-circle" style="font-size: 1.2rem;"></i> Información de quien entrega el equipo
                                 </h4>
                                 <div id="summary-client-info"
                                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.9rem;">
@@ -1069,6 +1070,7 @@ require_once '../../includes/sidebar.php';
                                             <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
                                                 <th style="padding: 0.5rem;">#</th>
                                                 <th style="padding: 0.5rem;">Equipo / Serie</th>
+                                                <th style="padding: 0.5rem;">Dueño / Propietario</th>
                                                 <th style="padding: 0.5rem;">Problema</th>
                                             </tr>
                                         </thead>
@@ -1193,6 +1195,15 @@ require_once '../../includes/sidebar.php';
                         // Enforce no whitespace-only for required fields
                         if (input.hasAttribute('required') && !input.value.trim()) {
                             isInputValid = false;
+                        }
+
+                        // Custom Cédula Validation (Step 1)
+                        if (input.id === 'client_tax_id_std') {
+                            const cleanLength = input.value.replace(/[^0-9a-zA-Z]/g, '').length;
+                            if (cleanLength > 0 && cleanLength < 14) {
+                                isInputValid = false;
+                                errorMsg = 'La cédula debe tener al menos 14 caracteres';
+                            }
                         }
 
                         if (!isInputValid) {
@@ -1432,7 +1443,7 @@ require_once '../../includes/sidebar.php';
                     const clientInfoDiv = document.getElementById('summary-client-info');
                     clientInfoDiv.innerHTML = `
                         <div><strong>Nombre:</strong> ${clientName}</div>
-                        <div><strong>ID/RUC:</strong> ${clientTax || '-'}</div>
+                        <div><strong>Cédula:</strong> ${clientTax || '-'}</div>
                         <div><strong>Teléfono:</strong> ${clientPhone}</div>
                         <div><strong>Email:</strong> ${clientEmail || '-'}</div>
                     `;
@@ -1446,6 +1457,7 @@ require_once '../../includes/sidebar.php';
                         const serial = block.querySelector('[name="serial_number[]"]').value;
                         const equipo = block.querySelector('[name="brand[]"]').value;
                         const factura = block.querySelector('[name="invoice_number[]"]').value;
+                        const owner = block.querySelector('[name="owner_name[]"]').value || '<span class="text-muted" style="font-size: 0.75rem;">Mismo que entrega</span>';
                         const problem = block.querySelector('[name="problem_reported[]"]').value;
 
                         const row = document.createElement('tr');
@@ -1456,6 +1468,7 @@ require_once '../../includes/sidebar.php';
                                 <strong>${equipo}</strong><br>
                                 <span class="text-muted" style="font-size: 0.75rem;">S/N: ${serial} ${factura ? '| Fact: ' + factura : ''}</span>
                             </td>
+                            <td style="padding: 0.75rem;">${owner}</td>
                             <td style="padding: 0.75rem;">${problem}</td>
                         `;
                         tbody.appendChild(row);
@@ -1464,6 +1477,56 @@ require_once '../../includes/sidebar.php';
 
                 <?php if (!$is_warranty_mode): ?>
                     showStep(currentStep);
+
+                    // Cédula (Tax ID) Masking & Validation
+                    const cedulaInput = document.getElementById('client_tax_id_std');
+                    const cedulaMsg = document.getElementById('cedula-validation-msg');
+
+                    if (cedulaInput) {
+                        cedulaInput.addEventListener('input', function(e) {
+                            let value = e.target.value.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
+                            
+                            // Limit to 14 characters max
+                            if (value.length > 14) {
+                                value = value.slice(0, 14);
+                            }
+
+                            let formatted = '';
+
+                            if (value.length > 0) {
+                                // Pattern: 000-000000-0000A
+                                if (value.length <= 3) {
+                                    formatted = value;
+                                } else if (value.length <= 9) {
+                                    formatted = value.slice(0, 3) + '-' + value.slice(3);
+                                } else {
+                                    formatted = value.slice(0, 3) + '-' + value.slice(3, 9) + '-' + value.slice(9, 14);
+                                }
+                            }
+
+                            e.target.value = formatted;
+
+                            // Validation message
+                            let cleanLength = value.length;
+                            if (cleanLength > 0 && cleanLength < 14) {
+                                cedulaMsg.style.display = 'block';
+                                cedulaMsg.style.color = 'var(--danger)';
+                                cedulaMsg.innerHTML = `<i class="ph ph-warning"></i> Mínimo 14 caracteres (falta${14 - cleanLength > 1 ? 'n' : ''} ${14 - cleanLength})`;
+                                cedulaInput.style.borderColor = 'var(--danger)';
+                            } else if (cleanLength >= 14) {
+                                cedulaMsg.style.display = 'block';
+                                cedulaMsg.style.color = 'var(--success)';
+                                cedulaMsg.innerHTML = `<i class="ph ph-check-circle"></i> Formato válido`;
+                                cedulaInput.style.borderColor = 'var(--success)';
+                                setTimeout(() => {
+                                    if (value.length >= 14) cedulaMsg.style.display = 'none';
+                                }, 3000);
+                            } else {
+                                cedulaMsg.style.display = 'none';
+                                cedulaInput.style.borderColor = '';
+                            }
+                        });
+                    }
                 <?php endif; ?>
             </script>
 

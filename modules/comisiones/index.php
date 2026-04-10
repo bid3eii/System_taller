@@ -134,6 +134,17 @@ if (isset($_SESSION['error'])) {
     .table-row-hover:hover {
         background-color: rgba(255, 255, 255, 0.03);
     }
+
+    /* Date picker icon visibility fix */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1) brightness(0.9);
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s ease;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+    }
 </style>
 
 <?php if ($is_admin): ?>
@@ -448,6 +459,7 @@ if (isset($_SESSION['error'])) {
                                                             '<?php echo addslashes(htmlspecialchars($c['vendedor'] ?? '')); ?>'
                                                         )">
                                                         <i class="ph ph-check"></i>
+                                                    </button>
                                                 <?php endif; ?>
                                             </div>
                                         </td>
@@ -834,30 +846,31 @@ function openPayModal(id, caso, cliente, factura, fecha, lugar, vendedor) {
     
     const inputFactura = document.getElementById('modalFactura');
     const inputFecha = document.getElementById('modalFechaFact');
+    const inputLugar = document.getElementById('modalLugar');
+    const inputVendedor = document.getElementById('modalVendedor');
     
-    inputFactura.value = factura;
-    inputFecha.value = fecha;
-    document.getElementById('modalLugar').value    = lugar;
-    document.getElementById('modalVendedor').value  = ''; // Empty by default
+    inputFactura.value  = factura;
+    inputFecha.value    = fecha;
+    inputLugar.value    = lugar;
+    inputVendedor.value = vendedor;
     
-    // Block editing if the invoice is already set
-    if (factura && factura.trim() !== '' && factura !== 'Pendiente') {
-        inputFactura.setAttribute('readonly', true);
-        inputFactura.style.backgroundColor = 'rgba(0,0,0,0.6)';
-        inputFactura.style.cursor = 'not-allowed';
-        
-        inputFecha.setAttribute('readonly', true);
-        inputFecha.style.backgroundColor = 'rgba(0,0,0,0.6)';
-        inputFecha.style.cursor = 'not-allowed';
-    } else {
-        inputFactura.removeAttribute('readonly');
-        inputFactura.style.backgroundColor = 'rgba(0,0,0,0.3)';
-        inputFactura.style.cursor = 'text';
-        
-        inputFecha.removeAttribute('readonly');
-        inputFecha.style.backgroundColor = 'rgba(0,0,0,0.3)';
-        inputFecha.style.cursor = 'text';
-    }
+    // Helper to lock fields
+    const lockField = (el) => {
+        if (el.value && el.value.trim() !== '' && el.value !== 'Pendiente' && el.value !== 'Oficina') {
+            el.setAttribute('readonly', true);
+            el.style.backgroundColor = 'rgba(0,0,0,0.6)';
+            el.style.cursor = 'not-allowed';
+        } else {
+            el.removeAttribute('readonly');
+            el.style.backgroundColor = 'rgba(0,0,0,0.3)';
+            el.style.cursor = 'text';
+        }
+    };
+
+    lockField(inputFactura);
+    lockField(inputFecha);
+    lockField(inputLugar);
+    lockField(inputVendedor);
     
     const modal = document.getElementById('payModal');
     modal.style.display = 'flex';

@@ -1,7 +1,7 @@
 <?php
 // Detect environment based on server name
 $whitelist = ['127.0.0.1', '::1', 'localhost','10.4.4.48'];
-$is_local = in_array($_SERVER['SERVER_NAME'], $whitelist);
+$is_local = (isset($_SERVER['SERVER_NAME']) && in_array($_SERVER['SERVER_NAME'], $whitelist)) || (php_sapi_name() === 'cli');
 
 if ($is_local) {
     // Local Credentials (XAMPP)

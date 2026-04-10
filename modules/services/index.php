@@ -144,7 +144,7 @@ $totalActive = $countActStmt->fetchColumn();
 $totalPages_act = ceil($totalActive / $limit);
 $sqlActive = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.payment_status, so.service_type,
+        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.payment_status, so.service_type, so.equipment_id, so.accessories_received,
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
@@ -185,7 +185,7 @@ $totalPages_del = ceil($totalDelivered / $limit);
 
 $sqlDelivered = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.payment_status,
+        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.payment_status, so.service_type, so.equipment_id, so.accessories_received,
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
@@ -264,7 +264,7 @@ require_once '../../includes/sidebar.php';
                         <?php if (can_access_module('manage_services', $pdo)): ?>
                         <th>Finanzas</th>
                         <?php endif; ?>
-                        <th style="text-align: right;">Acciones</th>
+                        <th style="text-align: center;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -362,18 +362,8 @@ require_once '../../includes/sidebar.php';
                                     </span>
                                 </td>
                                 <?php endif; ?>
-                                <td style="text-align: right;" onclick="event.stopPropagation();">
-                                    <?php if (can_access_module('manage_services', $pdo)): ?>
-                                        <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-primary"
-                                            style="padding: 0.4rem 1rem; font-size: 0.85rem;">
-                                            <i class="ph ph-gear"></i> Gestionar
-                                        </a>
-                                    <?php else: ?>
-                                        <a href="view.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
-                                            style="padding: 0.4rem 1rem; font-size: 0.85rem;">
-                                            <i class="ph ph-eye"></i> Ver Detalle
-                                        </a>
-                                    <?php endif; ?>
+                                <td style="text-align: center;" onclick="event.stopPropagation();">
+                                    <?php echo render_service_order_actions($item, 'services', $pdo); ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -461,7 +451,7 @@ require_once '../../includes/sidebar.php';
                         <?php if (can_access_module('manage_services', $pdo)): ?>
                         <th>Finanzas</th>
                         <?php endif; ?>
-                        <th style="text-align: right;">Acciones</th>
+                        <th style="text-align: center;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -518,11 +508,8 @@ require_once '../../includes/sidebar.php';
                                     </span>
                                 </td>
                                 <?php endif; ?>
-                                <td style="text-align: right;" onclick="event.stopPropagation();">
-                                    <a href="manage.php?id=<?php echo $item['id']; ?>" class="btn btn-secondary"
-                                        style="padding: 0.4rem 1rem; font-size: 0.85rem;">
-                                        <i class="ph ph-eye"></i> Ver
-                                    </a>
+                                <td style="text-align: center;" onclick="event.stopPropagation();">
+                                    <?php echo render_service_order_actions($item, 'services', $pdo); ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -799,14 +786,21 @@ require_once '../../includes/sidebar.php';
         document.getElementById('assignModal').style.display = 'none';
     }
 
+    // openEditModal is now handled by the shared component in includes/modals/edit_service_modal.php
+
+
     // Close on outside click
-    document.getElementById('assignModal').addEventListener('click', function (e) {
-        if (e.target === this) {
-            closeAssignModal();
-        }
+    window.addEventListener('click', function (e) {
+        const assignModal = document.getElementById('assignModal');
+        const editModal = document.getElementById('editEntryModal');
+        if (e.target === assignModal) closeAssignModal();
+        if (e.target === editModal) closeEditModal();
     });
 </script>
 
 <?php
+// Unified Modals
+require_once '../../includes/modals/edit_service_modal.php';
+
 require_once '../../includes/footer.php';
 ?>

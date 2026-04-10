@@ -174,6 +174,17 @@
             ];
         }
 
+        // Audit Log (SuperAdmin Only)
+        if ($_SESSION['role_name'] === 'SuperAdmin') {
+            $menu_items['audit_log'] = [
+                'type' => 'link',
+                'url' => BASE_URL . 'modules/admin/audit_logs.php',
+                'icon' => 'ph-shield-check',
+                'label' => 'Auditoría',
+                'active' => strpos($_SERVER['REQUEST_URI'], 'modules/admin/audit_logs.php') !== false
+            ];
+        }
+
         // 3. Determine Final Order
         $default_keys = array_keys($menu_items);
         // If user has saved order, prioritize it

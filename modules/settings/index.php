@@ -60,6 +60,7 @@ $defined_modules = [
     'project_history' => 'Historial Proyectos',
     'anexos' => 'Anexos Yazaki',
     'proyectos' => 'Gestión de Proyectos',
+    'edit_entries' => 'Permitir Editar Entradas de Servicios/Garantías',
 ];
 
 try {
@@ -1100,6 +1101,7 @@ require_once '../../includes/sidebar.php';
                         'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
                         'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
                         'proyectos' => ['label' => 'Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-kanban'],
+                        'edit_entries' => ['label' => 'Editar Entradas', 'cat' => 'Gestión', 'icon' => 'ph-pencil-simple'],
 
                         'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
                         'manage_services' => ['label' => 'Cierre / Facturación', 'cat' => 'Finanzas', 'icon' => 'ph-receipt'],
@@ -1231,6 +1233,7 @@ require_once '../../includes/sidebar.php';
                         'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
                         'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
                         'proyectos' => ['label' => 'Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-kanban'],
+                        'edit_entries' => ['label' => 'Editar Entradas', 'cat' => 'Gestión', 'icon' => 'ph-pencil-simple'],
 
                         'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
                         'manage_services' => ['label' => 'Cierre / Facturación', 'cat' => 'Finanzas', 'icon' => 'ph-receipt'],

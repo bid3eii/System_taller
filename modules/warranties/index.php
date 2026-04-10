@@ -101,7 +101,7 @@ $totalPages_act = ceil($totalActive / $limit);
 
 $sqlActive = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.service_type,
+        so.id, so.status, so.problem_reported, so.accessories_received, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.service_type, so.equipment_id,
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
@@ -110,7 +110,6 @@ $sqlActive = "
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
-    LEFT JOIN warranties w ON so.id = w.service_order_id
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     $whereActive
     ORDER BY so.created_at DESC
@@ -147,7 +146,7 @@ $totalPages_del = ceil($totalDelivered / $limit);
 
 $sqlDelivered = "
     SELECT 
-        so.id, so.status, so.problem_reported, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.service_type,
+        so.id, so.status, so.problem_reported, so.accessories_received, so.entry_date, so.invoice_number, so.assigned_tech_id, so.display_id, so.owner_name, so.service_type, so.equipment_id,
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
@@ -156,7 +155,6 @@ $sqlDelivered = "
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
     LEFT JOIN clients reg_owner ON e.client_id = reg_owner.id
-    LEFT JOIN warranties w ON so.id = w.service_order_id
     LEFT JOIN users tech ON so.assigned_tech_id = tech.id
     $whereDelivered
     ORDER BY so.created_at DESC
@@ -226,6 +224,7 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="6" style="min-width: 120px;">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th style="text-align: center;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -311,6 +310,9 @@ require_once '../../includes/sidebar.php';
                                         <?php echo $label; ?>
                                     </span>
                                 </td>
+                                <td style="text-align: center;" onclick="event.stopPropagation();">
+                                    <?php echo render_service_order_actions($item, 'warranties', $pdo); ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -393,6 +395,7 @@ require_once '../../includes/sidebar.php';
                         <th class="sortable" data-column="6">
                             Estado <i class="ph ph-caret-up-down sort-icon"></i>
                         </th>
+                        <th style="text-align: center;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -430,6 +433,9 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <td>
                                     <span class="status-badge status-gray">Entregado</span>
+                                </td>
+                                <td style="text-align: center;" onclick="event.stopPropagation();">
+                                    <?php echo render_service_order_actions($item, 'warranties', $pdo); ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -707,14 +713,20 @@ require_once '../../includes/sidebar.php';
         document.getElementById('assignModal').style.display = 'none';
     }
 
+    // openEditModal is now handled by the shared component in includes/modals/edit_service_modal.php
+
+
     // Close on outside click
-    document.getElementById('assignModal').addEventListener('click', function (e) {
-        if (e.target === this) {
-            closeAssignModal();
-        }
+    window.addEventListener('click', function (e) {
+        const assignModal = document.getElementById('assignModal');
+        if (e.target === assignModal) closeAssignModal();
+        if (e.target === editModal) closeEditModal();
     });
 </script>
 
 <?php
+// Unified Modals
+require_once '../../includes/modals/edit_service_modal.php';
+
 require_once '../../includes/footer.php';
 ?>

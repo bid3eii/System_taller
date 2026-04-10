@@ -27,15 +27,17 @@ $stmt = $pdo->prepare("
     SELECT 
         so.*,
         c.id as client_id,
-        c.name as client_name, 
+        c.name as contact_client_name, 
         c.phone,
         e.brand, 
         e.model, 
         e.serial_number, 
-        e.type as equipment_type
+        e.type as equipment_type,
+        co.name as registered_owner_name
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
+    LEFT JOIN clients co ON e.client_id = co.id
     WHERE so.id IN ($placeholders)
     ORDER BY so.id ASC
 ");
@@ -46,15 +48,16 @@ if (empty($orders)) {
     die("No se encontraron órdenes.");
 }
 
-// Validate all orders belong to same client
-$firstClientId = $orders[0]['client_id'];
-foreach ($orders as $order) {
-    if ($order['client_id'] != $firstClientId) {
-        die("Error: Todos los equipos deben pertenecer al mismo cliente.");
-    }
+// Logic to determine the Actual Client Name (Prioritizing Business/Owner)
+foreach ($orders as &$o) {
+    $o['final_client_name'] = trim(!empty($o['owner_name']) ? $o['owner_name'] : 
+                              (!empty($o['registered_owner_name']) ? $o['registered_owner_name'] : 
+                              $o['contact_client_name']));
 }
+unset($o);
 
 $clientData = $orders[0];
+$finalClientDisplayName = $clientData['final_client_name'];
 $equipmentCount = count($orders);
 
 // Handle Form Submission
@@ -130,8 +133,8 @@ require_once '../../includes/sidebar.php';
             </h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div>
-                    <span class="text-muted d-block text-sm">Nombre</span>
-                    <span class="font-medium" style="font-size: 1.1rem;"><?php echo htmlspecialchars($clientData['client_name']); ?></span>
+                    <span class="text-muted d-block text-sm">Nombre del Cliente / Empresa</span>
+                    <span class="font-medium" style="font-size: 1.1rem;"><?php echo htmlspecialchars($finalClientDisplayName); ?></span>
                 </div>
                 <div>
                     <span class="text-muted d-block text-sm">Teléfono</span>
@@ -158,13 +161,17 @@ require_once '../../includes/sidebar.php';
                     $stmtRepair->execute([$order['id']]);
                     $latestRepairNote = $stmtRepair->fetchColumn();
                 ?>
-                <div style="display: flex; align-items: start; gap: 1rem; padding: 1rem; background: var(--bg-hover); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: start; gap: 1rem; padding: 1rem; background: var(--bg-hover); border-radius: 8px; border: 1px solid var(--border-color); position: relative;">
                         <div style="background: #10b981; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; margin-top: 0.25rem;">
                             <?php echo $index + 1; ?>
                         </div>
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; margin-bottom: 0.25rem;">
-                                <?php echo htmlspecialchars($order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model']); ?>
+                            <div style="font-weight: 600; margin-bottom: 0.25rem; display: flex; justify-content: space-between; align-items: center;">
+                                <span><?php echo htmlspecialchars($order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model']); ?></span>
+                                <button type="button" class="btn-icon" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border: none; width: 28px; height: 28px; border-radius: 6px;" 
+                                    onclick="removeItem(<?php echo $order['id']; ?>)" title="Quitar de esta entrega">
+                                    <i class="ph ph-trash"></i>
+                                </button>
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
                                 Serie: <?php echo htmlspecialchars($order['serial_number']); ?> | 
@@ -191,7 +198,7 @@ require_once '../../includes/sidebar.php';
             <div class="form-group">
                 <label class="form-label">Nombre Completo *</label>
                 <div class="input-group">
-                    <input type="text" name="receiver_name" class="form-control" placeholder="Nombre de la persona que retira" required value="<?php echo htmlspecialchars($clientData['client_name']); ?>">
+                    <input type="text" name="receiver_name" class="form-control" placeholder="Nombre de la persona que retira" required value="<?php echo htmlspecialchars($finalClientDisplayName); ?>">
                     <i class="ph ph-user input-icon"></i>
                 </div>
                 <small class="text-muted">Por defecto se sugiere el nombre del cliente titular.</small>
@@ -233,6 +240,46 @@ require_once '../../includes/sidebar.php';
         </form>
     </div>
 </div>
+
+<script>
+function removeItem(id) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const idsString = urlParams.get('ids');
+    if (!idsString) return;
+
+    let ids = idsString.split(',');
+    ids = ids.filter(item => parseInt(item) !== id);
+
+    if (ids.length === 0) {
+        window.location.href = 'exit.php';
+    } else {
+        urlParams.set('ids', ids.join(','));
+        window.location.search = urlParams.toString();
+    }
+}
+
+// ID (Cedula) Masking
+document.querySelector('input[name="receiver_id"]').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
+    let formatted = '';
+
+    if (value.length > 0) {
+        // Pattern: 000-000000-0000A
+        if (value.length <= 3) {
+            formatted = value;
+        } else if (value.length <= 9) {
+            formatted = value.slice(0, 3) + '-' + value.slice(3);
+        } else {
+            formatted = value.slice(0, 3) + '-' + value.slice(3, 9) + '-' + value.slice(9, 14);
+        }
+    }
+
+    e.target.value = formatted;
+});
+
+// Phone masking if name="phone" existed but it's not here, 
+// let's stick to receiver_id as requested
+</script>
 
 <?php
 require_once '../../includes/footer.php';

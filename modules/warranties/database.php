@@ -223,16 +223,22 @@ $records = $stmt->fetchAll();
                                 </td>
                                 <td>
                                     <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start;">
-                                        <button class="btn-icon" onclick='openModal(<?php echo json_encode($r); ?>)' title="Ver Detalles">
+                                        <button class="btn-icon" 
+                                            data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' 
+                                            onclick="openModalFromBtn(this)" title="Ver Detalles">
                                             <i class="ph ph-eye"></i>
                                         </button>
                                         <?php if ($tab === 'stock'): ?>
-                                            <button class="btn-icon" onclick='openAssignModal(<?php echo json_encode($r); ?>)' title="Client Asignar / Vender" style="color: #10b981;">
+                                            <button class="btn-icon" 
+                                                data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>'
+                                                onclick="openAssignModalFromBtn(this)" title="Client Asignar / Vender" style="color: #10b981;">
                                                 <i class="ph ph-shopping-cart"></i>
                                             </button>
                                         <?php endif; ?>
                                         <?php if ($_SESSION['role_name'] === 'SuperAdmin'): ?>
-                                            <button class="btn-icon" onclick='openEditModal(<?php echo json_encode($r); ?>)' title="Editar Registro (SuperAdmin)" style="color: #f59e0b;">
+                                            <button class="btn-icon" 
+                                                data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>'
+                                                onclick="openEditModalFromBtn(this)" title="Editar Registro (SuperAdmin)" style="color: #f59e0b;">
                                                 <i class="ph ph-pencil-simple"></i>
                                             </button>
                                         <?php endif; ?>
@@ -388,36 +394,37 @@ $records = $stmt->fetchAll();
             <input type="hidden" name="equipment_id" id="edit_equipment_id">
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Equipo (Marca / Modelo)</label>
+                    <input type="text" name="equipment_name" id="edit_equipment_name" class="form-control" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label">Número de Serie</label>
+                    <input type="text" name="serial_number" id="edit_serial_number" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Factura Venta</label>
+                    <input type="text" name="sales_invoice_number" id="edit_sales_invoice" class="form-control">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
                     <label class="form-label">Código Producto</label>
                     <input type="text" name="product_code" id="edit_product_code" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Marca</label>
-                    <input type="text" name="brand" id="edit_brand" class="form-control" required>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                <div class="form-group">
-                    <label class="form-label">Modelo</label>
-                    <input type="text" name="model" id="edit_model" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Número de Serie</label>
-                    <input type="text" name="serial_number" id="edit_serial_number" class="form-control" required>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                <div class="form-group">
-                    <label class="form-label">Factura Venta</label>
-                    <input type="text" name="sales_invoice_number" id="edit_sales_invoice" class="form-control">
-                </div>
-                <div class="form-group">
                     <label class="form-label">Meses de Garantía</label>
                     <input type="number" name="warranty_months" id="edit_warranty_months" class="form-control">
                 </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label" style="color: #f59e0b; font-weight: bold;">Motivo del Cambio *</label>
+                <textarea name="edit_reason" class="form-control" required placeholder="Explica brevemente por qué se realiza este cambio (auditado)" style="min-height: 80px;"></textarea>
             </div>
 
             <div style="margin-top: 2.5rem; text-align: right; display: flex; justify-content: flex-end; gap: 1rem;">
@@ -431,12 +438,13 @@ $records = $stmt->fetchAll();
 </div>
 
 <script>
-function openModal(data) {
-    document.getElementById('m_code').innerText = data.product_code;
-    document.getElementById('m_serial').innerText = data.serial_number;
-    document.getElementById('m_client').innerText = data.client_name;
-    document.getElementById('m_equipment').innerText = data.brand + ' ' + data.model;
-    document.getElementById('m_invoice').innerText = data.sales_invoice_number;
+function openModalFromBtn(btn) {
+    const data = JSON.parse(btn.dataset.json);
+    document.getElementById('m_code').innerText = data.product_code || '-';
+    document.getElementById('m_serial').innerText = data.serial_number || '-';
+    document.getElementById('m_client').innerText = data.client_name || '-';
+    document.getElementById('m_equipment').innerText = (data.brand || '') + ' ' + (data.model || '');
+    document.getElementById('m_invoice').innerText = data.sales_invoice_number || 'N/A';
     document.getElementById('m_end').innerText = data.end_date ? data.end_date : 'N/A';
     document.getElementById('m_supplier').innerText = data.supplier_name || 'N/A';
     document.getElementById('m_master_inv').innerText = data.master_entry_invoice || 'N/A';
@@ -444,22 +452,30 @@ function openModal(data) {
     document.getElementById('detailModal').style.display = 'flex';
 }
 
-function openAssignModal(data) {
+function openAssignModalFromBtn(btn) {
+    const data = JSON.parse(btn.dataset.json);
     document.getElementById('assign_order_id').value = data.id;
     document.getElementById('assign_equipment_id').value = data.equipment_id;
-    document.getElementById('assign_equipment_name').innerText = data.brand + ' ' + data.model;
-    document.getElementById('assign_equipment_sn').innerText = 'S/N: ' + data.serial_number;
+    document.getElementById('assign_equipment_name').innerText = (data.brand || '') + ' ' + (data.model || '');
+    document.getElementById('assign_equipment_sn').innerText = 'S/N: ' + (data.serial_number || '');
     
     document.getElementById('assignForm').reset();
     document.getElementById('assignModal').style.display = 'flex';
 }
 
-function openEditModal(data) {
+function openEditModalFromBtn(btn) {
+    const data = JSON.parse(btn.dataset.json);
     document.getElementById('edit_order_id').value = data.id;
     document.getElementById('edit_equipment_id').value = data.equipment_id;
     document.getElementById('edit_product_code').value = data.product_code || '';
-    document.getElementById('edit_brand').value = data.brand || '';
-    document.getElementById('edit_model').value = data.model || '';
+    
+    // Combine Brand and Model
+    let equipmentName = data.brand || '';
+    if (data.model && data.model.trim() !== '') {
+        equipmentName += (equipmentName ? ' ' : '') + data.model;
+    }
+    document.getElementById('edit_equipment_name').value = equipmentName;
+    
     document.getElementById('edit_serial_number').value = data.serial_number || '';
     document.getElementById('edit_sales_invoice').value = data.sales_invoice_number || '';
     document.getElementById('edit_warranty_months').value = data.duration_months || 0;

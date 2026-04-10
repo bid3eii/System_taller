@@ -95,15 +95,15 @@ function can_access_module($module_name, $pdo)
 /**
  * Log an audit event
  */
-function log_audit($pdo, $table, $record_id, $action, $old_val_arr, $new_val_arr)
+function log_audit($pdo, $table, $record_id, $action, $old_val_arr, $new_val_arr, $reason = null)
 {
     $user_id = $_SESSION['user_id'] ?? null;
     $old_json = $old_val_arr ? json_encode($old_val_arr) : null;
     $new_json = $new_val_arr ? json_encode($new_val_arr) : null;
     $ip = $_SERVER['REMOTE_ADDR'];
 
-    $stmt = $pdo->prepare("INSERT INTO audit_logs (table_name, record_id, action, old_value, new_value, user_id, ip_address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$table, $record_id, $action, $old_json, $new_json, $user_id, $ip, get_local_datetime()]);
+    $stmt = $pdo->prepare("INSERT INTO audit_logs (table_name, record_id, action, reason, old_value, new_value, user_id, ip_address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$table, $record_id, $action, $reason, $old_json, $new_json, $user_id, $ip, get_local_datetime()]);
 }
 
 /**
@@ -281,4 +281,60 @@ function has_role($roles, $pdo)
 
     return false;
 }
+
+/**
+ * Renders unified action buttons for Service and Warranty tables
+ * Ensures visual consistency and correct module redirection
+ */
+function render_service_order_actions($item, $context, $pdo) {
+    $can_edit = can_access_module('edit_entries', $pdo);
+    
+    // Permission for management depends on module context
+    $manage_module = ($context === 'warranties' ? 'warranties' : 'manage_services');
+    $can_manage = can_access_module($manage_module, $pdo);
+    
+    // URLs
+    $manage_url = ($context === 'warranties' ? 'view.php?num=' . urlencode(get_order_number($item)) : 'manage.php?id=' . $item['id']);
+    $view_url = 'view.php?' . ($context === 'warranties' ? 'num=' . urlencode(get_order_number($item)) : 'id=' . $item['id']);
+
+    ob_start();
+    ?>
+    <div style="display: flex; justify-content: center; gap: 0.4rem;" onclick="event.stopPropagation();">
+        <?php if ($can_edit): ?>
+            <button type="button" class="btn-icon" 
+                style="width: 32px; height: 32px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 1rem;"
+                title="Editar Entrada"
+                data-id="<?php echo $item['id']; ?>"
+                data-equipment-id="<?php echo $item['equipment_id']; ?>"
+                data-context="<?php echo $context; ?>"
+                data-brand="<?php echo htmlspecialchars($item['brand'] ?? ''); ?>"
+                data-model="<?php echo htmlspecialchars($item['model'] ?? ''); ?>"
+                data-serial="<?php echo htmlspecialchars($item['serial_number'] ?? ''); ?>"
+                data-problem="<?php echo htmlspecialchars($item['problem_reported'] ?? ''); ?>"
+                data-accessories="<?php echo htmlspecialchars($item['accessories_received'] ?? ''); ?>"
+                data-owner-name="<?php echo htmlspecialchars($item['owner_name'] ?? ''); ?>"
+                data-invoice="<?php echo htmlspecialchars($item['invoice_number'] ?? ''); ?>"
+                onclick="openEditModal(this)">
+                <i class="ph ph-pencil-simple"></i>
+            </button>
+        <?php endif; ?>
+
+        <?php if ($can_manage): ?>
+            <a href="<?php echo $manage_url; ?>" class="btn-icon"
+                style="width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; color: white; font-size: 1rem; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);"
+                title="Gestionar Orden">
+                <i class="ph ph-gear-six"></i>
+            </a>
+        <?php else: ?>
+            <a href="<?php echo $view_url; ?>" class="btn-icon"
+                style="width: 32px; height: 32px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #6366f1; font-size: 1rem;"
+                title="Ver Detalles">
+                <i class="ph ph-eye"></i>
+            </a>
+        <?php endif; ?>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
 

@@ -1,5 +1,5 @@
 <?php
-require_once '../../config/db.php';
+require_once __DIR__ . '/../../config/db.php';
 
 $modules = [
     'dashboard' => 'Acceso al Dashboard',
@@ -11,7 +11,8 @@ $modules = [
     'history' => 'Ver Historial',
     'users' => 'Gestión de Usuarios',
     'reports' => 'Ver Reportes',
-    'settings' => 'Configuración del Sistema'
+    'settings' => 'Configuración del Sistema',
+    'edit_entries' => 'Permitir Editar Entradas de Servicios/Garantías'
 ];
 
 echo "Checking permissions...\n";

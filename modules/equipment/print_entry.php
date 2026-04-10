@@ -119,7 +119,7 @@ if (empty($doc_number)) {
         :root { --border-color: #000; --header-bg: #f8fafc; }
         * { box-sizing: border-box; }
         body { font-family: 'Roboto', sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; font-size: 12px; }
-        .paper { background: white; width: 216mm; min-height: 279mm; margin: 0 auto; padding: 15mm; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .paper { background: white; width: 216mm; min-height: 279mm; margin: 20px auto; padding: 15mm; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; }
         .actions { position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 999; }
         .btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; text-decoration: none; }
         .btn-primary { background: #2563eb; color: white; }
@@ -142,33 +142,30 @@ if (empty($doc_number)) {
         .info-label { font-weight: bold; width: 80px; text-align: right; margin-right: 10px; }
         .info-val { flex: 1; }
 
-        .equip_table { width: 100%; border-collapse: collapse; border: 1.5px solid var(--border-color); margin-top: 8px; margin-bottom: 8px;}
+        .equip_table { width: 100%; border-collapse: collapse; border: 1.5px solid var(--border-color); margin-top: 8px; margin-bottom: 8px; page-break-inside: auto; }
+        .equip_table tr { page-break-inside: avoid; page-break-after: auto; }
         .equip_table th, .equip_table td { border: 1.5px solid var(--border-color); padding: 4px; text-align: center; font-size: 11px; }
         .equip_table th { background: #fff; font-weight: bold; }
         
-        .legal-footer { font-size: 10px; text-align: justify; border: 1px solid var(--border-color); padding: 8px; margin-bottom: 10px; line-height: 1.3; }
-        .signatures-area { display: flex; justify-content: space-around; margin-top: 5px; }
-        .bottom-section { margin-top: auto; width: 100%; border-top: 0; padding-top: 5px; }
+        .legal-footer { font-size: 10px; text-align: justify; border: 1px solid var(--border-color); padding: 8px; margin-bottom: 15px; line-height: 1.3; page-break-inside: avoid; }
+        .signatures-area { display: flex; justify-content: space-around; margin-top: 30px; page-break-inside: avoid; }
+        .bottom-section { width: 100%; border-top: 0; padding-top: 5px; page-break-inside: avoid; }
         .sig-box { width: 45%; text-align: center; }
         .sig-line { border-bottom: 1.5px solid black; height: 40px; margin-bottom: 5px; }
 
         @media print { 
-            @page { size: letter; margin: 0 !important; }
-            html, body { height: 100%; overflow: hidden; margin: 0 !important; padding: 0 !important; }
+            @page { size: letter; margin: 10mm 0 !important; }
+            html, body { height: auto; overflow: visible; margin: 0 !important; padding: 0 !important; }
             .actions { display: none; } 
             .paper { 
                 box-shadow: none; 
                 margin: 0 !important; 
                 width: 100% !important; 
                 padding: 10mm 12mm; 
-                height: 260mm; 
-                max-height: 260mm;
-                box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                page-break-after: avoid;
-                page-break-before: avoid;
-                overflow: hidden;
+                height: auto; 
+                min-height: 0;
+                display: block;
+                overflow: visible;
             }
             .section-box { margin-bottom: 5px; }
             .equip_table { margin-top: 5px; margin-bottom: 5px; }
