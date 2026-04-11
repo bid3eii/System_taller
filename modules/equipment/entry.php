@@ -225,15 +225,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $problems = [$_POST['problem_reported'] ?? ($is_warranty_mode ? 'Garantía Registrada' : '')];
                 $invoice_numbers = [is_array($_POST['invoice_number'] ?? '') ? ($_POST['invoice_number'][0] ?? '') : ($_POST['invoice_number'] ?? '')];
             } else {
-                $brands = $_POST['brand'] ?? [];
-                $models = $_POST['model'] ?? [];
-                $submodels = $_POST['submodel'] ?? [];
-                $types = $_POST['type'] ?? [];
-                $owners = $_POST['owner_name'] ?? [];
-                $accessories_list = $_POST['accessories'] ?? [];
-                $service_types = $_POST['service_type'] ?? [];
-                $problems = $_POST['problem_reported'] ?? [];
-                $invoice_numbers = is_array($_POST['invoice_number'] ?? '') ? $_POST['invoice_number'] : [];
+                // Determine if we are in batch mode (multiple serials for same product)
+                // or in standard multi-equipment mode (multiple full equipment blocks)
+                $is_batch_entry = $is_warranty_mode && (!isset($_POST['brand']) || !is_array($_POST['brand']));
+
+                if ($is_batch_entry) {
+                    // Replicate the single product details for each serial number
+                    $brand_val = $_POST['brand'] ?? '';
+                    $model_val = $_POST['model'] ?? '';
+                    $submodel_val = $_POST['submodel'] ?? '';
+                    $type_val = $_POST['type'] ?? '';
+                    $owner_val = $_POST['owner_name'] ?? '';
+                    $acc_val = $_POST['accessories'] ?? '-';
+                    $prob_val = $_POST['problem_reported'] ?? 'Garantía Registrada';
+                    $inv_val = $_POST['sales_invoice_number'] ?? '';
+
+                    $brands = array_fill(0, count($serial_numbers), $brand_val);
+                    $models = array_fill(0, count($serial_numbers), $model_val);
+                    $submodels = array_fill(0, count($serial_numbers), $submodel_val);
+                    $types = array_fill(0, count($serial_numbers), $type_val);
+                    $owners = array_fill(0, count($serial_numbers), $owner_val);
+                    $accessories_list = array_fill(0, count($serial_numbers), $acc_val);
+                    $service_types = array_fill(0, count($serial_numbers), 'warranty');
+                    $problems = array_fill(0, count($serial_numbers), $prob_val);
+                    $invoice_numbers = array_fill(0, count($serial_numbers), $inv_val);
+                } else {
+                    $brands = $_POST['brand'] ?? [];
+                    $models = $_POST['model'] ?? [];
+                    $submodels = $_POST['submodel'] ?? [];
+                    $types = $_POST['type'] ?? [];
+                    $owners = $_POST['owner_name'] ?? [];
+                    $accessories_list = $_POST['accessories'] ?? [];
+                    $service_types = $_POST['service_type'] ?? [];
+                    $problems = $_POST['problem_reported'] ?? [];
+                    $invoice_numbers = is_array($_POST['invoice_number'] ?? '') ? $_POST['invoice_number'] : [];
+                }
             }
 
             $order_ids = [];
@@ -721,13 +747,22 @@ require_once '../../includes/sidebar.php';
                             </div>
                         </div>
 
-                        <div class="form-group" style="grid-column: span 1;">
+                        <div class="form-group" style="grid-column: span 2;">
                             <label class="form-label">Serie (S/N) *</label>
-                            <div class="input-group">
-                                <input type="text" name="serial_number" id="serial_number_warranty" class="form-control"
-                                    placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>">
-                                <i class="ph ph-barcode input-icon"></i>
+                            <div id="serial-numbers-container-wry">
+                                <div class="input-group" style="margin-bottom: 0.5rem;">
+                                    <input type="text" name="serial_number[]" class="form-control serial-input-wry"
+                                        placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>"
+                                        onblur="validateSerialWryBatch(this)" onkeydown="handleScannerKey(event, this)">
+                                    <i class="ph ph-barcode input-icon"></i>
+                                    <div class="warranty-status-msg-wry" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; pointer-events: none;"></div>
+                                </div>
                             </div>
+                            <?php if (!$edit_order): ?>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="addSerialNumberWry()" style="margin-top: 0.25rem; font-size: 0.75rem;">
+                                <i class="ph ph-plus"></i> Añadir otra serie
+                            </button>
+                            <?php endif; ?>
                         </div>
 
                         <div class="form-group" style="grid-column: span 2;">
@@ -738,6 +773,7 @@ require_once '../../includes/sidebar.php';
                                     value="<?php echo trim(($edit_order['brand'] ?? '') . ' ' . ($edit_order['model'] ?? '') . ' ' . ($edit_order['submodel'] ?? '')); ?>">
                                 <input type="hidden" name="model" value="">
                                 <input type="hidden" name="submodel" value="">
+                                <input type="hidden" name="type" value="">
                                 <i class="ph ph-laptop input-icon"></i>
                             </div>
                         </div>
@@ -1426,6 +1462,70 @@ require_once '../../includes/sidebar.php';
                                     invoiceInput.value = '';
                                     invoiceInput.style.borderColor = '';
                                 }
+                            }
+                        })
+                        .catch(e => {
+                            statusDiv.innerHTML = '';
+                        });
+                }
+
+                function addSerialNumberWry() {
+                    const container = document.getElementById('serial-numbers-container-wry');
+                    const div = document.createElement('div');
+                    div.className = 'input-group';
+                    div.style.marginBottom = '0.5rem';
+                    div.style.position = 'relative';
+                    div.innerHTML = `
+                        <input type="text" name="serial_number[]" class="form-control serial-input-wry"
+                            placeholder="S/N" required onblur="validateSerialWryBatch(this)" onkeydown="handleScannerKey(event, this)">
+                        <i class="ph ph-barcode input-icon"></i>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()" style="position: absolute; right: -40px; top: 50%; transform: translateY(-50%); padding: 5px; background: transparent; border: none; color: var(--danger);">
+                            <i class="ph ph-trash" style="font-size: 1.2rem;"></i>
+                        </button>
+                        <div class="warranty-status-msg-wry" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; pointer-events: none;"></div>
+                    `;
+                    container.appendChild(div);
+                    const newInput = div.querySelector('input');
+                    newInput.focus();
+                    return newInput;
+                }
+
+                function handleScannerKey(event, input) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault(); // Stop form submission
+                        const serial = input.value.trim();
+                        if (serial.length > 0) {
+                            addSerialNumberWry();
+                        }
+                    }
+                }
+
+                function validateSerialWryBatch(input) {
+                    const serial = input.value.trim();
+                    if (serial.length < 3) return;
+
+                    const parent = input.parentElement;
+                    const statusDiv = parent.querySelector('.warranty-status-msg-wry');
+
+                    statusDiv.innerHTML = '<i class="ph ph-spinner ph-spin" style="color:var(--text-muted);"></i>';
+
+                    fetch('check_warranty.php?serial_number=' + encodeURIComponent(serial))
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success && data.data) {
+                                // Try to fill brand if empty
+                                const brandInput = document.querySelector('input[name="brand"]');
+                                if (brandInput && !brandInput.value) {
+                                    brandInput.value = data.data.brand || '';
+                                }
+                                
+                                if (data.status === 'valid') {
+                                    statusDiv.innerHTML = '<i class="ph ph-check-circle" style="color:var(--success);" title="Garantía Activa"></i>';
+                                } else {
+                                    statusDiv.innerHTML = '<i class="ph ph-info" style="color:var(--warning);" title="Registrado previamente"></i>';
+                                }
+                            } else {
+                                statusDiv.innerHTML = '<i class="ph ph-sparkle" style="color:var(--primary-500);" title="Nuevo"></i>';
                             }
                         })
                         .catch(e => {

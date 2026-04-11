@@ -1,13 +1,14 @@
 <?php
 // includes/auth.php
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.gc_probability', 0);
     session_start();
 }
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to login
-    header("Location: /System_Taller/modules/auth/login.php");
+    header("Location: " . BASE_URL . "modules/auth/login.php");
     exit;
 }
 
@@ -29,7 +30,7 @@ if (!isset($_SESSION['last_user_refresh']) || (time() - $_SESSION['last_user_ref
     } else {
         // User deleted or inactive
         session_destroy();
-        header("Location: /System_Taller/modules/auth/login.php?error=account_issue");
+        header("Location: " . BASE_URL . "modules/auth/login.php?error=account_issue");
         exit;
     }
 }
@@ -39,7 +40,7 @@ $timeout_duration = 28800; // 8 hours
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) {
     session_unset();
     session_destroy();
-    header("Location: /System_Taller/modules/auth/login.php?error=timeout");
+    header("Location: " . BASE_URL . "modules/auth/login.php?error=timeout");
     exit;
 }
 $_SESSION['last_activity'] = time();
