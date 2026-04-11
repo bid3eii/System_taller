@@ -5,7 +5,7 @@
 ?>
 
 <!-- UNIFIED EDIT MODAL -->
-<div id="editEntryModal" class="modal" style="display: none; align-items: center; justify-content: center; z-index: 2000;">
+<div id="editEntryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
     <div class="modal-content animate-pop" style="max-width: 600px; width: 90%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
         <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent); padding: 2rem; border-top-left-radius: 20px; border-top-right-radius: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
