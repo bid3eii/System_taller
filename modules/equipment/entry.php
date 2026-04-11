@@ -662,7 +662,7 @@ require_once '../../includes/sidebar.php';
             <input type="hidden" name="type"
                 value="<?php echo $edit_order ? $edit_order['type'] : ''; // Default or hidden handler ?>">
 
-            <?php if ($is_warranty_mode): ?>
+            <?php if (!$is_warranty_mode): ?>
                 <!-- SECCIÓN 1: DATOS DEL CLIENTE -->
                 <div class="form-section animate-enter"
                     style="margin-top: 1rem; margin-bottom: 2rem; border-left: 4px solid var(--primary-500);">
@@ -730,6 +730,7 @@ require_once '../../includes/sidebar.php';
                         </div>
                     </div>
                 </div>
+            <?php endif; ?>
 
                 <!-- SECCIÓN 2: DETALLES DEL EQUIPO -->
                 <div class="form-section animate-enter" style="margin-bottom: 2rem; border-left: 4px solid var(--accent);">
@@ -807,6 +808,7 @@ require_once '../../includes/sidebar.php';
                             </div>
                         </div>
 
+                        <?php if (!$is_warranty_mode): ?>
                         <div class="form-group">
                             <label class="form-label">Factura Venta</label>
                             <div class="input-group">
@@ -815,6 +817,7 @@ require_once '../../includes/sidebar.php';
                                     value="<?php echo $edit_order['sales_invoice_number'] ?? ''; ?>">
                             </div>
                         </div>
+                        <?php endif; ?>
 
                         <div class="form-group">
                             <label class="form-label">Factura Proveedor</label>
