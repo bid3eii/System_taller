@@ -739,11 +739,18 @@ require_once '../../includes/sidebar.php';
                     </div>
 
                     <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
-                        <div class="form-group" style="grid-column: span 1;">
+                        <div class="form-group" style="grid-column: span 1; position: relative;">
                             <label class="form-label">Código</label>
                             <div class="input-group">
-                                <input type="text" name="product_code" class="form-control" placeholder="Cód. Producto"
-                                    required value="<?php echo $edit_order['product_code'] ?? ''; ?>">
+                                <input type="text" name="product_code" id="product_code_input" class="form-control" placeholder="Buscar o crear..."
+                                    required value="<?php echo $edit_order['product_code'] ?? ''; ?>"
+                                    autocomplete="off" oninput="searchProduct(this.value)">
+                                <i class="ph ph-magnifying-glass input-icon"></i>
+                            </div>
+                            <!-- Product Search Dropdown -->
+                            <div id="product-search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+                                background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; 
+                                max-height: 250px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.4); margin-top: 4px;">
                             </div>
                         </div>
 
@@ -2145,5 +2152,186 @@ require_once '../../includes/sidebar.php';
             if (clearBtn) clearBtn.style.display = 'none';
         }
     });
+
+    // =============================================
+    // PRODUCT SEARCH (RE-FILL / RE-STOCK)
+    // =============================================
+    let productSearchTimer = null;
+    
+    function searchProduct(query) {
+        const resultsDiv = document.getElementById('product-search-results');
+        if (!resultsDiv) return;
+        
+        clearTimeout(productSearchTimer);
+        
+        if (query.length < 2) {
+            resultsDiv.style.display = 'none';
+            return;
+        }
+
+        productSearchTimer = setTimeout(() => {
+            fetch('search_product.php?q=' + encodeURIComponent(query))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.results.length > 0) {
+                        let html = '';
+                        data.results.forEach(item => {
+                            html += `<div onclick="fillFromProduct(this)" 
+                                data-code="${item.product_code || ''}"
+                                data-brand="${item.brand || ''}"
+                                data-supplier="${item.supplier_name || ''}"
+                                data-sales-invoice="${item.sales_invoice_number || ''}"
+                                data-master-invoice="${item.master_entry_invoice || ''}"
+                                data-master-date="${item.master_entry_date || ''}"
+                                style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: background 0.15s;"
+                                onmouseover="this.style.background='rgba(99,102,241,0.1)'" 
+                                onmouseout="this.style.background='transparent'">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong style="color: var(--primary-400);">${item.product_code || 'Sin código'}</strong>
+                                        <span style="color: var(--text-secondary); margin-left: 8px;">${item.brand || ''}</span>
+                                    </div>
+                                    <span style="font-size: 0.7rem; background: rgba(99,102,241,0.15); color: var(--primary-400); padding: 2px 8px; border-radius: 4px;">
+                                        ${item.total_units} uds
+                                    </span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                                    <i class="ph ph-truck"></i> ${item.supplier_name || 'Sin proveedor'}
+                                    ${item.master_entry_invoice ? ' · Fact: ' + item.master_entry_invoice : ''}
+                                </div>
+                            </div>`;
+                        });
+                        resultsDiv.innerHTML = html;
+                        resultsDiv.style.display = 'block';
+                    } else {
+                        resultsDiv.innerHTML = '<div style="padding: 12px 14px; color: var(--text-muted); font-size: 0.85rem; text-align: center;"><i class="ph ph-sparkle"></i> Producto nuevo — se creará al guardar</div>';
+                        resultsDiv.style.display = 'block';
+                    }
+                })
+                .catch(() => { resultsDiv.style.display = 'none'; });
+        }, 300);
+    }
+
+    function fillFromProduct(el) {
+        const code = el.dataset.code;
+        const brand = el.dataset.brand;
+        const supplier = el.dataset.supplier;
+        const salesInvoice = el.dataset.salesInvoice;
+        const masterInvoice = el.dataset.masterInvoice;
+        const masterDate = el.dataset.masterDate;
+
+        // Fill product fields
+        const codeInput = document.querySelector('input[name="product_code"]');
+        if (codeInput) codeInput.value = code;
+        
+        const brandInput = document.querySelector('input[name="brand"]');
+        if (brandInput) brandInput.value = brand;
+        
+        const supplierInput = document.querySelector('input[name="supplier_name"]');
+        if (supplierInput) supplierInput.value = supplier;
+
+        const salesInvInput = document.querySelector('input[name="sales_invoice_number"]');
+        if (salesInvInput) salesInvInput.value = salesInvoice;
+        
+        const masterInvInput = document.querySelector('input[name="master_entry_invoice"]');
+        if (masterInvInput) masterInvInput.value = masterInvoice;
+        
+        const masterDateInput = document.querySelector('input[name="master_entry_date"]');
+        if (masterDateInput) masterDateInput.value = masterDate;
+
+        // Hide dropdown
+        document.getElementById('product-search-results').style.display = 'none';
+        
+        // Focus the serial number field so user can start scanning immediately
+        const firstSerial = document.querySelector('.serial-input-wry');
+        if (firstSerial) {
+            firstSerial.focus();
+            firstSerial.value = '';
+        }
+
+        // Visual feedback
+        if (codeInput) {
+            codeInput.style.borderColor = 'var(--success)';
+            codeInput.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.15)';
+            setTimeout(() => {
+                codeInput.style.borderColor = '';
+                codeInput.style.boxShadow = '';
+            }, 2000);
+        }
+    }
+
+    // Close search dropdown on outside click
+    document.addEventListener('click', function(e) {
+        const results = document.getElementById('product-search-results');
+        const input = document.getElementById('product_code_input');
+        if (results && input && !results.contains(e.target) && e.target !== input) {
+            results.style.display = 'none';
+        }
+    });
+
+    // =============================================
+    // BATCH SERIAL NUMBERS (Scanner Support)
+    // =============================================
+    function addSerialNumberWry() {
+        const container = document.getElementById('serial-numbers-container-wry');
+        if (!container) return;
+        
+        const newRow = document.createElement('div');
+        newRow.className = 'input-group';
+        newRow.style.marginBottom = '0.5rem';
+        newRow.innerHTML = `
+            <input type="text" name="serial_number[]" class="form-control serial-input-wry"
+                placeholder="S/N" required
+                onblur="validateSerialWryBatch(this)" onkeydown="handleScannerKey(event, this)">
+            <i class="ph ph-barcode input-icon"></i>
+            <div class="warranty-status-msg-wry" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; pointer-events: none;"></div>
+            <button type="button" onclick="this.parentElement.remove()" 
+                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: rgba(239,68,68,0.1); border: none; color: var(--danger); width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; z-index: 5;">
+                <i class="ph ph-x"></i>
+            </button>
+        `;
+        container.appendChild(newRow);
+        
+        const newInput = newRow.querySelector('input');
+        if (newInput) newInput.focus();
+    }
+
+    function handleScannerKey(event, input) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (input.value.trim() !== '') {
+                addSerialNumberWry();
+            }
+        }
+    }
+
+    function validateSerialWryBatch(input) {
+        const serial = input.value.trim();
+        if (!serial) return;
+        
+        const statusDiv = input.parentElement.querySelector('.warranty-status-msg-wry');
+        if (!statusDiv) return;
+
+        fetch('check_warranty.php?serial_number=' + encodeURIComponent(serial))
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.status === 'valid') {
+                        statusDiv.innerHTML = '<i class="ph-fill ph-check-circle" style="color: var(--success);"></i>';
+                        statusDiv.title = 'Garantía activa encontrada';
+                    } else if (data.status === 'expired' || data.status === 'void') {
+                        statusDiv.innerHTML = '<i class="ph-fill ph-warning-circle" style="color: var(--warning);"></i>';
+                        statusDiv.title = data.message;
+                    } else if (data.status === 'no_warranty') {
+                        statusDiv.innerHTML = '<i class="ph-fill ph-info" style="color: var(--warning);"></i>';
+                        statusDiv.title = 'Equipo sin garantía previa';
+                    } else {
+                        statusDiv.innerHTML = '<i class="ph-fill ph-sparkle" style="color: var(--primary-400);"></i>';
+                        statusDiv.title = 'Serie nueva';
+                    }
+                }
+            })
+            .catch(() => {});
+    }
 </script>
 <?php require_once '../../includes/footer.php'; ?>
