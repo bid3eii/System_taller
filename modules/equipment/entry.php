@@ -656,8 +656,9 @@ require_once '../../includes/sidebar.php';
 
         <form method="POST" id="entryForm" action="entry.php?<?php echo http_build_query($_GET); ?>">
             <?php if ($edit_order || $is_warranty_mode): ?>
+                <?php if ($edit_order): ?>
                 <input type="hidden" name="order_id" value="<?php echo $edit_order['id']; ?>">
-            <?php endif; ?>
+                <?php endif; ?>
 
             <input type="hidden" name="type"
                 value="<?php echo $edit_order ? $edit_order['type'] : ''; // Default or hidden handler ?>">
