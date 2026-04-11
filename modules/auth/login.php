@@ -62,7 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
-            log_audit($pdo, 'users', $user['id'], 'UPDATE', null, ['event' => 'login'], $user['id'], $_SERVER['REMOTE_ADDR']);
+            try {
+                log_audit($pdo, 'users', $user['id'], 'UPDATE', null, ['event' => 'login'], $user['id'], $_SERVER['REMOTE_ADDR']);
+            } catch (Exception $e) {
+                // Don't block login if audit logging fails
+            }
 
             header("Location: " . BASE_URL . "modules/dashboard/index.php");
             exit;
