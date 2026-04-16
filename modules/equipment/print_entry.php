@@ -186,8 +186,13 @@ if (empty($doc_number)) {
                 <div style="font-weight: bold; font-size: 11px; margin-top: 4px;"><?php echo htmlspecialchars($company_name); ?></div>
             </div>
             <div class="header-col header-center">
-                <h2>RECEPCIÓN DE EQUIPOS</h2>
-                <h3>SOPORTE TÉCNICO</h3>
+                <?php if ($first_order['client_id'] == 11): ?>
+                    <h2>INGRESO DE INVENTARIO</h2>
+                    <h3>CONTROL DE ALMACÉN</h3>
+                <?php else: ?>
+                    <h2>RECEPCIÓN DE EQUIPOS</h2>
+                    <h3>SOPORTE TÉCNICO</h3>
+                <?php endif; ?>
                 <p style="margin:4px 0; font-size: 10px;">Tel: <?php echo htmlspecialchars($company_phone); ?> | Email: <?php echo htmlspecialchars($company_email); ?></p>
             </div>
             <div class="header-col header-right">
@@ -280,7 +285,9 @@ if (empty($doc_number)) {
             <div class="section-box" style="font-size: 11px; margin-bottom: 10px;"><?php echo nl2br(htmlspecialchars($first_order['entry_notes'])); ?></div>
             <?php endif; ?>
 
-            <div class="legal-footer"><?php echo nl2br(htmlspecialchars($print_entry_text)); ?></div>
+            <?php if ($first_order['client_id'] != 11): ?>
+                <div class="legal-footer"><?php echo nl2br(htmlspecialchars($print_entry_text)); ?></div>
+            <?php endif; ?>
 
             <div class="signatures-area">
                 <div class="sig-box">

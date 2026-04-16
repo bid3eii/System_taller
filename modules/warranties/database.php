@@ -818,4 +818,12 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <?php endif; ?>
 
+<?php if (isset($_GET['msg']) && $_GET['msg'] === 'inventory_saved'): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    showToast('Inventario registrado correctamente.', 'success');
+});
+</script>
+<?php endif; ?>
+
 <?php require_once '../../includes/footer.php'; ?>

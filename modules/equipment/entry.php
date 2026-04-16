@@ -338,8 +338,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // 3. History
-                $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', 'Equipo ingresado al taller', ?, ?)");
-                $stmtHist->execute([$order_id_new, $_SESSION['user_id'], $now]);
+                $hist_note = ($client_id == 11) ? 'Equipo ingresado a inventario de bodega' : 'Equipo ingresado al taller';
+                $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', ?, ?, ?)");
+                $stmtHist->execute([$order_id_new, $hist_note, $_SESSION['user_id'], $now]);
 
                 // 4. Sequence/Doc Number
                 if ($entry_doc_number === null) {
@@ -351,7 +352,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->commit();
 
             if (!empty($order_ids)) {
-                header("Location: print_entry.php?ids=" . implode(',', $order_ids));
+                if ($client_id == 11) {
+                    // Warehouse inventory entry: redirect to database with success msg
+                    header("Location: ../warranties/database.php?msg=inventory_saved");
+                } else {
+                    // Normal technical reception: redirect to printer
+                    header("Location: print_entry.php?ids=" . implode(',', $order_ids));
+                }
                 exit;
             } else {
                 $error = "No se ingresaron equipos validos.";

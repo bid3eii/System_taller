@@ -136,9 +136,11 @@ function get_order_number($order, $padding = 4)
 
     $prefix = '';
     
-    // Determine prefix based on service_type
+    // Determine prefix based on service_type and client (Inventory vs normal service)
     if (isset($order['service_type'])) {
-        if ($order['service_type'] === 'warranty') {
+        if (isset($order['client_id']) && $order['client_id'] == 11) {
+            $prefix = 'INV';
+        } elseif ($order['service_type'] === 'warranty') {
             $prefix = 'G';
         } else {
             $prefix = 'S';
