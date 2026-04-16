@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $serial = clean($_POST['serial_number'] ?? '');
     $sales_invoice = clean($_POST['sales_invoice_number'] ?? '');
     $warranty_months = (int)clean($_POST['warranty_months'] ?? 0);
+    $purchase_origin = clean($_POST['purchase_origin'] ?? 'local'); // New field
     $edit_reason = clean($_POST['edit_reason'] ?? 'Sin motivo especificado');
 
     if (empty($service_order_id) || empty($equipment_id)) {
@@ -32,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 0. Fetch OLD values for audit log
         $stmtOld = $pdo->prepare("
-            SELECT e.brand, e.model, e.serial_number, w.product_code, w.sales_invoice_number, w.duration_months
+            SELECT e.brand, e.model, e.serial_number, w.product_code, w.sales_invoice_number, w.duration_months, w.purchase_origin
             FROM service_orders so
             JOIN equipments e ON so.equipment_id = e.id
             JOIN warranties w ON w.service_order_id = so.id
@@ -62,8 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // 3. Update Warranty Record
-        $stmtW = $pdo->prepare("UPDATE warranties SET product_code = ?, sales_invoice_number = ?, duration_months = ?, end_date = ? WHERE service_order_id = ?");
-        $stmtW->execute([$product_code, $sales_invoice, $warranty_months, $end_date, $service_order_id]);
+        $stmtW = $pdo->prepare("UPDATE warranties SET product_code = ?, sales_invoice_number = ?, duration_months = ?, end_date = ?, purchase_origin = ? WHERE service_order_id = ?");
+        $stmtW->execute([$product_code, $sales_invoice, $warranty_months, $end_date, $purchase_origin, $service_order_id]);
 
         // 4. Log in Audit and History
         $new_data = [

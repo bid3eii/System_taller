@@ -119,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $warranty_end_date = clean($_POST['warranty_end_date'] ?? null);
     $warranty_duration = clean($_POST['warranty_duration'] ?? 0);
     $warranty_period = clean($_POST['warranty_period'] ?? 'months');
+    $purchase_origin = clean($_POST['purchase_origin'] ?? 'local'); // New field
 
     // Fallback: If JS didn't populate end_date but we have duration, calculate it here
     if (empty($warranty_end_date) && $warranty_duration > 0) {
@@ -332,8 +333,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $duration_val = (int)($_POST['warranty_duration'] ?? 0);
                     $duration_months = ($warranty_period === 'months') ? $duration_val : ($warranty_period === 'years' ? $duration_val * 12 : 0);
 
-                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, status, end_date, duration_period, duration_months, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)");
-                    $stmtW->execute([$order_id_new, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $warranty_end_date, $warranty_period, $duration_months, $now]);
+                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, purchase_origin, status, end_date, duration_period, duration_months, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)");
+                    $stmtW->execute([$order_id_new, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $purchase_origin, $warranty_end_date, $warranty_period, $duration_months, $now]);
                 }
 
                 // 3. History
@@ -893,36 +894,66 @@ require_once '../../includes/sidebar.php';
                             </div>
                         </div>
 
-                        <!-- SEPARADOR: GARANTÍA -->
+                        <!-- SEPARADOR: GARANTÍA / ORIGEN (Vigencia oculta en Bodega según solicitud) -->
                         <div style="grid-column: span 6; margin: 1.5rem 0 0.5rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 2rem;">
                             <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
-                                <i class="ph-fill ph-shield-check" style="font-size: 1.25rem;"></i> Vigencia de Garantía
+                                <i class="ph-fill ph-shield-check" style="font-size: 1.25rem;"></i> Origen y Control
                             </h4>
                         </div>
 
-                        <div class="form-group" style="grid-column: span 3;">
-                            <label class="form-label">Duración Ofrecida</label>
-                            <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
-                                <input type="number" name="warranty_duration" id="warranty_duration" class="form-control"
-                                    placeholder="Cant." min="0" value="0"
-                                    style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 1rem; height: 50px; background: rgba(0,0,0,0.2); border-radius: 12px 0 0 12px;">
-                                <select name="warranty_period" id="warranty_period" class="form-control"
-                                    style="width: auto; flex: 0 0 140px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1; height: 50px; border-radius: 0 12px 12px 0;">
-                                    <option value="days">DÍAS</option>
-                                    <option value="weeks">SEMANAS</option>
-                                    <option value="months" selected>MESES</option>
-                                    <option value="years">AÑOS</option>
-                                </select>
+                        <div class="form-group" style="grid-column: span 6;">
+                            <label class="form-label" style="font-weight: 700; color: var(--text-secondary); margin-bottom: 1rem; display: block;">ORIGEN DE LA COMPRA</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <label class="selection-card-origin active" id="label-local"
+                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--primary-500); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(59, 130, 246, 0.1); color: var(--primary-400); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);">
+                                    <input type="radio" name="purchase_origin" value="local" checked
+                                        style="display: none;" onchange="updateOriginSync(this)">
+                                    <i class="ph-fill ph-storefront" style="font-size: 1.8rem;"></i>
+                                    <div style="text-align: left;">
+                                        <div style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">COMPRA LOCAL</div>
+                                        <div style="font-size: 0.75rem; opacity: 0.8; font-weight: 500;">Adquirido en el país</div>
+                                    </div>
+                                </label>
+
+                                <label class="selection-card-origin" id="label-importada"
+                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(255,255,255,0.03); color: var(--text-secondary);">
+                                    <input type="radio" name="purchase_origin" value="importada"
+                                        style="display: none;" onchange="updateOriginSync(this)">
+                                    <i class="ph-fill ph-airplane-tilt" style="font-size: 1.8rem;"></i>
+                                    <div style="text-align: left;">
+                                        <div style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">IMPORTADA</div>
+                                        <div style="font-size: 0.75rem; opacity: 0.8; font-weight: 500;">Adquirido en el exterior</div>
+                                    </div>
+                                </label>
                             </div>
                         </div>
 
-                        <div class="form-group" style="grid-column: span 3;">
-                            <label class="form-label">Calculado: Vence el día</label>
-                            <div class="input-group">
-                                <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control"
-                                    readonly
-                                    style="background-color: rgba(34, 197, 94, 0.05); cursor: not-allowed; font-weight: 800; color: var(--success); color-scheme: dark; border-radius: 12px; height: 50px; border: 1px solid rgba(34, 197, 94, 0.2);">
-                                <i class="ph ph-calendar-check input-icon" style="color: var(--success); font-size: 1.3rem;"></i>
+                        <!-- Vigencia oculta (pero presente por si el JS la necesita, aunque en bodega no se capturan fechas) -->
+                        <div id="warranty-dates-section" style="display: none; grid-column: span 6; grid-template-columns: repeat(2, 1fr); gap: 1.75rem;">
+                            <div class="form-group">
+                                <label class="form-label">Duración Ofrecida</label>
+                                <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
+                                    <input type="number" name="warranty_duration" id="warranty_duration" class="form-control"
+                                        placeholder="Cant." min="0" value="0"
+                                        style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 1rem; height: 50px; background: rgba(0,0,0,0.2); border-radius: 12px 0 0 12px;">
+                                    <select name="warranty_period" id="warranty_period" class="form-control"
+                                        style="width: auto; flex: 0 0 140px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1; height: 50px; border-radius: 0 12px 12px 0;">
+                                        <option value="days">DÍAS</option>
+                                        <option value="weeks">SEMANAS</option>
+                                        <option value="months" selected>MESES</option>
+                                        <option value="years">AÑOS</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Calculado: Vence el día</label>
+                                <div class="input-group">
+                                    <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control"
+                                        readonly
+                                        style="background-color: rgba(34, 197, 94, 0.05); cursor: not-allowed; font-weight: 800; color: var(--success); color-scheme: dark; border-radius: 12px; height: 50px; border: 1px solid rgba(34, 197, 94, 0.2);">
+                                    <i class="ph ph-calendar-check input-icon" style="color: var(--success); font-size: 1.3rem;"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1601,6 +1632,24 @@ require_once '../../includes/sidebar.php';
                         .catch(e => {
                             statusDiv.innerHTML = '';
                         });
+                }
+
+                function updateOriginSync(radio) {
+                    const cards = document.querySelectorAll('.selection-card-origin');
+                    cards.forEach(c => {
+                        c.classList.remove('active');
+                        c.style.borderColor = 'rgba(255,255,255,0.1)';
+                        c.style.backgroundColor = 'rgba(255,255,255,0.03)';
+                        c.style.color = 'var(--text-secondary)';
+                        c.style.boxShadow = 'none';
+                    });
+
+                    const card = radio.closest('.selection-card-origin');
+                    card.classList.add('active');
+                    card.style.borderColor = 'var(--primary-500)';
+                    card.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                    card.style.color = 'var(--primary-400)';
+                    card.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.2)';
                 }
 
                 function updateSummary() {

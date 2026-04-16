@@ -55,7 +55,7 @@ $sql = "
     SELECT 
         so.id, so.entry_date, 
         w.product_code, w.sales_invoice_number, w.supplier_name,
-        w.master_entry_invoice, w.master_entry_date, w.end_date, w.status, w.duration_months,
+        w.master_entry_invoice, w.master_entry_date, w.end_date, w.status, w.duration_months, w.purchase_origin,
         c.name as client_name, c.id as client_id, c.tax_id, c.phone,
         e.id as equipment_id, e.brand, e.model, e.serial_number
     FROM service_orders so
@@ -126,8 +126,7 @@ $records = $stmt->fetchAll();
                             <th>Cód. Producto</th>
                             <th>Cliente</th>
                             <th>Equipo / Serie</th>
-                            <th>Factura Venta</th>
-                            <th>Vencimiento</th>
+                            <th>Origen</th>
                             <th>Estado</th>
                             <th>Acción</th>
                         <?php else: ?>
@@ -161,12 +160,15 @@ $records = $stmt->fetchAll();
                                     <strong><?php echo htmlspecialchars($r['brand'] . ' ' . $r['model']); ?></strong>
                                     <div class="text-xs text-muted"><?php echo htmlspecialchars($r['serial_number']); ?></div>
                                 </td>
-                                <td><?php echo htmlspecialchars($r['sales_invoice_number'] ?: 'N/A'); ?></td>
                                 <td>
-                                    <?php if (empty($r['end_date'])): ?>
-                                        <span style="color: var(--text-muted);">N/A</span>
+                                    <?php if (($r['purchase_origin'] ?? 'local') === 'importada'): ?>
+                                        <span class="badge" style="background: rgba(168, 85, 247, 0.1); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3);">
+                                            <i class="ph-fill ph-airplane-tilt"></i> IMPORTADA
+                                        </span>
                                     <?php else: ?>
-                                        <strong style="color: var(--text-color); font-size: 0.9rem;"><?php echo date('d/m/Y', strtotime($r['end_date'])); ?></strong>
+                                        <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);">
+                                            <i class="ph-fill ph-storefront"></i> LOCAL
+                                        </span>
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo $healthBar; ?></td>
@@ -406,9 +408,13 @@ $records = $stmt->fetchAll();
                 <p class="text-xs text-muted mb-1">PROVEEDOR</p>
                 <p id="m_supplier" class="font-bold">-</p>
             </div>
-             <div>
+            <div>
                 <p class="text-xs text-muted mb-1">FACT. INGRESO MASTER</p>
                 <p id="m_master_inv" class="font-bold">-</p>
+            </div>
+            <div>
+                <p class="text-xs text-muted mb-1">ORIGEN DE COMPRA</p>
+                <div id="m_origin_badge">-</div>
             </div>
         </div>
         
@@ -556,9 +562,17 @@ $records = $stmt->fetchAll();
                     <input type="text" name="product_code" id="edit_product_code" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Meses de Garantía</label>
-                    <input type="number" name="warranty_months" id="edit_warranty_months" class="form-control">
+                    <label class="form-label">Origen de Compra</label>
+                    <select name="purchase_origin" id="edit_purchase_origin" class="form-control">
+                        <option value="local">LOCAL</option>
+                        <option value="importada">IMPORTADA</option>
+                    </select>
                 </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">Meses de Garantía</label>
+                <input type="number" name="warranty_months" id="edit_warranty_months" class="form-control">
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -587,6 +601,14 @@ function openModalFromBtn(btn) {
     document.getElementById('m_end').innerText = data.end_date ? data.end_date : 'N/A';
     document.getElementById('m_supplier').innerText = data.supplier_name || 'N/A';
     document.getElementById('m_master_inv').innerText = data.master_entry_invoice || 'N/A';
+    
+    // Origin Badge
+    const originBadge = document.getElementById('m_origin_badge');
+    if (data.purchase_origin === 'importada') {
+        originBadge.innerHTML = '<span class="badge" style="background: rgba(168, 85, 247, 0.1); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3);"><i class="ph-fill ph-airplane-tilt"></i> IMPORTADA</span>';
+    } else {
+        originBadge.innerHTML = '<span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3);"><i class="ph-fill ph-storefront"></i> LOCAL</span>';
+    }
     
     document.getElementById('detailModal').style.display = 'flex';
 }
@@ -765,6 +787,7 @@ function openEditModalFromBtn(btn) {
     document.getElementById('edit_serial_number').value = data.serial_number || '';
     document.getElementById('edit_sales_invoice').value = data.sales_invoice_number || '';
     document.getElementById('edit_warranty_months').value = data.duration_months || 0;
+    document.getElementById('edit_purchase_origin').value = data.purchase_origin || 'local';
     
     document.getElementById('editModal').style.display = 'flex';
 }

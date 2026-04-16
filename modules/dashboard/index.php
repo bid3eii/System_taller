@@ -113,6 +113,7 @@ if ($is_warehouse) {
     $stmt = $pdo->query("
         SELECT 
             w.product_code, 
+            w.purchase_origin,
             c.name as client_name, 
             e.brand, e.model, e.serial_number,
             so.entry_date as date

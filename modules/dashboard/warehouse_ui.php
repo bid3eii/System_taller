@@ -181,6 +181,7 @@
                     <thead>
                         <tr>
                             <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Fecha</th>
+                            <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Origen</th>
                             <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Cliente</th>
                             <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Equipo / Serie</th>
                             <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Cód. Producto</th>
@@ -192,6 +193,13 @@
                                 <tr class="wh-table-row">
                                     <td style="color: var(--text-secondary); font-weight: 500; font-size: 0.9rem; padding-left: 1rem;">
                                         <?php echo date('d/m  H:i', strtotime($item['date'])); ?>
+                                    </td>
+                                    <td>
+                                        <?php if (($item['purchase_origin'] ?? 'local') === 'importada'): ?>
+                                            <i class="ph-fill ph-airplane-tilt" style="color: #a855f7; font-size: 1.25rem;" title="Importada"></i>
+                                        <?php else: ?>
+                                            <i class="ph-fill ph-storefront" style="color: #3b82f6; font-size: 1.25rem;" title="Local"></i>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <div style="display: flex; align-items: center; gap: 0.85rem;">
