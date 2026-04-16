@@ -333,8 +333,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $duration_val = (int)($_POST['warranty_duration'] ?? 0);
                     $duration_months = ($warranty_period === 'months') ? $duration_val : ($warranty_period === 'years' ? $duration_val * 12 : 0);
 
-                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, purchase_origin, status, end_date, duration_period, duration_months, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)");
-                    $stmtW->execute([$order_id_new, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $purchase_origin, $warranty_end_date, $warranty_period, $duration_months, $now]);
+                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, purchase_origin, status, end_date, duration_months, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)");
+                    $stmtW->execute([$order_id_new, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $purchase_origin, $warranty_end_date, $duration_months, $now]);
                 }
 
                 // 3. History
