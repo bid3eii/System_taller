@@ -338,8 +338,8 @@ if (empty($exit_doc_number)) {
         }
 
         @media print {
-            @page { size: letter; margin: 0 !important; }
-            html, body { height: auto; overflow: visible; margin: 0 !important; padding: 0 !important; }
+            @page { size: letter; margin: 0; }
+            html, body { background: white !important; height: auto; overflow: visible; margin: 0 !important; padding: 0 !important; }
             .actions { display: none; }
             body { background: white; padding: 0; margin: 0; overflow: visible; }
             .paper { 

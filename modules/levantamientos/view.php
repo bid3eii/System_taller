@@ -4,6 +4,7 @@ session_start();
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
+require_once '../shared/lifecycle_timeline.php';
 
 // Check permission
 if (!can_access_module('surveys', $pdo)) {
@@ -85,12 +86,24 @@ $statusMaps = [
 ];
 $sData = $statusMaps[$survey['status']] ?? ['Desconocido', 'gray', 'ph-question'];
 
-$paymentMaps = [
-    'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
-    'credito' => ['Crédito', 'orange', 'ph-credit-card'],
-    'contado' => ['Contado', 'blue', 'ph-money'],
-    'pagado' => ['Pagado', 'success', 'ph-check-circle']
-];
+// For technicians: only show Pendiente or Pagado (hide internal billing details)
+$is_admin_user = ($_SESSION['role'] === 'superadmin' || $_SESSION['role'] === 'admin');
+if ($is_admin_user) {
+    $paymentMaps = [
+        'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
+        'credito' => ['Crédito', 'orange', 'ph-credit-card'],
+        'contado' => ['Contado', 'blue', 'ph-money'],
+        'pagado' => ['Pagado', 'success', 'ph-check-circle']
+    ];
+} else {
+    // Technicians see credito/contado as 'Pendiente' — only 'pagado' shows as Pagado
+    $paymentMaps = [
+        'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
+        'credito' => ['Pendiente', 'gray', 'ph-clock'],
+        'contado' => ['Pendiente', 'gray', 'ph-clock'],
+        'pagado' => ['Pagado', 'success', 'ph-check-circle']
+    ];
+}
 $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-question'];
 ?>
 
@@ -798,6 +811,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
             </p>
             <?php endif; ?>
 
+            <?php echo render_lifecycle_timeline($pdo, $id); ?>
         </div><!-- end left column -->
         <!-- RIGHT: Audit Log Timeline -->
         <?php if (count($audit_logs) > 0): ?>

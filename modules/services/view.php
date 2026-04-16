@@ -485,10 +485,22 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             #<?php echo str_pad($order['exit_doc_number'], 5, '0', STR_PAD_LEFT); ?></span>
                     <?php endif; ?>
                     <?php
-                    $paymentMaps = [
-                        'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
-                        'pagado' => ['Pagado', 'success', 'ph-money']
-                    ];
+                    $is_admin_user = ($_SESSION['role'] === 'superadmin' || $_SESSION['role'] === 'admin');
+                    if ($is_admin_user) {
+                        $paymentMaps = [
+                            'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
+                            'credito' => ['Crédito', 'orange', 'ph-credit-card'],
+                            'contado' => ['Contado', 'blue', 'ph-money'],
+                            'pagado' => ['Pagado', 'success', 'ph-check-circle']
+                        ];
+                    } else {
+                        $paymentMaps = [
+                            'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
+                            'credito' => ['Pendiente', 'gray', 'ph-clock'],
+                            'contado' => ['Pendiente', 'gray', 'ph-clock'],
+                            'pagado' => ['Pagado', 'success', 'ph-check-circle']
+                        ];
+                    }
                     $pData = $paymentMaps[$order['payment_status']] ?? ['Desconocido', 'gray', 'ph-question'];
                     ?>
                     <span class="status-badge status-<?php echo $pData[1]; ?>"

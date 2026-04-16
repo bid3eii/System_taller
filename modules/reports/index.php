@@ -342,11 +342,18 @@ body.light-mode .date-label {
     color: var(--text-main);
     font-size: 0.85rem;
     transition: all 0.3s ease;
+    color-scheme: dark; /* Forces white calendar icon in dark mode */
+}
+
+.premium-input-date::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.8) brightness(1.2); /* Makes it pop */
 }
 
 .premium-input-date:focus {
     border-color: var(--primary);
     outline: none;
+    background: rgba(var(--primary-rgb), 0.05);
 }
 
 .search-input-wrapper {
@@ -430,8 +437,10 @@ body.light-mode .premium-select:hover {
     right: 1.25rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
+    color: var(--primary); /* Bright primary color for visibility */
     pointer-events: none;
+    font-size: 1.1rem;
+    opacity: 0.9;
 }
 
 /* Table Enhancements */

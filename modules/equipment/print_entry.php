@@ -154,8 +154,8 @@ if (empty($doc_number)) {
         .sig-line { border-bottom: 1.5px solid black; height: 40px; margin-bottom: 5px; }
 
         @media print { 
-            @page { size: letter; margin: 10mm 0 !important; }
-            html, body { height: auto; overflow: visible; margin: 0 !important; padding: 0 !important; }
+            @page { size: letter; margin: 0; }
+            html, body { background: white !important; height: auto; overflow: visible; margin: 0 !important; padding: 0 !important; }
             .actions { display: none; } 
             .paper { 
                 box-shadow: none; 

@@ -56,14 +56,14 @@ $sql = "
         so.id, so.entry_date, 
         w.product_code, w.sales_invoice_number, w.supplier_name,
         w.master_entry_invoice, w.master_entry_date, w.end_date, w.status, w.duration_months,
-        c.name as client_name, c.id as client_id,
+        c.name as client_name, c.id as client_id, c.tax_id, c.phone,
         e.id as equipment_id, e.brand, e.model, e.serial_number
     FROM service_orders so
     JOIN warranties w ON w.service_order_id = so.id
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
     $where
-    ORDER BY " . ($tab === 'sold' ? "w.end_date" : "so.created_at") . " DESC
+    ORDER BY " . ($tab === 'sold' ? "DATE_SUB(w.end_date, INTERVAL w.duration_months MONTH) DESC, w.sales_invoice_number DESC, e.brand ASC" : "so.created_at DESC") . "
     LIMIT $limit OFFSET $offset
 ";
 $stmt = $pdo->prepare($sql);
@@ -105,89 +105,50 @@ $records = $stmt->fetchAll();
         </form>
     </div>
 
+    <!-- Bulk Actions (Only in Stock) -->
+    <?php if ($tab === 'stock'): ?>
+    <div style="margin-bottom: 1rem; display: none;" id="bulk-action-container">
+        <button class="btn btn-primary" onclick="openBulkAssignModal()" style="background: #10b981; border-color: #10b981;">
+            <i class="ph ph-shopping-cart"></i> Vender Seleccionados (<span id="bulk-count">0</span>)
+        </button>
+    </div>
+    <?php endif; ?>
+
     <div class="card">
         <div class="table-container">
-            <table>
+            <table style="<?php echo $tab === 'sold' ? 'table-layout: fixed; width: 100%;' : ''; ?>">
                 <thead>
                     <tr>
-                        <th>Cód. Producto</th>
-                        <th>Cliente</th>
-                        <th>Equipo / Serie</th>
-                        <th>Factura Venta</th>
-                        <th>Vencimiento</th>
-                        <th>Estado</th>
-                        <th>Acción</th>
+                        <?php if ($tab === 'stock'): ?>
+                            <th style="width: 40px; text-align: center;">
+                                <input type="checkbox" id="selectAllItems" onchange="toggleAllCheckboxes(this)">
+                            </th>
+                            <th>Cód. Producto</th>
+                            <th>Cliente</th>
+                            <th>Equipo / Serie</th>
+                            <th>Factura Venta</th>
+                            <th>Vencimiento</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        <?php else: ?>
+                            <th style="width: 220px;">Cliente</th>
+                            <th style="width: 100px;">Factura</th>
+                            <th>Equipos</th>
+                            <th style="width: 80px; text-align: center;">Acción</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (count($records) > 0): ?>
-                        <?php foreach ($records as $r): 
-                            $isExpired = ($r['end_date'] && strtotime($r['end_date']) < time());
-                            $statusLabel = $isExpired ? 'Expirada' : (ucfirst($r['status'] == 'active' ? 'Vigente' : $r['status']));
-                            $statusClass = $isExpired ? 'status-red' : ($r['status'] == 'active' ? 'status-green' : 'status-gray');
-
-                            // Calculate visual remaining time and Health Bar
-                            $warrantyBadge = '';
-                            $healthBar = '';
-                            if ($r['end_date'] && !$isExpired) {
-                                $end = new DateTime($r['end_date']);
-                                $now = new DateTime();
-                                $diff = $now->diff($end);
-                                $daysLeft = $diff->days;
-                                
-                                // Best effort to guess total duration
-                                $totalDays = 365; // default 12 months
-                                if (!empty($r['duration_months']) && $r['duration_months'] > 0) {
-                                    $totalDays = $r['duration_months'] * 30;
-                                } elseif (!empty($r['master_entry_date'])) {
-                                    $st = new DateTime($r['master_entry_date']);
-                                    $tDiff = $st->diff($end);
-                                    if ($tDiff->days > 0) $totalDays = $tDiff->days;
-                                }
-                                
-                                $percent = min(100, max(0, ($daysLeft / max(1, $totalDays)) * 100));
-                                if ($percent > 75) {
-                                    $barColor = '#10b981'; // Verde
-                                } elseif ($percent > 50) {
-                                    $barColor = '#eab308'; // Amarillo
-                                } elseif ($percent > 25) {
-                                    $barColor = '#f97316'; // Naranja
-                                } else {
-                                    $barColor = '#ef4444'; // Rojo
-                                }
-
-                                if ($daysLeft > 30) {
-                                    $months = floor($daysLeft / 30);
-                                    $detailText = 'Restan ~' . $months . ' meses';
-                                } else {
-                                    $detailText = 'Restan ' . $daysLeft . ' días';
-                                }
-                                
-                                $percentRound = round($percent);
-                                $healthBar = '
-                                <div style="display: inline-flex; align-items: center; border: 2px solid '.$barColor.'; border-radius: 20px; height: 26px; width: 130px; background: transparent;" title="' . $detailText . ' de ' . round($totalDays/30) . ' meses totales">
-                                    <div style="background: '.$barColor.'; color: #fff; border-radius: 16px 0 0 16px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; height: 100%; display: flex; align-items: center; justify-content: center; min-width: 48px;">
-                                        ' . $percentRound . '%
-                                    </div>
-                                    <div style="flex-grow: 1; padding: 3px 4px 3px 4px; height: 100%; display: flex; align-items: center; box-sizing: border-box;">
-                                        <div style="height: 100%; width: '.$percent.'%; background: '.$barColor.'; border-radius: 10px; transition: 0.3s; min-width: 4px;"></div>
-                                    </div>
-                                </div>';
-                            } elseif ($isExpired) {
-                                $healthBar = '
-                                <div style="display: inline-flex; align-items: center; border: 2px solid var(--danger); border-radius: 20px; height: 26px; width: 130px; background: transparent;" title="La garantía ha expirado">
-                                    <div style="background: var(--danger); color: #fff; border-radius: 16px 0 0 16px; padding: 0 8px; font-size: 0.70rem; font-weight: 700; height: 100%; display: flex; align-items: center; justify-content: center; min-width: 80px;">
-                                        EXPIRADA
-                                    </div>
-                                    <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
-                                         <i class="ph ph-warning-circle" style="color: var(--danger); font-size: 1.1rem;"></i>
-                                    </div>
-                                </div>';
-                            } else {
-                                $healthBar = '<span class="status-badge status-gray" style="border: 2px solid var(--text-muted); background: transparent;">N/A</span>';
-                            }
-                        ?>
+                        <?php if ($tab === 'stock'): ?>
+                            <?php foreach ($records as $r): ?>
+                            <?php
+                                $healthBar = '<span class="status-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">EN BODEGA</span>';
+                            ?>
                             <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="text-align: center;">
+                                    <input type="checkbox" class="bulk-cb" value="<?php echo $r['id']; ?>" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>'>
+                                </td>
                                 <td>
                                     <?php if (empty(trim($r['product_code']))): ?>
                                         <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">⚠️ Sin Código</span>
@@ -195,13 +156,7 @@ $records = $stmt->fetchAll();
                                         <span class="badge"><?php echo htmlspecialchars($r['product_code']); ?></span>
                                     <?php endif; ?>
                                 </td>
-                                <td>
-                                    <?php if ($tab === 'stock'): ?>
-                                        <span style="color: var(--text-muted); font-style: italic;">Sin Asignar</span>
-                                    <?php else: ?>
-                                        <?php echo htmlspecialchars($r['client_name']); ?>
-                                    <?php endif; ?>
-                                </td>
+                                <td><span style="color: var(--text-muted); font-style: italic;">Sin Asignar</span></td>
                                 <td>
                                     <strong><?php echo htmlspecialchars($r['brand'] . ' ' . $r['model']); ?></strong>
                                     <div class="text-xs text-muted"><?php echo htmlspecialchars($r['serial_number']); ?></div>
@@ -214,41 +169,172 @@ $records = $stmt->fetchAll();
                                         <strong style="color: var(--text-color); font-size: 0.9rem;"><?php echo date('d/m/Y', strtotime($r['end_date'])); ?></strong>
                                     <?php endif; ?>
                                 </td>
+                                <td><?php echo $healthBar; ?></td>
                                 <td>
-                                    <?php if ($tab === 'stock'): ?>
-                                        <span class="status-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">EN BODEGA</span>
-                                    <?php else: ?>
-                                        <?php echo $healthBar; ?>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start;">
-                                        <button class="btn-icon" 
-                                            data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' 
-                                            onclick="openModalFromBtn(this)" title="Ver Detalles">
-                                            <i class="ph ph-eye"></i>
-                                        </button>
-                                        <?php if ($tab === 'stock'): ?>
-                                            <button class="btn-icon" 
-                                                data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>'
-                                                onclick="openAssignModalFromBtn(this)" title="Client Asignar / Vender" style="color: #10b981;">
-                                                <i class="ph ph-shopping-cart"></i>
-                                            </button>
-                                        <?php endif; ?>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openModalFromBtn(this)" title="Ver Detalles"><i class="ph ph-eye"></i></button>
+                                        <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openAssignModalFromBtn(this)" title="Asignar / Vender" style="color: #10b981;"><i class="ph ph-shopping-cart"></i></button>
                                         <?php if ($_SESSION['role_name'] === 'SuperAdmin'): ?>
-                                            <button class="btn-icon" 
-                                                data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>'
-                                                onclick="openEditModalFromBtn(this)" title="Editar Registro (SuperAdmin)" style="color: #f59e0b;">
-                                                <i class="ph ph-pencil-simple"></i>
-                                            </button>
+                                            <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditModalFromBtn(this)" title="Editar Registro" style="color: #f59e0b;"><i class="ph ph-pencil-simple"></i></button>
                                         <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <?php
+                            // === GROUPED VIEW FOR SOLD TAB ===
+                            $grouped = [];
+                            foreach ($records as $r) {
+                                $key = ($r['sales_invoice_number'] ?: 'NO_INV_'.$r['id']) . '___' . $r['client_id'];
+                                if (!isset($grouped[$key])) {
+                                    $grouped[$key] = [
+                                        'client_name' => $r['client_name'],
+                                        'client_id' => $r['client_id'],
+                                        'sales_invoice_number' => $r['sales_invoice_number'],
+                                        'items' => [],
+                                        'ids' => [],
+                                    ];
+                                }
+                                $grouped[$key]['items'][] = $r;
+                                $grouped[$key]['ids'][] = $r['id'];
+                            }
+                            ?>
+                            <?php foreach ($grouped as $gkey => $group): ?>
+                                <?php
+                                    $all_ids = implode(',', $group['ids']);
+                                    $item_count = count($group['items']);
+                                    
+                                    // Calculate summary stats for the group
+                                    $group_expired = 0;
+                                    $group_active = 0;
+                                    foreach ($group['items'] as $gi) {
+                                        if ($gi['end_date'] && strtotime($gi['end_date']) < time()) {
+                                            $group_expired++;
+                                        } elseif ($gi['status'] == 'active') {
+                                            $group_active++;
+                                        }
+                                    }
+                                ?>
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <td style="vertical-align: middle;"><strong style="font-size: 0.82rem; line-height: 1.2; word-wrap: break-word;"><?php echo htmlspecialchars($group['client_name']); ?></strong></td>
+                                    <td style="vertical-align: middle;"><span style="color: var(--primary-500); font-weight: 600; font-size: 0.85rem;"><?php echo htmlspecialchars($group['sales_invoice_number'] ?: 'N/A'); ?></span></td>
+                                    <td style="vertical-align: middle; padding-top: 0.5rem; padding-bottom: 0.5rem;">
+                                        <?php 
+                                        $first = $group['items'][0];
+                                        $firstExp = ($first['end_date'] && strtotime($first['end_date']) < time());
+                                        
+                                        // Calculate percentage for this specific item
+                                        $tDays = max(1, ($first['duration_months'] ?: 12) * 30);
+                                        $dLeft = max(0, (new DateTime())->diff(new DateTime($first['end_date']))->days);
+                                        $firstPct = min(100, max(0, ($dLeft / $tDays) * 100));
+                                        
+                                        if ($firstExp) {
+                                            $barColor = '#ef4444'; $pctText = 'EXP';
+                                        } else {
+                                            if ($firstPct > 75) $barColor = '#10b981';
+                                            elseif ($firstPct > 50) $barColor = '#eab308';
+                                            elseif ($firstPct > 25) $barColor = '#f97316';
+                                            else $barColor = '#ef4444';
+                                            $pctText = round($firstPct) . '%';
+                                        }
+
+                                        $group_uid = 'grp_' . md5($gkey);
+                                        ?>
+                                        <!-- First item always visible -->
+                                        <div style="display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid <?php echo $barColor; ?>;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="flex: 1; min-width: 0;">
+                                                    <div style="font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($first['brand'] . ' ' . $first['model']); ?></div>
+                                                    <div style="font-size: 0.68rem; color: var(--text-muted);"><i class="ph ph-barcode"></i> <?php echo htmlspecialchars($first['serial_number']); ?></div>
+                                                </div>
+                                                    <div style="text-align: right; min-width: 130px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
+                                                        <div style="margin-right: 4px;">
+                                                            <div style="font-size: 0.62rem; color: var(--text-muted);"><?php echo $first['duration_months']; ?> meses</div>
+                                                            <div style="font-size: 0.75rem; font-weight: 600; color: <?php echo $firstExp ? '#ef4444' : 'var(--text-color)'; ?>;"><?php echo $first['end_date'] ? date('d/m/Y', strtotime($first['end_date'])) : 'N/A'; ?></div>
+                                                        </div>
+                                                        <!-- Edit Assignment (Pencil) - Accessible by Admin/Reception -->
+                                                        <?php if (has_permission('assign_equipment', $pdo)): ?>
+                                                            <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($first), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditAssignmentModal(this)" title="Editar Venta / Asignación" style="width: 26px; height: 26px; font-size: 0.9rem; color: #10b981; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);"><i class="ph ph-pencil-simple"></i></button>
+                                                        <?php endif; ?>
+                                                    </div>
+                                            </div>
+                                            <!-- Mini Bar -->
+                                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                                <div style="flex: 1; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                                                    <div style="height: 100%; width: <?php echo $firstPct; ?>%; background: <?php echo $barColor; ?>;"></div>
+                                                </div>
+                                                <span style="font-size: 0.6rem; font-weight: 700; color: <?php echo $barColor; ?>; min-width: 25px; text-align: right;"><?php echo $pctText; ?></span>
+                                            </div>
+                                        </div>
+                                        <?php if ($item_count > 1): ?>
+                                        <!-- Toggle to show rest -->
+                                        <button onclick="document.getElementById('<?php echo $group_uid; ?>').style.display = document.getElementById('<?php echo $group_uid; ?>').style.display === 'none' ? 'flex' : 'none'; this.querySelector('.toggle-icon').classList.toggle('ph-caret-down'); this.querySelector('.toggle-icon').classList.toggle('ph-caret-up');" 
+                                            style="margin-top: 4px; background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.25); color: #a78bfa; padding: 2px 8px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;">
+                                            <i class="ph ph-caret-down toggle-icon"></i> +<?php echo $item_count - 1; ?> equipo<?php echo ($item_count - 1) > 1 ? 's' : ''; ?> más
+                                        </button>
+                                        <!-- Hidden items -->
+                                        <div id="<?php echo $group_uid; ?>" style="display: none; flex-direction: column; gap: 4px; margin-top: 6px;">
+                                            <?php for ($gi_idx = 1; $gi_idx < $item_count; $gi_idx++): ?>
+                                                <?php 
+                                                $gi = $group['items'][$gi_idx];
+                                                $giExp = ($gi['end_date'] && strtotime($gi['end_date']) < time()); 
+                                                
+                                                $tDaysGi = max(1, ($gi['duration_months'] ?: 12) * 30);
+                                                $dLeftGi = max(0, (new DateTime())->diff(new DateTime($gi['end_date']))->days);
+                                                $giPct = min(100, max(0, ($dLeftGi / $tDaysGi) * 100));
+                                                
+                                                if ($giExp) {
+                                                    $giBarColor = '#ef4444'; $giPctText = 'EXP';
+                                                } else {
+                                                    if ($giPct > 75) $giBarColor = '#10b981';
+                                                    elseif ($giPct > 50) $giBarColor = '#eab308';
+                                                    elseif ($giPct > 25) $giBarColor = '#f97316';
+                                                    else $giBarColor = '#ef4444';
+                                                    $giPctText = round($giPct) . '%';
+                                                }
+                                                ?>
+                                                <div style="display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid <?php echo $giBarColor; ?>;">
+                                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                                        <div style="flex: 1; min-width: 0;">
+                                                            <div style="font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($gi['brand'] . ' ' . $gi['model']); ?></div>
+                                                            <div style="font-size: 0.68rem; color: var(--text-muted);"><i class="ph ph-barcode"></i> <?php echo htmlspecialchars($gi['serial_number']); ?></div>
+                                                        </div>
+                                                        <div style="text-align: right; min-width: 130px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
+                                                            <div style="margin-right: 4px;">
+                                                                <div style="font-size: 0.62rem; color: var(--text-muted);"><?php echo $gi['duration_months']; ?> meses</div>
+                                                                <div style="font-size: 0.75rem; font-weight: 600; color: <?php echo $giExp ? '#ef4444' : 'var(--text-color)'; ?>;"><?php echo $gi['end_date'] ? date('d/m/Y', strtotime($gi['end_date'])) : 'N/A'; ?></div>
+                                                            </div>
+                                                            <!-- Edit Assignment (Pencil) - Accessible by Admin/Reception -->
+                                                            <?php if (has_permission('assign_equipment', $pdo) || $_SESSION['role_name'] === 'SuperAdmin' || $_SESSION['role_name'] === 'Administrador'): ?>
+                                                                <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($gi), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditAssignmentModal(this)" title="Editar Venta / Asignación" style="width: 26px; height: 26px; font-size: 0.9rem; color: #10b981; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);"><i class="ph ph-pencil-simple"></i></button>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Mini Bar -->
+                                                    <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                                        <div style="flex: 1; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                                                            <div style="height: 100%; width: <?php echo $giPct; ?>%; background: <?php echo $giBarColor; ?>;"></div>
+                                                        </div>
+                                                        <span style="font-size: 0.6rem; font-weight: 700; color: <?php echo $giBarColor; ?>; min-width: 25px; text-align: right;"><?php echo $giPctText; ?></span>
+                                                    </div>
+                                                </div>
+                                            <?php endfor; ?>
+                                        </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="vertical-align: middle; text-align: center;">
+                                        <div style="display: flex; gap: 0.4rem; align-items: center; justify-content: center;">
+                                            <button class="btn-icon" data-group-json='<?php echo htmlspecialchars(json_encode($group['items']), ENT_QUOTES, "UTF-8"); ?>' onclick="openGroupDetailModal(this)" title="Ver Detalles del Lote"><i class="ph ph-eye"></i></button>
+                                            <a href="print_certificate.php?id=<?php echo $group['ids'][0]; ?>" target="_blank" class="btn-icon" title="Imprimir Certificado" style="color: #a855f7;"><i class="ph ph-printer"></i></a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                            <td colspan="<?php echo $tab === 'stock' ? '8' : '4'; ?>" style="padding: 3rem; text-align: center; color: var(--text-muted);">
                                 <i class="ph ph-warning-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
                                 No se encontraron registros.
                             </td>
@@ -339,13 +425,15 @@ $records = $stmt->fetchAll();
         <h3 style="margin-top: 0; margin-bottom: 2rem;"><i class="ph ph-shopping-cart" style="color: var(--primary-500);"></i> Vender / Asignar Equipo</h3>
         
         <form id="assignForm" method="POST" action="assign_client.php">
-            <input type="hidden" name="service_order_id" id="assign_order_id">
-            <input type="hidden" name="equipment_id" id="assign_equipment_id">
+            <input type="hidden" name="service_order_ids" id="assign_order_ids">
             
             <div style="margin-bottom: 1.5rem;">
-                <p class="text-sm text-muted mb-1">EQUIPO A VENDER:</p>
-                <p id="assign_equipment_name" class="font-bold" style="font-size: 1.1rem; color: var(--primary-400);">-</p>
-                <div class="text-xs text-muted" id="assign_equipment_sn"></div>
+                <p class="text-sm text-muted mb-1">EQUIPO(S) A VENDER:</p>
+                <div style="background: rgba(0,0,0,0.15); border-radius: 8px; max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color);">
+                    <ul id="assign_equipment_list" style="margin: 0; padding: 0; list-style: none;">
+                        <!-- Dinámico -->
+                    </ul>
+                </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -364,20 +452,71 @@ $records = $stmt->fetchAll();
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+            <div style="display: grid; grid-template-columns: 1fr; margin-bottom: 2rem;">
                 <div class="form-group">
-                    <label class="form-label">Factura de Venta *</label>
+                    <label class="form-label">Factura de Venta * (Aplica para todos)</label>
                     <input type="text" name="sales_invoice_number" class="form-control" required placeholder="Nº Factura">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Meses de Garantía *</label>
-                    <input type="number" name="warranty_months" class="form-control" required min="1" value="12">
                 </div>
             </div>
 
             <div style="text-align: right; display: flex; justify-content: flex-end; gap: 1rem;">
                 <button type="button" onclick="document.getElementById('assignModal').style.display='none'" class="btn btn-secondary">Cancelar</button>
                 <button type="submit" class="btn btn-primary"><i class="ph ph-check"></i> Confirmar Venta</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Sale / Assignment Modal -->
+<div id="editAssignmentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+    <div class="card" style="width: 90%; max-width: 600px; padding: 2rem; position: relative; border: 1px solid var(--border-color);">
+        <button onclick="document.getElementById('editAssignmentModal').style.display='none'" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer;">&times;</button>
+        <h3 style="margin-top: 0; margin-bottom: 2rem;"><i class="ph ph-shopping-cart" style="color: #10b981;"></i> Editar Venta / Asignación</h3>
+        
+        <form action="update_assignment.php" method="POST">
+            <input type="hidden" name="service_order_id" id="e_assign_order_id">
+            <input type="hidden" name="equipment_id" id="e_assign_equipment_id">
+            
+            <div style="margin-bottom: 1.5rem;">
+                <p class="text-sm text-muted mb-1">EQUIPO A EDITAR:</p>
+                <div style="padding: 10px 15px; background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div id="e_assign_equipment_name" style="font-weight: 600; font-size: 0.92rem;"></div>
+                    <div id="e_assign_serial" style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;"></div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">Cliente Final *</label>
+                <input type="text" name="edit_client_name" id="e_assign_client_name" class="form-control" placeholder="Nombre completo del cliente" required>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label">Cédula/RUC</label>
+                    <input type="text" name="edit_client_tax_id" id="e_assign_tax_id" class="form-control" placeholder="Opcional">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" name="edit_client_phone" id="e_assign_phone" class="form-control" placeholder="Opcional">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                <div class="form-group">
+                    <label class="form-label">Factura de Venta *</label>
+                    <input type="text" name="sales_invoice_number" id="e_assign_invoice" class="form-control" required placeholder="Nº Factura">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Meses de Garantía</label>
+                    <input type="number" name="warranty_months" id="e_assign_months" class="form-control" required min="1">
+                </div>
+            </div>
+
+            <div style="text-align: right; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" onclick="document.getElementById('editAssignmentModal').style.display='none'" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="background: #10b981; border-color: #10b981;">
+                    <i class="ph ph-floppy-disk"></i> Guardar Cambios
+                </button>
             </div>
         </form>
     </div>
@@ -452,12 +591,159 @@ function openModalFromBtn(btn) {
     document.getElementById('detailModal').style.display = 'flex';
 }
 
+let warehouse_cart = JSON.parse(localStorage.getItem('warehouse_cart')) || {};
+
+function saveCart() {
+    localStorage.setItem('warehouse_cart', JSON.stringify(warehouse_cart));
+}
+
+function handleCheckboxChange(cb) {
+    if (cb.checked) {
+        warehouse_cart[cb.value] = JSON.parse(cb.dataset.json);
+    } else {
+        delete warehouse_cart[cb.value];
+    }
+    saveCart();
+    updateBulkActionUI();
+}
+
+function toggleAllCheckboxes(source) {
+    const checkboxes = document.querySelectorAll('.bulk-cb');
+    checkboxes.forEach(cb => {
+        cb.checked = source.checked;
+        if (source.checked) {
+            warehouse_cart[cb.value] = JSON.parse(cb.dataset.json);
+        } else {
+            delete warehouse_cart[cb.value];
+        }
+    });
+    saveCart();
+    updateBulkActionUI();
+}
+
+function updateBulkActionUI() {
+    const keys = Object.keys(warehouse_cart);
+    const container = document.getElementById('bulk-action-container');
+    const countSpan = document.getElementById('bulk-count');
+    
+    if(keys.length > 0) {
+        countSpan.innerText = keys.length;
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+        const selectAll = document.getElementById('selectAllItems');
+        if (selectAll) selectAll.checked = false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Restore checkboxes from cart state when page loads
+    const checkboxes = document.querySelectorAll('.bulk-cb');
+    checkboxes.forEach(cb => {
+        if (warehouse_cart[cb.value]) {
+            cb.checked = true;
+        }
+        cb.addEventListener('change', () => handleCheckboxChange(cb));
+    });
+    updateBulkActionUI();
+    
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'assigned'): ?>
+    // Clear cart upon successful assignment
+    localStorage.removeItem('warehouse_cart');
+    warehouse_cart = {};
+    <?php endif; ?>
+});
+
 function openAssignModalFromBtn(btn) {
     const data = JSON.parse(btn.dataset.json);
-    document.getElementById('assign_order_id').value = data.id;
-    document.getElementById('assign_equipment_id').value = data.equipment_id;
-    document.getElementById('assign_equipment_name').innerText = (data.brand || '') + ' ' + (data.model || '');
-    document.getElementById('assign_equipment_sn').innerText = 'S/N: ' + (data.serial_number || '');
+    setupAssignModal([data]);
+}
+
+function openBulkAssignModal() {
+    const dataArr = Object.values(warehouse_cart);
+    if(dataArr.length === 0) return;
+    setupAssignModal(dataArr);
+}
+
+function openGroupDetailModal(btn) {
+    const items = JSON.parse(btn.dataset.groupJson);
+    const modal = document.getElementById('detailModal');
+    const content = modal.querySelector('.card');
+    
+    // Build a rich grouped detail view
+    let html = `<button onclick="document.getElementById('detailModal').style.display='none'" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer;">&times;</button>`;
+    html += `<h3 style="margin-top: 0; margin-bottom: 1.5rem;"><i class="ph ph-info" style="color: var(--primary-500);"></i> Detalles del Lote</h3>`;
+    
+    // Common info from first item
+    const first = items[0];
+    html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">`;
+    html += `<div><p class="text-xs text-muted mb-1">CLIENTE</p><p class="font-bold">${first.client_name || '-'}</p></div>`;
+    html += `<div><p class="text-xs text-muted mb-1">FACTURA DE VENTA</p><p class="font-bold">${first.sales_invoice_number || '-'}</p></div>`;
+    html += `<div><p class="text-xs text-muted mb-1">PROVEEDOR</p><p class="font-bold">${first.supplier_name || '-'}</p></div>`;
+    html += `<div><p class="text-xs text-muted mb-1">FACT. INGRESO MASTER</p><p class="font-bold">${first.master_entry_invoice || '-'}</p></div>`;
+    html += `</div>`;
+    
+    // Items list
+    html += `<p class="text-xs text-muted mb-1">EQUIPOS (${items.length})</p>`;
+    html += `<div style="display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem;">`;
+    items.forEach(item => {
+        const isExp = item.end_date && new Date(item.end_date) < new Date();
+        const borderColor = isExp ? '#ef4444' : '#10b981';
+        html += `<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid ${borderColor};">
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 0.9rem;">${item.brand || ''} ${item.model || ''}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="ph ph-barcode"></i> S/N: ${item.serial_number || 'N/A'}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="ph ph-tag"></i> Cód: ${item.product_code || 'N/A'}</div>
+            </div>
+            <div style="text-align: right; flex-shrink: 0;">
+                <div style="font-size: 0.7rem; color: var(--text-muted);">Garantía: ${item.duration_months || 0} meses</div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: ${isExp ? '#ef4444' : '#10b981'};">${item.end_date ? new Date(item.end_date).toLocaleDateString('es-HN') : 'N/A'}</div>
+            </div>
+        </div>`;
+    });
+    html += `</div>`;
+    
+    html += `<div style="text-align: right;"><button onclick="document.getElementById('detailModal').style.display='none'" class="btn btn-secondary">Cerrar</button></div>`;
+    
+    content.innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+function setupAssignModal(dataArr) {
+    const ids = dataArr.map(d => d.id).join(',');
+    document.getElementById('assign_order_ids').value = ids;
+    
+    const list = document.getElementById('assign_equipment_list');
+    list.innerHTML = '';
+    dataArr.forEach((d, index) => {
+        let li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.padding = '12px 15px';
+        li.style.transition = 'background 0.2s ease';
+        
+        if (index < dataArr.length - 1) {
+            li.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+        }
+        
+        let label = document.createElement('div');
+        label.style.flex = '1';
+        label.style.paddingRight = '15px';
+        label.innerHTML = `<div style="font-size: 0.9rem; font-weight: 600; color: var(--text-color); margin-bottom: 4px; line-height: 1.3;">${d.brand || ''} ${d.model || ''}</div>
+                           <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="ph ph-barcode" style="vertical-align: middle; font-size: 0.9rem;"></i> S/N: <span style="font-family: monospace;">${d.serial_number || 'N/A'}</span></div>`;
+        
+        let actions = document.createElement('div');
+        actions.style.display = 'flex';
+        actions.style.flexDirection = 'column';
+        actions.style.alignItems = 'center';
+        actions.innerHTML = `<label style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600;">Meses</label>
+                             <input type="number" name="warranty_months[${d.id}]" value="${d.duration_months || 12}" min="1" style="width: 60px; padding: 6px 4px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); color: #10b981; font-weight: 700; text-align: center; font-size: 0.9rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='var(--border-color)'">`;
+        
+        li.appendChild(label);
+        li.appendChild(actions);
+        list.appendChild(li);
+    });
     
     document.getElementById('assignForm').reset();
     document.getElementById('assignModal').style.display = 'flex';
@@ -482,6 +768,31 @@ function openEditModalFromBtn(btn) {
     
     document.getElementById('editModal').style.display = 'flex';
 }
+
+function openEditAssignmentModal(btn) {
+    const data = JSON.parse(btn.dataset.json);
+    document.getElementById('e_assign_order_id').value = data.id;
+    document.getElementById('e_assign_equipment_id').value = data.equipment_id;
+    
+    document.getElementById('e_assign_equipment_name').innerText = (data.brand || '') + ' ' + (data.model || '');
+    document.getElementById('e_assign_serial').innerText = 'S/N: ' + (data.serial_number || 'N/A');
+    
+    document.getElementById('e_assign_client_name').value = data.client_name || '';
+    document.getElementById('e_assign_tax_id').value = data.tax_id || '';
+    document.getElementById('e_assign_phone').value = data.phone || '';
+    document.getElementById('e_assign_invoice').value = data.sales_invoice_number || '';
+    document.getElementById('e_assign_months').value = data.duration_months || 12;
+    
+    document.getElementById('editAssignmentModal').style.display = 'flex';
+}
 </script>
+
+<?php if (isset($_GET['print_cert'])): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    window.open('print_certificate.php?id=<?php echo urlencode($_GET['print_cert']); ?>', '_blank', 'width=800,height=900');
+});
+</script>
+<?php endif; ?>
 
 <?php require_once '../../includes/footer.php'; ?>

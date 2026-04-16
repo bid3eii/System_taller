@@ -1,8 +1,18 @@
 <?php
 // Detect environment based on server name
 
-$whitelist = ['127.0.0.1', '::1', 'localhost','10.4.4.48'];
-$is_local = (isset($_SERVER['SERVER_NAME']) && in_array($_SERVER['SERVER_NAME'], $whitelist)) || (php_sapi_name() === 'cli');
+$is_local = false;
+if (php_sapi_name() === 'cli' || strpos(__DIR__, 'xampp') !== false || strpos(__DIR__, 'XAMPP') !== false) {
+    $is_local = true;
+} else if (isset($_SERVER['SERVER_NAME'])) {
+    $server_name = $_SERVER['SERVER_NAME'];
+    $is_local = (
+        in_array($server_name, ['127.0.0.1', '::1', 'localhost']) || 
+        strpos($server_name, '192.168.') === 0 || 
+        strpos($server_name, '10.') === 0 || 
+        strpos($server_name, '172.') === 0
+    );
+}
 
 if ($is_local) {
     // Local Credentials (XAMPP)

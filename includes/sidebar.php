@@ -59,6 +59,17 @@
             ];
         }
 
+        // --- SPECIAL: TECHNICIAN AGENDA ---
+        if (can_access_module('tech_agenda', $pdo)) {
+            $menu_items['tech_agenda'] = [
+                'type' => 'link',
+                'url' => BASE_URL . 'modules/tech_agenda/index.php',
+                'icon' => 'ph-map-trifold',
+                'label' => 'Mi Agenda',
+                'active' => strpos($_SERVER['REQUEST_URI'], 'tech_agenda') !== false
+            ];
+        }
+
         // Equipment
         if (can_access_module('equipment', $pdo)) {
             $menu_items['equipment'] = [
@@ -145,8 +156,19 @@
         $can_viaticos = can_access_module('viaticos', $pdo);
         $can_comisiones = can_access_module('comisiones', $pdo);
 
-        if ($can_proyectos || $can_surveys || $can_project_history || $can_anexos || $can_viaticos || $can_comisiones) {
+        if ($can_proyectos || $can_surveys || $can_project_history || $can_anexos || $can_viaticos || $can_comisiones || can_access_module('schedule', $pdo) || can_access_module('tech_agenda', $pdo)) {
             $proj_children = [];
+            
+            // General Agenda
+            if (can_access_module('schedule', $pdo)) {
+                $proj_children[] = ['url' => BASE_URL . 'modules/schedule/index.php', 'icon' => 'ph-calendar-blank', 'label' => 'Agenda / Visitas'];
+            }
+            
+            // Tech Agenda (Specialized internal link)
+            if (can_access_module('tech_agenda', $pdo)) {
+                $proj_children[] = ['url' => BASE_URL . 'modules/tech_agenda/index.php', 'icon' => 'ph-calendar-check', 'label' => 'Mi Agenda Técnica'];
+            }
+                
             if ($can_proyectos)
                 $proj_children[] = ['url' => BASE_URL . 'modules/proyectos/index.php', 'icon' => 'ph-kanban', 'label' => 'Proyectos'];
             if ($can_surveys)
@@ -169,7 +191,7 @@
                 'url' => '#',
                 'icon' => 'ph-folder-open',
                 'label' => 'Proyecto',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/proyectos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/levantamientos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/project_history/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/anexos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/comisiones/') !== false),
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/proyectos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/levantamientos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/project_history/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/anexos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/comisiones/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/schedule/') !== false),
                 'children' => $proj_children
             ];
         }

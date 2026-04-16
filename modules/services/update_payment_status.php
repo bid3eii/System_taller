@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payment_status = $_POST['payment_status'];
     $invoice_number = isset($_POST['invoice_number']) ? clean($_POST['invoice_number']) : null;
 
-    if (!in_array($payment_status, ['pendiente', 'pagado'])) {
+    if (!in_array($payment_status, ['pendiente', 'credito', 'contado', 'pagado'])) {
         die("Estado no válido");
     }
 
@@ -75,9 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $_SESSION['success_message'] = "Estado de pago actualizado y comisión generada exitosamente.";
         } else {
-            // Just update payment status
-            $stmt = $pdo->prepare("UPDATE service_orders SET payment_status = ? WHERE id = ?");
-            $stmt->execute([$payment_status, $id]);
+            // Just update payment status (and invoice if provided)
+            $stmt = $pdo->prepare("UPDATE service_orders SET payment_status = ?, invoice_number = COALESCE(?, invoice_number) WHERE id = ?");
+            $stmt->execute([$payment_status, $invoice_number, $id]);
 
             $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'updated', ?, ?, ?)");
             $stmtH->execute([$id, "Estado de pago actualizado a: " . strtoupper($payment_status), $_SESSION['user_id'], get_local_datetime()]);

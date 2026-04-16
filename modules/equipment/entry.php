@@ -59,7 +59,7 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'saved') {
 $edit_order = null;
 
 // Determine Mode
-$is_warranty_mode = (isset($_GET['type']) && $_GET['type'] === 'warranty');
+$is_warranty_mode = (isset($_GET['type']) && $_GET['type'] === 'warranty') || (isset($_GET['mode']) && $_GET['mode'] === 'warranty');
 
 // Handle Edit Mode
 if (isset($_GET['edit'])) {
@@ -406,12 +406,21 @@ require_once '../../includes/sidebar.php';
 
         .form-section {
             background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            margin-bottom: 1rem;
-            /* Reduced from 2rem */
-            border-radius: 12px;
-            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            margin-bottom: 2rem;
+            border-radius: 16px;
+            padding: 2rem;
             position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .premium-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         .form-section-header {
@@ -449,6 +458,13 @@ require_once '../../includes/sidebar.php';
             background-color: var(--bg-body);
             border: 1px solid var(--border-color);
             padding: 0.6rem 1rem;
+            color: var(--text-primary);
+            opacity: 1; /* Ensure no layer transparency */
+        }
+
+        /* Improved placeholder contrast */
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.45);
         }
 
         .form-control:focus {
@@ -479,21 +495,45 @@ require_once '../../includes/sidebar.php';
             padding-right: 2.5rem;
         }
 
+        /* Hide browser-default clear buttons to avoid icon overlap */
+        input::-ms-clear, 
+        input::-ms-reveal { display: none; width: 0; height: 0; }
+        input::-webkit-search-decoration,
+        input::-webkit-search-cancel-button,
+        input::-webkit-search-results-button,
+        input::-webkit-search-results-decoration { display: none; }
+
         /* Unified Search Results Style */
         .search-results {
             position: absolute;
             left: 0;
             right: 0;
             top: 100%;
-            z-index: 1000;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            margin-top: 5px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            max-height: 250px;
+            z-index: 9999; /* Super high priority */
+            background: #0f172a !important; /* Extremely solid dark navy/black */
+            border: 1px solid var(--primary-500); 
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            margin-top: -1px; /* Fuse with input border */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+            max-height: 350px;
             overflow-y: auto;
             display: none;
+            opacity: 1 !important; /* Zero transparency */
+        }
+
+        .search-option {
+            padding: 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            background: #0f172a !important; /* Solid dark background matching container */
+            color: var(--text-primary) !important;
+        }
+
+        .search-option:hover {
+            background: #1e293b !important; /* Lighter solid background on hover */
         }
 
         .search-results.show {
@@ -733,144 +773,163 @@ require_once '../../includes/sidebar.php';
                 </div>
             <?php endif; ?>
 
-                <!-- SECCIÓN 2: DETALLES DEL EQUIPO -->
-                <div class="form-section animate-enter" style="margin-bottom: 2rem; border-left: 4px solid var(--accent);">
-                    <div class="form-section-header"
-                        style="color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
-                        <i class="ph ph-desktop"></i> Detalles del Equipo
+                <!-- SECCIÓN UNIFICADA: REGISTRO INTEGRAL DE BODEGA -->
+                <div class="form-section premium-card animate-enter" style="border-top: 4px solid var(--accent); padding-top: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="background: rgba(168, 85, 247, 0.2); width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: 0 8px 16px rgba(0,0,0,0.2);">
+                                <i class="ph-fill ph-package" style="font-size: 2rem;"></i>
+                            </div>
+                            <div>
+                                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; color: white; letter-spacing: -0.5px;">Registro Integral de Bodega</h2>
+                                <p style="margin: 4px 0 0 0; font-size: 0.9rem; color: var(--text-secondary);">Control unificado de entrada, técnicos y garantías.</p>
+                            </div>
+                        </div>
+                        <span id="code-status-badge" class="badge" style="display: none; font-size: 0.75rem; padding: 6px 14px; border-radius: 20px; font-weight: 700; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></span>
                     </div>
 
-                    <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
-                        <div class="form-group" style="grid-column: span 1; position: relative;">
-                            <label class="form-label">Código</label>
-                            <div class="input-group">
-                                <input type="text" name="product_code" id="product_code_input" class="form-control" placeholder="Buscar o crear..."
+                    <div class="modern-grid" style="grid-template-columns: repeat(6, 1fr); gap: 1.75rem;">
+                        <!-- IDENTIFICACIÓN -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-secondary);">
+                                <i class="ph-bold ph-barcode" style="color: var(--primary-400);"></i> CÓDIGO
+                            </label>
+                            <div class="input-group" style="display: flex; position: relative; align-items: center;">
+                                <i class="ph ph-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary-500); font-size: 1.2rem; pointer-events: none; z-index: 10;"></i>
+                                <input type="text" name="product_code" id="product_code_input" class="form-control" placeholder="Escriba código..."
                                     required value="<?php echo $edit_order['product_code'] ?? ''; ?>"
+                                    style="flex: 1; padding-left: 45px; padding-right: 50px; border-radius: 12px; height: 50px; font-size: 1.05rem; background: rgba(0,0,0,0.2);"
                                     autocomplete="off" oninput="searchProduct(this.value)">
-                                <i class="ph ph-magnifying-glass input-icon"></i>
-                            </div>
-                            <!-- Product Search Dropdown -->
-                            <div id="product-search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
-                                background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; 
-                                max-height: 250px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.4); margin-top: 4px;">
+                                <button type="button" onclick="openSearchProductModal()" title="Buscador avanzado"
+                                    style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--primary-500); border: none; cursor: pointer; color: white; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 11; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);">
+                                    <i class="ph-bold ph-list-magnifying-glass" style="font-size: 1.1rem;"></i>
+                                </button>
+                                <div id="product-search-results" class="search-results"></div>
                             </div>
                         </div>
 
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Serie (S/N) *</label>
+                        <div class="form-group" style="grid-column: span 4;">
+                            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-secondary);">
+                                <i class="ph-bold ph-fingerprint" style="color: var(--primary-400);"></i> NÚMEROS DE SERIE (S/N)
+                            </label>
                             <div id="serial-numbers-container-wry">
-                                <div class="input-group" style="margin-bottom: 0.5rem;">
+                                <div class="input-group" style="margin-bottom: 0.5rem; position: relative;">
                                     <input type="text" name="serial_number[]" class="form-control serial-input-wry"
-                                        placeholder="S/N" required value="<?php echo $edit_order['serial_number'] ?? ''; ?>"
-                                        onblur="validateSerialWryBatch(this)" onkeydown="handleScannerKey(event, this)">
-                                    <i class="ph ph-barcode input-icon"></i>
-                                    <div class="warranty-status-msg-wry" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; pointer-events: none;"></div>
+                                        placeholder="Escanee o escriba la serie..." required value="<?php echo $edit_order['serial_number'] ?? ''; ?>"
+                                        onblur="validateSerialWryBatch(this)" onkeydown="handleScannerKey(event, this)"
+                                        style="border-radius: 12px; height: 50px; font-size: 1.05rem; background: rgba(0,0,0,0.2);">
+                                    <i class="ph ph-barcode input-icon" style="right: 15px; font-size: 1.3rem;"></i>
+                                    <div class="warranty-status-msg-wry" style="position: absolute; right: 45px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; pointer-events: none;"></div>
                                 </div>
                             </div>
                             <?php if (!$edit_order): ?>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="addSerialNumberWry()" style="margin-top: 0.25rem; font-size: 0.75rem;">
-                                <i class="ph ph-plus"></i> Añadir otra serie
+                            <button type="button" class="btn btn-sm" onclick="addSerialNumberWry()" style="margin-top: 0.25rem; font-size: 0.75rem; background: rgba(59, 130, 246, 0.1); color: var(--primary-400); border: 1px dashed var(--primary-500); padding: 8px 16px; border-radius: 8px; font-weight: 600;">
+                                <i class="ph ph-plus-circle"></i> AÑADIR OTRA SERIE
                             </button>
                             <?php endif; ?>
                         </div>
 
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Equipo *</label>
+                        <!-- ESPECIFICACIONES -->
+                        <div class="form-group" style="grid-column: span 6;">
+                            <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-secondary);">
+                                <i class="ph-bold ph-info" style="color: var(--accent);"></i> DESCRIPCIÓN TÉCNICA (PRODUCTO / MARCA)
+                            </label>
                             <div class="input-group">
-                                <input type="text" name="brand" class="form-control" placeholder="Ej. Lápiz HP Pavilion 15"
-                                    required
+                                <input type="text" name="brand" class="form-control" placeholder="Ej. MONITOR ASUS TUF GAMING 24\" 144HZ"
+                                    required style="border-radius: 12px; height: 50px; font-size: 1.05rem; background: rgba(0,0,0,0.2);"
                                     value="<?php echo trim(($edit_order['brand'] ?? '') . ' ' . ($edit_order['model'] ?? '') . ' ' . ($edit_order['submodel'] ?? '')); ?>">
                                 <input type="hidden" name="model" value="">
                                 <input type="hidden" name="submodel" value="">
                                 <input type="hidden" name="type" value="">
-                                <i class="ph ph-laptop input-icon"></i>
+                                <i class="ph ph-laptop input-icon" style="font-size: 1.3rem;"></i>
+                            </div>
+                        </div>
+
+                        <!-- SEPARADOR: DATOS DE INGRESO -->
+                        <div style="grid-column: span 6; margin: 1.5rem 0 0.5rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 2rem;">
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--success); display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                                <i class="ph-fill ph-receipt" style="font-size: 1.25rem;"></i> Facturación y Proveedor
+                            </h4>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Fecha de Ingreso</label>
+                            <div class="input-group">
+                                <input type="date" name="entry_date" class="form-control"
+                                    value="<?php echo $edit_order ? date('Y-m-d', strtotime($edit_order['created_at'])) : date('Y-m-d'); ?>"
+                                    style="color-scheme: dark; border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);">
+                                <i class="ph ph-calendar input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Factura Proveedor</label>
+                            <div class="input-group">
+                                <input type="text" name="master_entry_invoice" class="form-control" required
+                                    placeholder="No. Factura" style="border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);"
+                                    value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
+                                <i class="ph ph-file-text input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Fecha Proveedor</label>
+                            <div class="input-group">
+                                <input type="date" name="master_entry_date" class="form-control" required
+                                    value="<?php echo $edit_order['master_entry_date'] ?? ''; ?>" 
+                                    style="color-scheme: dark; border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);">
+                                <i class="ph ph-calendar-blank input-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 6;">
+                            <label class="form-label">Proveedor Seleccionado</label>
+                            <div class="input-group">
+                                <input type="text" name="supplier_name" class="form-control"
+                                    placeholder="Nombre del proveedor o tienda..." required
+                                    value="<?php echo $edit_order['supplier_name'] ?? ''; ?>" 
+                                    style="border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);">
+                                <i class="ph ph-truck input-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- SEPARADOR: GARANTÍA -->
+                        <div style="grid-column: span 6; margin: 1.5rem 0 0.5rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 2rem;">
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                                <i class="ph-fill ph-shield-check" style="font-size: 1.25rem;"></i> Vigencia de Garantía
+                            </h4>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 3;">
+                            <label class="form-label">Duración Ofrecida</label>
+                            <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
+                                <input type="number" name="warranty_duration" id="warranty_duration" class="form-control"
+                                    placeholder="Cant." min="0" value="0"
+                                    style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 1rem; height: 50px; background: rgba(0,0,0,0.2); border-radius: 12px 0 0 12px;">
+                                <select name="warranty_period" id="warranty_period" class="form-control"
+                                    style="width: auto; flex: 0 0 140px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1; height: 50px; border-radius: 0 12px 12px 0;">
+                                    <option value="days">DÍAS</option>
+                                    <option value="weeks">SEMANAS</option>
+                                    <option value="months" selected>MESES</option>
+                                    <option value="years">AÑOS</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 3;">
+                            <label class="form-label">Calculado: Vence el día</label>
+                            <div class="input-group">
+                                <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control"
+                                    readonly
+                                    style="background-color: rgba(34, 197, 94, 0.05); cursor: not-allowed; font-weight: 800; color: var(--success); color-scheme: dark; border-radius: 12px; height: 50px; border: 1px solid rgba(34, 197, 94, 0.2);">
+                                <i class="ph ph-calendar-check input-icon" style="color: var(--success); font-size: 1.3rem;"></i>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- SECCIÓN 3: CONTROL DE BODEGA / GARANTÍA -->
-                <div class="form-section animate-enter"
-                    style="margin-bottom: 1.5rem; border-left: 4px solid var(--success);">
-                    <div class="form-section-header"
-                        style="color: var(--success); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem; margin-bottom: 1.5rem;">
-                        <i class="ph ph-shield-check"></i> Ingreso a Bodega
-                    </div>
+                </div>
 
-                    <div class="modern-grid" style="grid-template-columns: repeat(4, 1fr);">
-                        <!-- Fila 1 -->
-                        <div class="form-group">
-                            <label class="form-label">Fecha de Ingreso</label>
-                            <div class="input-group">
-                                <input type="date" name="entry_date" class="form-control"
-                                    value="<?php echo $edit_order ? date('Y-m-d', strtotime($edit_order['created_at'])) : date('Y-m-d'); ?>"
-                                    style="color-scheme: dark;">
-                                <i class="ph ph-calendar input-icon"></i>
-                            </div>
-                        </div>
-
-                        <?php if (!$is_warranty_mode): ?>
-                        <div class="form-group">
-                            <label class="form-label">Factura Venta</label>
-                            <div class="input-group">
-                                <input type="text" name="sales_invoice_number" class="form-control"
-                                    placeholder="No. Factura"
-                                    value="<?php echo $edit_order['sales_invoice_number'] ?? ''; ?>">
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
-                        <div class="form-group">
-                            <label class="form-label">Factura Proveedor</label>
-                            <div class="input-group">
-                                <input type="text" name="master_entry_invoice" class="form-control" required
-                                    value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Fecha Proveedor</label>
-                            <input type="date" name="master_entry_date" class="form-control" required
-                                value="<?php echo $edit_order['master_entry_date'] ?? ''; ?>" style="color-scheme: dark;">
-                        </div>
-
-                        <!-- Fila 2 -->
-                        <div class="form-group" style="grid-column: span 4;">
-                            <label class="form-label">Proveedor</label>
-                            <div class="input-group">
-                                <input type="text" name="supplier_name" class="form-control"
-                                    placeholder="Proveedor Original" required
-                                    value="<?php echo $edit_order['supplier_name'] ?? ''; ?>">
-                            </div>
-                        </div>
-
-                        <!-- Fila 3 -->
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Tiempo de Garantía Ofrecida</label>
-                            <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
-                                <input type="number" name="warranty_duration" id="warranty_duration" class="form-control"
-                                    placeholder="Cant." min="0" value="0"
-                                    style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 0.5rem;">
-                                <select name="warranty_period" id="warranty_period" class="form-control"
-                                    style="width: auto; flex: 0 0 130px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1;">
-                                    <option value="days">Días</option>
-                                    <option value="weeks">Semanas</option>
-                                    <option value="months" selected>Meses</option>
-                                    <option value="years">Años</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Fecha Vencimiento Estimada</label>
-                            <div class="input-group">
-                                <input type="date" name="warranty_end_date" id="warranty_end_date" class="form-control"
-                                    readonly
-                                    style="background-color: rgba(255,255,255,0.03); cursor: not-allowed; font-weight: 600; color: var(--success); color-scheme: dark;">
-                                <i class="ph ph-calendar-check input-icon" style="color: var(--success);"></i>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div style="text-align: right; margin-top: 2rem; margin-bottom: 2rem;">
@@ -2046,7 +2105,148 @@ require_once '../../includes/sidebar.php';
                 if (e.target === modal) modal.style.display = 'none';
             }
         }
+
+        // --- SEARCH PRODUCT MODAL LOGIC ---
+        function openSearchProductModal() {
+            const modal = document.getElementById('searchProductModal');
+            modal.style.display = 'flex';
+            fetchProductsForModal(''); // Load initial list
+            
+            document.getElementById('modalProductSearchInput').focus();
+            
+            modal.onclick = function (e) {
+                if (e.target === modal) modal.style.display = 'none';
+            }
+        }
+
+        function closeSearchProductModal() {
+            document.getElementById('searchProductModal').style.display = 'none';
+        }
+
+        let modalSearchTimer = null;
+        function fetchProductsForModal(query) {
+            const tableBody = document.querySelector('#modalProductTable tbody');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem;"><i class="ph ph-spinner ph-spin" style="font-size: 1.5rem;"></i><br>Cargando productos...</td></tr>';
+
+            fetch('search_product.php?q=' + encodeURIComponent(query))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.results.length > 0) {
+                        let html = '';
+                        data.results.forEach(item => {
+                            html += `
+                                <tr class="clickable-row" onclick='selectProductFromModal(${JSON.stringify(item)})'>
+                                    <td><span class="badge" style="background:rgba(var(--primary-rgb),0.1); color:var(--primary-light);">${item.product_code}</span></td>
+                                    <td><strong>${item.brand}</strong> ${item.model || ''}</td>
+                                    <td>${item.supplier_name || '-'}</td>
+                                    <td style="text-align:right;">
+                                        <button type="button" class="btn btn-sm btn-primary" style="padding: 2px 8px; font-size: 0.75rem;">
+                                            Seleccionar
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        tableBody.innerHTML = html;
+                    } else {
+                        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);"><i class="ph ph-magnifying-glass" style="font-size: 1.5rem;"></i><br>No se encontraron productos coincidentes</td></tr>';
+                    }
+                })
+                .catch(err => {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--danger);">Error al cargar datos</td></tr>';
+                });
+        }
+
+        function selectProductFromModal(item) {
+            // Re-use logic from fillFromProduct helper (adjusted for raw item data)
+            const fields = {
+                'product_code': item.product_code,
+                'brand': item.brand,
+                'supplier_name': item.supplier_name,
+                'sales_invoice_number': item.sales_invoice_number,
+                'master_entry_invoice': item.master_entry_invoice,
+                'master_entry_date': item.master_entry_date
+            };
+
+            for (const [name, value] of Object.entries(fields)) {
+                const el = document.querySelector(`input[name="${name}"]`);
+                if (el) el.value = value || '';
+            }
+
+            // Update badge for modal selection
+            const badge = document.getElementById('code-status-badge');
+            if(badge) {
+                badge.style.display = 'inline-block';
+                badge.style.background = 'rgba(34, 197, 94, 0.25)';
+                badge.style.color = '#4ade80';
+                badge.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+                badge.innerHTML = '<i class="ph ph-check-circle"></i> EXISTENTE';
+            }
+
+            closeSearchProductModal();
+            
+            // Focus serial input
+            setTimeout(() => {
+                const serial = document.querySelector('.serial-input-wry');
+                if (serial) serial.focus();
+            }, 100);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('modalProductSearchInput')?.addEventListener('input', function(e) {
+                clearTimeout(modalSearchTimer);
+                modalSearchTimer = setTimeout(() => {
+                    fetchProductsForModal(e.target.value);
+                }, 300);
+            });
+        });
     </script>
+
+    <!-- Modal de Búsqueda de Productos -->
+    <div id="searchProductModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+        <div class="card animate-pop"
+            style="width: 90%; max-width: 800px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 20px;">
+            
+            <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+                <div>
+                    <h2 style="margin:0; font-size: 1.25rem; display: flex; align-items: center; gap: 0.75rem; color: var(--primary-400);">
+                        <i class="ph-fill ph-magnifying-glass"></i> Buscar Producto Existente
+                    </h2>
+                    <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--text-muted);">Seleccione un modelo para completar los datos automáticamente.</p>
+                </div>
+                <button onclick="closeSearchProductModal()"
+                    style="background: rgba(255,255,255,0.05); border: none; width: 40px; height: 40px; border-radius: 50%; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                    <i class="ph ph-x" style="font-size: 1.25rem;"></i>
+                </button>
+            </div>
+
+            <div style="padding: 1.5rem; background: rgba(0,0,0,0.1);">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <input type="text" id="modalProductSearchInput" class="form-control" 
+                        placeholder="Buscar por código, marca, modelo o proveedor..." 
+                        style="padding: 1rem 1rem 1rem 3rem; font-size: 1rem; border-radius: 12px; background: var(--bg-body);">
+                    <i class="ph ph-magnifying-glass input-icon" style="left: 1rem; font-size: 1.2rem; color: var(--primary-500);"></i>
+                </div>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding: 0.5rem 1.5rem 1.5rem;">
+                <table class="table" id="modalProductTable" style="width: 100%; border-collapse: separate; border-spacing: 0 8px;">
+                    <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
+                        <tr>
+                            <th style="padding: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">Código</th>
+                            <th style="padding: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">Producto / Marca</th>
+                            <th style="padding: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">Proveedor</th>
+                            <th style="padding: 0.75rem;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Results will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <div id="warrantyModal"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
@@ -2164,42 +2364,51 @@ require_once '../../includes/sidebar.php';
     
     function searchProduct(query) {
         const resultsDiv = document.getElementById('product-search-results');
+        const badge = document.getElementById('code-status-badge');
         if (!resultsDiv) return;
-        
+
         clearTimeout(productSearchTimer);
         
-        if (query.length < 2) {
+        if (query.length < 1) {
             resultsDiv.style.display = 'none';
+            if(badge) badge.style.display = 'none';
             return;
+        }
+
+        // Show loading state in badge
+        if(badge) {
+            badge.style.display = 'inline-block';
+            badge.style.background = 'rgba(255,255,255,0.05)';
+            badge.style.color = 'var(--text-muted)';
+            badge.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i>';
         }
 
         productSearchTimer = setTimeout(() => {
             fetch('search_product.php?q=' + encodeURIComponent(query))
                 .then(r => r.json())
                 .then(data => {
+                    let exactMatch = false;
                     if (data.success && data.results.length > 0) {
                         let html = '';
                         data.results.forEach(item => {
-                            html += `<div onclick="fillFromProduct(this)" 
+                            if(item.product_code.toLowerCase() === query.trim().toLowerCase()) exactMatch = true;
+                            html += `<div class="search-option" onclick="fillFromProduct(this)" 
                                 data-code="${item.product_code || ''}"
                                 data-brand="${item.brand || ''}"
                                 data-supplier="${item.supplier_name || ''}"
                                 data-sales-invoice="${item.sales_invoice_number || ''}"
                                 data-master-invoice="${item.master_entry_invoice || ''}"
-                                data-master-date="${item.master_entry_date || ''}"
-                                style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: background 0.15s;"
-                                onmouseover="this.style.background='rgba(99,102,241,0.1)'" 
-                                onmouseout="this.style.background='transparent'">
+                                data-master-date="${item.master_entry_date || ''}">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
                                         <strong style="color: var(--primary-400);">${item.product_code || 'Sin código'}</strong>
                                         <span style="color: var(--text-secondary); margin-left: 8px;">${item.brand || ''}</span>
                                     </div>
-                                    <span style="font-size: 0.7rem; background: rgba(99,102,241,0.15); color: var(--primary-400); padding: 2px 8px; border-radius: 4px;">
+                                    <span style="font-size: 0.7rem; background: rgba(99,102,241,0.2); color: var(--primary-400); padding: 2px 8px; border-radius: 4px; font-weight: bold;">
                                         ${item.total_units} uds
                                     </span>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
                                     <i class="ph ph-truck"></i> ${item.supplier_name || 'Sin proveedor'}
                                     ${item.master_entry_invoice ? ' · Fact: ' + item.master_entry_invoice : ''}
                                 </div>
@@ -2211,8 +2420,26 @@ require_once '../../includes/sidebar.php';
                         resultsDiv.innerHTML = '<div style="padding: 12px 14px; color: var(--text-muted); font-size: 0.85rem; text-align: center;"><i class="ph ph-sparkle"></i> Producto nuevo — se creará al guardar</div>';
                         resultsDiv.style.display = 'block';
                     }
+
+                    // Update Badge Status
+                    if(badge) {
+                        if(exactMatch) {
+                            badge.style.background = 'rgba(34, 197, 94, 0.25)';
+                            badge.style.color = '#4ade80';
+                            badge.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+                            badge.innerHTML = '<i class="ph ph-check-circle"></i> EXISTENTE';
+                        } else {
+                            badge.style.background = 'rgba(59, 130, 246, 0.25)';
+                            badge.style.color = '#60a5fa';
+                            badge.style.border = '1px solid rgba(59, 130, 246, 0.3)';
+                            badge.innerHTML = '<i class="ph ph-sparkle"></i> NUEVO';
+                        }
+                    }
                 })
-                .catch(() => { resultsDiv.style.display = 'none'; });
+                .catch(() => { 
+                    resultsDiv.style.display = 'none'; 
+                    if(badge) badge.style.display = 'none';
+                });
         }, 300);
     }
 
@@ -2251,6 +2478,16 @@ require_once '../../includes/sidebar.php';
         if (firstSerial) {
             firstSerial.focus();
             firstSerial.value = '';
+        }
+
+        // Inform badge it's existent
+        const badge = document.getElementById('code-status-badge');
+        if(badge) {
+            badge.style.display = 'inline-block';
+            badge.style.background = 'rgba(34, 197, 94, 0.25)';
+            badge.style.color = '#4ade80';
+            badge.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+            badge.innerHTML = '<i class="ph ph-check-circle"></i> EXISTENTE';
         }
 
         // Visual feedback

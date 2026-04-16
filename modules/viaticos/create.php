@@ -135,12 +135,45 @@ require_once '../../includes/sidebar.php';
             <div class="card-body"
                 style="display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 1.5rem; align-items: end;">
                 <div class="form-group" style="margin: 0;">
-                    <label class="form-label" style="font-size: 0.85rem; font-weight: bold;">MANTENIMIENTO
-                        / PROYECTO</label>
-                    <input type="text" name="project_title" class="form-control"
-                        placeholder="Ej. PLOTTER YAZAKI PLANTA 6" required
-                        style="font-size: 1.1rem; font-weight: bold; padding: 0.75rem;">
+                    <label class="form-label" style="font-size: 0.85rem; font-weight: bold;">MANTENIMIENTO / PROYECTO</label>
+                    <select name="survey_id" id="survey_id" class="form-control" required style="font-size: 1rem; font-weight: 500; height: 50px;" onchange="updateProjectTitle(this)">
+                        <option value="" disabled selected>Selecciona un Proyecto / Levantamiento...</option>
+                        <optgroup label="Proyectos Activos">
+                            <?php 
+                            $stmtP = $pdo->query("SELECT id, title, client_name FROM project_surveys WHERE status NOT IN ('completed', 'cancelled') ORDER BY created_at DESC");
+                            while($p = $stmtP->fetch()): ?>
+                                <option value="<?php echo $p['id']; ?>" data-title="<?php echo htmlspecialchars($p['client_name'] . ' - ' . $p['title']); ?>">
+                                    <?php echo htmlspecialchars($p['client_name'] . ' - ' . $p['title']); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </optgroup>
+                        <option value="other">-- OTRO (ESPECIFICAR) --</option>
+                    </select>
+                    <input type="hidden" name="project_title" id="project_title_hidden">
+                    <input type="text" id="project_title_custom" class="form-control" placeholder="Especificar nombre de proyecto..." style="display: none; margin-top: 0.5rem;">
                 </div>
+
+                <script>
+                function updateProjectTitle(select) {
+                    const customInput = document.getElementById('project_title_custom');
+                    const hiddenInput = document.getElementById('project_title_hidden');
+                    
+                    if (select.value === 'other') {
+                        customInput.style.display = 'block';
+                        customInput.required = true;
+                        hiddenInput.value = customInput.value;
+                        
+                        customInput.oninput = function() {
+                            hiddenInput.value = this.value;
+                        }
+                    } else {
+                        customInput.style.display = 'none';
+                        customInput.required = false;
+                        const option = select.options[select.selectedIndex];
+                        hiddenInput.value = option.getAttribute('data-title');
+                    }
+                }
+                </script>
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label">Fecha</label>
                     <input type="date" name="date" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>

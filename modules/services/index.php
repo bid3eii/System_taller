@@ -352,6 +352,8 @@ require_once '../../includes/sidebar.php';
                                     <?php
                                     $paymentMaps = [
                                         'pendiente' => ['Pendiente', 'gray'],
+                                        'credito' => ['Crédito', 'orange'],
+                                        'contado' => ['Contado', 'blue'],
                                         'pagado' => ['Pagado', 'green']
                                     ];
                                     $pCol = $paymentMaps[$item['payment_status']][1] ?? 'gray';
@@ -498,6 +500,8 @@ require_once '../../includes/sidebar.php';
                                     <?php
                                     $paymentMaps = [
                                         'pendiente' => ['Pendiente', 'gray'],
+                                        'credito' => ['Crédito', 'orange'],
+                                        'contado' => ['Contado', 'blue'],
                                         'pagado' => ['Pagado', 'green']
                                     ];
                                     $pCol = $paymentMaps[$item['payment_status']][1] ?? 'gray';

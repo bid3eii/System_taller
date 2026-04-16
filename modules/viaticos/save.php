@@ -16,13 +16,14 @@ try {
 
     // 1. Insert header
     $p_title = trim($_POST['project_title']);
+    $survey_id = !empty($_POST['survey_id']) && $_POST['survey_id'] !== 'other' ? intval($_POST['survey_id']) : null;
     $v_date = $_POST['date'];
     $t_amount = floatval($_POST['total_amount'] ?? 0);
     $c_by = $_SESSION['user_id'];
     $c_at = get_local_datetime();
 
-    $sHeader = $pdo->prepare("INSERT INTO viaticos (project_title, date, total_amount, created_by, status, created_at) VALUES (?, ?, ?, ?, 'draft', ?)");
-    $sHeader->execute([$p_title, $v_date, $t_amount, $c_by, $c_at]);
+    $sHeader = $pdo->prepare("INSERT INTO viaticos (project_title, survey_id, date, total_amount, created_by, status, created_at) VALUES (?, ?, ?, ?, ?, 'draft', ?)");
+    $sHeader->execute([$p_title, $survey_id, $v_date, $t_amount, $c_by, $c_at]);
     $viatico_id = $pdo->lastInsertId();
 
     if (isset($_POST['techs']) && is_array($_POST['techs'])) {

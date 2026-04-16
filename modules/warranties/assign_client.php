@@ -10,61 +10,78 @@ if (!can_access_module('warranties', $pdo) && !can_access_module('new_warranty',
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $service_order_id = clean($_POST['service_order_id'] ?? '');
-    $equipment_id = clean($_POST['equipment_id'] ?? '');
+    $service_order_ids_str = clean($_POST['service_order_ids'] ?? '');
     
     $client_name = clean($_POST['assign_client_name'] ?? '');
     $client_tax_id = clean($_POST['assign_client_tax_id'] ?? '');
     $client_phone = clean($_POST['assign_client_phone'] ?? '');
     
     $sales_invoice = clean($_POST['sales_invoice_number'] ?? '');
-    $warranty_months = (int)clean($_POST['warranty_months'] ?? 12);
+    $warranty_months_array = $_POST['warranty_months'] ?? [];
 
-    if (empty($service_order_id) || empty($equipment_id) || empty($client_name) || empty($sales_invoice)) {
+    if (empty($service_order_ids_str) || empty($client_name) || empty($sales_invoice)) {
         die("Error: Faltan datos requeridos.");
     }
+
+    $order_ids = explode(',', $service_order_ids_str);
 
     try {
         $pdo->beginTransaction();
 
-        // 1. Resolve Client
+        // 1. Resolve Client (Done Once for the batch)
         $stmtCheck = $pdo->prepare("SELECT id FROM clients WHERE name = ? OR (tax_id = ? AND tax_id != '') LIMIT 1");
         $stmtCheck->execute([$client_name, $client_tax_id]);
         $existing = $stmtCheck->fetch();
 
         if ($existing) {
             $client_id = $existing['id'];
-            // Actualizar posibles datos faltantes (teléfono/cédula si antes no los tenía)
             if (!empty($client_phone) || !empty($client_tax_id)) {
                 $pdo->prepare("UPDATE clients SET phone = COALESCE(NULLIF(phone,''), ?), tax_id = COALESCE(NULLIF(tax_id,''), ?) WHERE id = ?")
                     ->execute([$client_phone, $client_tax_id, $client_id]);
             }
         } else {
-            // New Client
             $stmtNewC = $pdo->prepare("INSERT INTO clients (name, phone, tax_id, is_third_party, created_at) VALUES (?, ?, ?, 0, ?)");
             $stmtNewC->execute([$client_name, $client_phone, $client_tax_id, get_local_datetime()]);
             $client_id = $pdo->lastInsertId();
         }
 
-        // 2. Update service_orders and equipments
-        $pdo->prepare("UPDATE service_orders SET client_id = ? WHERE id = ?")->execute([$client_id, $service_order_id]);
-        $pdo->prepare("UPDATE equipments SET client_id = ? WHERE id = ?")->execute([$client_id, $equipment_id]);
+        // Loop through all selected orders
+        foreach($order_ids as $service_order_id) {
+            $service_order_id = (int)trim($service_order_id);
+            if(empty($service_order_id)) continue;
 
-        // 3. Update warranty
-        $calc_date = new DateTime();
-        $calc_date->modify("+{$warranty_months} months");
-        $end_date = $calc_date->format('Y-m-d');
+            // Resolve equipment_id from service_order
+            $stmtEq = $pdo->prepare("SELECT equipment_id FROM service_orders WHERE id = ?");
+            $stmtEq->execute([$service_order_id]);
+            $equipment_id = $stmtEq->fetchColumn();
 
-        $stmtW = $pdo->prepare("UPDATE warranties SET sales_invoice_number = ?, duration_months = ?, end_date = ?, status = 'active' WHERE service_order_id = ?");
-        $stmtW->execute([$sales_invoice, $warranty_months, $end_date, $service_order_id]);
+            if($equipment_id) {
+                // Determine item-specific warranty months
+                $item_warranty_months = isset($warranty_months_array[$service_order_id]) ? (int)$warranty_months_array[$service_order_id] : 12;
 
-        // 4. Log History
-        $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'delivered', ?, ?, ?)");
-        $stmtHist->execute([$service_order_id, "Equipo vendido/asignado a $client_name. Factura: $sales_invoice", $_SESSION['user_id'], get_local_datetime()]);
+                // Calculate custom End Date for this specific item
+                $calc_date = new DateTime();
+                $calc_date->modify("+{$item_warranty_months} months");
+                $end_date = $calc_date->format('Y-m-d');
+
+                // 2. Update service_orders and equipments
+                $pdo->prepare("UPDATE service_orders SET client_id = ? WHERE id = ?")->execute([$client_id, $service_order_id]);
+                $pdo->prepare("UPDATE equipments SET client_id = ? WHERE id = ?")->execute([$client_id, $equipment_id]);
+
+                // 3. Update warranty
+                $stmtW = $pdo->prepare("UPDATE warranties SET sales_invoice_number = ?, duration_months = ?, end_date = ?, status = 'active' WHERE service_order_id = ?");
+                $stmtW->execute([$sales_invoice, $item_warranty_months, $end_date, $service_order_id]);
+
+                // 4. Log History
+                $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'delivered', ?, ?, ?)");
+                $stmtHist->execute([$service_order_id, "Equipo vendido/asignado en lote a $client_name. Factura: $sales_invoice ($item_warranty_months meses de garantía)", $_SESSION['user_id'], get_local_datetime()]);
+            }
+        }
 
         $pdo->commit();
 
-        header("Location: database.php?tab=sold&msg=assigned");
+        // Redirect with all IDs to trigger batch printing
+        header("Location: database.php?tab=sold&msg=assigned&print_cert=" . urlencode($service_order_ids_str));
         exit;
 
     } catch (Exception $e) {

@@ -1,333 +1,219 @@
 <style>
-    /* Modern Warehouse Dashboard Styles */
-    :root {
-        --glass-bg: rgba(255, 255, 255, 0.03);
-        --glass-border: rgba(255, 255, 255, 0.08);
-        --glass-hover: rgba(255, 255, 255, 0.06);
-        --neon-blue: #3b82f6;
-        --neon-purple: #8b5cf6;
-        --neon-green: #10b981;
-        --neon-orange: #f59e0b;
-    }
-
-    body.light-mode {
-        --glass-bg: rgba(0, 0, 0, 0.02);
-        --glass-border: rgba(0, 0, 0, 0.06);
-        --glass-hover: rgba(0, 0, 0, 0.04);
-    }
-
-    .wh-dashboard {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-        padding-bottom: 2rem;
-    }
-
-    /* Glass Cards */
-    .wh-card {
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+    /* Premium Warehouse Dashboard Aesthetics */
+    .wh-premium-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
         border-radius: 20px;
-        padding: 1.5rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
-        overflow: hidden;
         position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
-
-    .wh-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-        border-color: rgba(255, 255, 255, 0.15);
-        background: var(--glass-hover);
+    .wh-premium-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        border-color: rgba(255, 255, 255, 0.1);
     }
-
-    /* Add a subtle shine effect */
-    .wh-card::after {
+    .wh-premium-card::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: -100%;
-        width: 50%;
-        height: 100%;
-        background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0) 100%);
-        transform: skewX(-20deg);
-        transition: all 0.7s ease;
+        top: 0; left: -100%;
+        width: 50%; height: 100%;
+        background: linear-gradient(to right, transparent, rgba(255,255,255,0.03), transparent);
+        transform: skewX(-25deg);
+        transition: 0.7s;
     }
-
-    .wh-card:hover::after {
+    .wh-premium-card:hover::before {
         left: 200%;
     }
 
-    /* KPI Cards Specific - Removed and replaced by global stat-card */
+    .wh-stat-icon {
+        width: 56px; height: 56px;
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.75rem;
+        position: relative;
+    }
+    .wh-stat-icon::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        filter: blur(10px);
+        opacity: 0.5;
+        z-index: -1;
+    }
+    
+    .bg-gradient-blue { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1)); color: #3b82f6; }
+    .bg-gradient-blue::after { background: #3b82f6; }
+    
+    .bg-gradient-green { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1)); color: #10b981; }
+    .bg-gradient-green::after { background: #10b981; }
+    
+    .bg-gradient-orange { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1)); color: #f59e0b; }
+    .bg-gradient-orange::after { background: #f59e0b; }
 
-    /* Main Content Grid */
-    .wh-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 2rem;
+    .wh-table-row {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .wh-table-row:hover {
+        background: rgba(255, 255, 255, 0.02);
+        transform: scale(1.01);
+    }
+    .wh-table-row td {
+        padding: 1rem 0.75rem;
+    }
+    .wh-avatar {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--bg-card), rgba(255,255,255,0.05));
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
-    @media (max-width: 1024px) {
-        .wh-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Beautiful Table */
-    .wh-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0 8px;
-        margin-top: -8px;
-    }
-
-    .wh-table th {
-        text-align: left;
-        padding: 1rem 1.25rem;
-        color: var(--text-muted);
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 1px solid var(--glass-border);
-    }
-
-    .wh-table td {
-        padding: 1.25rem;
-        background: var(--glass-bg);
-        transition: background 0.2s ease;
-    }
-
-    .wh-table tr td:first-child {
-        border-top-left-radius: 12px;
-        border-bottom-left-radius: 12px;
-    }
-
-    .wh-table tr td:last-child {
-        border-top-right-radius: 12px;
-        border-bottom-right-radius: 12px;
-    }
-
-    .wh-table tbody tr:hover td {
-        background: var(--glass-hover);
-    }
-
-    .wh-badge {
-        padding: 0.4rem 0.8rem;
+    .wh-badge-premium {
+        padding: 0.35rem 0.8rem;
         border-radius: 20px;
-        font-size: 0.75rem;
         font-weight: 700;
+        font-size: 0.75rem;
         letter-spacing: 0.5px;
-        display: inline-block;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
     }
 
-    .wh-badge.disponible {
-        background: rgba(16, 185, 129, 0.15);
-        color: var(--neon-green);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .wh-badge.prestado,
-    .wh-badge.assigned {
-        background: rgba(245, 158, 11, 0.15);
-        color: var(--neon-orange);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .wh-badge.mantenimiento {
-        background: rgba(139, 92, 246, 0.15);
-        color: var(--neon-purple);
-        border: 1px solid rgba(139, 92, 246, 0.3);
-    }
-
-    /* Quick Actions */
-    .wh-action-btn {
+    .action-card {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 1.25rem;
         padding: 1.25rem;
         border-radius: 16px;
-        background: linear-gradient(145deg, var(--glass-bg), rgba(255, 255, 255, 0.01));
-        border: 1px solid var(--glass-border);
-        color: var(--text-main);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
         text-decoration: none;
         transition: all 0.3s ease;
-        margin-bottom: 1rem;
         position: relative;
         overflow: hidden;
     }
-
-    .wh-action-btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-        transform: translateX(-100%);
-        transition: 0.5s;
-    }
-
-    .wh-action-btn:hover::before {
-        transform: translateX(100%);
-    }
-
-    .wh-action-btn:hover {
-        border-color: rgba(255, 255, 255, 0.2);
+    .action-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
-
-    .wh-btn-icon {
-        width: 48px;
-        height: 48px;
+    .action-card .icon-box {
+        width: 48px; height: 48px;
         border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex; align-items: center; justify-content: center;
         font-size: 1.5rem;
+        transition: 0.3s ease;
     }
-
-    .wh-action-btn:nth-child(1) .wh-btn-icon {
-        background: rgba(59, 130, 246, 0.2);
-        color: var(--neon-blue);
+    .action-card:hover .icon-box {
+        transform: scale(1.1) rotate(5deg);
     }
-
-    .wh-action-btn:nth-child(2) .wh-btn-icon {
-        background: rgba(245, 158, 11, 0.2);
-        color: var(--neon-orange);
-    }
-
-    .wh-action-text {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .wh-action-title {
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 0.2rem;
-    }
-
-    .wh-action-desc {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-    }
-
-    /* Elegant Section Titles */
-    .wh-section-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: var(--text-main);
-    }
-
-    .wh-section-title i {
-        color: var(--neon-blue);
-        background: rgba(59, 130, 246, 0.1);
-        padding: 8px;
-        border-radius: 10px;
-    }
-
-    /* Chart Container */
-    .wh-chart-container {
-        height: 320px;
-        width: 100%;
-        position: relative;
-        padding: 1rem 0;
+    .text-gradient {
+        background: linear-gradient(to right, #fff, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 </style>
 
-<div class="wh-dashboard">
+<div class="animate-enter" style="display: flex; flex-direction: column; gap: 2rem;">
 
-    <!-- Premium KPIs -->
+    <!-- TOP PREMIUN KPIS -->
     <div class="stats-grid">
-        <a href="../equipment/entry.php?type=warranty" class="card stat-card card-premium-blue" style="text-decoration: none;">
-            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+        <a href="../equipment/entry.php?type=warranty" class="card stat-card wh-premium-card" style="text-decoration: none;">
+            <div class="wh-stat-icon bg-gradient-blue" style="margin-bottom: 1rem;">
                 <i class="ph <?php echo $kpi1_icon; ?>"></i>
             </div>
-            <div class="stat-value"><?php echo $kpi1_val; ?></div>
-            <div class="stat-label"><?php echo $kpi1_label; ?></div>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1;">
+                <?php echo $kpi1_val; ?>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.5rem; font-weight: 500;">
+                <?php echo $kpi1_label; ?>
+            </div>
         </a>
 
-        <a href="../warranties/database.php" class="card stat-card card-premium-green" style="text-decoration: none;">
-            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+        <a href="../warranties/database.php?tab=stock" class="card stat-card wh-premium-card" style="text-decoration: none;">
+            <div class="wh-stat-icon bg-gradient-green" style="margin-bottom: 1rem;">
                 <i class="ph <?php echo $kpi2_icon; ?>"></i>
             </div>
-            <div class="stat-value"><?php echo $kpi2_val; ?></div>
-            <div class="stat-label"><?php echo $kpi2_label; ?></div>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1;">
+                <?php echo $kpi2_val; ?>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.5rem; font-weight: 500;">
+                <?php echo $kpi2_label; ?>
+            </div>
         </a>
 
-        <a href="../warranties/database.php" class="card stat-card card-premium-orange" style="text-decoration: none;">
-            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+        <a href="../warranties/database.php?tab=sold" class="card stat-card wh-premium-card" style="text-decoration: none;">
+            <div class="wh-stat-icon bg-gradient-orange" style="margin-bottom: 1rem;">
                 <i class="ph <?php echo $kpi3_icon; ?>"></i>
             </div>
-            <div class="stat-value"><?php echo $kpi3_val; ?></div>
-            <div class="stat-label"><?php echo $kpi3_label; ?></div>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1;">
+                <?php echo $kpi3_val; ?>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.5rem; font-weight: 500;">
+                <?php echo $kpi3_label; ?>
+            </div>
         </a>
     </div>
 
-    <!-- Main Grid -->
-    <div class="wh-grid">
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
 
         <!-- Left Column: Activity List -->
-        <div class="wh-card" style="padding: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 class="wh-section-title" style="margin: 0;">
-                    <i class="ph-fill ph-clock-counter-clockwise"></i>
+        <div class="wh-premium-card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                <h3 style="margin: 0; display: flex; align-items: center; gap: 0.6rem; font-size: 1.3rem;">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class="ph-fill ph-clock-counter-clockwise" style="color: #3b82f6;"></i>
+                    </div>
                     Últimos Ingresos
                 </h3>
-                <a href="../warranties/database.php" class="btn btn-sm btn-secondary"
-                    style="border-radius: 20px; padding: 0.4rem 1rem;">Ver Todo</a>
+                <a href="../warranties/database.php" class="btn btn-sm btn-secondary" style="border-radius: 20px; padding: 0.4rem 1.2rem; font-weight: 600;">Administrar Todo</a>
             </div>
 
-            <div style="overflow-x: auto;">
-                <table class="wh-table">
+            <div class="table-container" style="overflow-x: auto; margin: -0.5rem;">
+                <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Cliente</th>
-                            <th>Equipo / Serie</th>
-                            <th>Cód. Producto</th>
+                            <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Fecha</th>
+                            <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Cliente</th>
+                            <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Equipo / Serie</th>
+                            <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Cód. Producto</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($recentItems) > 0): ?>
                             <?php foreach ($recentItems as $item): ?>
-                                <tr>
-                                    <td style="color: var(--text-muted); font-weight: 500;">
+                                <tr class="wh-table-row">
+                                    <td style="color: var(--text-secondary); font-weight: 500; font-size: 0.9rem; padding-left: 1rem;">
                                         <?php echo date('d/m  H:i', strtotime($item['date'])); ?>
                                     </td>
                                     <td>
-                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                            <div
-                                                style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0)); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05);">
-                                                <i class="ph ph-user" style="color: var(--text-secondary);"></i>
+                                        <div style="display: flex; align-items: center; gap: 0.85rem;">
+                                            <div class="wh-avatar">
+                                                <i class="ph-fill ph-user" style="color: var(--primary);"></i>
                                             </div>
-                                            <span style="font-weight: 600; color: var(--text-main);">
+                                            <span style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">
                                                 <?php echo htmlspecialchars($item['client_name']); ?>
                                             </span>
                                         </div>
                                     </td>
                                     <td>
-                                        <div style="font-weight: 500;">
+                                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.2rem;">
                                             <?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?>
                                         </div>
-                                        <div style="font-size: 0.8rem; color: var(--text-muted);">
-                                            <?php echo htmlspecialchars($item['serial_number']); ?>
+                                        <div style="font-size: 0.8rem; color: var(--text-secondary); font-family: monospace; letter-spacing: 0.5px;">
+                                            S/N: <?php echo htmlspecialchars($item['serial_number']); ?>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="wh-badge"
-                                            style="background: rgba(255, 255, 255, 0.1); color: var(--text-main); border: 1px solid rgba(255, 255, 255, 0.2);">
+                                        <span class="wh-badge-premium">
+                                            <i class="ph ph-barcode" style="margin-right: 4px; vertical-align: -1px;"></i>
                                             <?php echo htmlspecialchars($item['product_code']); ?>
                                         </span>
                                     </td>
@@ -335,10 +221,9 @@
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="4" style="text-align: center; padding: 3rem; color: var(--text-muted);">
-                                    <i class="ph ph-file-dashed"
-                                        style="font-size: 3rem; opacity: 0.5; margin-bottom: 1rem; display: block;"></i>
-                                    No hay ingresos recientes en bodega.
+                                <td colspan="4" style="text-align: center; padding: 4rem; color: var(--text-secondary);">
+                                    <i class="ph-duotone ph-package" style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem; display: block;"></i>
+                                    <span style="font-size: 1.1rem;">No hay ingresos recientes en bodega.</span>
                                 </td>
                             </tr>
                         <?php endif; ?>
@@ -350,37 +235,45 @@
         <!-- Right Column: Chart & Actions -->
         <div style="display: flex; flex-direction: column; gap: 2rem;">
 
-            <div class="wh-card" style="padding: 2rem;">
-                <h3 class="wh-section-title">
-                    <i class="ph-fill ph-chart-pie-slice"></i>
+            <div class="wh-premium-card" style="padding: 1.5rem;">
+                <h3 style="margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.6rem; font-size: 1.2rem;">
+                    <i class="ph-fill ph-chart-pie-slice" style="color: #10b981;"></i>
                     Estado General
                 </h3>
-                <div class="wh-chart-container">
+                <div style="height: 280px; width: 100%; position: relative;">
                     <canvas id="whStatusChart"></canvas>
                 </div>
             </div>
 
-            <div class="wh-card" style="padding: 2rem;">
-                <h3 class="wh-section-title">
-                    <i class="ph-fill ph-lightning"></i>
+            <div class="wh-premium-card" style="padding: 1.5rem;">
+                <h3 style="margin: 0 0 1.5rem 0; display: flex; align-items: center; gap: 0.6rem; font-size: 1.2rem;">
+                    <i class="ph-fill ph-lightning" style="color: #f59e0b;"></i>
                     Accesos Rápidos
                 </h3>
-                <div style="margin-top: 1rem;">
-                    <a href="../equipment/entry.php?type=warranty" class="wh-action-btn">
-                        <div class="wh-btn-icon"><i class="ph ph-plus-circle"></i></div>
-                        <div class="wh-action-text">
-                            <span class="wh-action-title">Nuevo Registro</span>
-                            <span class="wh-action-desc">Registrar partes en bodega</span>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <a href="../equipment/entry.php?type=warranty" class="action-card">
+                        <div class="icon-box" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; box-shadow: inset 0 0 10px rgba(59,130,246,0.1);">
+                            <i class="ph-fill ph-package"></i>
                         </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.2rem;">Nuevo Ingreso</div>
+                            <div class="text-sm" style="color: var(--text-secondary);">Registrar nuevas partes en bodega</div>
+                        </div>
+                        <i class="ph ph-caret-right" style="margin-left: auto; color: var(--text-secondary); font-size: 1.2rem;"></i>
                     </a>
 
-                    <a href="../warranties/database.php" class="wh-action-btn">
-                        <div class="wh-btn-icon"><i class="ph ph-database"></i></div>
-                        <div class="wh-action-text">
-                            <span class="wh-action-title">Ver Registros</span>
-                            <span class="wh-action-desc">Consultar base de datos histórica</span>
+                    <a href="../warranties/database.php" class="action-card">
+                        <div class="icon-box" style="background: rgba(16, 185, 129, 0.15); color: #10b981; box-shadow: inset 0 0 10px rgba(16,185,129,0.1);">
+                            <i class="ph-fill ph-database"></i>
                         </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.2rem;">Base de Datos</div>
+                            <div class="text-sm" style="color: var(--text-secondary);">Explorar el histórico completo</div>
+                        </div>
+                        <i class="ph ph-caret-right" style="margin-left: auto; color: var(--text-secondary); font-size: 1.2rem;"></i>
                     </a>
+
                 </div>
             </div>
 
@@ -391,29 +284,18 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const isLightModewh = document.body.classList.contains('light-mode');
-        const textColwh = isLightModewh ? '#475569' : '#cbd5e1';
+        const textColwh = isLightModewh ? '#475569' : '#94a3b8';
 
         const ctxWhStatus = document.getElementById('whStatusChart').getContext('2d');
 
-        // Gradient definitions
-        const gradientBlue = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
-        gradientBlue.addColorStop(0, '#60a5fa');
-        gradientBlue.addColorStop(1, '#2563eb');
-
-        const gradientOrange = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
-        gradientOrange.addColorStop(0, '#fbbf24');
-        gradientOrange.addColorStop(1, '#d97706');
-
-        const gradientPurple = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
-        gradientPurple.addColorStop(0, '#a78bfa');
-        gradientPurple.addColorStop(1, '#7c3aed');
-
+        // Stunning modern gradients
         const gradientGreen = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
         gradientGreen.addColorStop(0, '#34d399');
         gradientGreen.addColorStop(1, '#059669');
- const gradientGray = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
+
+        const gradientGray = ctxWhStatus.createLinearGradient(0, 0, 0, 400);
         gradientGray.addColorStop(0, '#94a3b8');
-        gradientGray.addColorStop(1, '#475569');
+        gradientGray.addColorStop(1, '#334155');
 
         new Chart(ctxWhStatus, {
             type: 'doughnut',
@@ -422,45 +304,52 @@
                 datasets: [{
                     data: [<?php echo $chartData['active']; ?>, <?php echo $chartData['expired']; ?>],
                     backgroundColor: [
-                        gradientGreen,    // Vigente
-                        gradientGray      // Expirada
+                        gradientGreen,    
+                        gradientGray      
                     ],
                     borderWidth: 0,
-                    hoverOffset: 8,
-                    borderRadius: 4
+                    hoverOffset: 12,
+                    borderRadius: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: { bottom: 20 }
+                },
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
                             color: textColwh,
-                            padding: 20,
+                            padding: 25,
                             font: {
                                 family: "'Inter', sans-serif",
                                 size: 13,
-                                weight: '500'
+                                weight: '600'
                             },
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
                         titleFont: { size: 14, family: "'Inter', sans-serif" },
-                        bodyFont: { size: 14, family: "'Inter', sans-serif", weight: 'bold' },
-                        padding: 12,
-                        cornerRadius: 8,
-                        displayColors: true
+                        bodyFont: { size: 15, family: "'Inter', sans-serif", weight: 'bold' },
+                        padding: 16,
+                        cornerRadius: 12,
+                        boxPadding: 8,
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1
                     }
                 },
-                cutout: '75%',
+                cutout: '78%',
                 animation: {
                     animateScale: true,
-                    animateRotate: true
+                    animateRotate: true,
+                    duration: 1500,
+                    easing: 'easeOutQuart'
                 }
             }
         });

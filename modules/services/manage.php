@@ -564,6 +564,8 @@ require_once '../../includes/sidebar.php';
                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Estado de Cobro</label>
                         <select name="payment_status" id="payment_status_order_select" class="modern-select" <?php echo $order['payment_status'] === 'pagado' ? 'disabled' : ''; ?>>
                             <option value="pendiente" <?php echo $order['payment_status'] === 'pendiente' ? 'selected' : ''; ?>>Pendiente de Pago</option>
+                            <option value="credito" <?php echo $order['payment_status'] === 'credito' ? 'selected' : ''; ?>>💳 Facturado a Crédito</option>
+                            <option value="contado" <?php echo $order['payment_status'] === 'contado' ? 'selected' : ''; ?>>💵 Facturado de Contado</option>
                             <option value="pagado" <?php echo $order['payment_status'] === 'pagado' ? 'selected' : ''; ?>>Pagado por el Cliente</option>
                         </select>
                     </div>
@@ -597,9 +599,13 @@ require_once '../../includes/sidebar.php';
                     const invoiceContainer = document.getElementById('invoice_field_container');
                     const invoiceInput = document.getElementById('invoice_number');
                     
-                    if (this.value === 'pagado') {
+                    if (this.value !== 'pendiente') {
                         invoiceContainer.style.display = 'block';
-                        invoiceInput.setAttribute('required', 'required');
+                        if (this.value === 'pagado') {
+                            invoiceInput.setAttribute('required', 'required');
+                        } else {
+                            invoiceInput.removeAttribute('required');
+                        }
                     } else {
                         invoiceContainer.style.display = 'none';
                         invoiceInput.removeAttribute('required');

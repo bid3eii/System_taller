@@ -61,6 +61,8 @@ $defined_modules = [
     'anexos' => 'Anexos Yazaki',
     'proyectos' => 'Gestión de Proyectos',
     'edit_entries' => 'Permitir Editar Entradas de Servicios/Garantías',
+    'schedule' => 'Agenda / Visitas (General)',
+    'tech_agenda' => 'Mi Agenda Técnica (Vista Técnico)',
 ];
 
 try {
@@ -1101,6 +1103,8 @@ require_once '../../includes/sidebar.php';
                         'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
                         'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
                         'proyectos' => ['label' => 'Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-kanban'],
+                        'schedule' => ['label' => 'Agenda / Visitas', 'cat' => 'Proyecto', 'icon' => 'ph-calendar-blank'],
+                        'tech_agenda' => ['label' => 'Mi Agenda Técnica', 'cat' => 'Proyecto', 'icon' => 'ph-map-trifold'],
                         'edit_entries' => ['label' => 'Editar Entradas', 'cat' => 'Gestión', 'icon' => 'ph-pencil-simple'],
 
                         'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],
@@ -1233,6 +1237,8 @@ require_once '../../includes/sidebar.php';
                         'project_history' => ['label' => 'Historial Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-books'],
                         'anexos' => ['label' => 'Anexos Yazaki', 'cat' => 'Proyecto', 'icon' => 'ph-file-pdf'],
                         'proyectos' => ['label' => 'Proyectos', 'cat' => 'Proyecto', 'icon' => 'ph-kanban'],
+                        'schedule' => ['label' => 'Agenda / Visitas', 'cat' => 'Proyecto', 'icon' => 'ph-calendar-blank'],
+                        'tech_agenda' => ['label' => 'Mi Agenda Técnica', 'cat' => 'Proyecto', 'icon' => 'ph-map-trifold'],
                         'edit_entries' => ['label' => 'Editar Entradas', 'cat' => 'Gestión', 'icon' => 'ph-pencil-simple'],
 
                         'comisiones' => ['label' => 'Comisiones', 'cat' => 'Finanzas', 'icon' => 'ph-coins'],

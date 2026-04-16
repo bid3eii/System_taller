@@ -74,23 +74,38 @@ if ($is_warehouse) {
     $kpi1_label = "Registros de Hoy";
     $kpi1_icon = "ph-calendar-plus";
 
-    // KPI 2: Componentes Vigentes
+    // KPI 2: En Stock (Bodega)
+    $stmt = $pdo->query("
+        SELECT COUNT(*) 
+        FROM warranties w 
+        JOIN service_orders so ON w.service_order_id = so.id 
+        JOIN clients c ON so.client_id = c.id 
+        WHERE c.name = 'Bodega - Inventario'
+    ");
+    $kpi2_val = $stmt->fetchColumn();
+    $kpi2_label = "En Stock";
+    $kpi2_icon = "ph-package";
+
+    // KPI 3: Vendidos / Garantías
+    $stmt = $pdo->query("
+        SELECT COUNT(*) 
+        FROM warranties w 
+        JOIN service_orders so ON w.service_order_id = so.id 
+        JOIN clients c ON so.client_id = c.id 
+        WHERE c.name != 'Bodega - Inventario'
+    ");
+    $kpi3_val = $stmt->fetchColumn();
+    $kpi3_label = "Vendidos / Garantías";
+    $kpi3_icon = "ph-shopping-cart";
+
+    // Chart: Warranty Status Data (Overall Vigentes vs Expired)
     $stmt = $pdo->query("SELECT SUM(CASE WHEN status = 'active' AND (end_date >= CURDATE() OR end_date IS NULL) THEN 1 ELSE 0 END) as active, SUM(CASE WHEN status = 'expired' OR end_date < CURDATE() THEN 1 ELSE 0 END) as expired FROM warranties");
     $statusData = $stmt->fetch(PDO::FETCH_ASSOC);
-    $kpi2_val = $statusData['active'] ?? 0;
+    $whActiveCount = $statusData['active'] ?? 0;
     $whExpiredCount = $statusData['expired'] ?? 0;
-    $kpi2_label = "Vigentes";
-    $kpi2_icon = "ph-check-circle";
-
-    // KPI 3: Total Registros
-    $stmt = $pdo->query("SELECT COUNT(*) FROM warranties");
-    $kpi3_val = $stmt->fetchColumn();
-    $kpi3_label = "Total Registros";
-    $kpi3_icon = "ph-database";
-
-    // Chart: Warranty Status Data
+    
     $chartData = [
-        'active' => $kpi2_val,
+        'active' => $whActiveCount,
         'expired' => $whExpiredCount
     ];
 
@@ -318,6 +333,22 @@ if ($is_warehouse) {
     $recentSql .= " LIMIT $itemsPerPage OFFSET $offset";
 
     $recentItems = $pdo->query($recentSql)->fetchAll();
+
+    // --- NEW: FETCH TECH AGENDA ---
+    $upcomingVisits = [];
+    if ($is_tech) {
+        $stmtVisits = $pdo->prepare("
+            SELECT se.*, ps.title as survey_title 
+            FROM schedule_events se
+            LEFT JOIN project_surveys ps ON se.survey_id = ps.id
+            WHERE se.tech_id = ? 
+            AND se.start_datetime >= CURDATE()
+            ORDER BY se.start_datetime ASC
+            LIMIT 5
+        ");
+        $stmtVisits->execute([$user_id]);
+        $upcomingVisits = $stmtVisits->fetchAll();
+    }
 }
 
 
@@ -507,34 +538,70 @@ if ($is_admin || $is_reception) {
 
     <!-- TECH QUICK ACTIONS -->
     <?php if (!$is_warehouse): ?>
-    <?php if (!$is_warehouse && $is_tech): ?>
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-            <a href="../services/index.php" class="card btn btn-secondary"
-                style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
-                <div
-                    style="background: rgba(234, 179, 8, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
-                    <i class="ph ph-list-checks" style="color: var(--warning); font-size: 1.5rem;"></i>
-                </div>
-                <div style="text-align: left;">
-                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Mis Asignaciones</div>
-                    <div class="text-sm text-muted">Ver y buscar órdenes</div>
-                </div>
-            </a>
+        <?php if ($is_tech): ?>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <a href="../services/index.php" class="card btn btn-secondary" style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
+                    <div style="background: rgba(234, 179, 8, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
+                        <i class="ph ph-list-checks" style="color: var(--warning); font-size: 1.5rem;"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;">Mis Asignaciones</div>
+                        <div class="text-sm text-muted">Ver y buscar órdenes</div>
+                    </div>
+                </a>
 
-            <a href="../levantamientos/index.php" class="card btn btn-secondary"
-                style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
-                <div
-                    style="background: rgba(99, 102, 241, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
-                    <i class="ph ph-clipboard" style="color: var(--primary-500); font-size: 1.5rem;"></i>
+                <a href="../levantamientos/index.php" class="card btn btn-secondary" style="margin: 0; padding: 1.25rem; flex-direction: row; justify-content: flex-start; background: var(--bg-card); border: 1px solid var(--border-color);">
+                    <div style="background: rgba(99, 102, 241, 0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 1rem;">
+                        <i class="ph ph-clipboard" style="color: var(--primary-500); font-size: 1.5rem;"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;">Levantamientos</div>
+                        <div class="text-sm text-muted">Requerimientos de proyectos</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- TECH AGENDA WIDGET -->
+            <?php if (!empty($upcomingVisits)): ?>
+                <div class="card mb-6" style="border-left: 4px solid var(--primary-500); background: linear-gradient(to right, rgba(99, 102, 241, 0.05), var(--bg-card));">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                            <i class="ph-fill ph-calendar-check" style="color: var(--primary-500);"></i>
+                            Mi Agenda: Próximas Visitas
+                        </h3>
+                        <a href="../tech_agenda/index.php" class="btn btn-sm btn-secondary">Ver Mi Hoja de Ruta</a>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <?php foreach ($upcomingVisits as $visit): ?>
+                            <div style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); display: flex; gap: 1rem; align-items: center;">
+                                <div style="background: var(--primary-600); color: white; padding: 0.5rem; border-radius: 10px; min-width: 60px; text-align: center;">
+                                    <div style="font-size: 0.7rem; font-weight: 700; opacity: 0.8;"><?php echo strtoupper(date('M', strtotime($visit['start_datetime']))); ?></div>
+                                    <div style="font-size: 1.25rem; font-weight: 800;"><?php echo date('d', strtotime($visit['start_datetime'])); ?></div>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);"><?php echo htmlspecialchars($visit['title']); ?></div>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem;">
+                                        <i class="ph ph-clock"></i> <?php echo date('h:i A', strtotime($visit['start_datetime'])); ?>
+                                        <?php if (!empty($visit['location'])): ?>
+                                            <span style="opacity: 0.5;">•</span>
+                                            <i class="ph ph-map-pin"></i> <?php echo htmlspecialchars($visit['location']); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <a href="../tech_agenda/index.php" class="btn-icon" title="Ver Hoja de Ruta"><i class="ph ph-arrow-right"></i></a>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-                <div style="text-align: left;">
-                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Levantamientos</div>
-                    <div class="text-sm text-muted">Requerimientos de proyectos</div>
+            <?php else: ?>
+                <div class="card mb-6 text-center" style="padding: 2rem; border-style: dashed; border-color: var(--border-color); background: transparent;">
+                    <i class="ph ph-calendar-blank" style="font-size: 3rem; color: var(--text-secondary); opacity: 0.3; margin-bottom: 1rem;"></i>
+                    <h3 style="color: var(--text-secondary);">No tienes visitas programadas</h3>
+                    <p class="text-muted">¡Buen trabajo! No hay visitas para los próximos días.</p>
                 </div>
-            </a>
-        </div>
-    <?php endif; ?>
+            <?php endif; ?>
+        <?php endif; ?>
 
     <!-- ADMIN / RECEPTION QUICK ACTIONS -->
     <?php if ($is_admin || $is_reception): ?>
@@ -547,7 +614,7 @@ if ($is_admin || $is_reception) {
                     <i class="ph ph-user-plus" style="color: var(--success); font-size: 1.5rem;"></i>
                 </div>
                 <div style="text-align: left;">
-                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Nuevo Cliente</div>
+                    <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;">Nuevo Cliente</div>
                     <div class="text-sm text-muted">Registro rápido</div>
                 </div>
             </a>
@@ -559,7 +626,7 @@ if ($is_admin || $is_reception) {
                     <i class="ph ph-file-plus" style="color: var(--primary-500); font-size: 1.5rem;"></i>
                 </div>
                 <div style="text-align: left;">
-                    <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Nueva Orden</div>
+                    <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;">Nueva Orden</div>
                     <div class="text-sm text-muted">Ingresar equipo</div>
                 </div>
             </a>
@@ -572,7 +639,7 @@ if ($is_admin || $is_reception) {
                         <i class="ph ph-toolbox" style="color: var(--warning); font-size: 1.5rem;"></i>
                     </div>
                     <div style="text-align: left;">
-                        <div style="font-weight: 600; color: var(--text-main); font-size: 1.1rem;">Inventario</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;">Inventario</div>
                         <div class="text-sm text-muted">Control de herramientas</div>
                     </div>
                 </a>
@@ -735,7 +802,7 @@ if ($is_admin || $is_reception) {
             <!-- Pagination Controls -->
             <?php if ($recentType != 'tools' && $totalPages >= 1): ?>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding: 0.5rem 0; border-top: 1px solid var(--border-color);">
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
                         Página <?php echo $currentPage; ?> de <?php echo $totalPages; ?> 
                         <span style="margin-left: 0.5rem; opacity: 0.5;">(Total: <?php echo $totalRecords; ?> registros)</span>
                     </div>
