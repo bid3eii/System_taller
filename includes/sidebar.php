@@ -48,6 +48,8 @@
         // 2. Define Menu Items
         $menu_items = [];
 
+        // --- SECTION 1: TALLER (Workshop) ---
+        
         // Clients
         if (can_access_module('clients', $pdo)) {
             $menu_items['clients'] = [
@@ -59,45 +61,147 @@
             ];
         }
 
-        // --- SPECIAL: TECHNICIAN AGENDA ---
-        if (can_access_module('tech_agenda', $pdo)) {
-            $menu_items['tech_agenda'] = [
-                'type' => 'link',
-                'url' => BASE_URL . 'modules/tech_agenda/index.php',
+        // Inventory (Combine Equipment & Bodega)
+        $can_equip = can_access_module('equipment', $pdo);
+        $can_bodega = can_access_module('new_warranty', $pdo);
+        if ($can_equip || $can_bodega) {
+            $inv_children = [];
+            if ($can_equip) {
+                $inv_children[] = ['url' => BASE_URL . 'modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'];
+                $inv_children[] = ['url' => BASE_URL . 'modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida'];
+            }
+            if ($can_bodega) {
+                $inv_children[] = ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Ingreso Bodega'];
+                $inv_children[] = ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros de Bodega'];
+            }
+            if ($can_equip) {
+                $inv_children[] = ['url' => BASE_URL . 'modules/equipment/history.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial S/N'];
+            }
+
+            $menu_items['inventory'] = [
+                'type' => 'dropdown',
+                'url' => '#',
+                'icon' => 'ph-package',
+                'label' => 'Inventario',
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false),
+                'children' => $inv_children
+            ];
+        }
+
+        // Services (Renamed from Solicitud)
+        $can_services = can_access_module('services', $pdo);
+        $can_warranties = can_access_module('warranties', $pdo);
+        $can_history = can_access_module('history', $pdo);
+
+        if ($can_services || $can_warranties || $can_history) {
+            $srv_children = [];
+            if ($can_services)
+                $srv_children[] = ['url' => BASE_URL . 'modules/services/index.php', 'icon' => 'ph-wrench', 'label' => 'Servicios'];
+            if ($can_warranties)
+                $srv_children[] = ['url' => BASE_URL . 'modules/warranties/index.php', 'icon' => 'ph-shield-check', 'label' => 'Servicio de Garantía'];
+            if ($can_history)
+                $srv_children[] = ['url' => BASE_URL . 'modules/history/index.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial General'];
+
+            $menu_items['services'] = [
+                'type' => 'dropdown',
+                'url' => '#',
+                'icon' => 'ph-clipboard-text',
+                'label' => 'Servicios',
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/services/') !== false || (strpos($_SERVER['REQUEST_URI'], 'modules/warranties/') !== false && strpos($_SERVER['REQUEST_URI'], 'database.php') === false) || strpos($_SERVER['REQUEST_URI'], 'modules/history/') !== false),
+                'children' => $srv_children
+            ];
+        }
+
+        // --- SECTION 2: CAMPO (Field Operations) ---
+
+        // Agenda
+        $can_sch = can_access_module('schedule', $pdo);
+        $can_tagenda = can_access_module('tech_agenda', $pdo);
+        $is_admin_role = isset($_SESSION['role_id']) && in_array($_SESSION['role_id'], [1, 7]);
+        $can_master = $is_admin_role || can_access_module('master_visit_control', $pdo);
+
+        if ($can_sch || $can_tagenda || $can_master) {
+            $age_children = [];
+            if ($can_sch)
+                $age_children[] = ['url' => BASE_URL . 'modules/schedule/index.php', 'icon' => 'ph-calendar-blank', 'label' => 'Agenda / Visitas'];
+            if ($can_tagenda)
+                $age_children[] = ['url' => BASE_URL . 'modules/tech_agenda/index.php', 'icon' => 'ph-calendar-check', 'label' => 'Mi Agenda Técnica'];
+            if ($can_master)
+                $age_children[] = ['url' => BASE_URL . 'modules/tech_agenda/master_control.php', 'icon' => 'ph-monitor', 'label' => 'Control Maestro de Visitas'];
+
+            $menu_items['agenda'] = [
+                'type' => 'dropdown',
+                'url' => '#',
                 'icon' => 'ph-map-trifold',
-                'label' => 'Mi Agenda',
-                'active' => strpos($_SERVER['REQUEST_URI'], 'tech_agenda') !== false
+                'label' => 'Agenda',
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/schedule/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/tech_agenda/') !== false),
+                'children' => $age_children
             ];
         }
 
-        // Equipment
-        if (can_access_module('equipment', $pdo)) {
-            $menu_items['equipment'] = [
+        // --- SECTION 3: PROYECTOS Y FINANZAS (Management) ---
+
+        // Projects
+        $can_proy = can_access_module('proyectos', $pdo) || $is_admin_role;
+        $can_surveys = can_access_module('surveys', $pdo);
+        $can_viat = can_access_module('viaticos', $pdo);
+        $can_phist = can_access_module('project_history', $pdo);
+
+        if ($can_proy || $can_surveys || $can_viat || $can_phist) {
+            $pro_children = [];
+            if ($can_proy)
+                $pro_children[] = ['url' => BASE_URL . 'modules/proyectos/index.php', 'icon' => 'ph-kanban', 'label' => 'Proyectos'];
+            if ($can_surveys)
+                $pro_children[] = ['url' => BASE_URL . 'modules/levantamientos/index.php', 'icon' => 'ph-clipboard', 'label' => 'Levantamientos'];
+            if ($can_viat)
+                $pro_children[] = ['url' => BASE_URL . 'modules/viaticos/index.php', 'icon' => 'ph-money', 'label' => 'Viáticos'];
+            if ($can_phist)
+                $pro_children[] = ['url' => BASE_URL . 'modules/project_history/index.php', 'icon' => 'ph-books', 'label' => 'Historial Proyectos'];
+
+            $menu_items['projects_group'] = [
                 'type' => 'dropdown',
                 'url' => '#',
-                'icon' => 'ph-desktop',
-                'label' => 'Equipos',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment') !== false && strpos($_SERVER['REQUEST_URI'], 'type=warranty') === false),
-                'children' => [
-                    ['url' => BASE_URL . 'modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'],
-                    ['url' => BASE_URL . 'modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida'],
-                    ['url' => BASE_URL . 'modules/equipment/history.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial S/N']
-                ]
+                'icon' => 'ph-folder-open',
+                'label' => 'Proyectos',
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/proyectos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/viaticos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/levantamientos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/project_history/') !== false),
+                'children' => $pro_children
             ];
         }
 
-        // Registro de Bodega
-        if (can_access_module('new_warranty', $pdo)) {
-            $menu_items['new_warranty'] = [
+        // Administration (Financial/Backoffice)
+        $can_com = can_access_module('comisiones', $pdo);
+        $can_anex = can_access_module('anexos', $pdo);
+        $can_fact = can_access_module('reporte_facturas', $pdo) || $is_admin_role;
+
+        if ($can_com || $can_anex || $can_fact) {
+            $adm_children = [];
+            if ($can_com)
+                $adm_children[] = ['url' => BASE_URL . 'modules/comisiones/index.php', 'icon' => 'ph-coins', 'label' => 'Panel de Incentivos'];
+            if ($can_anex)
+                $adm_children[] = ['url' => BASE_URL . 'modules/anexos/index.php', 'icon' => 'ph-file-pdf', 'label' => 'Anexos Yazaki'];
+            if ($can_fact)
+                $adm_children[] = ['url' => BASE_URL . 'modules/proyectos/reporte_facturas.php', 'icon' => 'ph-receipt', 'label' => 'Reporte de Facturas'];
+
+            $menu_items['admin_group'] = [
                 'type' => 'dropdown',
                 'url' => '#',
-                'icon' => 'ph-shield-check',
-                'label' => 'Registro de Bodega',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment/entry.php?type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false),
-                'children' => [
-                    ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Registro'],
-                    ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros']
-                ]
+                'icon' => 'ph-briefcase',
+                'label' => 'Administración',
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/comisiones/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/anexos/') !== false || strpos($_SERVER['REQUEST_URI'], 'reporte_facturas.php') !== false),
+                'children' => $adm_children
+            ];
+        }
+
+        // --- SECTION 4: SISTEMA (System Utils) ---
+        
+        // Reports
+        if (can_access_module('reports', $pdo)) {
+            $menu_items['reports'] = [
+                'type' => 'link',
+                'url' => BASE_URL . 'modules/reports/index.php',
+                'icon' => 'ph-chart-bar',
+                'label' => 'Reportes',
+                'active' => strpos($_SERVER['REQUEST_URI'], 'reports') !== false
             ];
         }
 
@@ -112,96 +216,7 @@
             ];
         }
 
-        // Requests (Solicitud)
-        $can_services = can_access_module('services', $pdo);
-        $can_warranties = can_access_module('warranties', $pdo);
-        $can_history = can_access_module('history', $pdo);
-
-        if ($can_services || $can_warranties || $can_history) {
-            $children = [];
-            if ($can_services)
-                $children[] = ['url' => BASE_URL . 'modules/services/index.php', 'icon' => 'ph-wrench', 'label' => 'Servicios'];
-            if ($can_warranties)
-                $children[] = ['url' => BASE_URL . 'modules/warranties/index.php', 'icon' => 'ph-shield-check', 'label' => 'Servicio de Garantía'];
-            if ($can_history)
-                $children[] = ['url' => BASE_URL . 'modules/history/index.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial General'];
-
-            $menu_items['requests'] = [
-                'type' => 'dropdown',
-                'url' => '#',
-                'icon' => 'ph-clipboard-text',
-                'label' => 'Solicitud',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/services/') !== false || (strpos($_SERVER['REQUEST_URI'], 'modules/warranties/') !== false && strpos($_SERVER['REQUEST_URI'], 'database.php') === false) || strpos($_SERVER['REQUEST_URI'], 'modules/history/') !== false),
-                'children' => $children
-            ];
-        }
-
-        // Reports
-        if (can_access_module('reports', $pdo)) {
-            $menu_items['reports'] = [
-                'type' => 'link',
-                'url' => BASE_URL . 'modules/reports/index.php',
-                'icon' => 'ph-chart-bar',
-                'label' => 'Reportes',
-                'active' => strpos($_SERVER['REQUEST_URI'], 'reports') !== false
-            ];
-        }
-
-        // Projects (Proyectos)
-        $is_admin_role = isset($_SESSION['role_id']) && in_array($_SESSION['role_id'], [1, 7]);
-        $can_proyectos = can_access_module('proyectos', $pdo) || $is_admin_role;
-        $can_surveys = can_access_module('surveys', $pdo);
-        $can_project_history = can_access_module('project_history', $pdo);
-        $can_anexos = can_access_module('anexos', $pdo);
-        $can_viaticos = can_access_module('viaticos', $pdo);
-        $can_comisiones = can_access_module('comisiones', $pdo);
-
-        if ($can_proyectos || $can_surveys || $can_project_history || $can_anexos || $can_viaticos || $can_comisiones || can_access_module('schedule', $pdo) || can_access_module('tech_agenda', $pdo)) {
-            $proj_children = [];
-            
-            // General Agenda
-            if (can_access_module('schedule', $pdo)) {
-                $proj_children[] = ['url' => BASE_URL . 'modules/schedule/index.php', 'icon' => 'ph-calendar-blank', 'label' => 'Agenda / Visitas'];
-            }
-            
-            // Tech Agenda (Specialized internal link)
-            if (can_access_module('tech_agenda', $pdo)) {
-                $proj_children[] = ['url' => BASE_URL . 'modules/tech_agenda/index.php', 'icon' => 'ph-calendar-check', 'label' => 'Mi Agenda Técnica'];
-            }
-
-            // Admin Master Control
-            if ($is_admin_role || can_access_module('master_visit_control', $pdo)) {
-                $proj_children[] = ['url' => BASE_URL . 'modules/tech_agenda/master_control.php', 'icon' => 'ph-monitor', 'label' => 'Control Maestro de Visitas'];
-            }
-                
-            if ($can_proyectos)
-                $proj_children[] = ['url' => BASE_URL . 'modules/proyectos/index.php', 'icon' => 'ph-kanban', 'label' => 'Proyectos'];
-            if ($can_surveys)
-                $proj_children[] = ['url' => BASE_URL . 'modules/levantamientos/index.php', 'icon' => 'ph-clipboard', 'label' => 'Levantamientos'];
-            if ($can_viaticos)
-                $proj_children[] = ['url' => BASE_URL . 'modules/viaticos/index.php', 'icon' => 'ph-money', 'label' => 'Viáticos'];
-            if ($can_comisiones)
-                $proj_children[] = ['url' => BASE_URL . 'modules/comisiones/index.php', 'icon' => 'ph-coins', 'label' => 'Panel de Incentivos'];
-            if ($can_anexos)
-                $proj_children[] = ['url' => BASE_URL . 'modules/anexos/index.php', 'icon' => 'ph-file-pdf', 'label' => 'Anexos Yazaki'];
-
-            if (can_access_module('reporte_facturas', $pdo) || $is_admin_role)
-                $proj_children[] = ['url' => BASE_URL . 'modules/proyectos/reporte_facturas.php', 'icon' => 'ph-receipt', 'label' => 'Reporte de Facturas'];
-
-            if ($can_project_history)
-                $proj_children[] = ['url' => BASE_URL . 'modules/project_history/index.php', 'icon' => 'ph-books', 'label' => 'Historial Proyectos'];
-
-            $menu_items['projects'] = [
-                'type' => 'dropdown',
-                'url' => '#',
-                'icon' => 'ph-folder-open',
-                'label' => 'Proyecto',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/proyectos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/levantamientos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/project_history/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/anexos/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/comisiones/') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/schedule/') !== false),
-                'children' => $proj_children
-            ];
-        }
-
-        // Audit Log (SuperAdmin Only)
+        // Audit Log (Moved to Utilities)
         if ($_SESSION['role_name'] === 'SuperAdmin') {
             $menu_items['audit_log'] = [
                 'type' => 'link',
@@ -214,16 +229,13 @@
 
         // 3. Determine Final Order
         $default_keys = array_keys($menu_items);
-        // If user has saved order, prioritize it
         $final_keys = [];
         if (!empty($navbar_order) && is_array($navbar_order)) {
-            // Add saved keys if they exist in valid items
             foreach ($navbar_order as $key) {
                 if (isset($menu_items[$key])) {
                     $final_keys[] = $key;
                 }
             }
-            // Add any newly added modules that weren't in user's saved list
             foreach ($default_keys as $key) {
                 if (!in_array($key, $final_keys)) {
                     $final_keys[] = $key;
@@ -234,13 +246,14 @@
         }
 
         // 4. Render
+        $separators = ['agenda', 'projects_group', 'reports'];
+
         foreach ($final_keys as $key) {
             $item = $menu_items[$key];
             $activeClass = $item['active'] ? 'active' : '';
 
-            if ($key === 'reports') {
-                // Retain specific separator for reports if desired, or make it generic
-                echo '<div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 0.5rem;"></div>';
+            if (in_array($key, $separators)) {
+                echo '<div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 0.5rem; opacity: 0.5;"></div>';
             }
 
             if ($item['type'] === 'link') {

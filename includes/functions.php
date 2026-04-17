@@ -340,3 +340,74 @@ function render_service_order_actions($item, $context, $pdo) {
 }
 
 
+/**
+ * Renders a visual diff between two JSON strings for audit logs
+ * Highlight differences between old and new state in a structured table
+ */
+function render_audit_diff($old_json, $new_json) {
+    // Use error suppression and fallback for invalid JSON
+    $old = [];
+    if (!empty($old_json)) {
+        $decoded = json_decode($old_json, true);
+        if (json_last_error() === JSON_ERROR_NONE) $old = $decoded;
+    }
+    
+    $new = [];
+    if (!empty($new_json)) {
+        $decoded = json_decode($new_json, true);
+        if (json_last_error() === JSON_ERROR_NONE) $new = $decoded;
+    }
+    
+    // Get all unique keys
+    $keys = array_unique(array_merge(array_keys($old), array_keys($new)));
+    
+    // Sort keys naturally
+    sort($keys);
+    
+    // Common ID/Timestamp keys to usually ignore unless specifically changed
+    $ignore_keys = ['created_at', 'updated_at'];
+    
+    $html = '<div class="audit-diff-wrapper">';
+    $html .= '<table class="audit-diff-table">';
+    $html .= '<thead><tr><th style="width: 25%;">Campo</th><th style="width: 37.5%;">Valor Anterior</th><th style="width: 37.5%;">Valor Nuevo</th></tr></thead>';
+    $html .= '<tbody>';
+    
+    $has_changes = false;
+    
+    foreach ($keys as $key) {
+        if (in_array($key, $ignore_keys)) continue;
+        
+        $old_val = $old[$key] ?? null;
+        $new_val = $new[$key] ?? null;
+        
+        // Skip identical values
+        if ($old_val === $new_val) continue;
+        
+        $has_changes = true;
+        
+        // Pretty format values
+        $format_val = function($v) {
+            if (is_null($v)) return '<span class="diff-null">N/A</span>';
+            if (is_bool($v)) return $v ? 'TRUE' : 'FALSE';
+            if (is_array($v)) return '<pre class="diff-json-inline">' . htmlspecialchars(json_encode($v, JSON_PRETTY_PRINT)) . '</pre>';
+            return htmlspecialchars((string)$v);
+        };
+        
+        $display_old = $format_val($old_val);
+        $display_new = $format_val($new_val);
+        
+        $html .= '<tr>';
+        $html .= '<td class="diff-label"><strong>' . htmlspecialchars(ucfirst(str_replace('_', ' ', $key))) . '</strong><br><small>' . htmlspecialchars($key) . '</small></td>';
+        $html .= '<td class="diff-value diff-deleted">' . $display_old . '</td>';
+        $html .= '<td class="diff-value diff-added">' . $display_new . '</td>';
+        $html .= '</tr>';
+    }
+    
+    if (!$has_changes) {
+        $html .= '<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted); font-style: italic;">Sin cambios significativos detectados en los valores.</td></tr>';
+    }
+    
+    $html .= '</tbody></table></div>';
+    
+    return $html;
+}
