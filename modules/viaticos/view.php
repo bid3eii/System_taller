@@ -142,32 +142,42 @@ require_once '../../includes/sidebar.php';
     }
 
     @media print {
+        /* CRITICAL: Overriding global scroll-locked layout for printing */
+        html, body, .wrapper, .scroll-wrapper {
+            height: auto !important;
+            overflow: visible !important;
+            position: static !important;
+            display: block !important;
+        }
 
         .navbar,
         .sidebar,
         .print-btn,
-        .header-actions {
+        .header-actions,
+        .theme-toggle {
             display: none !important;
         }
 
-        .app-container {
-            margin: 0;
-            padding: 0;
-        }
-
         .main-content {
-            margin-left: 0;
-            width: 100%;
+            margin: 0 !important;
+            padding: 0.5cm !important;
+            width: 100% !important;
+            max-width: none !important;
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+            display: block !important;
+            position: static !important;
         }
 
         body {
-            background: white;
-            color: black;
+            background: white !important;
+            color: black !important;
         }
 
         .viatico-grid th,
         .viatico-grid td {
-            border-color: #ddd;
+            border-color: #333 !important;
         }
 
         .grand-total-row td {
@@ -175,12 +185,70 @@ require_once '../../includes/sidebar.php';
             background: #eef2ff !important;
             color: #3730a3 !important;
         }
+
+        @page {
+            margin: 1.5cm !important;
+            size: auto;
+        }
+    }
+
+
+    /* Signature Section */
+    .signature-section {
+        width: 100%;
+        display: block;
+        text-align: center;
+        margin-top: 3rem;
+        padding: 0;
+    }
+
+    .signature-item {
+        display: inline-block;
+        width: 180px;
+        margin: 0 1.5rem;
+        text-align: center;
+        vertical-align: top;
+    }
+
+    .sig-line {
+        border-top: 2px solid #333;
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+
+    .sig-label {
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #666;
+        text-transform: uppercase;
+    }
+
+    @media print {
+        .signature-section {
+            margin-top: 2rem !important;
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        .signature-item {
+            width: 160px !important;
+            margin: 0 1rem !important;
+        }
+        .sig-line {
+            border-top: 2px solid #000 !important;
+        }
+        .sig-label {
+            color: #000 !important;
+        }
+        @page {
+            margin: 0.5cm !important;
+        }
     }
 </style>
-<main class="main-content">
+<!-- Redundant main tag removed because it is started in sidebar.php -->
     <div class="content-header" style="justify-content: space-between;">
         <div class="header-title">
-            <h1 style="display: flex; align-items: center; gap: 0.5rem;">
+            <h1 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.4rem;">
                 Reporte de Viático #<?php echo str_pad($viatico['id'], 5, '0', STR_PAD_LEFT); ?>
                 <?php if ($viatico['status'] == 'paid'): ?>
                     <span class="badge"
@@ -217,14 +285,7 @@ require_once '../../includes/sidebar.php';
     <!-- Data Matrix -->
     <div style="overflow-x: auto; padding-bottom: 1rem;">
         <table class="viatico-grid">
-            <thead>
-                <tr>
-                    <th>DETALLE</th>
-                    <?php foreach ($columns as $col): ?>
-                        <th><?php echo htmlspecialchars(strtoupper($col['tech_name'])); ?></th>
-                    <?php endforeach; ?>
-                </tr>
-            </thead>
+            <!-- Global header removed as it is now integrated per section -->
             <tbody>
                 <?php
                 $totalsByTech = array_fill_keys(array_column($columns, 'id'), 0);
@@ -234,7 +295,16 @@ require_once '../../includes/sidebar.php';
                     if (empty($rows_by_cat[$catKey]))
                         return;
 
-                    echo '<tr class="cat-header"><td colspan="' . (count($columns) + 1) . '">' . $title . '</td></tr>';
+                    // Row 1: Category Name (e.g., ALIMENTACIÓN) - NOW ON TOP & CENTERED
+                    echo '<tr class="cat-header"><td colspan="' . (count($columns) + 1) . '" style="text-align: center; background: rgba(99, 102, 241, 0.05); color: #6366f1; font-weight: 800; font-size: 1rem; border-bottom: none; letter-spacing: 1px;">' . $title . '</td></tr>';
+
+                    // Row 2: DETALLE and Names - NOW BELOW
+                    echo '<tr class="sub-header-row">';
+                    echo '<td style="font-weight: 800; background: var(--bg-body); color: var(--text-main); border-bottom: 2px solid var(--border-color);">DETALLE</td>';
+                    foreach ($columns as $col) {
+                        echo '<td style="text-align: center; font-weight: 800; background: var(--bg-body); border-bottom: 2px solid var(--border-color);">' . htmlspecialchars(strtoupper($col['tech_name'])) . '</td>';
+                    }
+                    echo '</tr>';
 
                     $subTotals = array_fill_keys(array_column($columns, 'id'), 0);
 
@@ -260,7 +330,7 @@ require_once '../../includes/sidebar.php';
                     echo '</tr>';
                 }
 
-                renderSection('ALIMENTOS', 'food', $rows_by_cat, $columns, $matrix, $totalsByTech);
+                renderSection('ALIMENTACIÓN', 'food', $rows_by_cat, $columns, $matrix, $totalsByTech);
                 renderSection('TRANSPORTE', 'transport', $rows_by_cat, $columns, $matrix, $totalsByTech);
                 renderSection('OTROS', 'other', $rows_by_cat, $columns, $matrix, $totalsByTech);
                 ?>
@@ -277,17 +347,33 @@ require_once '../../includes/sidebar.php';
     </div>
 
     <!-- Grand overall total -->
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 4rem;">
-        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">
-            TOTAL PROYECTO: $<span
-                id="grandTotalDisplay"><?php echo number_format($viatico['total_amount'], 2); ?></span>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 2rem;">
+        <div style="font-size: 1.4rem; font-weight: bold; color: var(--text-main); border-bottom: 2px solid var(--primary); padding-bottom: 0.25rem;">
+            TOTAL PROYECTO: <span
+                id="grandTotalDisplay">$<?php echo number_format($viatico['total_amount'], 2); ?></span>
+        </div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signature-section">
+        <div class="signature-item">
+            <div class="sig-line"></div>
+            <div class="sig-label">Entrega conforme</div>
+        </div>
+        <div class="signature-item">
+            <div class="sig-line"></div>
+            <div class="sig-label">Autoriza</div>
+        </div>
+        <div class="signature-item">
+            <div class="sig-line"></div>
+            <div class="sig-label">Recibe conforme</div>
         </div>
     </div>
 
     <button onclick="window.print()" class="btn btn-primary print-btn" title="Descargar como PDF o Imprimir">
         <i class="ph ph-file-pdf"></i>
     </button>
-</main>
+<!-- Redundant closing tags handled in footer.php -->
 <?php if (isset($_GET['pdf'])): ?>
     <script>
         window.addEventListener('load', function () {

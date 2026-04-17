@@ -124,10 +124,9 @@ $records = $stmt->fetchAll();
                                 <input type="checkbox" id="selectAllItems" onchange="toggleAllCheckboxes(this)">
                             </th>
                             <th>Cód. Producto</th>
-                            <th>Cliente</th>
                             <th>Equipo / Serie</th>
                             <th>Origen</th>
-                            <th>Estado</th>
+                            <th>Fecha Entrada</th>
                             <th>Acción</th>
                         <?php else: ?>
                             <th style="width: 220px;">Cliente</th>
@@ -155,7 +154,6 @@ $records = $stmt->fetchAll();
                                         <span class="badge"><?php echo htmlspecialchars($r['product_code']); ?></span>
                                     <?php endif; ?>
                                 </td>
-                                <td><span style="color: var(--text-muted); font-style: italic;">Sin Asignar</span></td>
                                 <td>
                                     <strong><?php echo htmlspecialchars($r['brand'] . ' ' . $r['model']); ?></strong>
                                     <div class="text-xs text-muted"><?php echo htmlspecialchars($r['serial_number']); ?></div>
@@ -171,7 +169,12 @@ $records = $stmt->fetchAll();
                                         </span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?php echo $healthBar; ?></td>
+                                <td>
+                                    <div style="font-weight: 600; font-size: 0.85rem;">
+                                        <i class="ph ph-calendar-blank" style="color: var(--primary-500); vertical-align: middle;"></i> 
+                                        <?php echo date('d/m/Y', strtotime($r['entry_date'])); ?>
+                                    </div>
+                                </td>
                                 <td>
                                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                                         <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openAssignModalFromBtn(this)" title="Asignar / Vender" style="color: #10b981;"><i class="ph ph-shopping-cart"></i></button>
