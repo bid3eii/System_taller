@@ -797,6 +797,40 @@ require_once '../../includes/sidebar.php';
                     </div>
 
                     <div class="modern-grid" style="grid-template-columns: repeat(6, 1fr); gap: 1.75rem;">
+                        <!-- ORIGEN Y CONTROL -->
+                        <div style="grid-column: span 6; margin-bottom: 0.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                                <i class="ph-fill ph-shield-check" style="font-size: 1.25rem;"></i> Origen y Control
+                            </h4>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 6;">
+                            <label class="form-label" style="font-weight: 700; color: var(--text-secondary); margin-bottom: 1rem; display: block;">ORIGEN DE LA COMPRA</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                <label class="selection-card-origin active" id="label-local"
+                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--primary-500); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(59, 130, 246, 0.1); color: var(--primary-400); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);">
+                                    <input type="radio" name="purchase_origin" value="local" checked
+                                        style="display: none;" onchange="updateOriginSync(this)">
+                                    <i class="ph-fill ph-storefront" style="font-size: 1.8rem;"></i>
+                                    <div style="text-align: left;">
+                                        <div style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">COMPRA LOCAL</div>
+                                        <div style="font-size: 0.75rem; opacity: 0.8; font-weight: 500;">Adquirido en el país</div>
+                                    </div>
+                                </label>
+
+                                <label class="selection-card-origin" id="label-importada"
+                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(255,255,255,0.03); color: var(--text-secondary);">
+                                    <input type="radio" name="purchase_origin" value="importada"
+                                        style="display: none;" onchange="updateOriginSync(this)">
+                                    <i class="ph-fill ph-airplane-tilt" style="font-size: 1.8rem;"></i>
+                                    <div style="text-align: left;">
+                                        <div style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">IMPORTADA</div>
+                                        <div style="font-size: 0.75rem; opacity: 0.8; font-weight: 500;">Adquirido en el exterior</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- IDENTIFICACIÓN -->
                         <div class="form-group" style="grid-column: span 2;">
                             <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--text-secondary);">
@@ -898,40 +932,6 @@ require_once '../../includes/sidebar.php';
                                     value="<?php echo $edit_order['supplier_name'] ?? ''; ?>" 
                                     style="border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);">
                                 <i class="ph ph-truck input-icon"></i>
-                            </div>
-                        </div>
-
-                        <!-- SEPARADOR: GARANTÍA / ORIGEN (Vigencia oculta en Bodega según solicitud) -->
-                        <div style="grid-column: span 6; margin: 1.5rem 0 0.5rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 2rem;">
-                            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
-                                <i class="ph-fill ph-shield-check" style="font-size: 1.25rem;"></i> Origen y Control
-                            </h4>
-                        </div>
-
-                        <div class="form-group" style="grid-column: span 6;">
-                            <label class="form-label" style="font-weight: 700; color: var(--text-secondary); margin-bottom: 1rem; display: block;">ORIGEN DE LA COMPRA</label>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                <label class="selection-card-origin active" id="label-local"
-                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--primary-500); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(59, 130, 246, 0.1); color: var(--primary-400); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);">
-                                    <input type="radio" name="purchase_origin" value="local" checked
-                                        style="display: none;" onchange="updateOriginSync(this)">
-                                    <i class="ph-fill ph-storefront" style="font-size: 1.8rem;"></i>
-                                    <div style="text-align: left;">
-                                        <div style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">COMPRA LOCAL</div>
-                                        <div style="font-size: 0.75rem; opacity: 0.8; font-weight: 500;">Adquirido en el país</div>
-                                    </div>
-                                </label>
-
-                                <label class="selection-card-origin" id="label-importada"
-                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(255,255,255,0.03); color: var(--text-secondary);">
-                                    <input type="radio" name="purchase_origin" value="importada"
-                                        style="display: none;" onchange="updateOriginSync(this)">
-                                    <i class="ph-fill ph-airplane-tilt" style="font-size: 1.8rem;"></i>
-                                    <div style="text-align: left;">
-                                        <div style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">IMPORTADA</div>
-                                        <div style="font-size: 0.75rem; opacity: 0.8; font-weight: 500;">Adquirido en el exterior</div>
-                                    </div>
-                                </label>
                             </div>
                         </div>
 

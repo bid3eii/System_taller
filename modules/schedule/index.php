@@ -18,9 +18,6 @@ require_once '../../includes/sidebar.php';
 $stmtTechs = $pdo->query("SELECT id, username FROM users WHERE role_id IN (1, 3) AND status = 'active' ORDER BY username ASC");
 $technicians = $stmtTechs->fetchAll();
 
-// Fetch Surveys for linking
-$stmtSurveys = $pdo->query("SELECT id, title, client_name FROM project_surveys WHERE status NOT IN ('completed', 'cancelled') ORDER BY created_at DESC");
-$activeSurveys = $stmtSurveys->fetchAll();
 ?>
 
 <!-- FullCalendar 6 Bundle -->
@@ -142,7 +139,9 @@ $activeSurveys = $stmtSurveys->fetchAll();
         backdrop-filter: blur(10px);
         z-index: 1000;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
+        overflow-y: auto;
+        padding: 4rem 1rem;
     }
 </style>
 
@@ -184,7 +183,7 @@ $activeSurveys = $stmtSurveys->fetchAll();
 
 <!-- Refined Event Modal -->
 <div id="eventModal" class="modal-backdrop">
-    <div class="modal-card animate-enter" style="background: var(--bg-body); width: 550px; max-width: 95%; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: 0 0 50px rgba(0,0,0,0.5); overflow: hidden;">
+    <div class="modal-card animate-enter" style="background: var(--bg-body); width: 550px; max-width: 95%; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: 0 0 50px rgba(0,0,0,0.5); margin: auto;">
         <div style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
             <h3 id="modalTitle" style="margin: 0; font-size: 1.25rem;">Programar Visita</h3>
             <button onclick="closeEventModal()" class="btn-icon" style="background: none; border: none; font-size: 1.5rem;"><i class="ph ph-x"></i></button>
@@ -228,11 +227,19 @@ $activeSurveys = $stmtSurveys->fetchAll();
                         <i class="ph-fill ph-map-pin"></i> Usar GPS Remoto
                     </button>
                 </label>
-                <div class="input-group">
-                    <i class="ph ph-map-pin input-icon"></i>
-                    <input type="text" id="location" name="location" class="form-control" placeholder="Dirección o cliente">
-                    <input type="hidden" id="latitude" name="latitude">
-                    <input type="hidden" id="longitude" name="longitude">
+                <div class="input-group" style="display: flex; gap: 0.5rem; border: none; background: transparent;">
+                    <div style="position: relative; flex: 1; display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; height: 50px;">
+                        <i class="ph ph-map-pin" style="position: absolute; left: 1rem; color: var(--primary-500); font-size: 1.25rem;"></i>
+                        <input type="text" id="location" name="location" class="form-control" placeholder="Dirección o cliente" 
+                               onkeydown="if(event.key === 'Enter'){ event.preventDefault(); searchAddress(); }"
+                               style="background: transparent; border: none; padding-left: 3rem; width: 100%;">
+                        <input type="hidden" id="latitude" name="latitude">
+                        <input type="hidden" id="longitude" name="longitude">
+                    </div>
+                    <button type="button" onclick="searchAddress()" id="searchAddrBtn" title="Buscar en el mapa"
+                            style="background: var(--primary-500); border: none; cursor: pointer; color: white; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                        <i class="ph-bold ph-magnifying-glass" style="font-size: 1.2rem;"></i>
+                    </button>
                 </div>
             </div>
 
@@ -243,15 +250,6 @@ $activeSurveys = $stmtSurveys->fetchAll();
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Vincular con Proyecto Existente</label>
-                <select id="survey_id" name="survey_id" class="form-control">
-                    <option value="">(Sin Vínculo)</option>
-                    <?php foreach ($activeSurveys as $s): ?>
-                        <option value="<?php echo $s['id']; ?>"><?php echo htmlspecialchars($s['client_name'] . ' - ' . $s['title']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
 
             <div class="form-group">
                 <label class="form-label">Notas Adicionales</label>
@@ -335,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('latitude').value = event.extendedProps.latitude || '';
             document.getElementById('longitude').value = event.extendedProps.longitude || '';
             document.getElementById('tech_id').value = event.extendedProps.tech_id;
-            document.getElementById('survey_id').value = event.extendedProps.survey_id || '';
+
             
             document.getElementById('start').value = event.start.toISOString().slice(0, 16);
             if (event.end) document.getElementById('end').value = event.end.toISOString().slice(0, 16);
@@ -387,8 +385,8 @@ document.addEventListener('DOMContentLoaded', function() {
             title: event.title,
             tech_id: event.extendedProps.tech_id,
             location: event.extendedProps.location,
-            survey_id: event.extendedProps.survey_id,
             description: event.extendedProps.description
+
         };
         fetch('save_event.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
         .then(r => r.json())
@@ -452,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    function setMarker(lat, lng, center = false) {
+    function setMarker(lat, lng, center = false, updateInput = true) {
         if (!mapMarker) {
             mapMarker = L.marker([lat, lng]).addTo(leafletMap);
         } else {
@@ -465,7 +463,61 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('latitude').value = lat;
         document.getElementById('longitude').value = lng;
+
+        if (!updateInput) return;
+
+        // Fetch Address (Reverse Geocoding)
+        const locationInput = document.getElementById('location');
+        const originalPlaceholder = locationInput.placeholder;
+        locationInput.placeholder = "Obteniendo dirección...";
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    locationInput.value = data.display_name;
+                }
+                locationInput.placeholder = originalPlaceholder;
+            })
+            .catch(() => {
+                locationInput.placeholder = originalPlaceholder;
+            });
     }
+
+    window.searchAddress = function() {
+        const query = document.getElementById('location').value.trim();
+        if (query.length < 3) return;
+
+        const btn = document.getElementById('searchAddrBtn');
+        const icon = btn.querySelector('i');
+        const oldIconClass = icon.className;
+        
+        icon.className = 'ph ph-spinner ph-spin';
+        btn.disabled = true;
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    const result = data[0];
+                    setMarker(parseFloat(result.lat), parseFloat(result.lon), true, false);
+                    
+                    // Show map if hidden
+                    const wrapper = document.getElementById('mapContainerWrapper');
+                    if (wrapper.style.display === 'none') {
+                        toggleMap();
+                    }
+                } else {
+                    Swal.fire({ icon: 'info', title: 'Sin resultados', text: 'No se encontró la ubicación especificada.', timer: 2000 });
+                }
+                icon.className = oldIconClass;
+                btn.disabled = false;
+            })
+            .catch(() => {
+                icon.className = oldIconClass;
+                btn.disabled = false;
+            });
+    };
 });
 </script>
 

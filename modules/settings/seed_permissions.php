@@ -12,7 +12,8 @@ $modules = [
     'users' => 'Gestión de Usuarios',
     'reports' => 'Ver Reportes',
     'settings' => 'Configuración del Sistema',
-    'edit_entries' => 'Permitir Editar Entradas de Servicios/Garantías'
+    'edit_entries' => 'Permitir Editar Entradas de Servicios/Garantías',
+    'master_visit_control' => 'Control Maestro de Visitas (Supervisión de Técnicos)'
 ];
 
 echo "Checking permissions...\n";

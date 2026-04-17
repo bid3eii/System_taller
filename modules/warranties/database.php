@@ -174,8 +174,8 @@ $records = $stmt->fetchAll();
                                 <td><?php echo $healthBar; ?></td>
                                 <td>
                                     <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                        <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openModalFromBtn(this)" title="Ver Detalles"><i class="ph ph-eye"></i></button>
                                         <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openAssignModalFromBtn(this)" title="Asignar / Vender" style="color: #10b981;"><i class="ph ph-shopping-cart"></i></button>
+                                        <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openModalFromBtn(this)" title="Ver Detalles"><i class="ph ph-eye"></i></button>
                                         <?php if ($_SESSION['role_name'] === 'SuperAdmin'): ?>
                                             <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditModalFromBtn(this)" title="Editar Registro" style="color: #f59e0b;"><i class="ph ph-pencil-simple"></i></button>
                                         <?php endif; ?>

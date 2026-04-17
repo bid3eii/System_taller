@@ -33,7 +33,7 @@ switch ($filter) {
         $where .= " AND DATE(se.start_datetime) = CURDATE()";
         break;
     case 'history':
-        $where .= " AND se.start_datetime < NOW() AND se.status IN ('completed', 'cancelled')";
+        $where .= " AND se.status IN ('completed', 'cancelled')";
         break;
     default: // upcoming
         $where .= " AND se.start_datetime >= CURDATE() AND se.status NOT IN ('completed', 'cancelled')";
@@ -145,8 +145,12 @@ $status_map = [
                                     </a>
                                 <?php endif; ?>
                                 <?php if ($v['survey_id']): ?>
-                                    <a href="../levantamientos/create.php?edit=<?php echo $v['survey_id']; ?>" class="btn btn-secondary" style="height: 38px;">
+                                    <a href="../levantamientos/view.php?id=<?php echo $v['survey_id']; ?>" class="btn btn-secondary" style="height: 38px;">
                                         <i class="ph ph-clipboard"></i> Ver Levantamiento
+                                    </a>
+                                <?php elseif ($v['status'] == 'completed'): ?>
+                                    <a href="../levantamientos/add.php?event_id=<?php echo $v['id']; ?>" class="btn btn-primary" style="height: 38px; background: var(--primary-500); border: none;">
+                                        <i class="ph ph-plus-circle"></i> Hacer Levantamiento
                                     </a>
                                 <?php endif; ?>
                             </div>
@@ -162,9 +166,6 @@ $status_map = [
                                     </button>
                                 <?php endif; ?>
                                 
-                                <button onclick="openNoteModal(<?php echo $v['id']; ?>)" class="btn btn-icon" title="Opciones">
-                                    <i class="ph ph-dots-three"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -193,7 +194,25 @@ function updateStatus(id, status) {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    if (status === 'completed') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Visita Finalizada!',
+                            text: '¿Deseas redactar el Levantamiento Técnico ahora?',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sí, crear levantamiento',
+                            cancelButtonText: 'No, después',
+                            confirmButtonColor: 'var(--success)',
+                        }).then((res) => {
+                            if (res.isConfirmed) {
+                                window.location.href = `../levantamientos/add.php?event_id=${id}`;
+                            } else {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        location.reload();
+                    }
                 } else {
                     Swal.fire('Error', data.message, 'error');
                 }
@@ -202,23 +221,6 @@ function updateStatus(id, status) {
     });
 }
 
-function openNoteModal(id) {
-    // Proximamente: Modal para agregar notas rápidas o cancelar
-    Swal.fire({
-        title: 'Gestión de Visita',
-        showDenyButton: true,
-        showCancelButton: true,
-        confirmButtonText: 'Editar Detalles',
-        denyButtonText: 'Cancelar Visita',
-        denyButtonColor: 'var(--danger)',
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = '../schedule/index.php'; // Ver en calendario para editar
-        } else if (result.isDenied) {
-            updateStatus(id, 'cancelled');
-        }
-    });
-}
 </script>
 
 <?php require_once '../../includes/footer.php'; ?>

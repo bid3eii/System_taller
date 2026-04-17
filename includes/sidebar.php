@@ -168,6 +168,11 @@
             if (can_access_module('tech_agenda', $pdo)) {
                 $proj_children[] = ['url' => BASE_URL . 'modules/tech_agenda/index.php', 'icon' => 'ph-calendar-check', 'label' => 'Mi Agenda Técnica'];
             }
+
+            // Admin Master Control
+            if ($is_admin_role || can_access_module('master_visit_control', $pdo)) {
+                $proj_children[] = ['url' => BASE_URL . 'modules/tech_agenda/master_control.php', 'icon' => 'ph-monitor', 'label' => 'Control Maestro de Visitas'];
+            }
                 
             if ($can_proyectos)
                 $proj_children[] = ['url' => BASE_URL . 'modules/proyectos/index.php', 'icon' => 'ph-kanban', 'label' => 'Proyectos'];

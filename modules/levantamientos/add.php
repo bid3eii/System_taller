@@ -14,6 +14,21 @@ $error = '';
 $success = '';
 
 
+// Pre-fill from Agenda Event if supplied
+$event_id = isset($_GET['event_id']) ? intval($_GET['event_id']) : null;
+$pre_client = '';
+$pre_title = '';
+
+if ($event_id) {
+    $stmtE = $pdo->prepare("SELECT title, location FROM schedule_events WHERE id = ?");
+    $stmtE->execute([$event_id]);
+    $eventData = $stmtE->fetch();
+    if ($eventData) {
+        $pre_title = $eventData['title'];
+        $pre_client = $eventData['location']; // Location usually contains client name in this context
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $client_name = clean($_POST['client_name'] ?? '');
     $title = clean($_POST['title']);
@@ -64,6 +79,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             $survey_id = $pdo->lastInsertId();
+
+            // 4. Link back to Agenda Event
+            $form_event_id = isset($_POST['origin_event_id']) ? intval($_POST['origin_event_id']) : $event_id;
+            if ($form_event_id) {
+                $stmtLink = $pdo->prepare("UPDATE schedule_events SET survey_id = ? WHERE id = ?");
+                $stmtLink->execute([$survey_id, $form_event_id]);
+            }
 
             // 2. Insert Materials
             if (!empty($mat_descriptions)) {
@@ -160,6 +182,7 @@ require_once '../../includes/sidebar.php';
     <?php endif; ?>
 
     <form method="POST" action="" id="surveyForm">
+        <input type="hidden" name="origin_event_id" value="<?php echo $event_id; ?>">
         <!-- 1. General Data -->
         <div class="card" style="margin-bottom: 2rem;">
             <h3
@@ -171,7 +194,8 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label">Cliente / Empresa *</label>
                     <div class="input-group">
                         <input type="text" name="client_name" class="form-control"
-                            placeholder="Nombre completo del cliente o empresa" required>
+                            placeholder="Nombre completo del cliente o empresa" required
+                            value="<?php echo htmlspecialchars($pre_client); ?>">
                         <i class="ph ph-buildings input-icon"></i>
                     </div>
                 </div>
@@ -180,7 +204,8 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label">Título del Proyecto *</label>
                     <div class="input-group">
                         <input type="text" name="title" class="form-control"
-                            placeholder="Ej. Implementación NAS y 20 Usuarios" required>
+                            placeholder="Ej. Implementación NAS y 20 Usuarios" required
+                            value="<?php echo htmlspecialchars($pre_title); ?>">
                         <i class="ph ph-text-t input-icon"></i>
                     </div>
                 </div>
