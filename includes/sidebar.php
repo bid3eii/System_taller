@@ -67,7 +67,7 @@
                 'type' => 'dropdown',
                 'url' => '#',
                 'icon' => 'ph-monitor',
-                'label' => 'Equipo',
+                'label' => 'Solicitud',
                 'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/equipment/') !== false && strpos($_SERVER['REQUEST_URI'], 'type=warranty') === false),
                 'children' => [
                     ['url' => BASE_URL . 'modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'],
