@@ -426,27 +426,47 @@ if (!$is_warehouse) {
     }
 }
 
-// Technician Workload Chart (Admin / Reception only)
-$techLabels = [];
-$techCounts = [];
-if ($is_admin || $is_reception) {
-    $tSql = "
-        SELECT u.username, COUNT(so.id) as total 
-        FROM service_orders so
-        JOIN users u ON so.assigned_tech_id = u.id
-        LEFT JOIN warranties w ON so.id = w.service_order_id
-        WHERE so.status NOT IN ('delivered', 'cancelled', 'ready')
-        AND (w.product_code IS NULL OR w.product_code = '') 
-        AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-        GROUP BY u.id, u.username
-        ORDER BY total DESC
-    ";
-    $techData = $pdo->query($tSql)->fetchAll();
-    foreach ($techData as $row) {
-        $techLabels[] = $row['username'];
-        $techCounts[] = (int)$row['total'];
+    // Technician Workload Chart (Admin / Reception only)
+    $techLabels = [];
+    $techCounts = [];
+    if ($is_admin || $is_reception) {
+        $tSql = "
+            SELECT u.username, COUNT(so.id) as total 
+            FROM service_orders so
+            JOIN users u ON so.assigned_tech_id = u.id
+            LEFT JOIN warranties w ON so.id = w.service_order_id
+            WHERE so.status NOT IN ('delivered', 'cancelled', 'ready')
+            AND (w.product_code IS NULL OR w.product_code = '') 
+            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
+            GROUP BY u.id, u.username
+            ORDER BY total DESC
+        ";
+        $techData = $pdo->query($tSql)->fetchAll();
+        foreach ($techData as $row) {
+            $techLabels[] = $row['username'];
+            $techCounts[] = (int)$row['total'];
+        }
+
+        // Technician Productivity Chart (Admin / Reception only)
+        $prodLabels = [];
+        $prodCounts = [];
+        $pSql = "
+            SELECT u.username, COUNT(so.id) as total 
+            FROM service_orders so
+            JOIN users u ON so.assigned_tech_id = u.id
+            LEFT JOIN warranties w ON so.id = w.service_order_id
+            WHERE so.status IN ('ready', 'delivered')
+            AND (w.product_code IS NULL OR w.product_code = '') 
+            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
+            GROUP BY u.id, u.username
+            ORDER BY total DESC
+        ";
+        $prodData = $pdo->query($pSql)->fetchAll();
+        foreach ($prodData as $row) {
+            $prodLabels[] = $row['username'];
+            $prodCounts[] = (int)$row['total'];
+        }
     }
-}
 
 ?>
 
@@ -867,6 +887,14 @@ if ($is_admin || $is_reception) {
                         <canvas id="techWorkloadChart"></canvas>
                     </div>
                 </div>
+
+                <!-- Tech Productivity Chart -->
+                <div class="card">
+                    <h3 class="mb-4">Productividad por Técnico (Equipos Hechos)</h3>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="techProductivityChart"></canvas>
+                    </div>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -1016,6 +1044,79 @@ if ($is_admin || $is_reception) {
                     callbacks: {
                         label: function(context) {
                             return ` ${context.raw} equipos activos`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Tech Productivity Chart (Admin/Reception only)
+    const ctxProd = document.getElementById('techProductivityChart').getContext('2d');
+    
+    // Create Green Gradient
+    const prodGradient = ctxProd.createLinearGradient(0, 0, 400, 0);
+    prodGradient.addColorStop(0, '#22c55e'); // Green-500
+    prodGradient.addColorStop(1, '#4ade80'); // Green-400
+
+    new Chart(ctxProd, {
+        type: 'bar',
+        data: {
+            labels: <?php echo json_encode($prodLabels); ?>,
+            datasets: [{
+                label: 'Equipos Hechos',
+                data: <?php echo json_encode($prodCounts); ?>,
+                backgroundColor: prodGradient,
+                hoverBackgroundColor: '#16a34a', // Green-600
+                borderRadius: 8,
+                borderSkipped: false,
+                barThickness: 32
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: { left: 10, right: 30 }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: { 
+                        color: gridColor,
+                        drawBorder: false
+                    },
+                    ticks: { 
+                        color: textColor, 
+                        precision: 0,
+                        font: { family: "'Inter', sans-serif", size: 11 }
+                    }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { 
+                        color: textColor,
+                        font: { 
+                            family: "'Inter', sans-serif", 
+                            size: 13,
+                            weight: '500'
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)', // Slate-900
+                    titleFont: { size: 13, weight: '600' },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${context.raw} equipos hechos`;
                         }
                     }
                 }
