@@ -57,6 +57,20 @@ try {
         echo "<b style='color:blue;'>ℹ️ La tabla 'schedule_events' ya existe.</b><br>";
     }
 
+    // 2.1 Asegurar columnas de coordenadas en 'schedule_events'
+    $check_lat = $pdo->query("SHOW COLUMNS FROM schedule_events LIKE 'latitude'");
+    if (!$check_lat->fetch()) {
+        echo "Agregando columna 'latitude' a 'schedule_events'...<br>";
+        $pdo->exec("ALTER TABLE `schedule_events` ADD COLUMN `latitude` decimal(10,8) DEFAULT NULL AFTER `service_order_id`;");
+        echo "<b style='color:green;'>✅ Columna 'latitude' agregada!</b><br>";
+    }
+    $check_lon = $pdo->query("SHOW COLUMNS FROM schedule_events LIKE 'longitude'");
+    if (!$check_lon->fetch()) {
+        echo "Agregando columna 'longitude' a 'schedule_events'...<br>";
+        $pdo->exec("ALTER TABLE `schedule_events` ADD COLUMN `longitude` decimal(11,8) DEFAULT NULL AFTER `latitude`;");
+        echo "<b style='color:green;'>✅ Columna 'longitude' agregada!</b><br>";
+    }
+
     // 3. Verificar columna 'survey_id' en 'viaticos'
     $check_viaticos = $pdo->query("SHOW COLUMNS FROM viaticos LIKE 'survey_id'");
     if (!$check_viaticos->fetch()) {
