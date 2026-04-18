@@ -61,7 +61,7 @@ try {
     $check_viaticos = $pdo->query("SHOW COLUMNS FROM viaticos LIKE 'survey_id'");
     if (!$check_viaticos->fetch()) {
         echo "Agregando columna 'survey_id' a 'viaticos'...<br>";
-        $pdo->exec("ALTER TABLE `viaticos` ADD COLUMN `survey_id` int(11) DEFAULT NULL AFTER `project_title` text;");
+        $pdo->exec("ALTER TABLE `viaticos` ADD COLUMN `survey_id` int(11) DEFAULT NULL AFTER `project_title`;");
         $pdo->exec("ALTER TABLE `viaticos` ADD CONSTRAINT `viaticos_survey_fk` FOREIGN KEY (`survey_id`) REFERENCES `project_surveys` (`id`) ON DELETE SET NULL;");
         $pdo->exec("ALTER TABLE `viaticos` ADD INDEX (`survey_id`);");
         echo "<b style='color:green;'>✅ Columna 'survey_id' agregada a 'viaticos'!</b><br>";
