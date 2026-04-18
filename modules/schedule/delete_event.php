@@ -10,6 +10,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+if (!can_access_module('schedule_manage', $pdo)) {
+    echo json_encode(['success' => false, 'message' => 'Permiso insuficiente para eliminar eventos de la agenda.']);
+    exit;
+}
+
 $input = json_decode(file_get_contents('php://input'), true);
 $id = $input['id'] ?? null;
 

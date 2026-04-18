@@ -10,6 +10,8 @@ if (!can_access_module('schedule', $pdo)) {
     die("Acceso denegado.");
 }
 
+$can_manage_schedule = can_access_module('schedule_manage', $pdo);
+
 $page_title = 'Agenda / Visitas';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
@@ -169,9 +171,11 @@ $technicians = $stmtTechs->fetchAll();
                 </div>
             <?php endif; ?>
             
+            <?php if ($can_manage_schedule): ?>
             <button class="btn btn-primary" onclick="openEventModal()" style="height: 44px; margin-top: auto;">
                 <i class="ph ph-plus-circle"></i> Nueva Visita
             </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -259,8 +263,12 @@ $technicians = $stmtTechs->fetchAll();
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
                 <div id="deleteBtnContainer"></div>
                 <div style="display: flex; gap: 1rem;">
-                    <button type="button" onclick="closeEventModal()" class="btn btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Agendar Ahora</button>
+                    <button type="button" onclick="closeEventModal()" class="btn btn-secondary">
+                        <?php echo $can_manage_schedule ? 'Cancelar' : 'Cerrar'; ?>
+                    </button>
+                    <?php if ($can_manage_schedule): ?>
+                        <button type="submit" class="btn btn-primary">Agendar Ahora</button>
+                    <?php endif; ?>
                 </div>
             </div>
         </form>
@@ -298,8 +306,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => successCallback(data))
                 .catch(e => failureCallback(e));
         },
-        editable: true,
-        selectable: true,
+        editable: <?php echo $can_manage_schedule ? 'true' : 'false'; ?>,
+        selectable: <?php echo $can_manage_schedule ? 'true' : 'false'; ?>,
         eventClick: (i) => openEventModal(i.event),
         select: (i) => openEventModal(null, i.startStr, i.endStr),
         eventDrop: (i) => updateEventQuick(i.event),
@@ -338,11 +346,15 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('start').value = event.start.toISOString().slice(0, 16);
             if (event.end) document.getElementById('end').value = event.end.toISOString().slice(0, 16);
             
-            document.getElementById('deleteBtnContainer').innerHTML = `
-                <button type="button" onclick="deleteEvent(${event.id})" class="btn" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger);">
-                    <i class="ph ph-trash"></i> Eliminar
-                </button>
-            `;
+            if (canManage) {
+                document.getElementById('deleteBtnContainer').innerHTML = `
+                    <button type="button" onclick="deleteEvent(${event.id})" class="btn" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger);">
+                        <i class="ph ph-trash"></i> Eliminar
+                    </button>
+                `;
+            } else {
+                document.getElementById('deleteBtnContainer').innerHTML = '';
+            }
         } else {
             document.getElementById('deleteBtnContainer').innerHTML = '';
             if (startStr) {
@@ -355,8 +367,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.closeEventModal = () => modal.style.display = 'none';
 
+    // Check manage permission in JS
+    const canManage = <?php echo $can_manage_schedule ? 'true' : 'false'; ?>;
+    if (!canManage) {
+        // Disable all inputs in the form
+        form.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+        // Hide the search button in map
+        const searchBtn = document.getElementById('searchAddrBtn');
+        if (searchBtn) searchBtn.style.display = 'none';
+        // Hide "Usar GPS Remoto" text button
+        const toggleMapBtn = form.querySelector('button[onclick="toggleMap()"]');
+        if (toggleMapBtn) toggleMapBtn.style.display = 'none';
+    }
+
     form.onsubmit = function(e) {
         e.preventDefault();
+        if (!canManage) return;
+
         const fd = new FormData(form);
         const data = Object.fromEntries(fd.entries());
 
