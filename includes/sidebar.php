@@ -61,30 +61,34 @@
             ];
         }
 
-        // Inventory (Combine Equipment & Bodega)
-        $can_equip = can_access_module('equipment', $pdo);
-        $can_bodega = can_access_module('new_warranty', $pdo);
-        if ($can_equip || $can_bodega) {
-            $inv_children = [];
-            if ($can_equip) {
-                $inv_children[] = ['url' => BASE_URL . 'modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'];
-                $inv_children[] = ['url' => BASE_URL . 'modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida'];
-            }
-            if ($can_bodega) {
-                $inv_children[] = ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Ingreso Bodega'];
-                $inv_children[] = ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros de Bodega'];
-            }
-            if ($can_equip) {
-                $inv_children[] = ['url' => BASE_URL . 'modules/equipment/history.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial S/N'];
-            }
+        // --- EQUIPO ---
+        if (can_access_module('equipment', $pdo)) {
+            $menu_items['equipment_menu'] = [
+                'type' => 'dropdown',
+                'url' => '#',
+                'icon' => 'ph-monitor',
+                'label' => 'Equipo',
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/equipment/') !== false && strpos($_SERVER['REQUEST_URI'], 'type=warranty') === false),
+                'children' => [
+                    ['url' => BASE_URL . 'modules/equipment/entry.php', 'icon' => 'ph-arrow-right-in', 'label' => 'Entrada'],
+                    ['url' => BASE_URL . 'modules/equipment/exit.php', 'icon' => 'ph-arrow-left-out', 'label' => 'Salida'],
+                    ['url' => BASE_URL . 'modules/equipment/history.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial S/N']
+                ]
+            ];
+        }
 
-            $menu_items['inventory'] = [
+        // --- BODEGA ---
+        if (can_access_module('new_warranty', $pdo)) {
+            $menu_items['bodega_menu'] = [
                 'type' => 'dropdown',
                 'url' => '#',
                 'icon' => 'ph-package',
-                'label' => 'Inventario',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'equipment') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false),
-                'children' => $inv_children
+                'label' => 'Bodega',
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false),
+                'children' => [
+                    ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Ingreso Bodega'],
+                    ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros de Bodega']
+                ]
             ];
         }
 
