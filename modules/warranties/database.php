@@ -57,7 +57,7 @@ $sql = "
         w.product_code, w.sales_invoice_number, w.supplier_name,
         w.master_entry_invoice, w.master_entry_date, w.end_date, w.status, w.duration_months, w.purchase_origin,
         c.name as client_name, c.id as client_id, c.tax_id, c.phone,
-        e.id as equipment_id, e.brand, e.model, e.serial_number
+        e.id as equipment_id, e.category_id, e.brand, e.model, e.serial_number
     FROM service_orders so
     JOIN warranties w ON w.service_order_id = so.id
     JOIN clients c ON so.client_id = c.id
@@ -69,6 +69,10 @@ $sql = "
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $records = $stmt->fetchAll();
+
+// Fetch Categories for selling modals
+$stmtCats = $pdo->query("SELECT id, name, default_months FROM equipment_categories ORDER BY name ASC");
+$categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 
@@ -516,6 +520,15 @@ $records = $stmt->fetchAll();
                     <input type="text" name="sales_invoice_number" id="e_assign_invoice" class="form-control" required placeholder="Nº Factura">
                 </div>
                 <div class="form-group">
+                    <label class="form-label">Categoría</label>
+                    <select name="category_id" id="e_assign_category" class="form-control" onchange="const option = this.options[this.selectedIndex]; if(option.value){ document.getElementById('e_assign_months').value = option.dataset.months; }">
+                        <option value="">Ninguna</option>
+                        <?php foreach($categories as $cat): ?>
+                            <option value="<?php echo $cat['id']; ?>" data-months="<?php echo $cat['default_months']; ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Meses de Garantía</label>
                     <input type="number" name="warranty_months" id="e_assign_months" class="form-control" required min="1">
                 </div>
@@ -594,6 +607,8 @@ $records = $stmt->fetchAll();
 </div>
 
 <script>
+window.equipmentCategories = <?php echo json_encode($categories); ?>;
+
 function openModalFromBtn(btn) {
     const data = JSON.parse(btn.dataset.json);
     document.getElementById('m_code').innerText = data.product_code || '-';
@@ -760,10 +775,26 @@ function setupAssignModal(dataArr) {
         
         let actions = document.createElement('div');
         actions.style.display = 'flex';
-        actions.style.flexDirection = 'column';
-        actions.style.alignItems = 'center';
-        actions.innerHTML = `<label style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600;">Meses</label>
-                             <input type="number" name="warranty_months[${d.id}]" value="${d.duration_months || 12}" min="1" style="width: 60px; padding: 6px 4px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); color: #10b981; font-weight: 700; text-align: center; font-size: 0.9rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='var(--border-color)'">`;
+        actions.style.gap = '10px';
+        actions.style.alignItems = 'flex-end';
+        
+        let optionsHtml = '<option value="">Ninguna</option>';
+        window.equipmentCategories.forEach(cat => {
+            optionsHtml += `<option value="${cat.id}" data-months="${cat.default_months}" ${(d.category_id == cat.id) ? 'selected' : ''}>${cat.name}</option>`;
+        });
+
+        actions.innerHTML = `
+            <div style="display:flex; flex-direction:column;">
+                <label style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600;">Categoría</label>
+                <select name="category_id[${d.id}]" onchange="const option = this.options[this.selectedIndex]; if(option.value){ this.closest('div').nextElementSibling.querySelector('input').value = option.dataset.months; }" style="padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); color: var(--text-primary); font-size: 0.85rem;">
+                    ${optionsHtml}
+                </select>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <label style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600;">Meses</label>
+                <input type="number" name="warranty_months[${d.id}]" value="${d.duration_months || 12}" min="1" style="width: 60px; padding: 6px 4px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); color: #10b981; font-weight: 700; text-align: center; font-size: 0.9rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='var(--border-color)'">
+            </div>
+        `;
         
         li.appendChild(label);
         li.appendChild(actions);
@@ -807,6 +838,7 @@ function openEditAssignmentModal(btn) {
     document.getElementById('e_assign_tax_id').value = data.tax_id || '';
     document.getElementById('e_assign_phone').value = data.phone || '';
     document.getElementById('e_assign_invoice').value = data.sales_invoice_number || '';
+    document.getElementById('e_assign_category').value = data.category_id || '';
     document.getElementById('e_assign_months').value = data.duration_months || 12;
     
     document.getElementById('editAssignmentModal').style.display = 'flex';

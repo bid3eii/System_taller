@@ -110,6 +110,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $note .= "\n\n[Diagnóstico]\nProcedimiento: $proc\nConclusión: $conc";
             }
 
+            if ($new_status === 'replaced') {
+                $replacement_sn = clean($_POST['replacement_serial_number'] ?? '');
+                if (empty($replacement_sn)) {
+                    throw new Exception("El número de serie de reemplazo es obligatorio.");
+                }
+                $stmtSn = $pdo->prepare("UPDATE service_orders SET replacement_serial_number = ? WHERE id = ?");
+                $stmtSn->execute([$replacement_sn, $id]);
+                
+                $note .= "\n\n[Equipo Reemplazado]\nNuevo N° Serie: $replacement_sn";
+            }
+
             update_service_status($pdo, $id, $new_status, $note, $_SESSION['user_id']);
 
             $redirectUrl = "manage.php?id=$id&msg=success";
@@ -164,6 +175,7 @@ $statusLabels = [
     'pending_approval' => 'En Espera',
     'in_repair' => 'En Reparación',
     'ready' => 'Listo',
+    'replaced' => 'Reemplazo',
     'delivered' => 'Entregado',
     'cancelled' => 'Cancelado'
 ];
@@ -338,6 +350,7 @@ require_once '../../includes/sidebar.php';
                     'pending_approval' => ['En Espera', 'orange'],
                     'in_repair' => ['En Proceso', 'purple'],
                     'ready' => ['Listo', 'green'],
+                    'replaced' => ['Reemplazo', 'pink'],
                     'delivered' => ['Entregado', 'gray'],
                     'cancelled' => ['Cancelado', 'red']
                 ];
@@ -534,6 +547,13 @@ require_once '../../includes/sidebar.php';
                             <textarea name="note" id="progressNote" class="modern-textarea" rows="3" placeholder="Ej. Se empezó a diagnosticar el equipo..." required></textarea>
                         </div>
 
+                        <div id="replacement_serial_container" style="display: <?php echo $order['status'] === 'replaced' ? 'block' : 'none'; ?>; margin-bottom: 1.5rem; background: rgba(236, 72, 153, 0.1); border: 1px dashed rgba(236, 72, 153, 0.3); padding: 1rem; border-radius: 8px;">
+                            <label style="display: block; font-size: 0.85rem; color: #f472b6; margin-bottom: 0.5rem;"><i class="ph ph-barcode"></i> Nuevo Número de Serie (Reemplazo) <span style="color: #ef4444;">*</span></label>
+                            <input type="text" name="replacement_serial_number" id="replacement_serial_number" class="modern-input" 
+                                   value="<?php echo htmlspecialchars($order['replacement_serial_number'] ?? ''); ?>" 
+                                   placeholder="Ingresa el S/N del equipo de reemplazo" style="border-color: rgba(236, 72, 153, 0.3);">
+                        </div>
+
                         <button type="submit" class="btn-update">
                             Guardar Cambios Operativos
                         </button>
@@ -694,9 +714,20 @@ require_once '../../includes/sidebar.php';
         statusSelect.addEventListener('change', function() {
             if (this.value === 'diagnosing') {
                 diagModal.style.display = 'flex';
-                // we have to make sure the inputs refer to exactly which form is enclosing statusSelect
             } else {
                 diagModal.style.display = 'none';
+            }
+            
+            var replContainer = document.getElementById('replacement_serial_container');
+            var replInput = document.getElementById('replacement_serial_number');
+            if (replContainer && replInput) {
+                if (this.value === 'replaced') {
+                    replContainer.style.display = 'block';
+                    replInput.setAttribute('required', 'required');
+                } else {
+                    replContainer.style.display = 'none';
+                    replInput.removeAttribute('required');
+                }
             }
         });
         document.getElementById('btnCancelDiag')?.addEventListener('click', function() {

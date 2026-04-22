@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $sales_invoice = clean($_POST['sales_invoice_number'] ?? '');
     $warranty_months_array = $_POST['warranty_months'] ?? [];
+    $category_id_array = $_POST['category_id'] ?? [];
 
     if (empty($service_order_ids_str) || empty($client_name) || empty($sales_invoice)) {
         die("Error: Faltan datos requeridos.");
@@ -65,8 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $end_date = $calc_date->format('Y-m-d');
 
                 // 2. Update service_orders and equipments
+                $item_category_id = isset($category_id_array[$service_order_id]) && $category_id_array[$service_order_id] !== '' ? (int)$category_id_array[$service_order_id] : null;
                 $pdo->prepare("UPDATE service_orders SET client_id = ? WHERE id = ?")->execute([$client_id, $service_order_id]);
-                $pdo->prepare("UPDATE equipments SET client_id = ? WHERE id = ?")->execute([$client_id, $equipment_id]);
+                $pdo->prepare("UPDATE equipments SET client_id = ?, category_id = ? WHERE id = ?")->execute([$client_id, $item_category_id, $equipment_id]);
 
                 // 3. Update warranty
                 $stmtW = $pdo->prepare("UPDATE warranties SET sales_invoice_number = ?, duration_months = ?, end_date = ?, status = 'active' WHERE service_order_id = ?");

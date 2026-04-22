@@ -676,11 +676,20 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             </div>
 
                             <div class="info-group">
-                                <span class="info-label">Número de Serie</span>
+                                <span class="info-label">Número de Serie Original</span>
                                 <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em;">
                                     <?php echo htmlspecialchars($order['serial_number']); ?>
                                 </div>
                             </div>
+
+                            <?php if (!empty($order['replacement_serial_number'])): ?>
+                            <div class="info-group" style="background: rgba(236, 72, 153, 0.1); padding: 0.75rem; border-radius: 8px; border: 1px dashed rgba(236, 72, 153, 0.3);">
+                                <span class="info-label" style="color: #f472b6;"><i class="ph ph-arrows-clockwise"></i> Número de Serie (Reemplazo)</span>
+                                <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em; font-weight: bold; color: #f9a8d4;">
+                                    <?php echo htmlspecialchars($order['replacement_serial_number']); ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

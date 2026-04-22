@@ -88,6 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $receiver_name = clean($_POST['receiver_name']);
         $receiver_id = clean($_POST['receiver_id']);
         $delivery_notes = clean($_POST['delivery_notes']);
+        
+        $has_driver = isset($_POST['has_driver']) ? 1 : 0;
+        $driver_name = clean($_POST['driver_name'] ?? '');
+        $driver_id = clean($_POST['driver_id'] ?? '');
 
         try {
             $pdo->beginTransaction();
@@ -102,7 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$_SESSION['user_id'], $currentUserSig, $id]);
 
             // Log History (with delivery details)
-            $history_note = "Entregado a: $receiver_name ($receiver_id). Notas: $delivery_notes";
+            if ($has_driver && !empty($driver_name)) {
+                $history_note = "Entregado a: $receiver_name ($receiver_id). Conductor: $driver_name ($driver_id). Notas: $delivery_notes";
+            } else {
+                $history_note = "Entregado a: $receiver_name ($receiver_id). Notas: $delivery_notes";
+            }
             $stmtH = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'delivered', ?, ?, ?)");
             $stmtH->execute([$id, $history_note, $_SESSION['user_id'], get_local_datetime()]);
 
@@ -239,6 +247,42 @@ require_once '../../includes/sidebar.php';
                 <div class="input-group">
                     <input type="text" name="receiver_id" class="form-control" placeholder="Número de documento" required>
                     <i class="ph ph-identification-card input-icon"></i>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem; margin-bottom: 1rem;">
+                <label class="custom-checkbox" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="has_driver" id="has_driver" style="width: 18px; height: 18px;" onchange="toggleDriverFields(this.checked)">
+                    <span>Entregado a un conductor de transporte (Tercero)</span>
+                </label>
+            </div>
+
+            <script>
+                function toggleDriverFields(isChecked) {
+                    document.getElementById('driver_fields').style.display = isChecked ? 'block' : 'none';
+                    let receiverIdField = document.querySelector('input[name="receiver_id"]');
+                    let receiverNameField = document.querySelector('input[name="receiver_name"]');
+                    if (isChecked) {
+                        receiverIdField.removeAttribute('required');
+                        receiverNameField.removeAttribute('required');
+                    } else {
+                        receiverIdField.setAttribute('required', 'required');
+                        receiverNameField.setAttribute('required', 'required');
+                    }
+                }
+            </script>
+
+            <div id="driver_fields" style="display: none; background: rgba(0,0,0,0.05); padding: 1rem; border-radius: 8px; border: 1px dashed var(--border-color); margin-bottom: 1rem;">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-main); font-size: 0.95rem;"><i class="ph ph-truck"></i> Datos del Conductor</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Nombre del Conductor</label>
+                        <input type="text" name="driver_name" class="form-control" placeholder="Nombre completo">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Cédula / Placa</label>
+                        <input type="text" name="driver_id" class="form-control" placeholder="Identificación o placa">
+                    </div>
                 </div>
             </div>
 

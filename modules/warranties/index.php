@@ -289,6 +289,7 @@ require_once '../../includes/sidebar.php';
                                         'pending_approval' => 'orange',
                                         'in_repair' => 'purple',
                                         'ready' => 'green',
+                                        'replaced' => 'pink',
                                         'delivered' => 'gray',
                                         'cancelled' => 'red'
                                     ];
@@ -301,6 +302,7 @@ require_once '../../includes/sidebar.php';
                                         'pending_approval' => 'En Espera',
                                         'in_repair' => 'En Proceso',
                                         'ready' => 'Listo',
+                                        'replaced' => 'Reemplazo',
                                         'delivered' => 'Entregado',
                                         'cancelled' => 'Cancelado'
                                     ];

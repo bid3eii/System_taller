@@ -158,6 +158,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $note .= "\n\n[Diagnóstico]\nProcedimiento: $proc\nConclusión: $conc";
             }
 
+            if ($new_status === 'replaced') {
+                $replacement_sn = clean($_POST['replacement_serial_number'] ?? '');
+                if (empty($replacement_sn)) {
+                    throw new Exception("El número de serie de reemplazo es obligatorio.");
+                }
+                $stmtSn = $pdo->prepare("UPDATE service_orders SET replacement_serial_number = ? WHERE id = ?");
+                $stmtSn->execute([$replacement_sn, $id]);
+                
+                $note .= "\n\n[Equipo Reemplazado]\nNuevo N° Serie: $replacement_sn";
+            }
+
             update_service_status($pdo, $id, $new_status, $note, $_SESSION['user_id']);
             
             // Redirect to prevent form resubmission
@@ -230,7 +241,8 @@ $statusLabels = [
     'diagnosing' => 'En Revisión/Diagnóstico',
     'pending_approval' => 'En Espera',
     'in_repair' => 'En Reparación',
-    'ready' => 'Listo'
+    'ready' => 'Listo',
+    'replaced' => 'Reemplazo'
 ];
 // View Logic
 $view_mode = $_GET['view_mode'] ?? 'current';
@@ -570,9 +582,16 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             </div>
 
                             <div class="info-group">
-                                <span class="info-label">Número de Serie</span>
+                                <span class="info-label">Número de Serie Original</span>
                                 <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em;"><?php echo htmlspecialchars($order['serial_number']); ?></div>
                             </div>
+
+                            <?php if (!empty($order['replacement_serial_number'])): ?>
+                            <div class="info-group" style="background: rgba(236, 72, 153, 0.1); padding: 0.75rem; border-radius: 8px; border: 1px dashed rgba(236, 72, 153, 0.3);">
+                                <span class="info-label" style="color: #f472b6;"><i class="ph ph-arrows-clockwise"></i> Número de Serie (Reemplazo)</span>
+                                <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em; font-weight: bold; color: #f9a8d4;"><?php echo htmlspecialchars($order['replacement_serial_number']); ?></div>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -757,6 +776,13 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                         <textarea name="note" id="progressNote" class="modern-textarea" rows="3" placeholder="Ej. Se realizó cambio de repuesto..." required></textarea>
                                     </div>
 
+                                    <div id="replacement_serial_container" style="display: <?php echo $order['status'] === 'replaced' ? 'block' : 'none'; ?>; margin-bottom: 1rem; background: rgba(236, 72, 153, 0.1); border: 1px dashed rgba(236, 72, 153, 0.3); padding: 1rem; border-radius: 8px;">
+                                        <label style="display: block; font-size: 0.85rem; color: #f472b6; margin-bottom: 0.5rem;"><i class="ph ph-barcode"></i> Nuevo Número de Serie (Reemplazo) <span style="color: #ef4444;">*</span></label>
+                                        <input type="text" name="replacement_serial_number" id="replacement_serial_number" class="modern-input" 
+                                               value="<?php echo htmlspecialchars($order['replacement_serial_number'] ?? ''); ?>" 
+                                               placeholder="Ingresa el S/N del equipo de reemplazo" style="border-color: rgba(236, 72, 153, 0.3);">
+                                    </div>
+
                                     <button type="submit" class="btn-update">
                                         Guardar Cambios
                                     </button>
@@ -921,6 +947,18 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                             } else {
                                                 diagModal.style.display = 'none';
                                                 repairModal.style.display = 'none';
+                                            }
+                                            
+                                            var replContainer = document.getElementById('replacement_serial_container');
+                                            var replInput = document.getElementById('replacement_serial_number');
+                                            if (replContainer && replInput) {
+                                                if (this.value === 'replaced') {
+                                                    replContainer.style.display = 'block';
+                                                    replInput.setAttribute('required', 'required');
+                                                } else {
+                                                    replContainer.style.display = 'none';
+                                                    replInput.removeAttribute('required');
+                                                }
                                             }
                                         });
 

@@ -118,9 +118,22 @@ $fullDeliveryNote = $stmtLastHistory->fetchColumn();
 $receiverName = $clientData['contact_name']; 
 $deliveryComments = '';
 $receiverId = '';
+$driverName = '';
+$driverId = '';
 
 if ($fullDeliveryNote) {
-    if (preg_match('/Entregado a: (.*?) \((.*?)\)\. Notas: (.*)/s', $fullDeliveryNote, $matches)) {
+    if (preg_match('/Entregado a: (.*?) \((.*?)\)\. Conductor: (.*?) \((.*?)\)\. Notas: (.*)/s', $fullDeliveryNote, $matches)) {
+        $receiverName = trim($matches[1]);
+        $receiverId = trim($matches[2]);
+        $driverName = trim($matches[3]);
+        $driverId = trim($matches[4]);
+        $deliveryComments = trim($matches[5]);
+    } else if (preg_match('/Entregado a: (.*?) \((.*?)\)\. Conductor: (.*?) \((.*?)\)/s', $fullDeliveryNote, $matches)) {
+        $receiverName = trim($matches[1]);
+        $receiverId = trim($matches[2]);
+        $driverName = trim($matches[3]);
+        $driverId = trim($matches[4]);
+    } else if (preg_match('/Entregado a: (.*?) \((.*?)\)\. Notas: (.*)/s', $fullDeliveryNote, $matches)) {
         $receiverName = trim($matches[1]);
         $receiverId = trim($matches[2]);
         $deliveryComments = trim($matches[3]);
@@ -511,7 +524,7 @@ if (empty($exit_doc_number)) {
 
             <!-- SIGNATURES -->
             <div class="signatures-area">
-                <div class="sig-box">
+                <div class="sig-box" style="width: <?php echo $driverName ? '30%' : '40%'; ?>;">
                     <!-- TALLER Signature -->
                     
                     <?php 
@@ -550,16 +563,30 @@ if (empty($exit_doc_number)) {
                     <div style="font-size: 10px;"><?php echo htmlspecialchars($deliveredBy); ?></div>
                     <div style="font-size: 10px; font-weight: bold;"><?php echo htmlspecialchars($roleName); ?></div>
                 </div>
+
+                <?php if ($driverName): ?>
+                <div class="sig-box" style="width: 30%;">
+                    <div style="height: 25px;"></div>
+                    <div class="sig-line"></div>
+                    <div style="font-weight: bold; margin-top: 5px; margin-bottom: 5px;">Conductor (Transporte)</div>
+                    <div style="text-align: center; margin-top: 5px; font-size: 10px;">
+                        <?php echo htmlspecialchars($driverName); ?>
+                    </div>
+                     <div style="text-align: center; margin-top: 5px; font-size: 10px;">
+                        <?php echo htmlspecialchars($driverId); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
                 
-                 <div class="sig-box">
+                 <div class="sig-box" style="width: <?php echo $driverName ? '30%' : '40%'; ?>;">
                     <div style="height: 20px;"></div>
                     <div class="sig-line"></div>
                     <div style="font-weight: bold; margin-top: 5px; margin-bottom: 5px;">Recibe Conforme</div>
-                    <div style="text-align: center; margin-top: 5px;">
-                        <?php echo htmlspecialchars($receiverName); ?>
+                    <div style="text-align: center; margin-top: 5px; min-height: 12px;">
+                        <?php echo $driverName ? '&nbsp;' : htmlspecialchars($receiverName); ?>
                     </div>
-                     <div style="text-align: center; margin-top: 5px;">
-                        <?php echo htmlspecialchars($receiverId); ?>
+                     <div style="text-align: center; margin-top: 5px; min-height: 12px;">
+                        <?php echo $driverName ? '&nbsp;' : htmlspecialchars($receiverId); ?>
                     </div>
                 </div>
             </div>

@@ -106,6 +106,7 @@ require_once '../../includes/sidebar.php';
                 <option value="diagnosing">En Diagnóstico</option>
                 <option value="in_repair">En Reparación</option>
                 <option value="ready">Listos</option>
+                <option value="replaced">Reemplazados</option>
                 <option value="delivered">Entregados</option>
             </select>
             <i class="ph ph-caret-down select-caret"></i>
@@ -221,6 +222,7 @@ require_once '../../includes/sidebar.php';
                                         'approved' => ['Aprobado', 'primary'],
                                         'in_repair' => ['En Proceso', 'purple'],
                                         'ready' => ['Listo', 'success'],
+                                        'replaced' => ['Reemplazo', 'pink'],
                                         'delivered' => ['Entregado', 'secondary'],
                                     ];
                                     $st = $statusLabels[$order['status']] ?? [$order['status'], 'secondary'];

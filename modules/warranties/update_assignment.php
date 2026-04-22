@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $sales_invoice = clean($_POST['sales_invoice_number'] ?? '');
     $warranty_months = (int)($_POST['warranty_months'] ?? 12);
+    $category_id = isset($_POST['category_id']) && $_POST['category_id'] !== '' ? (int)$_POST['category_id'] : null;
     $return_to = clean($_POST['return_to'] ?? 'database.php');
 
     if (empty($service_order_id) || empty($client_name) || empty($sales_invoice)) {
@@ -63,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 3. Update service_orders and equipments
         $pdo->prepare("UPDATE service_orders SET client_id = ? WHERE id = ?")->execute([$client_id, $service_order_id]);
-        $pdo->prepare("UPDATE equipments SET client_id = ? WHERE id = ?")->execute([$client_id, $equipment_id]);
+        $pdo->prepare("UPDATE equipments SET client_id = ?, category_id = ? WHERE id = ?")->execute([$client_id, $category_id, $equipment_id]);
 
         // 4. Update warranty
         $stmtW = $pdo->prepare("UPDATE warranties SET sales_invoice_number = ?, duration_months = ?, end_date = ? WHERE service_order_id = ?");

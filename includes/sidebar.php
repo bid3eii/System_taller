@@ -84,10 +84,11 @@
                 'url' => '#',
                 'icon' => 'ph-package',
                 'label' => 'Bodega',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false),
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/categories/') !== false),
                 'children' => [
                     ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Ingreso Bodega'],
-                    ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros de Bodega']
+                    ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros de Bodega'],
+                    ['url' => BASE_URL . 'modules/categories/index.php', 'icon' => 'ph-list-dashes', 'label' => 'Categorías']
                 ]
             ];
         }

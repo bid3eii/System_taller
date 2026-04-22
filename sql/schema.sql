@@ -96,7 +96,7 @@ CREATE TABLE `service_orders` (
   `equipment_id` int(11) NOT NULL,
   `client_id` int(11) NOT NULL,
   `assigned_tech_id` int(11) DEFAULT NULL,
-  `status` enum('received','diagnosing','pending_approval','in_repair','ready','delivered','cancelled') DEFAULT 'received',
+  `status` enum('received','diagnosing','pending_approval','in_repair','ready','replaced','delivered','cancelled') DEFAULT 'received',
   `problem_reported` text DEFAULT NULL,
   `accessories_received` text DEFAULT NULL,
   `entry_notes` text DEFAULT NULL,
@@ -108,6 +108,7 @@ CREATE TABLE `service_orders` (
   `final_cost` decimal(10,2) DEFAULT 0.00,
   `exit_date` datetime DEFAULT NULL,
   `exit_signature_path` varchar(255) DEFAULT NULL,
+  `replacement_serial_number` varchar(50) DEFAULT NULL,
   `authorized_by_user_id` int(11) DEFAULT NULL,
   `created_at` timestamp DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
