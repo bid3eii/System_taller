@@ -173,9 +173,6 @@ require_once '../../includes/sidebar.php';
                             <th class="sortable" data-column="5">
                                 Estado <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="6">
-                                # Diagnóstico <i class="ph ph-caret-up-down sort-icon"></i>
-                            </th>
                             <th class="sortable" data-column="7">
                                 Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
@@ -237,15 +234,6 @@ require_once '../../includes/sidebar.php';
                                         <?php echo $st[0]; ?>
                                     </span>
                                 </td>
-                                <td>
-                                    <?php if (!empty($order['diagnosis_number'])): ?>
-                                        <span class="badge" style="background: rgba(168, 85, 247, 0.1); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.2); padding: 4px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
-                                            #<?php echo str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT); ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="text-muted">-</span>
-                                    <?php endif; ?>
-                                </td>
                                 <td><?php echo $order['tech_name'] ? htmlspecialchars($order['tech_name']) : '<span class="text-muted">-</span>'; ?></td>
                                 <td class="text-end" style="padding-right: 1.5rem;">
                                     <div class="report-dropdown">
@@ -289,7 +277,7 @@ require_once '../../includes/sidebar.php';
                         
                         <?php if (empty($orders)): ?>
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">No se encontraron registros.</td>
+                            <td colspan="7" class="text-center py-5 text-muted">No se encontraron registros.</td>
                         </tr>
                         <?php endif; ?>
                     </tbody>
