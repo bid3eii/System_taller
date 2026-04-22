@@ -904,6 +904,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                         'diagnosing' => 'En Revisión/Diagnóstico',
                                         'pending_approval' => 'En Espera',
                                         'in_repair' => 'En Reparación',
+                                        'replaced' => 'Reemplazo',
                                         'ready' => 'Listo'
                                     ];
                                     $statusOrder = array_keys($status_options);

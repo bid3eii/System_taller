@@ -241,8 +241,8 @@ $statusLabels = [
     'diagnosing' => 'En Revisión/Diagnóstico',
     'pending_approval' => 'En Espera',
     'in_repair' => 'En Reparación',
-    'ready' => 'Listo',
-    'replaced' => 'Reemplazo'
+    'replaced' => 'Reemplazo',
+    'ready' => 'Listo'
 ];
 // View Logic
 $view_mode = $_GET['view_mode'] ?? 'current';

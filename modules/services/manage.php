@@ -174,8 +174,8 @@ $statusLabels = [
     'diagnosing' => 'En Revisión/Diagnóstico',
     'pending_approval' => 'En Espera',
     'in_repair' => 'En Reparación',
-    'ready' => 'Listo',
     'replaced' => 'Reemplazo',
+    'ready' => 'Listo',
     'delivered' => 'Entregado',
     'cancelled' => 'Cancelado'
 ];

@@ -105,8 +105,8 @@ require_once '../../includes/sidebar.php';
                 <option value="pending">Pendientes</option>
                 <option value="diagnosing">En Diagnóstico</option>
                 <option value="in_repair">En Reparación</option>
-                <option value="ready">Listos</option>
                 <option value="replaced">Reemplazados</option>
+                <option value="ready">Listos</option>
                 <option value="delivered">Entregados</option>
             </select>
             <i class="ph ph-caret-down select-caret"></i>
