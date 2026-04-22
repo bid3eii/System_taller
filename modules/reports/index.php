@@ -473,6 +473,30 @@ body.light-mode .premium-select:hover {
     border: 1px solid var(--border-color);
     background: rgba(var(--bg-card-rgb), 0.2);
     position: relative;
+    /* VERY VISIBLE SCROLLBAR FOR USER */
+    scrollbar-width: auto;
+    scrollbar-color: var(--primary) rgba(var(--primary-rgb), 0.1);
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 12px !important; /* Thick scrollbar */
+    display: block !important;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: rgba(var(--primary-rgb), 0.05);
+    border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-600);
 }
 
 .table {
