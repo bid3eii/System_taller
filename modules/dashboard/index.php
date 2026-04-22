@@ -447,7 +447,14 @@ if (!$is_warehouse) {
             $techCounts[] = (int)$row['total'];
         }
 
-        // Technician Productivity Chart (Admin / Reception only)
+        // Default Load (Current Month)
+        $p_start = '';
+        $p_end = '';
+        $p_tech = 'all';
+
+        // Fetch techs for filter dropdown
+        $techs_for_filter = $pdo->query("SELECT id, username FROM users WHERE role_id = 3 ORDER BY username ASC")->fetchAll();
+
         $prodLabels = [];
         $prodCounts = [];
         $pSql = "
@@ -458,10 +465,26 @@ if (!$is_warehouse) {
             WHERE so.status IN ('ready', 'delivered')
             AND (w.product_code IS NULL OR w.product_code = '') 
             AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-            GROUP BY u.id, u.username
-            ORDER BY total DESC
         ";
-        $prodData = $pdo->query($pSql)->fetchAll();
+        $pParams = [];
+        if (!empty($p_start)) {
+            $pSql .= " AND so.exit_date >= ?";
+            $pParams[] = $p_start . " 00:00:00";
+        }
+        if (!empty($p_end)) {
+            $pSql .= " AND so.exit_date <= ?";
+            $pParams[] = $p_end . " 23:59:59";
+        }
+        if ($p_tech !== 'all') {
+            $pSql .= " AND u.id = ?";
+            $pParams[] = $p_tech;
+        }
+        $pSql .= " GROUP BY u.id, u.username ORDER BY total DESC";
+        
+        $stmtProd = $pdo->prepare($pSql);
+        $stmtProd->execute($pParams);
+        $prodData = $stmtProd->fetchAll();
+
         foreach ($prodData as $row) {
             $prodLabels[] = $row['username'];
             $prodCounts[] = (int)$row['total'];
@@ -889,8 +912,59 @@ if (!$is_warehouse) {
                 </div>
 
                 <!-- Tech Productivity Chart -->
-                <div class="card">
-                    <h3 class="mb-4">Productividad por Técnico (Equipos Hechos)</h3>
+                <div class="card" style="position: relative; overflow: visible;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="margin: 0;">Productividad por Técnico (Equipos Hechos)</h3>
+                        <div style="position: relative;">
+                            <button id="prodFilterBtn" onclick="toggleProdFilter(event)" class="btn btn-sm btn-secondary" title="Filtrar por Fecha" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;">
+                                <i class="ph ph-funnel" id="prodFilterIcon"></i>
+                                <span id="prodFilterBadge" style="display: none; font-size: 0.75rem; font-weight: 600; color: var(--primary-500);">Filtrado</span>
+                            </button>
+
+                            <!-- Dropdown de Filtro (Absoluto al botón) -->
+                            <div id="prodFilterModal" class="filter-dropdown-card animate-pop" style="display: none;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h4 style="margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="ph ph-funnel" style="color: var(--primary-500);"></i> Filtros
+                                    </h4>
+                                    <button onclick="toggleProdFilter(event)" class="btn-icon" style="width: 24px; height: 24px;"><i class="ph ph-x"></i></button>
+                                </div>
+                                <div id="prodFilterForm">
+                                    <div style="margin-bottom: 1rem;">
+                                        <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 600; opacity: 0.9;">Técnico</label>
+                                        <select id="f_tech" class="form-control" style="width: 100%; font-size: 0.9rem; padding: 0.5rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white;">
+                                            <option value="all" style="background: #0f172a; color: white;">Todos los Técnicos</option>
+                                            <?php foreach ($techs_for_filter as $tf): ?>
+                                                <option value="<?php echo $tf['id']; ?>" style="background: #0f172a; color: white;">
+                                                    <?php echo htmlspecialchars($tf['username']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                            <div>
+                                                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; font-weight: 600; opacity: 0.9;">Desde</label>
+                                                <input type="date" id="f_start" class="form-control" style="width: 100%; font-size: 0.8rem; padding: 0.5rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
+                                            </div>
+                                            <div>
+                                                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.8rem; font-weight: 600; opacity: 0.9;">Hasta</label>
+                                                <input type="date" id="f_end" class="form-control" style="width: 100%; font-size: 0.8rem; padding: 0.5rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.75rem;">
+                                        <button onclick="applyProductivityFilter()" class="btn btn-primary" style="flex: 2; padding: 0.6rem; font-size: 0.9rem; border-radius: 10px; font-weight: 600;">Aplicar Filtro</button>
+                                        <button onclick="clearProductivityFilter()" class="btn btn-secondary" style="flex: 1; padding: 0.6rem; font-size: 0.9rem; border-radius: 10px;">Limpiar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="prodActiveFilters" style="display: none; margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-secondary); flex-direction: column; gap: 0.25rem;">
+                        <!-- JS Dynamic Content -->
+                    </div>
                     <div style="position: relative; height: 250px; width: 100%;">
                         <canvas id="techProductivityChart"></canvas>
                     </div>
@@ -1051,23 +1125,89 @@ if (!$is_warehouse) {
         }
     });
 
-    // Tech Productivity Chart (Admin/Reception only)
+    <?php endif; ?>
+    <?php endif; // End !$is_warehouse ?>
+</script>
+
+<style>
+.filter-dropdown-card {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.75rem;
+    z-index: 100;
+    width: 320px; /* Increased width to fix overflow */
+    background: #0f172a; /* Darker background */
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+}
+.filter-dropdown-card h4, 
+.filter-dropdown-card label {
+    color: white !important;
+}
+
+.filter-dropdown-card input[type="date"],
+.filter-dropdown-card select {
+    color: white !important;
+    color-scheme: dark;
+}
+
+.animate-pop {
+    animation: modalPop 0.2s ease-out;
+}
+@keyframes modalPop {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+</style>
+
+<script>
+function toggleProdFilter(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('prodFilterModal');
+    const isVisible = dropdown.style.display === 'block';
+    dropdown.style.display = isVisible ? 'none' : 'block';
+}
+
+// Close when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('prodFilterModal');
+    if (dropdown && dropdown.style.display === 'block') {
+        if (!dropdown.contains(e.target) && e.target.id !== 'prodFilterBtn') {
+            dropdown.style.display = 'none';
+        }
+    }
+});
+
+// Logic for AJAX Productivity Chart
+let productivityChart = null;
+
+function initProductivityChart(labels, counts) {
     const ctxProd = document.getElementById('techProductivityChart').getContext('2d');
     
-    // Create Green Gradient
-    const prodGradient = ctxProd.createLinearGradient(0, 0, 400, 0);
-    prodGradient.addColorStop(0, '#22c55e'); // Green-500
-    prodGradient.addColorStop(1, '#4ade80'); // Green-400
+    // Get colors from body class directly to be safe
+    const isL = document.body.classList.contains('light-mode');
+    const tColor = isL ? '#475569' : '#cbd5e1';
+    const gColor = isL ? '#e2e8f0' : 'rgba(255, 255, 255, 0.1)';
 
-    new Chart(ctxProd, {
+    const prodGradient = ctxProd.createLinearGradient(0, 0, 400, 0);
+    prodGradient.addColorStop(0, '#22c55e');
+    prodGradient.addColorStop(1, '#4ade80');
+
+    if (productivityChart) productivityChart.destroy();
+
+    productivityChart = new Chart(ctxProd, {
         type: 'bar',
         data: {
-            labels: <?php echo json_encode($prodLabels); ?>,
+            labels: labels,
             datasets: [{
                 label: 'Equipos Hechos',
-                data: <?php echo json_encode($prodCounts); ?>,
+                data: counts,
                 backgroundColor: prodGradient,
-                hoverBackgroundColor: '#16a34a', // Green-600
+                hoverBackgroundColor: '#16a34a',
                 borderRadius: 8,
                 borderSkipped: false,
                 barThickness: 32
@@ -1077,54 +1217,113 @@ if (!$is_warehouse) {
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: { left: 10, right: 30 }
-            },
+            layout: { padding: { left: 10, right: 30 } },
             scales: {
                 x: {
                     beginAtZero: true,
-                    grid: { 
-                        color: gridColor,
-                        drawBorder: false
-                    },
-                    ticks: { 
-                        color: textColor, 
-                        precision: 0,
-                        font: { family: "'Inter', sans-serif", size: 11 }
-                    }
+                    grid: { color: gColor, drawBorder: false },
+                    ticks: { color: tColor, precision: 0, font: { family: "'Inter', sans-serif", size: 11 } }
                 },
                 y: {
                     grid: { display: false },
-                    ticks: { 
-                        color: textColor,
-                        font: { 
-                            family: "'Inter', sans-serif", 
-                            size: 13,
-                            weight: '500'
-                        }
-                    }
+                    ticks: { color: tColor, font: { family: "'Inter', sans-serif", size: 13, weight: '500' } }
                 }
             },
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)', // Slate-900
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
                     titleFont: { size: 13, weight: '600' },
                     bodyFont: { size: 12 },
                     padding: 12,
                     cornerRadius: 8,
                     displayColors: false,
                     callbacks: {
-                        label: function(context) {
-                            return ` ${context.raw} equipos hechos`;
-                        }
+                        label: function(context) { return ` ${context.raw} equipos hechos`; }
                     }
                 }
             }
         }
     });
-    <?php endif; ?>
-    <?php endif; // End !$is_warehouse ?>
+}
+
+function applyProductivityFilter() {
+    const start = document.getElementById('f_start').value;
+    const end = document.getElementById('f_end').value;
+    const tech = document.getElementById('f_tech').value;
+    const techName = document.getElementById('f_tech').options[document.getElementById('f_tech').selectedIndex].text;
+    const btn = document.querySelector('[onclick="applyProductivityFilter()"]');
+    
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="ph ph-circle-notch animate-spin"></i> Filtrando...';
+    btn.disabled = true;
+
+    // Use dedicated AJAX file
+    const url = `ajax_productivity.php?p_start=${start}&p_end=${end}&p_tech=${tech}`;
+
+    fetch(url)
+        .then(async res => {
+            const isJson = res.headers.get('content-type')?.includes('application/json');
+            const data = isJson ? await res.json() : null;
+
+            if (!res.ok) {
+                throw new Error(data?.error || `HTTP Error ${res.status}`);
+            }
+            return data;
+        })
+        .then(data => {
+            if (!data) throw new Error("No data received");
+            initProductivityChart(data.labels, data.counts);
+            
+            // Update UI
+            document.getElementById('prodFilterIcon').style.color = 'var(--primary-500)';
+            document.getElementById('prodFilterBadge').style.display = 'inline';
+            
+            let info = '';
+            if (start || end) {
+                const sF = start ? start.split('-').reverse().join('/') : 'Inicio';
+                const eF = end ? end.split('-').reverse().join('/') : 'Fin';
+                info += `<div style="display: flex; align-items: center; gap: 0.5rem;"><i class="ph ph-calendar"></i> Rango: <strong>${sF} - ${eF}</strong></div>`;
+            }
+            if (tech !== 'all') {
+                info += `<div style="display: flex; align-items: center; gap: 0.5rem;"><i class="ph ph-user"></i> Técnico: <strong>${techName}</strong></div>`;
+            }
+            
+            const infoDiv = document.getElementById('prodActiveFilters');
+            infoDiv.innerHTML = info;
+            infoDiv.style.display = info ? 'flex' : 'none';
+            
+            document.getElementById('prodFilterModal').style.display = 'none';
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error: " + err.message);
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+
+function clearProductivityFilter() {
+    document.getElementById('f_start').value = '';
+    document.getElementById('f_end').value = '';
+    document.getElementById('f_tech').value = 'all';
+    
+    applyProductivityFilter();
+    
+    // Reset UI
+    document.getElementById('prodFilterIcon').style.color = '';
+    document.getElementById('prodFilterBadge').style.display = 'none';
+    document.getElementById('prodActiveFilters').style.display = 'none';
+}
+
+// Initial Load
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('techProductivityChart')) {
+        initProductivityChart(<?php echo json_encode($prodLabels); ?>, <?php echo json_encode($prodCounts); ?>);
+    }
+});
 </script>
 
 <?php
