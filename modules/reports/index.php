@@ -158,7 +158,7 @@ require_once '../../includes/sidebar.php';
                             <th class="sortable" data-column="0">
                                 ID <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="1">
+                            <th class="sortable text-center" data-column="1" style="width: 110px; min-width: 110px;">
                                 Fecha <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
                             <th class="sortable" data-column="2" style="width: 180px; min-width: 180px;">
@@ -184,7 +184,7 @@ require_once '../../includes/sidebar.php';
                                     data-tech="<?php echo $order['assigned_tech_id'] ?? 'none'; ?>"
                                     data-serial="<?php echo strtolower($order['serial_number'] ?? ''); ?>">
                                     <td><span class="badge-tag"><?php echo get_order_number($order); ?></span></td>
-                                <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
+                                    <td class="text-center"><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                                 <td style="max-width: 180px;">
                                     <div class="fw-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php 
                                             echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : 
