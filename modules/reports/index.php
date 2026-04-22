@@ -468,15 +468,18 @@ body.light-mode .premium-select:hover {
 .table-responsive {
     border-radius: 20px;
     overflow-x: auto !important;
+    display: block;
+    width: 100%;
     border: 1px solid var(--border-color);
     background: rgba(var(--bg-card-rgb), 0.2);
+    position: relative;
 }
 
 .table {
     border-radius: 20px;
-    width: 100%;
-    min-width: 1250px; /* Strong min-width to prevent any clipping */
-    table-layout: auto;
+    width: 100% !important;
+    min-width: 1300px !important; /* Force a very wide table to guarantee scroll */
+    table-layout: auto !important;
 }
 
 .table thead th {
