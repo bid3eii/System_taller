@@ -161,6 +161,7 @@ require_once '../../includes/sidebar.php';
                             <th class="sortable" data-column="1">
                                 Fecha <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
+                            <th class="text-center" style="width: 100px; min-width: 100px;">Imprimir</th>
                             <th class="sortable" data-column="2" style="width: 200px;">
                                 Cliente <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
@@ -179,7 +180,6 @@ require_once '../../includes/sidebar.php';
                             <th class="sortable" data-column="7">
                                 Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="text-end" style="width: 120px; min-width: 120px;">Imprimir</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -191,6 +191,43 @@ require_once '../../includes/sidebar.php';
                                     data-serial="<?php echo strtolower($order['serial_number'] ?? ''); ?>">
                                     <td><span class="badge-tag"><?php echo get_order_number($order); ?></span></td>
                                     <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
+                                    <td class="text-center">
+                                        <div class="report-dropdown">
+                                            <button class="premium-action-btn" onclick="toggleReportDropdown(this)">
+                                                <i class="ph-fill ph-printer"></i>
+                                            </button>
+                                            <div class="report-dropdown-menu">
+                                                <div class="dropdown-header">DOCUMENTOS</div>
+                                                <a href="../equipment/print_entry.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
+                                                    <i class="ph-fill ph-file-text" style="color: var(--primary);"></i> Hoja de Entrada
+                                                </a>
+                                                
+                                                <?php if (!empty($order['diagnosis_number'])): ?>
+                                                <a href="../services/print_diagnosis.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
+                                                    <i class="ph-fill ph-stethoscope" style="color: #a855f7;"></i> Diagnóstico Técnico
+                                                </a>
+                                                <?php endif; ?>
+
+                                                <?php if (in_array($order['status'], ['repaired', 'delivered', 'ready'])): ?>
+                                                <a href="../equipment/print_delivery.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
+                                                    <i class="ph-fill ph-check-circle" style="color: #10b981;"></i> Hoja de Salida
+                                                </a>
+                                                <?php endif; ?>
+
+                                                <?php 
+                                                // Show "Print All" if client has multiple ready/delivered equipment
+                                                $clientId = $order['client_id'];
+                                                if (isset($clientGroups[$clientId]) && count($clientGroups[$clientId]) > 1): 
+                                                    $allIds = implode(',', $clientGroups[$clientId]);
+                                                ?>
+                                                <div style="border-top: 1px solid var(--border-color); margin: 0.5rem 0;"></div>
+                                                <a href="../equipment/print_delivery_multi.php?ids=<?php echo $allIds; ?>" class="dropdown-item" style="background: rgba(16, 185, 129, 0.05);">
+                                                    <i class="ph-fill ph-stack" style="color: #10b981;"></i> Imprimir Todos (<?php echo count($clientGroups[$clientId]); ?>)
+                                                </a>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </td>
                                 <td style="max-width: 200px;">
                                     <div class="fw-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php 
                                             echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : 
@@ -247,43 +284,6 @@ require_once '../../includes/sidebar.php';
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo $order['tech_name'] ? htmlspecialchars($order['tech_name']) : '<span class="text-muted">-</span>'; ?></td>
-                                <td class="text-end" style="padding-right: 1.5rem;">
-                                    <div class="report-dropdown">
-                                        <button class="premium-action-btn" onclick="toggleReportDropdown(this)">
-                                            <i class="ph-fill ph-printer"></i>
-                                        </button>
-                                        <div class="report-dropdown-menu">
-                                            <div class="dropdown-header">DOCUMENTOS</div>
-                                            <a href="../equipment/print_entry.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
-                                                <i class="ph-fill ph-file-text" style="color: var(--primary);"></i> Hoja de Entrada
-                                            </a>
-                                            
-                                            <?php if (!empty($order['diagnosis_number'])): ?>
-                                            <a href="../services/print_diagnosis.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
-                                                <i class="ph-fill ph-stethoscope" style="color: #a855f7;"></i> Diagnóstico
-                                            </a>
-                                            <?php endif; ?>
-
-                                            <?php if (in_array($order['status'], ['repaired', 'delivered', 'ready'])): ?>
-                                            <a href="../equipment/print_delivery.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
-                                                <i class="ph-fill ph-check-circle" style="color: #10b981;"></i> Hoja de Salida
-                                            </a>
-                                            <?php endif; ?>
-
-                                            <?php 
-                                            // Show "Print All" if client has multiple ready/delivered equipment
-                                            $clientId = $order['client_id'];
-                                            if (isset($clientGroups[$clientId]) && count($clientGroups[$clientId]) > 1): 
-                                                $allIds = implode(',', $clientGroups[$clientId]);
-                                            ?>
-                                            <div style="border-top: 1px solid var(--border-color); margin: 0.5rem 0;"></div>
-                                            <a href="../equipment/print_delivery_multi.php?ids=<?php echo $allIds; ?>" class="dropdown-item" style="background: rgba(16, 185, 129, 0.05);">
-                                                <i class="ph-fill ph-stack" style="color: #10b981;"></i> Imprimir Todos (<?php echo count($clientGroups[$clientId]); ?>)
-                                            </a>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
                             </tr>
                         <?php endforeach; ?>
                         
@@ -473,13 +473,27 @@ body.light-mode .premium-select:hover {
     border: 1px solid var(--border-color);
     background: rgba(var(--bg-card-rgb), 0.2);
     position: relative;
+    /* Force scrollbar to be visible */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) transparent;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+    display: block !important;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 10px;
 }
 
 .table {
     border-radius: 20px;
     width: 100% !important;
-    min-width: 1300px !important; /* Force a very wide table to guarantee scroll */
+    min-width: 1200px !important;
     table-layout: auto !important;
+    margin-bottom: 0;
 }
 
 .table thead th {
@@ -632,9 +646,6 @@ body.light-mode .premium-action-btn:hover i {
     font-size: 1.2rem;
 }
 
-.table {
-    border-radius: 20px;
-}
 
 .report-dropdown {
     position: relative;
