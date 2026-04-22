@@ -161,10 +161,10 @@ require_once '../../includes/sidebar.php';
                             <th class="sortable" data-column="1">
                                 Fecha <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="2">
+                            <th class="sortable" data-column="2" style="width: 200px;">
                                 Cliente <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="3">
+                            <th class="sortable" data-column="3" style="width: 220px;">
                                 Equipo <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
                             <th class="sortable" data-column="4">
@@ -191,8 +191,12 @@ require_once '../../includes/sidebar.php';
                                     data-serial="<?php echo strtolower($order['serial_number'] ?? ''); ?>">
                                     <td><span class="badge-tag"><?php echo get_order_number($order); ?></span></td>
                                     <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
-                                <td>
-                                    <div class="fw-medium">
+                                <td style="max-width: 200px;">
+                                    <div class="fw-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php 
+                                            echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : 
+                                                 (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : 
+                                                 $order['contact_name'])); 
+                                        ?>">
                                         <?php 
                                             echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : 
                                                  (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : 
@@ -201,8 +205,10 @@ require_once '../../includes/sidebar.php';
                                     </div>
                                     <div class="text-xs text-muted"><?php echo htmlspecialchars($order['client_phone']); ?></div>
                                 </td>
-                                <td>
-                                    <div class="fw-medium"><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></div>
+                                <td style="max-width: 220px;">
+                                    <div class="fw-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>">
+                                        <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
+                                    </div>
                                     <div class="text-xs text-muted" style="opacity: 0.7;">S/N: <?php echo htmlspecialchars($order['serial_number'] ?: '-'); ?></div>
                                 </td>
                                 <td>
@@ -469,7 +475,7 @@ body.light-mode .premium-select:hover {
 .table {
     border-radius: 20px;
     width: 100%;
-    min-width: 1100px; /* Force scrollbar instead of clipping */
+    min-width: 800px; /* Reduced min-width since columns are now narrower */
 }
 
 .table thead th {
