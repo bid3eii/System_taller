@@ -149,8 +149,8 @@ require_once '../../includes/sidebar.php';
     </div>
 
     <!-- Table -->
-    <div class="card" style="overflow: visible;">
-        <div class="card-body p-0" style="overflow: visible;">
+    <div class="card">
+        <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table" id="reportsTable">
                     <thead>
@@ -308,6 +308,19 @@ require_once '../../includes/sidebar.php';
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
+@media (max-width: 1200px) {
+    .premium-filter-bar {
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: auto auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .premium-filter-bar {
+        grid-template-columns: 1fr;
+    }
+}
+
 .input-group-date {
     display: flex;
     gap: 0.5rem;
@@ -448,7 +461,7 @@ body.light-mode .premium-select:hover {
 /* Table Enhancements */
 .table-responsive {
     border-radius: 20px;
-    overflow: visible; /* Changed from hidden to visible */
+    overflow-x: auto !important;
     border: 1px solid var(--border-color);
     background: rgba(var(--bg-card-rgb), 0.2);
 }
@@ -608,16 +621,8 @@ body.light-mode .premium-action-btn:hover i {
     font-size: 1.2rem;
 }
 
-/* Fix for dropdown overflow - ensure parent containers don't clip */
-.main-content,
-.card,
-.card-body,
-.table-responsive {
-    overflow: visible !important;
-}
-
 .table {
-    overflow: visible !important;
+    border-radius: 20px;
 }
 
 .report-dropdown {
