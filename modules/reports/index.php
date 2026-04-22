@@ -161,19 +161,19 @@ require_once '../../includes/sidebar.php';
                             <th class="sortable" data-column="1">
                                 Fecha <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="2" style="width: 200px;">
+                            <th class="sortable" data-column="2" style="width: 180px; min-width: 180px;">
                                 Cliente <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="3" style="width: 220px;">
+                            <th class="sortable" data-column="3" style="width: 180px; min-width: 180px;">
                                 Equipo <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="4">
+                            <th class="sortable" data-column="4" style="width: 100px;">
                                 Tipo <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="7">
+                            <th class="sortable" data-column="7" style="width: 130px;">
                                 Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="text-end" style="width: 120px; min-width: 120px;">Imprimir</th>
+                            <th class="text-end" style="width: 110px; min-width: 110px;">Imprimir</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -184,8 +184,8 @@ require_once '../../includes/sidebar.php';
                                     data-tech="<?php echo $order['assigned_tech_id'] ?? 'none'; ?>"
                                     data-serial="<?php echo strtolower($order['serial_number'] ?? ''); ?>">
                                     <td><span class="badge-tag"><?php echo get_order_number($order); ?></span></td>
-                                    <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
-                                <td style="max-width: 200px;">
+                                <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
+                                <td style="max-width: 180px;">
                                     <div class="fw-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php 
                                             echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : 
                                                  (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : 
@@ -468,7 +468,7 @@ body.light-mode .premium-select:hover {
 .table {
     border-radius: 20px;
     width: 100% !important;
-    min-width: 1300px !important; /* Force a very wide table to guarantee scroll */
+    min-width: 1000px !important; /* Reduced from 1300px since we removed columns */
     table-layout: auto !important;
 }
 
