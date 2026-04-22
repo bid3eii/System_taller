@@ -399,7 +399,7 @@ body.light-mode .date-label {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 0.85rem 1.25rem;
+    padding: 0.85rem 3rem 0.85rem 1.25rem;
     color: var(--text-main);
     font-size: 0.95rem;
     appearance: none;

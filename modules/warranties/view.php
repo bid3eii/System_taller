@@ -1076,7 +1076,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                     <?php echo date('d/m/Y H:i', strtotime($event['created_at'])); ?> • <?php echo htmlspecialchars($event['user_name']); ?>
                                 </div>
                                 <?php if($event['notes']): ?>
-                                    <div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--p-text-muted); background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;">
+                                    <div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--p-text-muted); background: var(--p-bg-input); padding: 0.5rem; border-radius: 4px;">
                                         <?php echo htmlspecialchars($event['notes']); ?>
                                     </div>
                                 <?php endif; ?>

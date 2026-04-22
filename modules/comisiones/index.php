@@ -183,14 +183,14 @@ if (isset($_SESSION['error'])) {
             <!-- Filters -->
             <style>
                 .filter-input {
-                    background: rgba(15, 23, 42, 0.6) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-                    color: #f8fafc !important;
+                    background: var(--bg-hover) !important;
+                    border: 1px solid var(--border-color) !important;
+                    color: var(--text-main) !important;
                     height: 42px !important;
                 }
                 .filter-input:focus {
                     border-color: var(--primary-500) !important;
-                    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+                    box-shadow: 0 0 0 2px var(--primary-glow) !important;
                 }
                 .filter-label {
                     color: #94a3b8;
@@ -200,7 +200,7 @@ if (isset($_SESSION['error'])) {
                     letter-spacing: 0.3px;
                 }
             </style>
-            <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05);">
+            <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-color);">
                 <form method="GET" action="" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
                     <div style="flex: 1; min-width: 250px;">
                         <label class="filter-label" style="display: block;">Buscar</label>
@@ -260,14 +260,14 @@ if (isset($_SESSION['error'])) {
             $countServicios = $stmtS->fetchColumn();
             ?>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                <a href="index.php?search=PROYECTO" style="text-decoration: none; display: block; background: rgba(30, 41, 59, 0.4); border: 1px solid <?php echo (strpos(strtoupper($search), 'PROYECTO') !== false) ? 'rgba(99, 102, 241, 0.5)' : 'rgba(255,255,255,0.05)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
+                <a href="index.php?search=PROYECTO" style="text-decoration: none; display: block; background: var(--bg-card); border: 1px solid <?php echo (strpos(strtoupper($search), 'PROYECTO') !== false) ? 'var(--primary-500)' : 'var(--border-color)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                             <i class="ph ph-buildings"></i>
                         </div>
                         <div>
                             <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Proyectos</h4>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #fff; line-height: 1.2;"><?php echo $countProyectos; ?></div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); line-height: 1.2;"><?php echo $countProyectos; ?></div>
                         </div>
                     </div>
                     <?php if (strpos(strtoupper($search), 'PROYECTO') !== false): ?>
@@ -275,14 +275,14 @@ if (isset($_SESSION['error'])) {
                     <?php endif; ?>
                 </a>
 
-                <a href="index.php?search=SERVICIO" style="text-decoration: none; display: block; background: rgba(30, 41, 59, 0.4); border: 1px solid <?php echo (strpos(strtoupper($search), 'SERVICIO') !== false) ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255,255,255,0.05)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
+                <a href="index.php?search=SERVICIO" style="text-decoration: none; display: block; background: var(--bg-card); border: 1px solid <?php echo (strpos(strtoupper($search), 'SERVICIO') !== false) ? 'rgba(16, 185, 129, 0.5)' : 'var(--border-color)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                             <i class="ph ph-wrench"></i>
                         </div>
                         <div>
                             <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Servicios</h4>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #fff; line-height: 1.2;"><?php echo $countServicios; ?></div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); line-height: 1.2;"><?php echo $countServicios; ?></div>
                         </div>
                     </div>
                     <?php if (strpos(strtoupper($search), 'SERVICIO') !== false): ?>
@@ -501,7 +501,7 @@ if (isset($_SESSION['error'])) {
 <?php else: /* ============ TECH VIEW ============ */ ?>
     <style>
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .kpi-card { background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; transition: transform .2s; }
+    .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; transition: transform .2s; }
     .kpi-card:hover { transform: translateY(-2px); }
     .kpi-label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; }
     .kpi-value { font-size: 2rem; font-weight: 800; line-height: 1; }
@@ -511,8 +511,8 @@ if (isset($_SESSION['error'])) {
     .filter-tab.active { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.45); color: #a5b4fc; }
     .filter-tab.active-green { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: #6ee7b7; }
     .filter-tab.active-orange { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: #fcd34d; }
-    .com-card { background: rgba(30,41,59,0.55); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 0.85rem; display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start; transition: all .2s; }
-    .com-card:hover { background: rgba(30,41,59,0.8); border-color: rgba(255,255,255,0.1); }
+    .com-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 0.85rem; display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start; transition: all .2s; }
+    .com-card:hover { background: var(--bg-hover); border-color: var(--primary-500); }
     .com-card-left { display: flex; flex-direction: column; gap: 0.4rem; }
     .com-caso { font-weight: 700; font-size: 1.05rem; color: #60a5fa; text-decoration: none; }
     .com-caso:hover { color: #93c5fd; }
@@ -677,12 +677,12 @@ if (isset($_SESSION['error'])) {
 <?php endif; /* end admin/tech branch */ ?>
 
 <!-- ====== INFO MODAL ====== -->
-<div id="infoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9998; justify-content:center; align-items:center;">
-    <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); border-radius:1rem; padding:2rem; width:90%; max-width:650px; box-shadow:0 25px 50px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;">
+<div id="infoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9998; justify-content:center; align-items:center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; padding: 2rem; width: 90%; max-width: 650px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;">
         
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem;">
             <div>
-                <h2 style="margin:0; font-size:1.4rem; color:#f1f5f9; display:flex; align-items:center; gap:0.5rem;">
+                <h2 style="margin:0; font-size:1.4rem; color: var(--text-main); display:flex; align-items:center; gap:0.5rem;">
                     <i class="ph ph-files"></i> <span id="infoCasoTitle"></span>
                 </h2>
                 <span id="infoEstadoBadge" class="status-badge" style="margin-top:0.5rem; display:inline-block;"></span>
@@ -751,11 +751,11 @@ if (isset($_SESSION['error'])) {
 </div>
 
 <!-- ====== QUICK PAY MODAL ====== -->
-<div id="payModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
-    <div style="background:#0f172a; border:1px solid rgba(255,255,255,0.1); border-radius:1rem; padding:2rem; width:90%; max-width:520px; box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+<div id="payModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 1rem; padding: 2rem; width: 90%; max-width: 520px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
             <div>
-                <h2 style="margin:0; font-size:1.25rem; color:#f1f5f9;"><i class="ph ph-currency-circle-dollar" style="color:#10b981;"></i> Liquidar Incentivo</h2>
+                <h2 style="margin:0; font-size:1.25rem; color: var(--text-main);"><i class="ph ph-currency-circle-dollar" style="color:#10b981;"></i> Liquidar Incentivo</h2>
                 <p id="modalSubtitle" style="margin:0.25rem 0 0; font-size:0.85rem; color:#64748b;"></p>
             </div>
             <button onclick="closePayModal()" style="background:transparent; border:none; color:#64748b; font-size:1.5rem; cursor:pointer; line-height:1;">×</button>

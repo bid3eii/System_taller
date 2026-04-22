@@ -59,17 +59,33 @@ $technicians = $stmtTechs->fetchAll();
 
     /* Buttons */
     .fc .fc-button {
-        border-radius: 10px !important;
+        border-radius: 8px !important;
         font-weight: 600 !important;
         font-size: 0.85rem !important;
         padding: 0.6rem 1.2rem !important;
-        transition: all 0.2s ease !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         box-shadow: var(--shadow-sm) !important;
+        border: 1px solid var(--border-color) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .fc .fc-button-group {
+        gap: 0.5rem !important;
+        background: transparent !important;
+    }
+
+    .fc .fc-button-group > .fc-button {
+        margin-left: 0 !important; /* Undo FullCalendar negative margin */
     }
 
     .fc .fc-button:hover {
-        background: var(--bg-hover) !important;
-        transform: translateY(-1px);
+        background: var(--primary-500) !important;
+        color: white !important;
+        border-color: var(--primary-500) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
     }
 
     .fc .fc-button-primary:not(:disabled).fc-button-active {
@@ -77,6 +93,13 @@ $technicians = $stmtTechs->fetchAll();
         border-color: var(--primary-600) !important;
         color: white !important;
         box-shadow: 0 0 15px var(--primary-glow) !important;
+        z-index: 2;
+    }
+
+    /* Force text visibility on all states */
+    .fc .fc-button:not(.fc-button-active) {
+        color: var(--text-primary) !important;
+        background: var(--bg-card) !important;
     }
 
     /* MultiMonth (Year View) Specific Fixes - THE "0" REDO */
@@ -86,20 +109,29 @@ $technicians = $stmtTechs->fetchAll();
     }
 
     .fc-multimonth-month {
-        background: rgba(30, 41, 59, 0.4) !important; 
+        background: var(--bg-card) !important; 
         border: 1px solid var(--border-color) !important;
         border-radius: 12px !important;
-        margin: 5px !important;
-        flex: 1 1 200px !important; /* Allow growing and shrinking with 200px base */
-        max-width: 24% !important; /* Limit to roughly 4 columns */
+        margin: 8px !important;
+        flex: 1 1 280px !important; 
+        max-width: 32% !important; 
         overflow: hidden !important;
+        box-shadow: var(--shadow-sm) !important;
+    }
+
+    body.light-mode .fc-multimonth-month {
+        background: white !important;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
     }
 
     .fc-multimonth-title {
-        color: var(--text-primary) !important;
-        font-weight: 700 !important;
-        padding: 1rem !important;
-        background: rgba(255,255,255,0.03) !important;
+        color: var(--primary-500) !important;
+        font-weight: 800 !important;
+        padding: 1.25rem !important;
+        background: var(--bg-hover) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        text-transform: capitalize !important;
+        font-size: 1.1rem !important;
     }
 
     .fc-multimonth-daygrid-table, 
@@ -114,9 +146,18 @@ $technicians = $stmtTechs->fetchAll();
 
     .fc .fc-daygrid-day-number {
         color: var(--text-primary) !important;
+        font-weight: 600 !important;
+        padding: 4px !important;
+        font-size: 0.85rem !important;
+    }
+
+    .fc .fc-col-header-cell-cushion {
+        color: var(--text-secondary) !important;
+        font-size: 0.7rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
         font-weight: 700 !important;
-        padding: 5px !important;
-        opacity: 0.9;
+        padding: 8px 0 !important;
     }
 
     /* Events Styling */

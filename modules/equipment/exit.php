@@ -62,7 +62,7 @@ require_once '../../includes/sidebar.php'; // Navbar
     $multiClientGroups = array_filter($clientGroups, function($ids) { return count($ids) > 1; });
     if (!empty($multiClientGroups)): 
     ?>
-        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <div style="background: var(--bg-hover); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
             <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem;">
                 <div style="background: rgba(16, 185, 129, 0.15); padding: 0.75rem; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                     <i class="ph-fill ph-stack" style="font-size: 1.75rem; color: #10b981;"></i>
@@ -90,13 +90,13 @@ require_once '../../includes/sidebar.php'; // Navbar
                     $allIds = implode(',', $orderIds);
                     $equipmentCount = count($orderIds);
                 ?>
-                    <div style="display: block; padding: 1rem; background: white; border: 2px solid rgba(16, 185, 129, 0.2); border-radius: 10px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                    <div style="display: block; padding: 1rem; background: var(--bg-card); border: 2px solid rgba(16, 185, 129, 0.2); border-radius: 10px; transition: all 0.2s; box-shadow: var(--shadow-sm);">
                         
                         <!-- Header -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e5e7eb;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
                                 <i class="ph-fill ph-user-circle" style="color: #10b981; font-size: 1.25rem; flex-shrink: 0;"></i>
-                                <span style="font-weight: 600; font-size: 0.95rem; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($clientName); ?>">
+                                <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($clientName); ?>">
                                     <?php echo htmlspecialchars($clientName); ?>
                                 </span>
                             </div>
@@ -108,8 +108,8 @@ require_once '../../includes/sidebar.php'; // Navbar
                         <!-- Equipment List -->
                         <div style="margin-bottom: 0.75rem;">
                             <?php foreach (array_slice($equipmentList, 0, 3) as $index => $equipment): ?>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; font-size: 0.85rem; color: #6b7280;">
-                                    <i class="ph ph-laptop" style="color: #6b7280; font-size: 0.9rem;"></i>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; font-size: 0.85rem; color: var(--text-secondary);">
+                                    <i class="ph ph-laptop" style="color: var(--text-secondary); font-size: 0.9rem;"></i>
                                     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?php echo htmlspecialchars($equipment); ?></span>
                                 </div>
                             <?php endforeach; ?>

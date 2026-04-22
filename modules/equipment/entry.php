@@ -426,7 +426,20 @@ require_once '../../includes/sidebar.php';
         }
 
         .premium-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+        }
+
+        body.light-mode .premium-card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Adjust premium card for dark mode specifically to keep it punchy */
+        body:not(.light-mode) .premium-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
@@ -518,30 +531,35 @@ require_once '../../includes/sidebar.php';
             right: 0;
             top: 100%;
             z-index: 9999; /* Super high priority */
-            background: #0f172a !important; /* Extremely solid dark navy/black */
+            background: var(--bg-card) !important; /* Adapt to theme */
             border: 1px solid var(--primary-500); 
             border-top: none;
             border-radius: 0 0 12px 12px;
             margin-top: -1px; /* Fuse with input border */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--shadow-card);
             max-height: 350px;
             overflow-y: auto;
             display: none;
             opacity: 1 !important; /* Zero transparency */
         }
 
+        body.light-mode .search-results {
+            background: white !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
         .search-option {
             padding: 16px;
             cursor: pointer;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--border-color);
             transition: all 0.2s;
             font-size: 0.95rem;
-            background: #0f172a !important; /* Solid dark background matching container */
+            background: transparent !important;
             color: var(--text-primary) !important;
         }
 
         .search-option:hover {
-            background: #1e293b !important; /* Lighter solid background on hover */
+            background: var(--bg-hover) !important;
         }
 
         .search-results.show {
@@ -782,14 +800,14 @@ require_once '../../includes/sidebar.php';
             <?php endif; ?>
 
                 <!-- SECCIÓN UNIFICADA: REGISTRO INTEGRAL DE BODEGA -->
-                <div class="form-section premium-card animate-enter" style="border-top: 4px solid var(--accent); padding-top: 2rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1.5rem;">
+                <div class="form-section premium-card animate-enter" style="border-top: 4px solid var(--primary-500); padding-top: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="background: rgba(168, 85, 247, 0.2); width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: 0 8px 16px rgba(0,0,0,0.2);">
+                            <div style="background: rgba(168, 85, 247, 0.15); width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #a855f7; box-shadow: 0 8px 16px rgba(0,0,0,0.1);">
                                 <i class="ph-fill ph-package" style="font-size: 2rem;"></i>
                             </div>
                             <div>
-                                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; color: white; letter-spacing: -0.5px;">Registro Integral de Bodega</h2>
+                                <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px;">Registro Integral de Bodega</h2>
                                 <p style="margin: 4px 0 0 0; font-size: 0.9rem; color: var(--text-secondary);">Control unificado de entrada, técnicos y garantías.</p>
                             </div>
                         </div>
@@ -798,8 +816,8 @@ require_once '../../includes/sidebar.php';
 
                     <div class="modern-grid" style="grid-template-columns: repeat(6, 1fr); gap: 1.75rem;">
                         <!-- ORIGEN Y CONTROL -->
-                        <div style="grid-column: span 6; margin-bottom: 0.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
+                        <div style="grid-column: span 6; margin-bottom: 0.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--primary-500); display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
                                 <i class="ph-fill ph-shield-check" style="font-size: 1.25rem;"></i> Origen y Control
                             </h4>
                         </div>
@@ -808,7 +826,7 @@ require_once '../../includes/sidebar.php';
                             <label class="form-label" style="font-weight: 700; color: var(--text-secondary); margin-bottom: 1rem; display: block;">ORIGEN DE LA COMPRA</label>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                                 <label class="selection-card-origin active" id="label-local"
-                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--primary-500); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(59, 130, 246, 0.1); color: var(--primary-400); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);">
+                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--primary-500); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(99, 102, 241, 0.1); color: var(--primary-500); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);">
                                     <input type="radio" name="purchase_origin" value="local" checked
                                         style="display: none;" onchange="updateOriginSync(this)">
                                     <i class="ph-fill ph-storefront" style="font-size: 1.8rem;"></i>
@@ -819,7 +837,7 @@ require_once '../../includes/sidebar.php';
                                 </label>
 
                                 <label class="selection-card-origin" id="label-importada"
-                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid rgba(255,255,255,0.1); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(255,255,255,0.03); color: var(--text-secondary);">
+                                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; border: 2px solid var(--border-color); border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: var(--bg-hover); color: var(--text-secondary);">
                                     <input type="radio" name="purchase_origin" value="importada"
                                         style="display: none;" onchange="updateOriginSync(this)">
                                     <i class="ph-fill ph-airplane-tilt" style="font-size: 1.8rem;"></i>
@@ -840,7 +858,7 @@ require_once '../../includes/sidebar.php';
                                 <i class="ph ph-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary-500); font-size: 1.2rem; pointer-events: none; z-index: 10;"></i>
                                 <input type="text" name="product_code" id="product_code_input" class="form-control" placeholder="Escriba código..."
                                     required value="<?php echo $edit_order['product_code'] ?? ''; ?>"
-                                    style="flex: 1; padding-left: 45px; padding-right: 50px; border-radius: 12px; height: 50px; font-size: 1.05rem; background: rgba(0,0,0,0.2);"
+                                    style="flex: 1; padding-left: 45px; padding-right: 50px; border-radius: 12px; height: 50px; font-size: 1.05rem; background: var(--bg-hover);"
                                     autocomplete="off" oninput="searchProduct(this.value)">
                                 <button type="button" onclick="openSearchProductModal()" title="Buscador avanzado"
                                     style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--primary-500); border: none; cursor: pointer; color: white; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 11; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);">
@@ -859,7 +877,7 @@ require_once '../../includes/sidebar.php';
                                     <input type="text" name="serial_number[]" class="form-control serial-input-wry"
                                         placeholder="Escanee o escriba la serie..." required value="<?php echo $edit_order['serial_number'] ?? ''; ?>"
                                         onblur="validateSerialWryBatch(this)" onkeydown="handleScannerKey(event, this)"
-                                        style="border-radius: 12px; height: 50px; font-size: 1.05rem; background: rgba(0,0,0,0.2);">
+                                        style="border-radius: 12px; height: 50px; font-size: 1.05rem; background: var(--bg-hover);">
                                     <i class="ph ph-barcode input-icon" style="right: 15px; font-size: 1.3rem;"></i>
                                     <div class="warranty-status-msg-wry" style="position: absolute; right: 45px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; pointer-events: none;"></div>
                                 </div>
@@ -878,7 +896,7 @@ require_once '../../includes/sidebar.php';
                             </label>
                             <div class="input-group">
                                 <input type="text" name="brand" class="form-control" placeholder="Ej. MONITOR ASUS TUF GAMING 24\" 144HZ"
-                                    required style="border-radius: 12px; height: 50px; font-size: 1.05rem; background: rgba(0,0,0,0.2);"
+                                    required style="border-radius: 12px; height: 50px; font-size: 1.05rem; background: var(--bg-hover);"
                                     value="<?php echo trim(($edit_order['brand'] ?? '') . ' ' . ($edit_order['model'] ?? '') . ' ' . ($edit_order['submodel'] ?? '')); ?>">
                                 <input type="hidden" name="model" value="">
                                 <input type="hidden" name="submodel" value="">
@@ -888,7 +906,7 @@ require_once '../../includes/sidebar.php';
                         </div>
 
                         <!-- SEPARADOR: DATOS DE INGRESO -->
-                        <div style="grid-column: span 6; margin: 1.5rem 0 0.5rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 2rem;">
+                        <div style="grid-column: span 6; margin: 1.5rem 0 0.5rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
                             <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--success); display: flex; align-items: center; gap: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
                                 <i class="ph-fill ph-receipt" style="font-size: 1.25rem;"></i> Facturación y Proveedor
                             </h4>
@@ -899,7 +917,7 @@ require_once '../../includes/sidebar.php';
                             <div class="input-group">
                                 <input type="date" name="entry_date" class="form-control"
                                     value="<?php echo $edit_order ? date('Y-m-d', strtotime($edit_order['created_at'])) : date('Y-m-d'); ?>"
-                                    style="color-scheme: dark; border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);">
+                                    style="border-radius: 12px; height: 50px; background: var(--bg-hover);">
                                 <i class="ph ph-calendar input-icon"></i>
                             </div>
                         </div>
@@ -908,7 +926,7 @@ require_once '../../includes/sidebar.php';
                             <label class="form-label">Factura Proveedor</label>
                             <div class="input-group">
                                 <input type="text" name="master_entry_invoice" class="form-control" required
-                                    placeholder="No. Factura" style="border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);"
+                                    placeholder="No. Factura" style="border-radius: 12px; height: 50px; background: var(--bg-hover);"
                                     value="<?php echo $edit_order['master_entry_invoice'] ?? ''; ?>">
                                 <i class="ph ph-file-text input-icon"></i>
                             </div>
@@ -919,7 +937,7 @@ require_once '../../includes/sidebar.php';
                             <div class="input-group">
                                 <input type="date" name="master_entry_date" class="form-control" required
                                     value="<?php echo $edit_order['master_entry_date'] ?? ''; ?>" 
-                                    style="color-scheme: dark; border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);">
+                                    style="border-radius: 12px; height: 50px; background: var(--bg-hover);">
                                 <i class="ph ph-calendar-blank input-icon"></i>
                             </div>
                         </div>
@@ -930,7 +948,7 @@ require_once '../../includes/sidebar.php';
                                 <input type="text" name="supplier_name" class="form-control"
                                     placeholder="Nombre del proveedor o tienda..." required
                                     value="<?php echo $edit_order['supplier_name'] ?? ''; ?>" 
-                                    style="border-radius: 12px; height: 50px; background: rgba(0,0,0,0.2);">
+                                    style="border-radius: 12px; height: 50px; background: var(--bg-hover);">
                                 <i class="ph ph-truck input-icon"></i>
                             </div>
                         </div>
@@ -942,7 +960,7 @@ require_once '../../includes/sidebar.php';
                                 <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
                                     <input type="number" name="warranty_duration" id="warranty_duration" class="form-control"
                                         placeholder="Cant." min="0" value="0"
-                                        style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 1rem; height: 50px; background: rgba(0,0,0,0.2); border-radius: 12px 0 0 12px;">
+                                        style="border-top-right-radius: 0; border-bottom-right-radius: 0; flex: 1; border-right: none; margin-right: -1px; z-index: 2; padding-left: 1rem; height: 50px; background: var(--bg-hover); border-radius: 12px 0 0 12px;">
                                     <select name="warranty_period" id="warranty_period" class="form-control"
                                         style="width: auto; flex: 0 0 140px; border-top-left-radius: 0; border-bottom-left-radius: 0; background-color: var(--bg-card); border-left: 1px solid var(--border-color); z-index: 1; height: 50px; border-radius: 0 12px 12px 0;">
                                         <option value="days">DÍAS</option>
