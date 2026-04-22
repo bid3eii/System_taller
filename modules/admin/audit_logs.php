@@ -375,6 +375,7 @@ $totalPages = ceil($totalLogs / $limit);
     padding: 1.5rem;
     border-radius: 16px;
     border: 1px solid var(--border-color);
+    overflow-x: auto; /* Prevent table overflow */
 }
 
 .audit-diff-table {

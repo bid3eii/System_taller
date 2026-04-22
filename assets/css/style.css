@@ -172,12 +172,12 @@ h3 {
 /* Scroll Wrapper for content below navbar */
 .scroll-wrapper {
   flex: 1;
-  /* Take remaining space */
   overflow-y: auto;
-  /* Enable vertical scroll */
-  overflow-x: hidden;
+  overflow-x: hidden; /* Keep page contained */
   position: relative;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .navbar-brand {
@@ -322,11 +322,17 @@ body.light-mode .dropdown-content {
 
 /* Main Content */
 .main-content {
-  /* No longer handles scroll or centering directly, wrapper does scroll */
   padding: 2.5rem;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
 }
 
 /* Glass Cards */
@@ -571,13 +577,17 @@ body.light-mode .stat-value {
 }
 
 /* Tables */
-.table-container {
+.table-container, .table-responsive {
   overflow-x: auto;
+  width: 100%;
+  margin-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 800px; /* Ensure table doesn't squash too much */
 }
 
 th {
