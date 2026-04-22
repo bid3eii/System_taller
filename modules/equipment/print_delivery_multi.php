@@ -469,7 +469,15 @@ if (empty($exit_doc_number)) {
                     <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                     <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order, 5); ?></td>
                     <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'])); ?></td>
-                    <td style="text-transform: uppercase;"><?php echo htmlspecialchars($order['serial_number']); ?></td>
+                    <td style="text-transform: uppercase;">
+                        <?php echo htmlspecialchars($order['serial_number']); ?>
+                        <?php if (!empty($order['replacement_serial_number'])): ?>
+                            <div style="margin-top: 3px; padding-top: 3px; border-top: 1px dashed #000; font-size: 8px;">
+                                <strong>REEMPLAZO:</strong><br>
+                                <?php echo htmlspecialchars($order['replacement_serial_number']); ?>
+                            </div>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
