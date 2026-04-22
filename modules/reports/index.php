@@ -179,7 +179,7 @@ require_once '../../includes/sidebar.php';
                             <th class="sortable" data-column="7">
                                 Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="text-end">Imprimir</th>
+                            <th class="text-end" style="width: 120px; min-width: 120px;">Imprimir</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -475,7 +475,8 @@ body.light-mode .premium-select:hover {
 .table {
     border-radius: 20px;
     width: 100%;
-    min-width: 800px; /* Reduced min-width since columns are now narrower */
+    min-width: 1250px; /* Strong min-width to prevent any clipping */
+    table-layout: auto;
 }
 
 .table thead th {
