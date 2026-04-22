@@ -467,8 +467,9 @@ body.light-mode .premium-select:hover {
 }
 
 .table {
-    overflow: visible !important; /* Allow dropdowns to overflow */
     border-radius: 20px;
+    width: 100%;
+    min-width: 1100px; /* Force scrollbar instead of clipping */
 }
 
 .table thead th {
