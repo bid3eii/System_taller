@@ -170,9 +170,6 @@ require_once '../../includes/sidebar.php';
                             <th class="sortable" data-column="4">
                                 Tipo <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
-                            <th class="sortable" data-column="5">
-                                Estado <i class="ph ph-caret-up-down sort-icon"></i>
-                            </th>
                             <th class="sortable" data-column="7">
                                 Técnico <i class="ph ph-caret-up-down sort-icon"></i>
                             </th>
@@ -214,25 +211,6 @@ require_once '../../includes/sidebar.php';
                                     <?php else: ?>
                                         <span class="badge badge-blue">Servicio</span>
                                     <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php 
-                                    $statusLabels = [
-                                        'pending' => ['Pendiente', 'warning'],
-                                        'received' => ['Recibido', 'warning'],
-                                        'diagnosing' => ['Diagnosticado', 'info'],
-                                        'pending_approval' => ['En Espera', 'orange'],
-                                        'approved' => ['Aprobado', 'primary'],
-                                        'in_repair' => ['En Proceso', 'purple'],
-                                        'ready' => ['Listo', 'success'],
-                                        'replaced' => ['Reemplazo', 'pink'],
-                                        'delivered' => ['Entregado', 'secondary'],
-                                    ];
-                                    $st = $statusLabels[$order['status']] ?? [$order['status'], 'secondary'];
-                                    ?>
-                                    <span class="status-badge status-<?php echo $st[1]; ?>">
-                                        <?php echo $st[0]; ?>
-                                    </span>
                                 </td>
                                 <td><?php echo $order['tech_name'] ? htmlspecialchars($order['tech_name']) : '<span class="text-muted">-</span>'; ?></td>
                                 <td class="text-end" style="padding-right: 1.5rem;">
@@ -277,7 +255,7 @@ require_once '../../includes/sidebar.php';
                         
                         <?php if (empty($orders)): ?>
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">No se encontraron registros.</td>
+                            <td colspan="6" class="text-center py-5 text-muted">No se encontraron registros.</td>
                         </tr>
                         <?php endif; ?>
                     </tbody>
