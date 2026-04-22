@@ -6,7 +6,8 @@ require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 
 // Check permission (only admins/superadmins will have this later, but for now let's just use a dedicated 'proyectos' or 'admin' only check)
-if (!can_access_module('proyectos', $pdo) && $_SESSION['role'] !== 'superadmin' && $_SESSION['role'] !== 'admin') {
+$user_role = $_SESSION['role'] ?? $_SESSION['role_name'] ?? '';
+if (!can_access_module('proyectos', $pdo) && $user_role !== 'superadmin' && $user_role !== 'admin') {
     die("Acceso denegado. Solo administradores pueden gestionar proyectos.");
 }
 

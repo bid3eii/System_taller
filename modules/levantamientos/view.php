@@ -87,7 +87,8 @@ $statusMaps = [
 $sData = $statusMaps[$survey['status']] ?? ['Desconocido', 'gray', 'ph-question'];
 
 // For technicians: only show Pendiente or Pagado (hide internal billing details)
-$is_admin_user = ($_SESSION['role'] === 'superadmin' || $_SESSION['role'] === 'admin');
+$user_role = $_SESSION['role'] ?? $_SESSION['role_name'] ?? '';
+$is_admin_user = ($user_role === 'superadmin' || $user_role === 'admin');
 if ($is_admin_user) {
     $paymentMaps = [
         'pendiente' => ['Pendiente', 'gray', 'ph-clock'],

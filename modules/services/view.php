@@ -485,7 +485,8 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             #<?php echo str_pad($order['exit_doc_number'], 5, '0', STR_PAD_LEFT); ?></span>
                     <?php endif; ?>
                     <?php
-                    $is_admin_user = ($_SESSION['role'] === 'superadmin' || $_SESSION['role'] === 'admin');
+                    $user_role = $_SESSION['role'] ?? $_SESSION['role_name'] ?? '';
+                    $is_admin_user = ($user_role === 'superadmin' || $user_role === 'admin');
                     if ($is_admin_user) {
                         $paymentMaps = [
                             'pendiente' => ['Pendiente', 'gray', 'ph-clock'],
