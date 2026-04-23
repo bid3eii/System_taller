@@ -20,7 +20,7 @@ if ($id === 0) {
 
 try {
     // Header
-    $stmtH = $pdo->prepare("SELECT v.*, u.username as creator_name FROM viaticos v LEFT JOIN users u ON v.created_by = u.id WHERE v.id = ?");
+    $stmtH = $pdo->prepare("SELECT v.*, u.full_name as creator_full_name, u.username as creator_username FROM viaticos v LEFT JOIN users u ON v.created_by = u.id WHERE v.id = ?");
     $stmtH->execute([$id]);
     $viatico = $stmtH->fetch(PDO::FETCH_ASSOC);
 
@@ -276,7 +276,7 @@ require_once '../../includes/sidebar.php';
                         style="color: var(--text-main);"><?php echo date('d/m/Y', strtotime($viatico['date'])); ?></strong>
                 </p>
                 <p class="text-muted" style="margin: 0;">Creado por: <strong
-                        style="color: var(--text-main);"><?php echo htmlspecialchars($viatico['creator_name']); ?></strong>
+                        style="color: var(--text-main);"><?php echo htmlspecialchars($viatico['creator_full_name'] ?: $viatico['creator_username']); ?></strong>
                 </p>
             </div>
         </div>

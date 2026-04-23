@@ -40,7 +40,7 @@ $sql = "
         e.type as equipment_type,
         e.serial_number,
         so.assigned_tech_id,
-        u.username as tech_name
+        u.full_name as tech_name_full, u.username as tech_username
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
@@ -59,7 +59,7 @@ try {
 }
 
 // Fetch Technicians for filter
-$techs = $pdo->query("SELECT u.id, u.username FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name LIKE '%técnico%' OR r.name LIKE '%tecnico%' ORDER BY u.username ASC")->fetchAll(PDO::FETCH_ASSOC);
+$techs = $pdo->query("SELECT u.id, u.username, u.full_name FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name LIKE '%técnico%' OR r.name LIKE '%tecnico%' ORDER BY u.username ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 // Group orders by client for multi-equipment delivery detection
 $clientGroups = [];
@@ -125,7 +125,7 @@ require_once '../../includes/sidebar.php';
             <select id="techFilter" class="premium-select">
                 <option value="all">Todos los Técnicos</option>
                 <?php foreach($techs as $t): ?>
-                    <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['username']); ?></option>
+                    <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['full_name'] ?: $t['username']); ?></option>
                 <?php endforeach; ?>
             </select>
             <i class="ph ph-caret-down select-caret"></i>
@@ -234,7 +234,7 @@ require_once '../../includes/sidebar.php';
                                         <?php echo $st[0]; ?>
                                     </span>
                                 </td>
-                                <td><?php echo $order['tech_name'] ? htmlspecialchars($order['tech_name']) : '<span class="text-muted">-</span>'; ?></td>
+                                <td><?php echo ($order['tech_name_full'] || $order['tech_username']) ? htmlspecialchars($order['tech_name_full'] ?: $order['tech_username']) : '<span class="text-muted">-</span>'; ?></td>
                                 <td class="text-end" style="padding-right: 1.5rem;">
                                     <div class="report-dropdown">
                                         <button class="premium-action-btn" onclick="toggleReportDropdown(this)">

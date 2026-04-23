@@ -286,10 +286,10 @@
     <!-- User Profile & Dropdown -->
     <div class="navbar-user dropdown" style="cursor: pointer; padding-right: 0;">
         <div class="user-avatar-sm">
-            <?php echo strtoupper(substr($_SESSION['username'] ?? 'U', 0, 1)); ?>
+            <?php echo strtoupper(substr($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'U', 0, 1)); ?>
         </div>
         <div style="line-height: 1.2;">
-            <p class="text-sm font-medium"><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></p>
+            <p class="text-sm font-medium"><?php echo htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'User'); ?></p>
             <p class="text-xs text-muted"><?php echo htmlspecialchars($_SESSION['role_name'] ?? 'Role'); ?></p>
         </div>
         <i class="ph-bold ph-caret-down"

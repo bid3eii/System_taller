@@ -630,7 +630,7 @@ while ($row = $stmtCP->fetch()) {
 // Fetch Users (moved from users/index.php)
 $stmtUsers = $pdo->prepare("
     SELECT 
-        u.id, u.username, u.email, u.status, u.created_at,
+        u.id, u.username, u.full_name, u.email, u.status, u.created_at,
         r.name as role_name
     FROM users u
     JOIN roles r ON u.role_id = r.id
@@ -1268,7 +1268,7 @@ require_once '../../includes/sidebar.php';
                             // Fetch Users with Role Names and Module Counts
                             $stmtAllUsers = $pdo->query("
                     SELECT 
-                        u.id, u.username, u.email, u.status, u.role_id, 
+                        u.id, u.username, u.full_name, u.email, u.status, u.role_id, 
                         r.name as role_name,
                         (SELECT COUNT(*) FROM role_permissions rp JOIN permissions p ON rp.permission_id = p.id WHERE rp.role_id = u.role_id AND p.code LIKE 'module_%') as role_module_count
                     FROM users u 
@@ -1308,13 +1308,13 @@ require_once '../../includes/sidebar.php';
                                                             <?php if ($is_super): ?>
                                                                     <i class="ph-fill ph-lock-key" style="color: var(--warning);"></i>
                                                             <?php else: ?>
-                                                                    <?php echo strtoupper(substr($u['username'], 0, 1)); ?>
+                                                                    <?php echo strtoupper(substr($u['full_name'] ?: $u['username'], 0, 1)); ?>
                                                             <?php endif; ?>
                                                         </div>
                                                     </td>
                                                     <td>
                                                         <div style="font-weight: 500; color: var(--text-main);">
-                                                            <?php echo htmlspecialchars($u['username']); ?>
+                                                            <?php echo htmlspecialchars($u['full_name'] ?: $u['username']); ?>
                                                         </div>
                                                         <div style="font-size: 0.8rem; color: var(--text-muted);">
                                                             <?php echo htmlspecialchars($u['email']); ?>
@@ -1619,10 +1619,10 @@ require_once '../../includes/sidebar.php';
                                                             <?php if ($is_super_user): ?>
                                                                     <i class="ph-fill ph-lock-key" style="color: var(--warning);"></i>
                                                             <?php else: ?>
-                                                                    <?php echo strtoupper(substr($user['username'], 0, 1)); ?>
+                                                                    <?php echo strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1)); ?>
                                                             <?php endif; ?>
                                                         </div>
-                                                        <span class="font-medium"><?php echo htmlspecialchars($user['username']); ?></span>
+                                                        <span class="font-medium"><?php echo htmlspecialchars($user['full_name'] ?: $user['username']); ?></span>
                                                     </div>
                                                 </td>
                                                 <td>

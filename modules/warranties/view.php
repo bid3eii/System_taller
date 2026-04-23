@@ -217,7 +217,7 @@ if (!$can_view_all && $order['assigned_tech_id'] != $_SESSION['user_id']) {
 
 // Fetch History
 $stmtHist = $pdo->prepare("
-    SELECT h.*, u.username as user_name 
+    SELECT h.*, u.full_name as user_full_name, u.username as user_username 
     FROM service_order_history h
     LEFT JOIN users u ON h.user_id = u.id
     WHERE h.service_order_id = ?
@@ -1073,7 +1073,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                     <?php echo $statusLabels[$event['action']] ?? $event['action']; ?>
                                 </div>
                                 <div class="timeline-date">
-                                    <?php echo date('d/m/Y H:i', strtotime($event['created_at'])); ?> • <?php echo htmlspecialchars($event['user_name']); ?>
+                                    <?php echo date('d/m/Y H:i', strtotime($event['created_at'])); ?> • <?php echo htmlspecialchars($event['user_full_name'] ?: ($event['user_username'] ?: 'Sistema')); ?>
                                 </div>
                                 <?php if($event['notes']): ?>
                                     <div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--p-text-muted); background: var(--p-bg-input); padding: 0.5rem; border-radius: 4px;">

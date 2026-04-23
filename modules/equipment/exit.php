@@ -240,7 +240,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                                 c.name as client_name, 
                                 co.name as registered_owner_name,
                                 e.brand, e.model, e.serial_number, e.type,
-                                u.username as delivered_by
+                                u.full_name as delivered_by_full, u.username as delivered_by_username
                             FROM service_orders so
                             JOIN clients c ON so.client_id = c.id
                             JOIN equipments e ON so.equipment_id = e.id
@@ -279,12 +279,12 @@ require_once '../../includes/sidebar.php'; // Navbar
                                 </td>
                                 <td><?php echo date('d/m/Y H:i', strtotime($dItem['exit_date'])); ?></td>
                                 <td>
-                                    <?php if($dItem['delivered_by']): ?>
+                                    <?php if($dItem['delivered_by_username'] || $dItem['delivered_by_full']): ?>
                                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                                             <div style="width: 24px; height: 24px; background: var(--primary-500); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold;">
-                                                <?php echo strtoupper(substr($dItem['delivered_by'], 0, 1)); ?>
+                                                <?php echo strtoupper(substr($dItem['delivered_by_full'] ?: $dItem['delivered_by_username'], 0, 1)); ?>
                                             </div>
-                                            <span style="font-size: 0.9rem;"><?php echo htmlspecialchars($dItem['delivered_by']); ?></span>
+                                            <span style="font-size: 0.9rem;"><?php echo htmlspecialchars($dItem['delivered_by_full'] ?: $dItem['delivered_by_username']); ?></span>
                                         </div>
                                     <?php else: ?>
                                         <span class="text-muted text-sm">-</span>

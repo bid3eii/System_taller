@@ -56,8 +56,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['signature'])) {
     } else { $error = "Error al subir el archivo."; }
 }
 
+// Handle Personal Info Update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
+    $new_full_name = clean($_POST['full_name']);
+    $new_email = clean($_POST['email']);
+    
+    $stmtUpdate = $pdo->prepare("UPDATE users SET full_name = ?, email = ? WHERE id = ?");
+    if ($stmtUpdate->execute([$new_full_name, $new_email, $user_id])) {
+        $_SESSION['full_name'] = $new_full_name;
+        $success = "Perfil actualizado correctamente.";
+        log_audit($pdo, 'users', $user_id, 'UPDATE', null, ['event' => 'profile_update', 'full_name' => $new_full_name]);
+    } else {
+        $error = "Error al actualizar el perfil.";
+    }
+}
+
 // Fetch User Data
-$stmt = $pdo->prepare("SELECT u.username, u.email, r.name as role_name, u.signature_path FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?");
+$stmt = $pdo->prepare("SELECT u.username, u.full_name, u.email, r.name as role_name, u.signature_path FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
 
@@ -93,7 +108,7 @@ require_once '../../includes/sidebar.php';
                     <div class="avatar-ring"></div>
                 </div>
                 <div class="identity-info">
-                    <h2 class="user-name"><?php echo htmlspecialchars($user['username']); ?></h2>
+                    <h2 class="user-name"><?php echo htmlspecialchars($user['full_name'] ?: $user['username']); ?></h2>
                     <span class="user-role-badge"><?php echo htmlspecialchars($user['role_name']); ?></span>
                     <p class="user-email"><i class="ph ph-envelope"></i> <?php echo htmlspecialchars($user['email']); ?></p>
                 </div>
@@ -126,6 +141,27 @@ require_once '../../includes/sidebar.php';
         <!-- RIGHT COLUMN -->
         <div class="profile-main">
             <div class="profile-card main-content-card">
+                </div>
+
+                <form method="POST" style="margin-bottom: 2rem;">
+                    <input type="hidden" name="action" value="update_profile">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <div class="form-group-premium">
+                            <label><i class="ph ph-user"></i> Nombre Completo (Profesional)</label>
+                            <input type="text" name="full_name" class="input-premium" value="<?php echo htmlspecialchars($user['full_name']); ?>" placeholder="Ej: Eduardo Chang">
+                        </div>
+                        <div class="form-group-premium">
+                            <label><i class="ph ph-envelope"></i> Correo Electrónico</label>
+                            <input type="email" name="email" class="input-premium" value="<?php echo htmlspecialchars($user['email']); ?>" placeholder="usuario@empresa.com">
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn-premium">
+                            <i class="ph ph-check"></i> Actualizar Información
+                        </button>
+                    </div>
+                </form>
+
                 <div class="section-header">
                     <div class="header-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;"><i class="ph ph-list-numbers"></i></div>
                     <div>
@@ -213,6 +249,11 @@ require_once '../../includes/sidebar.php';
 .item-body { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
 .btn-premium { background: var(--profile-gradient); color: white !important; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); text-decoration: none; }
 .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5); filter: brightness(1.1); }
+
+.form-group-premium { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-group-premium label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
+.input-premium { background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.95rem; transition: 0.3s; }
+.input-premium:focus { border-color: var(--profile-primary); outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>

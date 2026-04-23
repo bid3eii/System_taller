@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id']) || !can_access_module('viaticos_add', $pdo)) {
 }
 
 // Fetch all technicians/users to populate the dropdown
-$stmt = $pdo->query("SELECT id, username FROM users WHERE status = 'active' ORDER BY username ASC");
+$stmt = $pdo->query("SELECT id, username, full_name FROM users WHERE status = 'active' ORDER BY username ASC");
 $all_techs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
@@ -187,7 +187,7 @@ require_once '../../includes/sidebar.php';
                             <option value="" disabled selected>Selecciona un técnico...</option>
                             <?php foreach ($all_techs as $t): ?>
                                 <option value="<?php echo $t['id']; ?>">
-                                    <?php echo htmlspecialchars($t['username']); ?>
+                                    <?php echo htmlspecialchars($t['full_name'] ?: $t['username']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>

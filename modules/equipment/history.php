@@ -33,7 +33,7 @@ if (!empty($search_serial)) {
         // 2. Fetch associated orders
         $stmtOrders = $pdo->prepare("
             SELECT so.*, 
-                   u.username as tech_name
+                   u.full_name as tech_name_full, u.username as tech_username
             FROM service_orders so
             LEFT JOIN users u ON so.assigned_tech_id = u.id
             WHERE so.equipment_id = ? AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
@@ -201,7 +201,7 @@ if (!empty($search_serial)) {
                                 <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Técnico Asignado</label>
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                     <i class="ph ph-user-circle text-muted" style="font-size: 1.25rem;"></i>
-                                    <span><?php echo $order['tech_name'] ? htmlspecialchars($order['tech_name']) : '<span class="text-muted">No asignado</span>'; ?></span>
+                                    <span><?php echo ($order['tech_name_full'] || $order['tech_username']) ? htmlspecialchars($order['tech_name_full'] ?: $order['tech_username']) : '<span class="text-muted">No asignado</span>'; ?></span>
                                 </div>
                             </div>
 

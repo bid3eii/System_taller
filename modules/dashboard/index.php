@@ -507,7 +507,7 @@ if (!$is_warehouse) {
 
 <div class="animate-enter">
     <div style="margin-bottom: 2rem;">
-        <h1>Bienvenido, <?php echo htmlspecialchars($_SESSION['username']); ?></h1>
+        <h1>Bienvenido, <?php echo htmlspecialchars($_SESSION['full_name'] ?: $_SESSION['username']); ?></h1>
         <p class="text-muted">
             <?php
             if ($is_reception)

@@ -42,13 +42,14 @@ try {
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $full_name = clean($_POST['full_name']);
     $username = clean($_POST['username']);
     $email = clean($_POST['email']);
     $role_id = clean($_POST['role_id']);
     $password = $_POST['password']; // Optional
     $status = clean($_POST['status']);
 
-    if (empty($username) || empty($role_id) || empty($email)) {
+    if (empty($full_name) || empty($username) || empty($role_id) || empty($email)) {
         $error = "Por favor complete los campos obligatorios.";
     } else {
         // Check if username/email exists for OTHER users
@@ -61,12 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if (!empty($password)) {
                     // Update validation with password
                     $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, role_id = ?, status = ?, password_hash = ? WHERE id = ?");
-                    $stmt->execute([$username, $email, $role_id, $status, $password_hash, $id]);
+                    $stmt = $pdo->prepare("UPDATE users SET full_name = ?, username = ?, email = ?, role_id = ?, status = ?, password_hash = ? WHERE id = ?");
+                    $stmt->execute([$full_name, $username, $email, $role_id, $status, $password_hash, $id]);
                 } else {
                     // Update without password
-                    $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, role_id = ?, status = ? WHERE id = ?");
-                    $stmt->execute([$username, $email, $role_id, $status, $id]);
+                    $stmt = $pdo->prepare("UPDATE users SET full_name = ?, username = ?, email = ?, role_id = ?, status = ? WHERE id = ?");
+                    $stmt->execute([$full_name, $username, $email, $role_id, $status, $id]);
                 }
                 
                 $success = "Usuario actualizado exitosamente.";
@@ -115,6 +116,14 @@ require_once '../../includes/sidebar.php';
                 <div>
                      <h3 class="mb-3" style="font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">Datos de Cuenta</h3>
                      
+                     <div class="form-group">
+                        <label class="form-label">Nombre <span style="color: var(--danger)">*</span></label>
+                        <div class="input-group">
+                            <input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($user['full_name']); ?>">
+                            <i class="ph ph-identification-card input-icon"></i>
+                        </div>
+                    </div>
+
                      <div class="form-group">
                         <label class="form-label">Nombre de Usuario <span style="color: var(--danger)">*</span></label>
                         <div class="input-group">
