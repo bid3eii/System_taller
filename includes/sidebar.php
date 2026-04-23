@@ -79,18 +79,44 @@
 
         // --- BODEGA ---
         if (can_access_module('new_warranty', $pdo)) {
-            $menu_items['bodega_menu'] = [
-                'type' => 'dropdown',
-                'url' => '#',
-                'icon' => 'ph-package',
-                'label' => 'Bodega',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/categories/') !== false),
-                'children' => [
-                    ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Ingreso Bodega'],
-                    ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros de Bodega'],
-                    ['url' => BASE_URL . 'modules/categories/index.php', 'icon' => 'ph-list-dashes', 'label' => 'Categorías']
-                ]
-            ];
+            if ($_SESSION['role_id'] == 5) {
+                // For Bodega role, show items directly in navbar
+                $menu_items['bodega_ingreso'] = [
+                    'type' => 'link',
+                    'url' => BASE_URL . 'modules/equipment/entry.php?type=warranty',
+                    'icon' => 'ph-plus-circle',
+                    'label' => 'Nuevo Ingreso',
+                    'active' => strpos($_SERVER['REQUEST_URI'], 'entry.php?type=warranty') !== false
+                ];
+                $menu_items['bodega_registros'] = [
+                    'type' => 'link',
+                    'url' => BASE_URL . 'modules/warranties/database.php',
+                    'icon' => 'ph-database',
+                    'label' => 'Registros de Bodega',
+                    'active' => strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false
+                ];
+                $menu_items['bodega_categorias'] = [
+                    'type' => 'link',
+                    'url' => BASE_URL . 'modules/categories/index.php',
+                    'icon' => 'ph-list-dashes',
+                    'label' => 'Categorías',
+                    'active' => strpos($_SERVER['REQUEST_URI'], 'modules/categories/') !== false
+                ];
+            } else {
+                // For others, keep the dropdown
+                $menu_items['bodega_menu'] = [
+                    'type' => 'dropdown',
+                    'url' => '#',
+                    'icon' => 'ph-package',
+                    'label' => 'Bodega',
+                    'active' => (strpos($_SERVER['REQUEST_URI'], 'type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/categories/') !== false),
+                    'children' => [
+                        ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Ingreso Bodega'],
+                        ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros de Bodega'],
+                        ['url' => BASE_URL . 'modules/categories/index.php', 'icon' => 'ph-list-dashes', 'label' => 'Categorías']
+                    ]
+                ];
+            }
         }
 
         // Services (Renamed from Solicitud)
