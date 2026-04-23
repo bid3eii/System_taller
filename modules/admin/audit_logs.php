@@ -5,9 +5,9 @@ require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 
-// Strict Role Check - Only SuperAdmin
-if ($_SESSION['role_name'] !== 'SuperAdmin') {
-    die("Acceso denegado: Se requiere privilegios de SuperAdmin.");
+// Permission Check
+if (!can_access_module('audit_logs', $pdo)) {
+    die("Acceso denegado: No tienes permisos suficientes para ver los logs de auditoría.");
 }
 
 $page_title = 'Monitoreo de Auditoría';

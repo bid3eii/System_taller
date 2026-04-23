@@ -222,7 +222,7 @@
         }
 
         // Audit Log (Moved to Utilities)
-        if ($_SESSION['role_name'] === 'SuperAdmin') {
+        if (can_access_module('audit_logs', $pdo)) {
             $menu_items['audit_log'] = [
                 'type' => 'link',
                 'url' => BASE_URL . 'modules/admin/audit_logs.php',
