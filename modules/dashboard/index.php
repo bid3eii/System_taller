@@ -1010,7 +1010,7 @@ if (!$is_warehouse) {
                     <div id="prodActiveFilters" style="display: none; margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-secondary); flex-direction: column; gap: 0.25rem;">
                         <!-- JS Dynamic Content -->
                     </div>
-                    <div style="position: relative; height: 300px; width: 100%;">
+                    <div style="position: relative; height: 200px; width: 100%;">
                         <canvas id="techProductivityChart"></canvas>
                     </div>
                 </div>
@@ -1390,7 +1390,7 @@ function initProductivityChart(labels, counts, summary = null) {
                 hoverBackgroundColor: '#059669', // Emerald-600
                 borderRadius: 0,
                 borderSkipped: false,
-                barThickness: 28
+                barThickness: 24
             }]
         },
         options: {
