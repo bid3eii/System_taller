@@ -70,7 +70,7 @@ $stmt = $pdo->prepare("
         so.*, so.display_id,
         c.name as client_name, c.phone, c.email,
         e.brand, e.model, e.serial_number, e.type as equipment_type,
-        u_auth.username as authorized_by_name
+        u_auth.full_name as authorized_by_name, u_auth.username as authorized_by_user
     FROM service_orders so
     JOIN clients c ON so.client_id = c.id
     JOIN equipments e ON so.equipment_id = e.id
@@ -86,7 +86,7 @@ if (!$order) {
 
 // Fetch User who elaborated the diagnosis (From History) and the date
 $stmtHistory = $pdo->prepare("
-    SELECT u.username, r.name as role_name, h.created_at
+    SELECT u.username, u.full_name, r.name as role_name, h.created_at
     FROM service_order_history h
     JOIN users u ON h.user_id = u.id
     LEFT JOIN roles r ON u.role_id = r.id
@@ -97,7 +97,7 @@ $stmtHistory = $pdo->prepare("
 $stmtHistory->execute([$id]);
 $diagnosis_author = $stmtHistory->fetch();
 
-$elaborated_by = $diagnosis_author['username'] ?? 'Desconocido'; 
+$elaborated_by = !empty($diagnosis_author['full_name']) ? $diagnosis_author['full_name'] : ($diagnosis_author['username'] ?? 'Desconocido'); 
 $elaborated_role = $diagnosis_author['role_name'] ?? 'Técnico';
 $diagnosis_date = $diagnosis_author['created_at'] ?? $order['entry_date']; 
 

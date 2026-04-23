@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // Fetch viaticos based on role
-$stmt_str = "SELECT v.*, u.username as creator_name 
+$stmt_str = "SELECT v.*, u.full_name as creator_full_name, u.username as creator_username 
              FROM viaticos v 
              LEFT JOIN users u ON v.created_by = u.id 
              ORDER BY v.date DESC, v.id DESC";
@@ -116,7 +116,7 @@ require_once '../../includes/sidebar.php';
                                     </td>
                                     <td class="text-center"><span class="badge" style="background: var(--bg-card);"><i
                                                 class="ph ph-user"></i>
-                                            <?php echo htmlspecialchars($v['creator_name']); ?>
+                                            <?php echo htmlspecialchars($v['creator_full_name'] ?: $v['creator_username']); ?>
                                         </span></td>
                                     <td class="text-center" style="font-weight: 600; color: var(--success);">$
                                         <?php echo number_format($v['total_amount'], 2); ?>

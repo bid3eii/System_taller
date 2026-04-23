@@ -42,7 +42,7 @@ $stmt = $pdo->prepare("
         c_contact.id as client_id,
         co.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type as equipment_type, e.submodel,
-        u.username as delivered_by
+        u.full_name as delivered_by_name, u.username as delivered_by_user
     FROM service_orders so
     JOIN clients c_contact ON so.client_id = c_contact.id
     JOIN equipments e ON so.equipment_id = e.id
@@ -536,7 +536,7 @@ if (empty($exit_doc_number)) {
                     <!-- TALLER Signature -->
                     
                     <?php 
-                        $deliveredBy = $clientData['delivered_by'] ?? 'Taller Mastertec';
+                        $deliveredBy = !empty($clientData['delivered_by_name']) ? $clientData['delivered_by_name'] : ($clientData['delivered_by_user'] ?? 'Taller Mastertec');
                         
                         // SNAPSHOT LOGIC
                         $sigPath = $clientData['exit_signature_path'] ?? null;
@@ -545,8 +545,8 @@ if (empty($exit_doc_number)) {
                         $stmtSig = $pdo->prepare("SELECT u.signature_path, r.name as role_name 
                                                   FROM users u 
                                                   LEFT JOIN roles r ON u.role_id = r.id 
-                                                  WHERE u.username = ?");
-                        $stmtSig->execute([$deliveredBy]);
+                                                  WHERE u.username = ? OR u.full_name = ?");
+                        $stmtSig->execute([$deliveredBy, $deliveredBy]);
                         $userData = $stmtSig->fetch();
                         
                         // If no snapshot, use current

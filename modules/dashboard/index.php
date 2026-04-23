@@ -447,9 +447,20 @@ if (!$is_warehouse) {
             $techCounts[] = (int)$row['total'];
         }
 
-        // Technician Productivity Chart (Admin / Reception only)
+        // Default Load (Current Month)
+        $p_start = '';
+        $p_end = '';
+        $p_tech = 'all';
+
+        // Fetch techs for filter dropdown
+        $techs_for_filter = $pdo->query("SELECT id, username FROM users WHERE role_id = 3 ORDER BY username ASC")->fetchAll();
+
         $prodLabels = [];
         $prodCounts = [];
+        $prodTotal = 0;
+        $prodTopName = '---';
+        $prodTopCount = 0;
+
         $pSql = "
             SELECT u.username, COUNT(so.id) as total 
             FROM service_orders so
@@ -458,13 +469,34 @@ if (!$is_warehouse) {
             WHERE so.status IN ('ready', 'delivered')
             AND (w.product_code IS NULL OR w.product_code = '') 
             AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-            GROUP BY u.id, u.username
-            ORDER BY total DESC
         ";
-        $prodData = $pdo->query($pSql)->fetchAll();
-        foreach ($prodData as $row) {
+        $pParams = [];
+        if (!empty($p_start)) {
+            $pSql .= " AND so.exit_date >= ?";
+            $pParams[] = $p_start . " 00:00:00";
+        }
+        if (!empty($p_end)) {
+            $pSql .= " AND so.exit_date <= ?";
+            $pParams[] = $p_end . " 23:59:59";
+        }
+        if ($p_tech !== 'all') {
+            $pSql .= " AND u.id = ?";
+            $pParams[] = $p_tech;
+        }
+        $pSql .= " GROUP BY u.id, u.username ORDER BY total DESC";
+        
+        $stmtProd = $pdo->prepare($pSql);
+        $stmtProd->execute($pParams);
+        $prodData = $stmtProd->fetchAll();
+
+        foreach ($prodData as $index => $row) {
             $prodLabels[] = $row['username'];
             $prodCounts[] = (int)$row['total'];
+            $prodTotal += (int)$row['total'];
+            if ($index === 0) {
+                $prodTopName = $row['username'];
+                $prodTopCount = (int)$row['total'];
+            }
         }
     }
 
@@ -475,7 +507,7 @@ if (!$is_warehouse) {
 
 <div class="animate-enter">
     <div style="margin-bottom: 2rem;">
-        <h1>Bienvenido, <?php echo htmlspecialchars($_SESSION['username']); ?></h1>
+        <h1>Bienvenido, <?php echo htmlspecialchars($_SESSION['full_name'] ?: $_SESSION['username']); ?></h1>
         <p class="text-muted">
             <?php
             if ($is_reception)
@@ -889,9 +921,96 @@ if (!$is_warehouse) {
                 </div>
 
                 <!-- Tech Productivity Chart -->
-                <div class="card">
-                    <h3 class="mb-4">Productividad por Técnico (Equipos Hechos)</h3>
-                    <div style="position: relative; height: 250px; width: 100%;">
+                <div class="card" style="position: relative; overflow: visible; border-bottom: 4px solid var(--success);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="ph-fill ph-chart-bar" style="color: var(--success);"></i>
+                                Productividad por Técnico
+                            </h3>
+                            <p class="text-xs text-muted" style="margin-top: 0.2rem;">Equipos reparados y entregados</p>
+                        </div>
+                        <div style="position: relative;">
+                            <button id="prodFilterBtn" onclick="toggleProdFilter(event)" class="btn btn-sm btn-secondary" title="Filtrar por Fecha" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 10px;">
+                                <i class="ph ph-funnel" id="prodFilterIcon"></i>
+                                <span id="prodFilterBadge" style="display: none; font-size: 0.75rem; font-weight: 600; color: var(--primary-500);">Filtrado</span>
+                            </button>
+
+                            <!-- Dropdown de Filtro (Absoluto al botón) -->
+                            <div id="prodFilterModal" class="filter-dropdown-card animate-pop" style="display: none;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h4 style="margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="ph ph-funnel" style="color: var(--primary-500);"></i> Filtros
+                                    </h4>
+                                    <button onclick="toggleProdFilter(event)" class="btn-icon" style="width: 24px; height: 24px;"><i class="ph ph-x"></i></button>
+                                </div>
+                                <div id="prodFilterForm">
+                                    <div style="margin-bottom: 1.25rem;">
+                                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;">Técnico</label>
+                                        <div class="input-group-premium">
+                                            <i class="ph ph-user-focus"></i>
+                                            <select id="f_tech" class="form-control-premium">
+                                                <option value="all">Todos los Técnicos</option>
+                                                <?php foreach ($techs_for_filter as $tf): ?>
+                                                    <option value="<?php echo $tf['id']; ?>">
+                                                        <?php echo htmlspecialchars($tf['username']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;">Rango de Fecha</label>
+                                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                            <div class="input-group-premium">
+                                                <i class="ph ph-calendar-plus"></i>
+                                                <input type="date" id="f_start" class="form-control-premium">
+                                            </div>
+                                            <div class="input-group-premium">
+                                                <i class="ph ph-calendar-check"></i>
+                                                <input type="date" id="f_end" class="form-control-premium">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.75rem;">
+                                        <button onclick="applyProductivityFilter()" class="btn-premium-primary" style="flex: 2;">
+                                            <i class="ph ph-check"></i> Aplicar
+                                        </button>
+                                        <button onclick="clearProductivityFilter()" class="btn-premium-secondary" style="flex: 1;">
+                                            <i class="ph ph-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Stats Row -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div class="prod-summary-card">
+                            <div class="prod-summary-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
+                                <i class="ph ph-check-circle"></i>
+                            </div>
+                            <div>
+                                <div class="prod-summary-label">Total Hechos</div>
+                                <div class="prod-summary-value" id="prodTotalCount">--</div>
+                            </div>
+                        </div>
+                        <div class="prod-summary-card">
+                            <div class="prod-summary-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary-500);">
+                                <i class="ph ph-medal"></i>
+                            </div>
+                            <div>
+                                <div class="prod-summary-label">Top Técnico</div>
+                                <div class="prod-summary-value" id="prodTopTech" style="font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px;">---</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="prodActiveFilters" style="display: none; margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-secondary); flex-direction: column; gap: 0.25rem;">
+                        <!-- JS Dynamic Content -->
+                    </div>
+                    <div style="position: relative; height: 200px; width: 100%;">
                         <canvas id="techProductivityChart"></canvas>
                     </div>
                 </div>
@@ -1051,80 +1170,360 @@ if (!$is_warehouse) {
         }
     });
 
-    // Tech Productivity Chart (Admin/Reception only)
+    <?php endif; ?>
+    <?php endif; // End !$is_warehouse ?>
+</script>
+
+<style>
+.filter-dropdown-card {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.75rem;
+    z-index: 100;
+    width: 320px; /* Reduced width since we are stacking */
+    background: #0f172a; 
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px; 
+    padding: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(20px);
+}
+.filter-dropdown-card h4, 
+.filter-dropdown-card label {
+    color: white !important;
+}
+
+.filter-dropdown-card input[type="date"],
+.filter-dropdown-card select {
+    color: white !important;
+    color-scheme: dark;
+}
+
+.animate-pop {
+    animation: modalPop 0.2s ease-out;
+}
+@keyframes modalPop {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* New Productivity Styles */
+.prod-summary-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+.prod-summary-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.prod-summary-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+.prod-summary-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.1rem;
+}
+.prod-summary-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+/* Premium Filter Dropdown Styles */
+.input-group-premium {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-group-premium i {
+    position: absolute;
+    left: 0.85rem;
+    color: var(--primary-500);
+    font-size: 1.15rem;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+.input-group-premium:focus-within i {
+    color: white;
+    transform: scale(1.1);
+}
+.form-control-premium {
+    width: 100%;
+    min-width: 0; /* Prevent horizontal overflow */
+    padding: 0.75rem 0.75rem 0.75rem 2.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+    font-size: 0.9rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    color-scheme: dark;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.input-group-premium select.form-control-premium {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236366f1' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+}
+.form-control-premium:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+    transform: translateY(-1px);
+}
+.form-control-premium option {
+    background: #0f172a;
+    color: white;
+}
+.btn-premium-primary {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.btn-premium-primary:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.1);
+}
+.btn-premium-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-premium-secondary:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+</style>
+
+<script>
+function toggleProdFilter(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('prodFilterModal');
+    const isVisible = dropdown.style.display === 'block';
+    dropdown.style.display = isVisible ? 'none' : 'block';
+}
+
+// Close when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('prodFilterModal');
+    if (dropdown && dropdown.style.display === 'block') {
+        if (!dropdown.contains(e.target) && e.target.id !== 'prodFilterBtn') {
+            dropdown.style.display = 'none';
+        }
+    }
+});
+
+// Logic for AJAX Productivity Chart
+let productivityChart = null;
+
+function initProductivityChart(labels, counts, summary = null) {
     const ctxProd = document.getElementById('techProductivityChart').getContext('2d');
     
-    // Create Green Gradient
-    const prodGradient = ctxProd.createLinearGradient(0, 0, 400, 0);
-    prodGradient.addColorStop(0, '#22c55e'); // Green-500
-    prodGradient.addColorStop(1, '#4ade80'); // Green-400
+    // Update Summary DOM if provided
+    if (summary) {
+        document.getElementById('prodTotalCount').innerText = summary.total;
+        document.getElementById('prodTopTech').innerText = summary.top_tech || '---';
+        document.getElementById('prodTopTech').title = summary.top_tech ? `${summary.top_tech} (${summary.top_count})` : '';
+    }
 
-    new Chart(ctxProd, {
+    const isL = document.body.classList.contains('light-mode');
+    const tColor = isL ? '#475569' : '#cbd5e1';
+    const gColor = isL ? '#e2e8f0' : 'rgba(255, 255, 255, 0.1)';
+
+    const prodGradient = ctxProd.createLinearGradient(0, 0, 400, 0);
+    prodGradient.addColorStop(0, '#10b981'); // Emerald-500
+    prodGradient.addColorStop(1, '#34d399'); // Emerald-400
+
+    if (productivityChart) productivityChart.destroy();
+
+    productivityChart = new Chart(ctxProd, {
         type: 'bar',
         data: {
-            labels: <?php echo json_encode($prodLabels); ?>,
+            labels: labels,
             datasets: [{
                 label: 'Equipos Hechos',
-                data: <?php echo json_encode($prodCounts); ?>,
+                data: counts,
                 backgroundColor: prodGradient,
-                hoverBackgroundColor: '#16a34a', // Green-600
-                borderRadius: 8,
+                hoverBackgroundColor: '#059669', // Emerald-600
+                borderRadius: 0,
                 borderSkipped: false,
-                barThickness: 32
+                barThickness: 24
             }]
         },
         options: {
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: { left: 10, right: 30 }
-            },
+            layout: { padding: { left: 10, right: 40, top: 10, bottom: 10 } },
             scales: {
                 x: {
                     beginAtZero: true,
-                    grid: { 
-                        color: gridColor,
-                        drawBorder: false
-                    },
-                    ticks: { 
-                        color: textColor, 
-                        precision: 0,
-                        font: { family: "'Inter', sans-serif", size: 11 }
-                    }
+                    grid: { color: gColor, drawBorder: false },
+                    ticks: { color: tColor, precision: 0, font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } }
                 },
                 y: {
                     grid: { display: false },
                     ticks: { 
-                        color: textColor,
-                        font: { 
-                            family: "'Inter', sans-serif", 
-                            size: 13,
-                            weight: '500'
-                        }
+                        color: tColor, 
+                        font: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '600' },
+                        padding: 10
                     }
                 }
             },
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)', // Slate-900
-                    titleFont: { size: 13, weight: '600' },
-                    bodyFont: { size: 12 },
-                    padding: 12,
-                    cornerRadius: 8,
-                    displayColors: false,
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '700' },
+                    bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+                    padding: 14,
+                    cornerRadius: 12,
+                    displayColors: true,
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
                     callbacks: {
-                        label: function(context) {
-                            return ` ${context.raw} equipos hechos`;
+                        label: function(context) { 
+                            return ` ${context.raw} equipos completados`; 
                         }
                     }
                 }
+            },
+            animation: {
+                duration: 1500,
+                easing: 'easeOutQuart'
             }
         }
     });
-    <?php endif; ?>
-    <?php endif; // End !$is_warehouse ?>
+}
+
+function applyProductivityFilter() {
+    const start = document.getElementById('f_start').value;
+    const end = document.getElementById('f_end').value;
+    const tech = document.getElementById('f_tech').value;
+    const techName = document.getElementById('f_tech').options[document.getElementById('f_tech').selectedIndex].text;
+    const btn = document.querySelector('[onclick="applyProductivityFilter()"]');
+    
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="ph ph-circle-notch animate-spin"></i> Filtrando...';
+    btn.disabled = true;
+
+    // Use dedicated AJAX file
+    const url = `ajax_productivity.php?p_start=${start}&p_end=${end}&p_tech=${tech}`;
+
+    fetch(url)
+        .then(async res => {
+            const isJson = res.headers.get('content-type')?.includes('application/json');
+            const data = isJson ? await res.json() : null;
+
+            if (!res.ok) {
+                throw new Error(data?.error || `HTTP Error ${res.status}`);
+            }
+            return data;
+        })
+        .then(data => {
+            if (!data) throw new Error("No data received");
+            initProductivityChart(data.labels, data.counts, data.summary);
+            
+            // Update UI
+            document.getElementById('prodFilterIcon').style.color = 'var(--primary-500)';
+            document.getElementById('prodFilterBadge').style.display = 'inline';
+            
+            let info = '';
+            if (start || end) {
+                const sF = start ? start.split('-').reverse().join('/') : 'Inicio';
+                const eF = end ? end.split('-').reverse().join('/') : 'Fin';
+                info += `<div style="display: flex; align-items: center; gap: 0.5rem;"><i class="ph ph-calendar"></i> Rango: <strong>${sF} - ${eF}</strong></div>`;
+            }
+            if (tech !== 'all') {
+                info += `<div style="display: flex; align-items: center; gap: 0.5rem;"><i class="ph ph-user"></i> Técnico: <strong>${techName}</strong></div>`;
+            }
+            
+            const infoDiv = document.getElementById('prodActiveFilters');
+            infoDiv.innerHTML = info;
+            infoDiv.style.display = info ? 'flex' : 'none';
+            
+            document.getElementById('prodFilterModal').style.display = 'none';
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error: " + err.message);
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+
+function clearProductivityFilter() {
+    document.getElementById('f_start').value = '';
+    document.getElementById('f_end').value = '';
+    document.getElementById('f_tech').value = 'all';
+    
+    applyProductivityFilter();
+    
+    // Reset UI
+    document.getElementById('prodFilterIcon').style.color = '';
+    document.getElementById('prodFilterBadge').style.display = 'none';
+    document.getElementById('prodActiveFilters').style.display = 'none';
+}
+
+// Initial Load
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('techProductivityChart')) {
+        initProductivityChart(
+            <?php echo json_encode($prodLabels); ?>, 
+            <?php echo json_encode($prodCounts); ?>,
+            {
+                total: <?php echo $prodTotal; ?>,
+                top_tech: <?php echo json_encode($prodTopName); ?>,
+                top_count: <?php echo $prodTopCount; ?>
+            }
+        );
+    }
+});
 </script>
 
 <?php

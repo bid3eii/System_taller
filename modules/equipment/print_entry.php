@@ -96,9 +96,10 @@ if (empty($orders)) {
 $first_order = $orders[0];
 
 // Get Creator for the first order (assuming same creator for the batch)
-$stmtCreator = $pdo->prepare("SELECT u.username FROM service_order_history h JOIN users u ON h.user_id = u.id WHERE h.service_order_id = ? AND h.action = 'received' ORDER BY h.created_at ASC LIMIT 1");
+$stmtCreator = $pdo->prepare("SELECT u.full_name, u.username FROM service_order_history h JOIN users u ON h.user_id = u.id WHERE h.service_order_id = ? AND h.action = 'received' ORDER BY h.created_at ASC LIMIT 1");
 $stmtCreator->execute([$first_order['id']]);
-$received_by = $stmtCreator->fetchColumn() ?: 'Taller Mastertec';
+$creatorData = $stmtCreator->fetch();
+$received_by = ($creatorData['full_name'] ?? $creatorData['username']) ?: 'Taller Mastertec';
 
 // Ensure entry_doc_number exists and is common
 $doc_number = $first_order['entry_doc_number'];

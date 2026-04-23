@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Fetch Technicians for Dropdown
 $technicians = [];
 try {
-    $stmtTech = $pdo->query("SELECT id, username FROM users WHERE role_id = 3 AND status = 'active'");
+    $stmtTech = $pdo->query("SELECT id, username, full_name FROM users WHERE role_id = 3 AND status = 'active'");
     $technicians = $stmtTech->fetchAll();
 } catch (Exception $e) {
     // Handle error quietly
@@ -105,7 +105,7 @@ $sqlActive = "
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
-        tech.username as tech_name
+        tech.full_name as tech_name_full, tech.username as tech_username
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
@@ -150,7 +150,7 @@ $sqlDelivered = "
         c.name as contact_name, c.phone,
         reg_owner.name as registered_owner_name,
         e.brand, e.model, e.serial_number, e.type,
-        tech.username as tech_name
+        tech.full_name as tech_name_full, tech.username as tech_username
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
@@ -256,12 +256,12 @@ require_once '../../includes/sidebar.php';
 
                                 <!-- Assigned Technician -->
                                 <td onclick="event.stopPropagation();" style="white-space: nowrap; min-width: 140px;">
-                                    <?php if ($item['tech_name']): ?>
+                                    <?php if ($item['tech_name_full'] || $item['tech_username']): ?>
                                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                                             <span
                                                 style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.5rem; background: var(--bg-hover); border-radius: 6px; font-size: 0.85rem;">
                                                 <i class="ph ph-user-circle"></i>
-                                                <?php echo htmlspecialchars($item['tech_name']); ?>
+                                                <?php echo htmlspecialchars($item['tech_name_full'] ?: $item['tech_username']); ?>
                                             </span>
                                             <?php if (can_access_module('assign_equipment', $pdo)): ?>
                                                 <button type="button" class="btn-icon" style="padding: 2px;" title="Cambiar Técnico"
@@ -427,8 +427,8 @@ require_once '../../includes/sidebar.php';
                                 </td>
                                 <!-- Falla Reportada column removed -->
                                 <td>
-                                    <?php if ($item['tech_name']): ?>
-                                        <span class="text-sm"><?php echo htmlspecialchars($item['tech_name']); ?></span>
+                                    <?php if ($item['tech_name_full'] || $item['tech_username']): ?>
+                                        <span class="text-sm"><?php echo htmlspecialchars($item['tech_name_full'] ?: $item['tech_username']); ?></span>
                                     <?php else: ?>
                                         <span class="text-muted text-sm">-</span>
                                     <?php endif; ?>
@@ -500,7 +500,7 @@ require_once '../../includes/sidebar.php';
                 <select name="tech_id" id="assignTechId" class="form-control" style="width: 100%;">
                     <option value="">-- Sin Asignar --</option>
                     <?php foreach ($technicians as $tech): ?>
-                        <option value="<?php echo $tech['id']; ?>"><?php echo htmlspecialchars($tech['username']); ?>
+                        <option value="<?php echo $tech['id']; ?>"><?php echo htmlspecialchars($tech['full_name'] ?: $tech['username']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

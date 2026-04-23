@@ -15,10 +15,10 @@ require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 
 // Fetch all technicians for filter
-$technicians = $pdo->query("SELECT id, username FROM users WHERE role_id IN (1,3,7) AND status = 'active' ORDER BY username ASC")->fetchAll();
+$technicians = $pdo->query("SELECT id, username, full_name FROM users WHERE role_id IN (1,3,7) AND status = 'active' ORDER BY username ASC")->fetchAll();
 
 // Base query
-$sql = "SELECT se.*, u.username as tech_name, ps.id as ps_id, ps.title as ps_title
+$sql = "SELECT se.*, u.full_name as tech_full_name, u.username as tech_username, ps.id as ps_id, ps.title as ps_title
         FROM schedule_events se
         LEFT JOIN users u ON se.tech_id = u.id
         LEFT JOIN project_surveys ps ON se.survey_id = ps.id
@@ -104,7 +104,7 @@ $status_map = [
                 <select id="techFilter" class="form-control">
                     <option value="all">Todos</option>
                     <?php foreach ($technicians as $t): ?>
-                        <option value="<?php echo htmlspecialchars($t['username']); ?>"><?php echo htmlspecialchars($t['username']); ?></option>
+                        <option value="<?php echo htmlspecialchars($t['full_name'] ?: $t['username']); ?>"><?php echo htmlspecialchars($t['full_name'] ?: $t['username']); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -147,15 +147,15 @@ $status_map = [
                         $s = $status_map[$v['status']];
                         $has_ps = !empty($v['ps_id']);
                     ?>
-                        <tr data-tech="<?php echo htmlspecialchars($v['tech_name'] ?? 'N/A'); ?>" 
+                        <tr data-tech="<?php echo htmlspecialchars($v['tech_full_name'] ?: ($v['tech_username'] ?? 'N/A')); ?>" 
                             data-status="<?php echo $v['status']; ?>"
                             data-report="<?php echo $has_ps ? 'completed' : 'pending'; ?>">
                             <td style="padding-left: 2rem;">
                                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                                     <div class="user-avatar-sm" style="width: 32px; height: 32px; font-size: 0.8rem; background: var(--bg-body);">
-                                        <?php echo strtoupper(substr($v['tech_name'] ?? 'U', 0, 1)); ?>
+                                        <?php echo strtoupper(substr($v['tech_full_name'] ?: ($v['tech_username'] ?? 'U'), 0, 1)); ?>
                                     </div>
-                                    <span style="font-weight: 500;"><?php echo htmlspecialchars($v['tech_name'] ?? 'N/A'); ?></span>
+                                    <span style="font-weight: 500;"><?php echo htmlspecialchars($v['tech_full_name'] ?: ($v['tech_username'] ?? 'N/A')); ?></span>
                                 </div>
                             </td>
                             <td>

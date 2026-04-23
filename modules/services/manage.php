@@ -139,7 +139,7 @@ $stmt = $pdo->prepare("
         c.name as contact_name, c.phone, c.email,
         e.brand, e.model, e.submodel, e.serial_number, e.type as equipment_type,
         co.name as registered_owner_name,
-        u.username as tech_name
+        u.full_name as tech_name_full, u.username as tech_username
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
@@ -408,7 +408,7 @@ require_once '../../includes/sidebar.php';
                     <div>
                         <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Técnico Asignado</div>
                         <div style="font-weight: 500; color: var(--text-primary);">
-                            <i class="ph ph-user" style="color: var(--text-muted);"></i> <?php echo htmlspecialchars($order['tech_name'] ?? 'Sin asignar'); ?>
+                            <i class="ph ph-user" style="color: var(--text-muted);"></i> <?php echo htmlspecialchars($order['tech_name_full'] ?: ($order['tech_username'] ?? 'Sin asignar')); ?>
                         </div>
                     </div>
                 </div>

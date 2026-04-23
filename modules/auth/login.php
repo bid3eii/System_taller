@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user && $user['username'] === $username && password_verify($password, $user['password_hash'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
+            $_SESSION['full_name'] = $user['full_name'];
             $_SESSION['role_id'] = $user['role_id'];
             $_SESSION['role_name'] = $user['role_name'];
             $_SESSION['last_activity'] = time();

@@ -25,13 +25,14 @@ try {
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $full_name = clean($_POST['full_name']);
     $username = clean($_POST['username']);
     $email = clean($_POST['email']);
     $role_id = clean($_POST['role_id']);
     $password = $_POST['password'];
     $status = clean($_POST['status']);
 
-    if (empty($username) || empty($password) || empty($role_id) || empty($email)) {
+    if (empty($full_name) || empty($username) || empty($password) || empty($role_id) || empty($email)) {
         $error = "Por favor complete los campos obligatorios.";
     } else {
         // Check if username or email already exists
@@ -44,8 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
             try {
-                $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?)");
-                if ($stmt->execute([$username, $email, $password_hash, $role_id, $status, get_local_datetime()])) {
+                $stmt = $pdo->prepare("INSERT INTO users (full_name, username, email, password_hash, role_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                if ($stmt->execute([$full_name, $username, $email, $password_hash, $role_id, $status, get_local_datetime()])) {
                     $success = "Usuario creado exitosamente.";
                 } else {
                     $error = "Error al crear el usuario.";
@@ -90,6 +91,14 @@ require_once '../../includes/sidebar.php';
         <?php endif; ?>
 
         <form method="POST" action="">
+            <div class="form-group">
+                <label class="form-label">Nombre <span style="color: var(--danger)">*</span></label>
+                <div class="input-group">
+                    <input type="text" name="full_name" class="form-control" required placeholder="Ej. Juan Pérez">
+                    <i class="ph ph-identification-card input-icon"></i>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label class="form-label">Nombre de Usuario <span style="color: var(--danger)">*</span></label>
                 <div class="input-group">
