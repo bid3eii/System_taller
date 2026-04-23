@@ -48,12 +48,30 @@ try {
     
     $labels = [];
     $counts = [];
-    foreach ($results as $row) {
+    $totalCount = 0;
+    $topTechName = '---';
+    $topTechCount = 0;
+
+    foreach ($results as $index => $row) {
         $labels[] = $row['username'];
         $counts[] = (int)$row['total'];
+        $totalCount += (int)$row['total'];
+        
+        if ($index === 0) {
+            $topTechName = $row['username'];
+            $topTechCount = (int)$row['total'];
+        }
     }
     
-    echo json_encode(['labels' => $labels, 'counts' => $counts]);
+    echo json_encode([
+        'labels' => $labels, 
+        'counts' => $counts,
+        'summary' => [
+            'total' => $totalCount,
+            'top_tech' => $topTechName,
+            'top_count' => $topTechCount
+        ]
+    ]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
