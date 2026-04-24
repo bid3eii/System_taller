@@ -11,8 +11,8 @@ if (!isset($_SESSION['user_id']) || !can_access_module('viaticos_add', $pdo)) {
     exit;
 }
 
-// Fetch all technicians/users to populate the dropdown
-$stmt = $pdo->query("SELECT id, username, full_name FROM users WHERE status = 'active' ORDER BY username ASC");
+// Fetch solo técnicos (role_id = 3) para el dropdown
+$stmt = $pdo->query("SELECT id, username, full_name FROM users WHERE role_id = 3 AND status = 'active' ORDER BY username ASC");
 $all_techs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
@@ -22,77 +22,131 @@ require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 ?>
 <style>
+    .viatico-container {
+        background: var(--bg-card);
+        border-radius: 16px;
+        box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.15);
+        padding: 0;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
     .viatico-grid {
         width: 100%;
         border-collapse: collapse;
-        background: var(--bg-card);
-        border-radius: 8px;
-        overflow: hidden;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        background: transparent;
     }
 
     .viatico-grid th,
     .viatico-grid td {
-        border: 1px solid var(--border-color);
-        padding: 0.75rem;
+        border-bottom: 1px solid rgba(var(--border-color-rgb), 0.4);
+        padding: 1.25rem 1rem;
         text-align: right;
         position: relative;
+        vertical-align: middle;
+        transition: background-color 0.2s;
     }
 
     .viatico-grid th {
-        background: var(--bg-body);
-        font-weight: 600;
+        background: rgba(var(--bg-body-rgb), 0.6);
+        font-weight: 700;
         color: var(--text-main);
         text-align: center;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        border-bottom: 2px solid var(--border-color);
     }
 
     .viatico-grid th:first-child,
     .viatico-grid td:first-child {
         text-align: left;
         font-weight: 600;
-        background: var(--bg-body);
-        width: 200px;
+        background: rgba(var(--bg-body-rgb), 0.3);
+        width: 250px;
+        border-right: 1px solid rgba(var(--border-color-rgb), 0.4);
+    }
+    
+    .viatico-grid tbody tr:hover td {
+        background: rgba(var(--primary-rgb), 0.02);
     }
 
-    .cat-header {
+    .cat-header td {
         background: rgba(var(--primary-rgb), 0.05) !important;
         color: var(--primary) !important;
-        font-weight: bold;
+        font-weight: 800 !important;
         text-transform: uppercase;
         font-size: 0.85rem;
-        letter-spacing: 0.5px;
+        letter-spacing: 1.5px;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
     }
 
     .subtotal-row td {
-        background: rgba(var(--secondary-rgb), 0.05);
-        font-weight: bold;
+        background: rgba(var(--bg-body-rgb), 0.8) !important;
+        font-weight: 700;
+        color: var(--text-muted);
+        border-top: 2px dashed rgba(var(--border-color-rgb), 0.6);
+        font-size: 1.05rem;
+    }
+
+    .subtotal-row td:not(:first-child) {
         color: var(--text-main);
     }
 
     .grand-total-row td {
-        background: rgba(var(--primary-rgb), 0.1);
-        font-weight: bold;
-        font-size: 1.1rem;
+        background: rgba(var(--primary-rgb), 0.08) !important;
+        font-weight: 800;
+        font-size: 1.3rem;
         color: var(--primary);
-        border-top: 2px solid var(--primary);
+        border-top: 3px solid var(--primary);
+        padding: 1.5rem 1rem;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .input-wrapper::before {
+        content: '$';
+        position: absolute;
+        left: 12px;
+        color: var(--text-muted);
+        font-weight: 600;
+        pointer-events: none;
+        z-index: 2;
     }
 
     .amount-input {
         width: 100%;
-        background: transparent;
-        border: none;
+        max-width: 180px;
+        background: var(--bg-body);
+        border: 1px solid rgba(var(--border-color-rgb), 0.8);
+        border-radius: 8px;
         color: var(--text-main);
         text-align: right;
         font-family: inherit;
-        font-size: 1rem;
+        font-size: 1.05rem;
+        font-weight: 600;
         outline: none;
-        padding: 0.25rem;
+        padding: 0.6rem 1rem 0.6rem 2rem;
+        transition: all 0.25s ease;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .amount-input:hover {
+        border-color: rgba(var(--primary-rgb), 0.4);
+        background: var(--bg-card);
     }
 
     .amount-input:focus {
-        background: rgba(var(--primary-rgb), 0.1);
-        border-radius: 4px;
+        background: var(--bg-card);
+        border-color: var(--primary);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 0 0 4px rgba(var(--primary-rgb), 0.15);
     }
 
     .amount-input::-webkit-outer-spin-button,
@@ -103,18 +157,98 @@ require_once '../../includes/sidebar.php';
 
     .remove-col-btn {
         position: absolute;
-        top: 5px;
-        right: 5px;
-        background: none;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 8px;
+        background: rgba(239, 68, 68, 0.1);
         border: none;
         color: var(--danger);
         cursor: pointer;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: all 0.2s;
     }
 
     th:hover .remove-col-btn {
         opacity: 1;
+    }
+    
+    .remove-col-btn:hover {
+        background: var(--danger);
+        color: white;
+    }
+
+    /* Top controls */
+    .controls-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: grid;
+        grid-template-columns: 2fr 1fr 1.5fr;
+        gap: 1.5rem;
+        align-items: end;
+    }
+    
+    .controls-card .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+    
+    .tech-add-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .tech-add-group .btn {
+        height: 50px;
+        width: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .bottom-actions {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+        gap: 1rem;
+    }
+
+    .grand-total-display-area {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .grand-total-display-area span.label {
+        color: var(--text-muted);
+        font-size: 1rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 1px;
     }
 </style>
 <main class="main-content">
@@ -131,10 +265,8 @@ require_once '../../includes/sidebar.php';
     <!-- Configuration Form -->
     <form id="viaticoForm" method="POST" action="save.php" style="max-width: 1200px; margin: 0 auto;">
 
-        <div class="card" style="margin-bottom: 2rem;">
-            <div class="card-body"
-                style="display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 1.5rem; align-items: end;">
-                <div class="form-group" style="margin: 0;">
+        <div class="controls-card">
+            <div class="form-group" style="margin: 0;">
                     <label class="form-label" style="font-size: 0.85rem; font-weight: bold;">MANTENIMIENTO / PROYECTO</label>
                     <select name="survey_id" id="survey_id" class="form-control" required style="font-size: 1rem; font-weight: 500; height: 50px;" onchange="updateProjectTitle(this)">
                         <option value="" disabled selected>Selecciona un Proyecto / Levantamiento...</option>
@@ -182,8 +314,8 @@ require_once '../../includes/sidebar.php';
                 <!-- Tech Adder -->
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label">Añadir Técnico (Columna)</label>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <select id="techSelector" class="form-control">
+                    <div class="tech-add-group">
+                        <select id="techSelector" class="form-control" style="font-size: 1rem; font-weight: 500; height: 50px;">
                             <option value="" disabled selected>Selecciona un técnico...</option>
                             <?php foreach ($all_techs as $t): ?>
                                 <option value="<?php echo $t['id']; ?>">
@@ -192,14 +324,13 @@ require_once '../../includes/sidebar.php';
                             <?php endforeach; ?>
                         </select>
                         <button type="button" id="btnAddTech" class="btn btn-secondary"><i
-                                class="ph ph-plus"></i></button>
+                                class="ph-bold ph-plus"></i></button>
                     </div>
                 </div>
             </div>
-        </div>
 
         <!-- Data Matrix -->
-        <div style="overflow-x: auto; padding-bottom: 1rem;">
+        <div class="viatico-container">
             <table class="viatico-grid" id="mainGrid">
                 <thead>
                     <tr id="headerRow">
@@ -258,26 +389,26 @@ require_once '../../includes/sidebar.php';
             </table>
         </div>
 
-        <!-- Custom Row Adder -->
-        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem;">
-            <div style="display: flex; gap: 0.5rem; width: 400px;">
+        <!-- Custom Row Adder and Totals -->
+        <div class="bottom-actions">
+            <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 450px;">
                 <input type="text" id="customConceptInput" class="form-control"
-                    placeholder="Agregar fila (ej. Hospedaje, Caseta)">
-                <button type="button" id="btnAddRow" class="btn btn-outline"><i class="ph ph-plus"></i> Añadir
+                    placeholder="Agregar fila (ej. Hospedaje, Caseta)" style="height: 50px; font-size: 1rem;">
+                <button type="button" id="btnAddRow" class="btn btn-outline" style="height: 50px; border-radius: 8px; white-space: nowrap;"><i class="ph-bold ph-plus"></i> Añadir
                     Concepto</button>
             </div>
-            <div style="flex: 1; text-align: right;">
-                <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);">
-                    Gran Total: $<span id="grandTotalDisplay">0.00</span>
-                    <input type="hidden" name="total_amount" id="grandTotalInput" value="0.00">
-                </div>
+            
+            <div class="grand-total-display-area">
+                <span class="label">Gran Total</span>
+                <span style="color: var(--text-main);">$</span><span id="grandTotalDisplay">0.00</span>
+                <input type="hidden" name="total_amount" id="grandTotalInput" value="0.00">
             </div>
-        </div>
 
-        <div style="display: flex; justify-content: flex-end;">
-            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
-                <i class="ph ph-floppy-disk"></i> Guardar Viáticos
-            </button>
+            <div style="display: flex; justify-content: flex-end; width: 100%; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2.5rem; font-size: 1.1rem; height: 55px; border-radius: 12px; font-weight: 600;">
+                    <i class="ph-bold ph-floppy-disk"></i> Guardar Viáticos
+                </button>
+            </div>
         </div>
     </form>
     <script>
@@ -300,7 +431,14 @@ require_once '../../includes/sidebar.php';
 
             if (!val) return;
             if (addedTechs.some(t => t.id === val)) {
-                alert('Ese técnico ya fue añadido.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Técnico duplicado',
+                    text: 'Este técnico ya ha sido añadido a la matriz.',
+                    confirmButtonColor: '#3b82f6',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-main)'
+                });
                 return;
             }
 
@@ -324,8 +462,8 @@ require_once '../../includes/sidebar.php';
                 const label = row.getAttribute('data-label');
                 const type = row.getAttribute('data-type');
 
-                td.innerHTML = `<input type="number" name="amounts[${type}][${cat}][${label}][${tech.colIndex}]"
-    class="amount-input calc-input" data-tech="${tech.id}" data-cat="${cat}" value="" min="0" step="0.01">`;
+                td.innerHTML = `<div class="input-wrapper"><input type="number" name="amounts[${type}][${cat}][${label}][${tech.colIndex}]"
+    class="amount-input calc-input" data-tech="${tech.id}" data-cat="${cat}" value="" min="0" step="0.01"></div>`;
                 row.appendChild(td);
             });
 
@@ -378,8 +516,8 @@ require_once '../../includes/sidebar.php';
             // Add cell for each tech
             addedTechs.forEach(tech => {
                 const td = document.createElement('td');
-                td.innerHTML = `<input type="number" name="amounts[custom][other][${concept}][${tech.colIndex}]"
-    class="amount-input calc-input" data-tech="${tech.id}" data-cat="other" value="" min="0" step="0.01">`;
+                td.innerHTML = `<div class="input-wrapper"><input type="number" name="amounts[custom][other][${concept}][${tech.colIndex}]"
+    class="amount-input calc-input" data-tech="${tech.id}" data-cat="other" value="" min="0" step="0.01"></div>`;
                 tr.appendChild(td);
             });
 
@@ -443,7 +581,14 @@ require_once '../../includes/sidebar.php';
         function removeTech(techId) {
             // Future enhancement: remove DOM elements related to tech id.
             // For now, simpler to reload or just restrict removal.
-            alert('En esta versión, si te equivocas de técnico, recarga la página.');
+            Swal.fire({
+                icon: 'info',
+                title: 'Función en desarrollo',
+                text: 'En esta versión, si te equivocas de técnico, por favor recarga la página.',
+                confirmButtonColor: '#3b82f6',
+                background: 'var(--bg-card)',
+                color: 'var(--text-main)'
+            });
         }
 
     </script>

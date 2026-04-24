@@ -285,14 +285,14 @@ if (isset($_SESSION['error'])) {
             $countServicios = $stmtS->fetchColumn();
             ?>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                <a href="index.php?search=PROYECTO" style="text-decoration: none; display: block; background: var(--bg-card); border: 1px solid <?php echo (strpos(strtoupper($search), 'PROYECTO') !== false) ? 'var(--primary-500)' : 'var(--border-color)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
+                <a href="index.php?search=PROYECTO" style="color: inherit; text-decoration: none; display: block; background: var(--bg-card); border: 1px solid <?php echo (strpos(strtoupper($search), 'PROYECTO') !== false) ? '#6366f1' : 'var(--border-color)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); color: #818cf8; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                             <i class="ph ph-buildings"></i>
                         </div>
                         <div>
-                            <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Proyectos</h4>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); line-height: 1.2;"><?php echo $countProyectos; ?></div>
+                            <h4 style="margin: 0; font-size: 0.9rem; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px;">Proyectos</h4>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; line-height: 1.2;"><?php echo $countProyectos; ?></div>
                         </div>
                     </div>
                     <?php if (strpos(strtoupper($search), 'PROYECTO') !== false): ?>
@@ -300,14 +300,14 @@ if (isset($_SESSION['error'])) {
                     <?php endif; ?>
                 </a>
 
-                <a href="index.php?search=SERVICIO" style="text-decoration: none; display: block; background: var(--bg-card); border: 1px solid <?php echo (strpos(strtoupper($search), 'SERVICIO') !== false) ? 'rgba(16, 185, 129, 0.5)' : 'var(--border-color)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
+                <a href="index.php?search=SERVICIO" style="color: inherit; text-decoration: none; display: block; background: var(--bg-card); border: 1px solid <?php echo (strpos(strtoupper($search), 'SERVICIO') !== false) ? 'rgba(16, 185, 129, 0.5)' : 'var(--border-color)'; ?>; border-radius: 12px; padding: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden;" class="hover-card-filter">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                             <i class="ph ph-wrench"></i>
                         </div>
                         <div>
-                            <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Servicios</h4>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); line-height: 1.2;"><?php echo $countServicios; ?></div>
+                            <h4 style="margin: 0; font-size: 0.9rem; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px;">Servicios</h4>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; line-height: 1.2;"><?php echo $countServicios; ?></div>
                         </div>
                     </div>
                     <?php if (strpos(strtoupper($search), 'SERVICIO') !== false): ?>
