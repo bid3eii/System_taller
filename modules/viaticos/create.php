@@ -252,13 +252,13 @@ require_once '../../includes/sidebar.php';
     }
 </style>
 <main class="main-content">
-    <div class="content-header">
+    <div class="content-header" style="max-width: 1200px; margin: 0 auto 2rem auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div class="header-title">
-            <h1>Crear Nuevo Viático</h1>
-            <p class="text-muted">Presupuesto estilo matriz (Técnicos vs Gastos)</p>
+            <h1 style="margin-bottom: 0.3rem;">Crear Nuevo Viático</h1>
+            <p class="text-muted" style="margin: 0;">Presupuesto estilo matriz (Técnicos vs Gastos)</p>
         </div>
         <div class="header-actions">
-            <a href="index.php" class="btn btn-outline"><i class="ph ph-arrow-left"></i> Volver</a>
+            <a href="index.php" class="btn btn-secondary" style="display: inline-flex; gap: 0.5rem; align-items: center; padding: 0.6rem 1.2rem; border-radius: 8px;"><i class="ph ph-arrow-left"></i> Volver</a>
         </div>
     </div>
 
