@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if ($old_status !== $new_status) {
-                    log_audit($pdo, $id, 'project_surveys', 'UPDATE STATUS', $old_status, $new_status);
+                    log_audit($pdo, 'project_surveys', $id, 'UPDATE', ['status' => $old_status], ['status' => $new_status], 'Cambio de estado operativo');
                 }
                 
                 $pdo->commit();

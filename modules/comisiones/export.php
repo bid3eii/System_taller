@@ -13,6 +13,8 @@ if (!can_access_module('comisiones', $pdo)) {
 $search = $_GET['search'] ?? '';
 $status_filter = $_GET['status'] ?? '';
 $tech_filter = strval($_GET['tech_id'] ?? '');
+$date_from = $_GET['date_from'] ?? '';
+$date_to = $_GET['date_to'] ?? '';
 $is_admin = can_access_module('comisiones_add', $pdo);
 $user_id = $_SESSION['user_id'];
 
@@ -39,6 +41,15 @@ if ($status_filter) {
     $params[] = $status_filter;
 }
 
+if ($date_from) {
+    $where[] = "c.fecha_servicio >= ?";
+    $params[] = $date_from . ' 00:00:00';
+}
+if ($date_to) {
+    $where[] = "c.fecha_servicio <= ?";
+    $params[] = $date_to . ' 23:59:59';
+}
+
 $where_clause = $where ? "WHERE " . implode(" AND ", $where) : "";
 
 $stmt = $pdo->prepare("
@@ -46,7 +57,7 @@ $stmt = $pdo->prepare("
         c.caso, c.tipo, c.fecha_servicio, c.fecha_facturacion,
         c.cliente, c.lugar, c.servicio, c.cantidad,
         c.factura, c.vendedor,
-        u.username AS tecnico,
+        COALESCE(u.full_name, u.username) AS tecnico,
         c.estado, c.notas
     FROM comisiones c
     LEFT JOIN users u ON c.tech_id = u.id
@@ -55,6 +66,17 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute($params);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get technician name for the filename if tech_filter is active or if not admin
+$tech_display_name = '';
+if (!$is_admin) {
+    $tech_display_name = $_SESSION['full_name'] ?? $_SESSION['username'] ?? 'Tecnico';
+} elseif ($tech_filter) {
+    $stTech = $pdo->prepare("SELECT COALESCE(full_name, username) FROM users WHERE id = ?");
+    $stTech->execute([$tech_filter]);
+    $tech_display_name = $stTech->fetchColumn();
+}
+$tech_suffix = $tech_display_name ? '_' . str_replace(' ', '_', $tech_display_name) : '';
 
 /* -------- Helper: escape XML characters -------- */
 function xesc(string $v): string
@@ -70,6 +92,11 @@ if ($status_filter)
     $filter_parts[] = "Estado: " . $status_filter;
 if ($tech_filter)
     $filter_parts[] = "Tech ID: " . $tech_filter;
+if ($date_from || $date_to) {
+    $d1 = $date_from ? date('d/m/Y', strtotime($date_from)) : 'Inicio';
+    $d2 = $date_to ? date('d/m/Y', strtotime($date_to)) : 'Fin';
+    $filter_parts[] = "Fecha: $d1 al $d2";
+}
 $filter_desc = $filter_parts ? implode(' | ', $filter_parts) : 'Todos los registros';
 $exported_on = date('d/m/Y H:i');
 $total_rows = count($rows);
@@ -78,20 +105,21 @@ $total_rows = count($rows);
 $columns = [
     ['label' => 'Caso / Proyecto', 'width' => 22],
     ['label' => 'Tipo', 'width' => 12],
-    ['label' => 'Técnico Asignado', 'width' => 22],
+    ['label' => 'Técnico Asignado', 'width' => 25],
     ['label' => 'Nº Factura', 'width' => 18],
-    ['label' => 'Cliente', 'width' => 28],
+    ['label' => 'Cliente', 'width' => 30],
     ['label' => 'Fecha Servicio', 'width' => 16],
     ['label' => 'Fecha Facturación', 'width' => 18],
-    ['label' => 'Lugar / Zona', 'width' => 20],
-    ['label' => 'Descripción del Servicio', 'width' => 40],
+    ['label' => 'Lugar / Zona', 'width' => 22],
+    ['label' => 'Descripción del Servicio', 'width' => 45],
     ['label' => 'Cantidad', 'width' => 10],
     ['label' => 'Vendedor / Captador', 'width' => 22],
     ['label' => 'Estado Comisión', 'width' => 16],
+    ['label' => 'Observaciones / Notas', 'width' => 40],
 ];
 
 /* -------- Stream Excel XML -------- */
-$filename = 'Comisiones_RRHH_' . date('Y-m-d_H-i') . '.xls';
+$filename = 'Mis_Incentivos' . $tech_suffix . '_' . date('Y-m-d_Hi') . '.xls';
 
 header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -255,8 +283,11 @@ echo '<?mso-application progid="Excel.Sheet"?>' . "\n";
                     <Cell ss:StyleID="<?php echo $alt; ?>">
                         <Data ss:Type="String"><?php echo xesc($r['vendedor'] ?: '—'); ?></Data>
                     </Cell>
-                    <Cell ss:StyleID="<?php echo $estado_style; ?>">
+                    <Cell ss:StyleID="<?php echo $alt; ?>">
                         <Data ss:Type="String"><?php echo xesc($r['estado']); ?></Data>
+                    </Cell>
+                    <Cell ss:StyleID="<?php echo $alt; ?>">
+                        <Data ss:Type="String"><?php echo xesc($r['notas'] ?: '—'); ?></Data>
                     </Cell>
                 </Row>
             <?php endforeach; ?>

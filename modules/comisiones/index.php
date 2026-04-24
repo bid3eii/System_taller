@@ -21,6 +21,8 @@ $user_id = $_SESSION['user_id'];
 $search = $_GET['search'] ?? '';
 $status_filter = $_GET['status'] ?? '';
 $tech_filter = strval($_GET['tech_id'] ?? '');
+$date_from = $_GET['date_from'] ?? '';
+$date_to = $_GET['date_to'] ?? '';
 
 // Build query (admin sees both sections always; status_filter only applies to tech view)
 $params = [];
@@ -52,6 +54,16 @@ if ($search) {
 if (!$is_admin && $status_filter) {
     $where[] = "c.estado = ?";
     $params[] = $status_filter;
+}
+
+// Date range filter
+if ($date_from) {
+    $where[] = "c.fecha_servicio >= ?";
+    $params[] = $date_from . ' 00:00:00';
+}
+if ($date_to) {
+    $where[] = "c.fecha_servicio <= ?";
+    $params[] = $date_to . ' 23:59:59';
 }
 
 $where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
@@ -90,12 +102,25 @@ $tech_total = 0;
 $tech_pending = 0;
 $tech_paid = 0;
 if (!$is_admin) {
+    // If dates are provided, we should probably filter KPIs too, but usually KPIs are all-time.
+    // We'll filter KPIs by date if the user selected dates, so the metrics match the table.
+    $kpi_where = "tech_id = ?";
+    $kpi_params = [$user_id];
+    if ($date_from) {
+        $kpi_where .= " AND fecha_servicio >= ?";
+        $kpi_params[] = $date_from . ' 00:00:00';
+    }
+    if ($date_to) {
+        $kpi_where .= " AND fecha_servicio <= ?";
+        $kpi_params[] = $date_to . ' 23:59:59';
+    }
+
     $kpi = $pdo->prepare("SELECT
         COUNT(*) AS total,
         SUM(CASE WHEN estado = 'PENDIENTE' THEN 1 ELSE 0 END) AS pendiente,
         SUM(CASE WHEN estado = 'PAGADA'    THEN 1 ELSE 0 END) AS pagada
-        FROM comisiones WHERE tech_id = ?");
-    $kpi->execute([$user_id]);
+        FROM comisiones WHERE $kpi_where");
+    $kpi->execute($kpi_params);
     $kpi_row = $kpi->fetch(PDO::FETCH_ASSOC);
     $tech_total = intval($kpi_row['total'] ?? 0);
     $tech_pending = intval($kpi_row['pendiente'] ?? 0);
@@ -538,7 +563,7 @@ if (isset($_SESSION['error'])) {
     <div class="animate-enter">
 
         <!-- HEADER -->
-        <div class="page-header" style="margin-bottom:1.75rem;">
+        <div class="page-header" style="margin-bottom:1.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <h1 style="margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;">
                     <i class="ph ph-coins" style="color:var(--primary-500);"></i>
@@ -546,6 +571,22 @@ if (isset($_SESSION['error'])) {
                 </h1>
                 <p class="text-muted">Historial de pagos asignados a ti, <?php echo $username_display; ?></p>
             </div>
+            <?php
+            $export_params = http_build_query(array_filter([
+                'search' => $search,
+                'status' => $active_tab_status,
+                'date_from' => $date_from,
+                'date_to' => $date_to
+            ]));
+            $export_url = 'export.php' . ($export_params ? '?' . $export_params : '');
+            ?>
+            <a href="<?php echo $export_url; ?>" class="btn btn-secondary"
+               style="display: flex; gap: 0.6rem; align-items: center; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #a5b4fc; padding: 0.7rem 1.2rem; border-radius: 10px; font-weight: 600; transition: all 0.2s;"
+               onmouseover="this.style.background='rgba(99, 102, 241, 0.2)'; this.style.transform='translateY(-1px)';"
+               onmouseout="this.style.background='rgba(99, 102, 241, 0.1)'; this.style.transform='translateY(0)';"
+               title="Exportar mi historial de incentivos a Excel">
+                <i class="ph ph-file-xls" style="font-size: 1.2rem;"></i> Exportar Mis Incentivos
+            </a>
         </div>
 
         <?php if ($success_msg): ?>
@@ -578,17 +619,43 @@ if (isset($_SESSION['error'])) {
             </div>
         </div>
 
-        <!-- STATUS FILTER TABS -->
-        <div class="filter-tabs">
-            <a href="index.php" class="filter-tab <?php echo $active_tab_status === '' ? 'active' : ''; ?>">
-                <i class="ph ph-squares-four"></i> Todas
-            </a>
-            <a href="index.php?status=PENDIENTE" class="filter-tab <?php echo $active_tab_status === 'PENDIENTE' ? 'active-orange' : ''; ?>">
-                <i class="ph ph-hourglass"></i> Pendientes
-            </a>
-            <a href="index.php?status=PAGADA" class="filter-tab <?php echo $active_tab_status === 'PAGADA' ? 'active-green' : ''; ?>">
-                <i class="ph ph-check-circle"></i> Pagadas
-            </a>
+        <!-- STATUS FILTER TABS AND DATE RANGE -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+            <div class="filter-tabs" style="margin-bottom: 0;">
+                <a href="index.php?date_from=<?php echo urlencode($date_from); ?>&date_to=<?php echo urlencode($date_to); ?>" class="filter-tab <?php echo $active_tab_status === '' ? 'active' : ''; ?>">
+                    <i class="ph ph-squares-four"></i> Todas
+                </a>
+                <a href="index.php?status=PENDIENTE&date_from=<?php echo urlencode($date_from); ?>&date_to=<?php echo urlencode($date_to); ?>" class="filter-tab <?php echo $active_tab_status === 'PENDIENTE' ? 'active-orange' : ''; ?>">
+                    <i class="ph ph-hourglass"></i> Pendientes
+                </a>
+                <a href="index.php?status=PAGADA&date_from=<?php echo urlencode($date_from); ?>&date_to=<?php echo urlencode($date_to); ?>" class="filter-tab <?php echo $active_tab_status === 'PAGADA' ? 'active-green' : ''; ?>">
+                    <i class="ph ph-check-circle"></i> Pagadas
+                </a>
+            </div>
+
+            <form method="GET" action="index.php" style="display: flex; gap: 0.75rem; align-items: center; margin: 0;">
+                <?php if ($active_tab_status): ?>
+                    <input type="hidden" name="status" value="<?php echo htmlspecialchars($active_tab_status); ?>">
+                <?php endif; ?>
+                
+                <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(15,23,42,0.6); padding: 0.3rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="date" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>" 
+                           style="background: transparent; border: none; color: #e2e8f0; font-size: 0.85rem; padding: 0.3rem; outline: none;">
+                    <span style="color: #64748b;">-</span>
+                    <input type="date" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>"
+                           style="background: transparent; border: none; color: #e2e8f0; font-size: 0.85rem; padding: 0.3rem; outline: none;">
+                </div>
+                
+                <button type="submit" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); color: #a5b4fc;">
+                    <i class="ph ph-calendar-check"></i> Filtrar Fecha
+                </button>
+
+                <?php if ($date_from || $date_to): ?>
+                    <a href="index.php?status=<?php echo urlencode($active_tab_status); ?>" class="btn btn-secondary" style="padding: 0.5rem; font-size: 0.85rem; border-radius: 8px; background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #fca5a5;" title="Limpiar fechas">
+                        <i class="ph ph-x"></i>
+                    </a>
+                <?php endif; ?>
+            </form>
         </div>
 
         <!-- COMMISSION CARDS -->

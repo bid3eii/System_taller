@@ -894,7 +894,7 @@ require_once '../../includes/sidebar.php';
                 </div>
 
                 <!-- Action Button: Only way to change status is via Incentives -->
-                <a href="../comisiones/index.php" 
+                <a href="../comisiones/index.php?search=<?php echo urlencode("#P" . str_pad($id, 4, '0', STR_PAD_LEFT)); ?>" 
                    style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.6rem; padding: 1rem; font-weight: 700; font-size: 0.95rem; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none; box-shadow: 0 4px 15px rgba(99,102,241,0.3); text-decoration: none; transition: all 0.2s ease; cursor: pointer;"
                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(99,102,241,0.4)';"
                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(99,102,241,0.3)';"
