@@ -18,6 +18,13 @@ try {
 }
 
 try {
+    $pdo->exec("ALTER TABLE project_surveys ADD COLUMN vendedor VARCHAR(100) NULL AFTER user_id;");
+    echo "Added vendedor to DB successfully.\n";
+} catch (Exception $e) {
+    echo "Error vendedor: " . $e->getMessage() . "\n";
+}
+
+try {
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS project_survey_tools (
             id INT AUTO_INCREMENT PRIMARY KEY,

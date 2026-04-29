@@ -491,7 +491,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
 
             <?php if (can_access_module('anexos', $pdo)): ?>
                 <a href="../anexos/create.php?survey_id=<?php echo $survey['id']; ?>" class="btn btn-primary"
-                    style="white-space: nowrap; font-size: 0.875rem; background: linear-gradient(135deg, var(--primary-500), var(--primary-700)); border: none; box-shadow: 0 4px 12px rgba(99,102,241,0.35);">
+                    style="white-space: nowrap; font-size: 0.875rem; background: linear-gradient(135deg, var(--primary-500), var(--primary-600)); border: none; box-shadow: 0 4px 12px rgba(99,102,241,0.35);">
                     <i class="ph ph-file-plus"></i> Crear Anexo
                 </a>
             <?php endif; ?>
@@ -547,7 +547,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                     Vendedor</div>
                 <div
                     style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <?php echo htmlspecialchars($survey['vendedor'] ?: 'No asignado'); ?>
+                    <?php echo htmlspecialchars($survey['vendedor'] ?? 'No asignado'); ?>
                 </div>
             </div>
         </div>
