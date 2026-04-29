@@ -2,7 +2,7 @@
 // modules/auth/login.php
 require_once dirname(__DIR__, 2) . '/config/db.php';
 ini_set('session.gc_probability', 0);
-session_start();
+@session_start(['gc_probability' => 0]);
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 
 $error = '';

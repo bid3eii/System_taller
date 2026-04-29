@@ -1,7 +1,7 @@
 <?php
 // modules/comisiones/save_and_pay.php
 // Saves billing fields and marks a commission as paid in one step
-session_start();
+@session_start(['gc_probability' => 0]);
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';

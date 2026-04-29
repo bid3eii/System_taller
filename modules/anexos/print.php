@@ -1,6 +1,6 @@
 <?php
 // modules/anexos/print.php
-session_start();
+@session_start(['gc_probability' => 0]);
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';

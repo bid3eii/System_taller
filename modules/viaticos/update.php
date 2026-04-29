@@ -3,7 +3,7 @@ require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    @session_start(['gc_probability' => 0]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !can_access_module('viaticos_edit', $pdo)) {

@@ -37,7 +37,7 @@ if ($is_local) {
     // InfinityFree Session Fix (prevent Permission Denied on /php_sessions)
     // We disable the probability of PHP's garbage collector running immediately
     // on this user's requests to avoid the notice.
-    ini_set('session.gc_probability', 0);
+    @ini_set('session.gc_probability', 0);
 }
 
 try {

@@ -20,7 +20,7 @@ try {
 // Step 2: Session
 echo "2. Iniciando sesión... ";
 try {
-    session_start();
+    @session_start(['gc_probability' => 0]);
     echo "OK ✓\n";
 } catch (Exception $e) {
     echo "ERROR: " . $e->getMessage() . "\n";

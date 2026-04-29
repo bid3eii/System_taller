@@ -2,7 +2,7 @@
 // includes/auth.php
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.gc_probability', 0);
-    session_start();
+    @session_start(['gc_probability' => 0]);
 }
 
 // Check if user is logged in

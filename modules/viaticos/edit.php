@@ -4,7 +4,7 @@ require_once '../../includes/functions.php';
 
 // Verificación de sesión
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    @session_start(['gc_probability' => 0]);
 }
 if (!isset($_SESSION['user_id']) || !can_access_module('viaticos_edit', $pdo)) {
     header("Location: " . BASE_URL . "modules/viaticos/index.php");

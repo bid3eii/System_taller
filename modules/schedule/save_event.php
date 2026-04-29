@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 
-session_start();
+@session_start(['gc_probability' => 0]);
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'No session']);
     exit;
