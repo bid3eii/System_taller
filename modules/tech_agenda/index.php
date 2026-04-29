@@ -28,15 +28,17 @@ if ($is_admin && isset($_GET['tech_id'])) {
     $params = [$_GET['tech_id']];
 }
 
+$order_dir = "ASC";
 switch ($filter) {
     case 'today':
         $where .= " AND DATE(se.start_datetime) = CURDATE()";
         break;
     case 'history':
         $where .= " AND se.status IN ('completed', 'cancelled')";
+        $order_dir = "DESC";
         break;
-    default: // upcoming
-        $where .= " AND se.start_datetime >= CURDATE() AND se.status NOT IN ('completed', 'cancelled')";
+    default: // upcoming (now acts as all pending/overdue)
+        $where .= " AND se.status NOT IN ('completed', 'cancelled')";
         break;
 }
 
@@ -45,7 +47,7 @@ $sql = "SELECT se.*, ps.title as survey_title, ps.client_name as survey_client
         FROM schedule_events se
         LEFT JOIN project_surveys ps ON se.survey_id = ps.id
         WHERE $where
-        ORDER BY se.start_datetime ASC";
+        ORDER BY se.start_datetime $order_dir";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $visits = $stmt->fetchAll();
