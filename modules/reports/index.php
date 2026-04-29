@@ -734,11 +734,23 @@ function sortTable(columnIndex, direction) {
         let textA = cellA.textContent.trim().toLowerCase();
         let textB = cellB.textContent.trim().toLowerCase();
         
+        // Date parsing for DD/MM/YYYY
+        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        const matchA = textA.match(dateRegex);
+        const matchB = textB.match(dateRegex);
+        
+        if (matchA && matchB) {
+            // Convert to YYYYMMDD for easy numeric comparison
+            const dateValueA = parseInt(matchA[3] + matchA[2] + matchA[1]);
+            const dateValueB = parseInt(matchB[3] + matchB[2] + matchB[1]);
+            return direction === 'asc' ? dateValueA - dateValueB : dateValueB - dateValueA;
+        }
+
         // Try to parse as numbers for numeric sorting
         const numA = parseFloat(textA);
         const numB = parseFloat(textB);
         
-        if (!isNaN(numA) && !isNaN(numB)) {
+        if (!isNaN(numA) && !isNaN(numB) && !textA.includes('/') && !textB.includes('/')) {
             return direction === 'asc' ? numA - numB : numB - numA;
         }
         
