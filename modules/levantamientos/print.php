@@ -38,16 +38,16 @@ $stmtM = $pdo->prepare("SELECT * FROM project_materials WHERE survey_id = ? ORDE
 $stmtM->execute([$id]);
 $materials = $stmtM->fetchAll();
 
+// Fetch Survey Images
+$stmtImg = $pdo->prepare("SELECT * FROM project_survey_images WHERE survey_id = ? ORDER BY id ASC");
+$stmtImg->execute([$id]);
+$survey_images = $stmtImg->fetchAll();
+
 // Formatting dates
-setlocale(LC_TIME, 'es_ES.UTF-8', 'es_ES', 'esp');
-$date_format = strftime("%A %d de %B de %Y", strtotime($survey['created_at']));
-// Fallback if strftime is deprecated/failing
-if (!$date_format || strpos($date_format, '%') !== false) {
-    $months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    $days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    $timestamp = strtotime($survey['created_at']);
-    $date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de ' . $months[date('n', $timestamp) - 1] . ' de ' . date('Y', $timestamp);
-}
+$months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+$days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+$timestamp = strtotime($survey['created_at'] ?? 'now');
+$date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de ' . $months[date('n', $timestamp) - 1] . ' de ' . date('Y', $timestamp);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -84,9 +84,9 @@ if (!$date_format || strpos($date_format, '%') !== false) {
             /* Slate 50 */
         }
 
-        /* Strict A4 Setup */
+        /* Strict Letter Setup */
         @page {
-            size: A4 portrait;
+            size: letter portrait;
             margin: 0;
         }
 
@@ -110,11 +110,11 @@ if (!$date_format || strpos($date_format, '%') !== false) {
             align-items: center;
         }
 
-        /* The A4 "Paper" Container */
+        /* The Letter "Paper" Container */
         .print-wrapper {
             background: #ffffff;
-            width: 210mm;
-            min-height: 297mm;
+            width: 215.9mm;
+            min-height: 279.4mm;
             margin: 1rem auto;
             position: relative;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -291,6 +291,8 @@ if (!$date_format || strpos($date_format, '%') !== false) {
             margin: 0 0 4mm 0;
             display: flex;
             align-items: center;
+            justify-content: center;
+            text-align: center;
             gap: 2mm;
             border-bottom: 1px solid var(--border-light);
             padding-bottom: 2mm;
@@ -431,18 +433,25 @@ if (!$date_format || strpos($date_format, '%') !== false) {
             }
 
             body {
-                background: white;
-                margin: 0;
-                padding: 0;
-                align-items: flex-start;
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: block !important;
             }
 
             .print-wrapper {
-                box-shadow: none;
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                min-height: auto;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                position: static !important;
+                display: block !important;
+            }
+
+            .section, p, li, h1, h2, h3, h4, td, th {
+                page-break-inside: auto;
             }
         }
     </style>
@@ -527,10 +536,10 @@ if (!$date_format || strpos($date_format, '%') !== false) {
                 </div>
             </div>
 
-            <!-- Trabajos a Revisar -->
+            <!-- Trabajo a Realizar -->
             <?php if (!empty($survey['trabajos_revisar'])): ?>
-            <div class="section">
-                <h3 class="section-title">Trabajos a Revisar</h3>
+            <div class="section" style="page-break-before: always; padding-top: 15mm;">
+                <h3 class="section-title">Trabajo a Realizar</h3>
                 <div class="rich-text">
                     <?php echo $survey['trabajos_revisar']; ?>
                 </div>
@@ -574,37 +583,6 @@ if (!$date_format || strpos($date_format, '%') !== false) {
                 </div>
             </div>
 
-            <!-- Materials Table -->
-            <?php if (count($materials) > 0): ?>
-                <div class="section" style="page-break-inside: avoid;">
-                    <h3 class="section-title">Requerimientos de Material</h3>
-                    <table class="styled-table">
-                        <thead>
-                            <tr>
-                                <th>Descripción del Componente</th>
-                                <th class="center" style="width: 15%;">Cantidad</th>
-                                <th style="width: 35%;">Asignación / Observaciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($materials as $m): ?>
-                                <tr>
-                                    <td style="font-weight: 500; font-size: 9.5pt; color: var(--brand-dark);">
-                                        <?php echo htmlspecialchars($m['item_description']); ?>
-                                    </td>
-                                    <td class="center" style="font-weight: 600;">
-                                        <?php echo floatval($m['quantity']) . ' ' . htmlspecialchars($m['unit']); ?>
-                                    </td>
-                                    <td style="font-size: 9pt; color: var(--text-muted);">
-                                        <?php echo htmlspecialchars($m['notes'] ?: '-'); ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-
             <!-- Footers and Signatures -->
             <div class="doc-footer" style="page-break-inside: avoid;">
 
@@ -616,6 +594,93 @@ if (!$date_format || strpos($date_format, '%') !== false) {
 
         </div>
     </div>
+
+    <!-- Página de Requerimientos de Material (Solo si hay) -->
+    <?php if (count($materials) > 0): ?>
+    <div style="page-break-before: always;"></div>
+    <div class="print-wrapper">
+        <div class="accent-bar"></div>
+        <div class="container">
+            <div class="doc-header" style="flex-direction: column; align-items: center; text-align: center; border-bottom: none; gap: 0; margin-bottom: 5mm;">
+                <div class="company-brand" style="margin-bottom: 0;">
+                    <img src="../../assets/img/logo.png" alt="M Technologies Logo" class="company-logo">
+                </div>
+                <div class="doc-title-block" style="text-align: center; width: 100%; border-bottom: 2px solid var(--border-light); padding-bottom: 3mm; margin-top: -2mm;">
+                    <h2 class="doc-type">Requerimientos de Material</h2>
+                    <p class="doc-number">Referencia #<?php echo str_pad($id, 5, '0', STR_PAD_LEFT); ?></p>
+                </div>
+            </div>
+
+            <div class="section">
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Descripción del Componente</th>
+                            <th class="center" style="width: 15%;">Cantidad</th>
+                            <th style="width: 35%;">Asignación / Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($materials as $m): ?>
+                            <tr>
+                                <td style="font-weight: 500; font-size: 9.5pt; color: var(--brand-dark);">
+                                    <?php echo htmlspecialchars($m['item_description']); ?>
+                                </td>
+                                <td class="center" style="font-weight: 600;">
+                                    <?php echo floatval($m['quantity']) . ' ' . htmlspecialchars($m['unit']); ?>
+                                </td>
+                                <td style="font-size: 9pt; color: var(--text-muted);">
+                                    <?php echo htmlspecialchars($m['notes'] ?: '-'); ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="doc-footer" style="margin-top: 10mm;">
+                <div class="legal-notice">
+                    Requerimientos de material correspondientes al Levantamiento Operativo #<?php echo str_pad($id, 5, '0', STR_PAD_LEFT); ?>.
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Página Anexo Fotográfico (Solo si hay imágenes) -->
+    <?php if (!empty($survey_images)): ?>
+    <div style="page-break-before: always;"></div>
+    <div class="print-wrapper">
+        <div class="accent-bar"></div>
+        <div class="container">
+            <div class="doc-header" style="flex-direction: column; align-items: center; text-align: center; border-bottom: none; gap: 0; margin-bottom: 5mm;">
+                <div class="company-brand" style="margin-bottom: 0;">
+                    <img src="../../assets/img/logo.png" alt="M Technologies Logo" class="company-logo">
+                </div>
+                <div class="doc-title-block" style="text-align: center; width: 100%; border-bottom: 2px solid var(--border-light); padding-bottom: 3mm; margin-top: -2mm;">
+                    <h2 class="doc-type">Anexo Fotográfico</h2>
+                    <p class="doc-number">Referencia #<?php echo str_pad($id, 5, '0', STR_PAD_LEFT); ?></p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4mm;">
+                    <?php foreach ($survey_images as $img): ?>
+                        <div style="border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden; height: 85mm;">
+                            <img src="<?php echo BASE_URL . $img['image_path']; ?>" style="width: 100%; height: 100%; object-fit: contain; display: block;" alt="Evidencia">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            
+            <div class="doc-footer" style="margin-top: 10mm;">
+                <div class="legal-notice">
+                    Anexo fotográfico correspondiente al Levantamiento Operativo #<?php echo str_pad($id, 5, '0', STR_PAD_LEFT); ?>.
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 </body>
 
 </html>

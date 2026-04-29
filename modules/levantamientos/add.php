@@ -131,6 +131,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            // 5. Handle Image Uploads
+            if (isset($_FILES['survey_images']) && !empty($_FILES['survey_images']['name'][0])) {
+                $uploadDir = '../../uploads/levantamientos/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+
+                $stmtImg = $pdo->prepare("INSERT INTO project_survey_images (survey_id, image_path, created_at) VALUES (?, ?, ?)");
+                
+                foreach ($_FILES['survey_images']['tmp_name'] as $key => $tmp_name) {
+                    if ($_FILES['survey_images']['error'][$key] === 0) {
+                        $fileName = time() . '_' . $key . '_' . preg_replace('/[^a-zA-Z0-9.-]/', '_', basename($_FILES['survey_images']['name'][$key]));
+                        $targetPath = $uploadDir . $fileName;
+                        
+                        if (move_uploaded_file($tmp_name, $targetPath)) {
+                            $stmtImg->execute([$survey_id, 'uploads/levantamientos/' . $fileName, get_local_datetime()]);
+                        }
+                    }
+                }
+            }
+
             $pdo->commit();
             header("Location: index.php?msg=added");
             exit;
@@ -211,7 +232,7 @@ require_once '../../includes/sidebar.php';
         </div>
     <?php endif; ?>
 
-    <form method="POST" action="" id="surveyForm">
+    <form method="POST" action="" id="surveyForm" enctype="multipart/form-data">
         <input type="hidden" name="origin_event_id" value="<?php echo $event_id; ?>">
         <!-- 1. General Data -->
         <div class="card" style="margin-bottom: 2rem;">
@@ -270,15 +291,15 @@ require_once '../../includes/sidebar.php';
             </div>
         </div>
 
-        <!-- 2.5 Trabajos a Revisar -->
+        <!-- 2.5 Trabajo a Realizar -->
         <div class="card" style="margin-bottom: 2rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
                 <i class="ph ph-magnifying-glass" style="font-size: 1.2rem; color: var(--warning);"></i>
-                <h3 style="margin: 0; color: var(--text-primary);">Trabajos a Revisar</h3>
+                <h3 style="margin: 0; color: var(--text-primary);">Trabajo a Realizar</h3>
             </div>
             <div class="form-group">
                 <textarea id="trabajos_revisar" name="trabajos_revisar"></textarea>
-                <p class="text-xs text-muted" style="margin-top: 0.5rem;">Detalla los elementos que necesitan ser inspeccionados o revisados en campo.</p>
+                <p class="text-xs text-muted" style="margin-top: 0.5rem;">Detalla los elementos que necesitan ser inspeccionados o el trabajo principal a ejecutar.</p>
             </div>
         </div>
 
@@ -292,6 +313,68 @@ require_once '../../includes/sidebar.php';
                 <textarea id="notas" name="notas"></textarea>
                 <p class="text-xs text-muted" style="margin-top: 0.5rem;">Cualquier observación adicional relevante para el proyecto.</p>
             </div>
+        </div>
+
+        <!-- 2.7 Evidencia Fotográfica -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                <i class="ph ph-image" style="font-size: 1.2rem; color: var(--primary-500);"></i>
+                <h3 style="margin: 0; color: var(--text-primary);">Evidencia Fotográfica (Anexos)</h3>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Adjuntar Imágenes (opcional)</label>
+                <input type="file" name="survey_images[]" id="survey_images_input" multiple accept="image/*" class="form-control" style="padding: 0.5rem;">
+                <p class="text-xs text-muted" style="margin-top: 0.5rem;">Puedes seleccionar varias imágenes al mismo tiempo.</p>
+                <div id="survey_images_preview" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;"></div>
+            </div>
+            
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const fileInput = document.getElementById('survey_images_input');
+                const previewContainer = document.getElementById('survey_images_preview');
+                let selectedFiles = [];
+
+                fileInput.addEventListener('change', function(e) {
+                    for (let i = 0; i < this.files.length; i++) {
+                        selectedFiles.push(this.files[i]);
+                    }
+                    updateInputAndPreview();
+                });
+
+                function updateInputAndPreview() {
+                    const dt = new DataTransfer();
+                    selectedFiles.forEach(file => dt.items.add(file));
+                    fileInput.files = dt.files;
+
+                    previewContainer.innerHTML = '';
+                    selectedFiles.forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const div = document.createElement('div');
+                            div.style.cssText = 'position: relative; width: 100px; height: 100px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden;';
+                            
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                            
+                            const btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.innerHTML = '<i class="ph ph-x" style="font-size: 0.8rem;"></i>';
+                            btn.style.cssText = 'position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; z-index: 10;';
+                            btn.onclick = function() {
+                                selectedFiles.splice(index, 1);
+                                updateInputAndPreview();
+                            };
+
+                            div.appendChild(img);
+                            div.appendChild(btn);
+                            previewContainer.appendChild(div);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+            </script>
         </div>
 
         <!-- 3. Time & Resources Estimation -->

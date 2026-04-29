@@ -61,6 +61,11 @@ $stmtT = $pdo->prepare("
 $stmtT->execute([$id]);
 $tools = $stmtT->fetchAll();
 
+// Fetch Survey Images
+$stmtImg = $pdo->prepare("SELECT * FROM project_survey_images WHERE survey_id = ? ORDER BY id ASC");
+$stmtImg->execute([$id]);
+$survey_images = $stmtImg->fetchAll();
+
 // Fetch Audit Logs (Bitácora)
 $stmtAudit = $pdo->prepare("
     SELECT a.*, u.username as action_user 
@@ -643,7 +648,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                         <div class="glass-card" style="margin-bottom: 0;">
                             <div class="glass-card-header">
                                 <i class="ph ph-magnifying-glass" style="color: var(--warning);"></i>
-                                <h3 class="glass-card-title">Trabajos a Revisar</h3>
+                                <h3 class="glass-card-title">Trabajo a Realizar</h3>
                             </div>
                             <div class="rich-text-content">
                                 <?php echo $survey['trabajos_revisar']; ?>
@@ -660,6 +665,25 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                             </div>
                             <div class="rich-text-content">
                                 <?php echo $survey['notas']; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Evidencia Fotográfica Box -->
+                    <?php if (!empty($survey_images)): ?>
+                        <div class="glass-card" style="margin-bottom: 0;">
+                            <div class="glass-card-header">
+                                <i class="ph ph-image" style="color: var(--primary-500);"></i>
+                                <h3 class="glass-card-title">Evidencia Fotográfica</h3>
+                            </div>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <?php foreach ($survey_images as $img): ?>
+                                    <a href="<?php echo BASE_URL . $img['image_path']; ?>" target="_blank" 
+                                       style="display: block; width: 120px; height: 120px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s;"
+                                       onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                        <img src="<?php echo BASE_URL . $img['image_path']; ?>" alt="Evidencia" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </a>
+                                <?php endforeach; ?>
                             </div>
                         </div>
                     <?php endif; ?>

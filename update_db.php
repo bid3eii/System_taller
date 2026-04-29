@@ -4,10 +4,45 @@ require_once 'config/db.php';
 echo "<pre>";
 
 try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS project_survey_images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        survey_id INT NOT NULL,
+        image_path VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (survey_id) REFERENCES project_surveys(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    echo "Created table project_survey_images successfully. ";
+} catch (Exception $e) {
+    echo "Error images table: " . $e->getMessage() . "\n";
+}
+
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS project_survey_tools (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        survey_id INT NOT NULL,
+        tool_id INT DEFAULT NULL,
+        tool_name VARCHAR(255) DEFAULT NULL,
+        quantity INT DEFAULT 1,
+        notes TEXT,
+        FOREIGN KEY (survey_id) REFERENCES project_surveys(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    echo "Created table project_survey_tools successfully. ";
+} catch (Exception $e) {
+    echo "Error tools table: " . $e->getMessage() . "\n";
+}
+
+try {
     $pdo->exec("ALTER TABLE project_surveys ADD COLUMN trabajos_revisar TEXT AFTER scope_activities;");
     echo "Added trabajos_revisar to DB successfully.\n";
 } catch (Exception $e) {
     echo "Error trabajos_revisar: " . $e->getMessage() . "\n";
+}
+
+try {
+    $pdo->exec("ALTER TABLE project_surveys ADD COLUMN vendedor VARCHAR(255) NULL AFTER title;");
+    echo "Added vendedor to DB successfully.\n";
+} catch (Exception $e) {
+    echo "Error vendedor: " . $e->getMessage() . "\n";
 }
 
 try {
