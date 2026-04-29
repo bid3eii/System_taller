@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = clean($_POST['title']);
     $general_description = clean($_POST['general_description']);
     $scope_activities = $_POST['scope_activities']; // Can contain HTML if using rich text
+    $trabajos_revisar = $_POST['trabajos_revisar'] ?? ''; // Can contain HTML
+    $notas = $_POST['notas'] ?? ''; // Can contain HTML
     $estimated_time = clean($_POST['estimated_time']);
 
     $personnel_required = clean($_POST['personnel_required'] ?? '');
@@ -62,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 1. Insert Survey
             $stmt = $pdo->prepare("
                 INSERT INTO project_surveys 
-                (client_name, user_id, vendedor, title, general_description, scope_activities, estimated_time, personnel_required, status, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)
+                (client_name, user_id, vendedor, title, general_description, scope_activities, trabajos_revisar, notas, estimated_time, personnel_required, status, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)
             ");
 
             $stmt->execute([
@@ -73,6 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $title,
                 $general_description,
                 $scope_activities,
+                $trabajos_revisar,
+                $notas,
                 $estimated_time,
                 $personnel_required,
                 get_local_datetime()
@@ -149,22 +153,48 @@ require_once '../../includes/sidebar.php';
 <!-- TinyMCE CDN for Rich Text -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/5.10.9/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    tinymce.init({
-        selector: '#scope_activities',
-        height: 300,
-        menubar: false,
-        plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
-            'searchreplace', 'visualblocks', 'fullscreen',
-            'insertdatetime', 'table', 'help', 'wordcount'
-        ],
-        toolbar: 'undo redo | blocks | ' +
-            'bold italic | alignleft aligncenter ' +
-            'alignright alignjustify | bullist numlist outdent indent | ' +
-            'removeformat | help',
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-        skin: document.body.classList.contains('light-mode') ? 'oxide' : 'oxide-dark',
-        content_css: document.body.classList.contains('light-mode') ? 'default' : 'dark'
+    function initTinyMCE() {
+        const isLight = document.body.classList.contains('light-mode') || localStorage.getItem('theme') === 'light';
+        tinymce.init({
+            selector: '#scope_activities, #trabajos_revisar, #notas',
+            height: 500,
+            resize: 'vertical',
+            menubar: true,
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons'
+            ],
+            toolbar: 'undo redo | formatselect fontselect fontsizeselect | ' +
+                'bold italic underline strikethrough forecolor backcolor | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'link image media table emoticons | removeformat | fullscreen help',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:15px }',
+            skin: isLight ? 'oxide' : 'oxide-dark',
+            content_css: isLight ? 'default' : 'dark',
+            setup: function(editor) {
+                editor.on('change', function() {
+                    editor.save();
+                });
+            }
+        });
+    }
+
+    // Inicializar en carga
+    initTinyMCE();
+
+    // Re-inicializar cuando el usuario cambie el tema
+    window.addEventListener('DOMContentLoaded', () => {
+        const themeBtn = document.getElementById('themeToggle');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                // Pequeño retardo para permitir que se actualice el body.classList en el otro script
+                setTimeout(() => {
+                    tinymce.remove('#scope_activities, #trabajos_revisar, #notas');
+                    initTinyMCE();
+                }, 100);
+            });
+        }
     });
 </script>
 
@@ -236,8 +266,31 @@ require_once '../../includes/sidebar.php';
 
             <div class="form-group">
                 <textarea id="scope_activities" name="scope_activities"></textarea>
-                <p class="text-xs text-muted" style="margin-top: 0.5rem;">Describe detalladamente las tareas que incluye
-                    el servicio.</p>
+                <p class="text-xs text-muted" style="margin-top: 0.5rem;">Describe detalladamente las tareas que incluye el servicio.</p>
+            </div>
+        </div>
+
+        <!-- 2.5 Trabajos a Revisar -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                <i class="ph ph-magnifying-glass" style="font-size: 1.2rem; color: var(--warning);"></i>
+                <h3 style="margin: 0; color: var(--text-primary);">Trabajos a Revisar</h3>
+            </div>
+            <div class="form-group">
+                <textarea id="trabajos_revisar" name="trabajos_revisar"></textarea>
+                <p class="text-xs text-muted" style="margin-top: 0.5rem;">Detalla los elementos que necesitan ser inspeccionados o revisados en campo.</p>
+            </div>
+        </div>
+
+        <!-- 2.6 Notas -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                <i class="ph ph-note" style="font-size: 1.2rem; color: var(--info);"></i>
+                <h3 style="margin: 0; color: var(--text-primary);">Notas Adicionales</h3>
+            </div>
+            <div class="form-group">
+                <textarea id="notas" name="notas"></textarea>
+                <p class="text-xs text-muted" style="margin-top: 0.5rem;">Cualquier observación adicional relevante para el proyecto.</p>
             </div>
         </div>
 

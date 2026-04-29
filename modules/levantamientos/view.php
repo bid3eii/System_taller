@@ -615,26 +615,55 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
             <!-- 2-col grid: Alcances + Materiales side by side -->
             <div style="display: grid; grid-template-columns: 7fr 3fr; gap: 1rem; align-items: start;">
 
-                <!-- Scope Box -->
-                <?php if ($survey['scope_activities']): ?>
-                    <div class="glass-card" style="margin-bottom: 0;">
-                        <div class="glass-card-header">
-                            <i class="ph ph-target"></i>
-                            <h3 class="glass-card-title">Alcances</h3>
+                <!-- Left Text Column -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Scope Box -->
+                    <?php if ($survey['scope_activities']): ?>
+                        <div class="glass-card" style="margin-bottom: 0;">
+                            <div class="glass-card-header">
+                                <i class="ph ph-target"></i>
+                                <h3 class="glass-card-title">Alcances</h3>
+                            </div>
+                            <div class="rich-text-content">
+                                <?php echo $survey['scope_activities']; ?>
+                            </div>
                         </div>
-                        <div class="rich-text-content">
-                            <?php echo $survey['scope_activities']; ?>
+                    <?php else: ?>
+                        <div class="glass-card" style="margin-bottom: 0;">
+                            <div class="glass-card-header">
+                                <i class="ph ph-target"></i>
+                                <h3 class="glass-card-title">Alcances</h3>
+                            </div>
+                            <p class="text-muted italic" style="margin:0; font-size:0.9rem;">Sin alcances definidos.</p>
                         </div>
-                    </div>
-                <?php else: ?>
-                    <div class="glass-card" style="margin-bottom: 0;">
-                        <div class="glass-card-header">
-                            <i class="ph ph-target"></i>
-                            <h3 class="glass-card-title">Alcances</h3>
+                    <?php endif; ?>
+
+                    <!-- Trabajos a Revisar Box -->
+                    <?php if (!empty($survey['trabajos_revisar'])): ?>
+                        <div class="glass-card" style="margin-bottom: 0;">
+                            <div class="glass-card-header">
+                                <i class="ph ph-magnifying-glass" style="color: var(--warning);"></i>
+                                <h3 class="glass-card-title">Trabajos a Revisar</h3>
+                            </div>
+                            <div class="rich-text-content">
+                                <?php echo $survey['trabajos_revisar']; ?>
+                            </div>
                         </div>
-                        <p class="text-muted italic" style="margin:0; font-size:0.9rem;">Sin alcances definidos.</p>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+
+                    <!-- Notas Box -->
+                    <?php if (!empty($survey['notas'])): ?>
+                        <div class="glass-card" style="margin-bottom: 0;">
+                            <div class="glass-card-header">
+                                <i class="ph ph-note" style="color: var(--info);"></i>
+                                <h3 class="glass-card-title">Notas Adicionales</h3>
+                            </div>
+                            <div class="rich-text-content">
+                                <?php echo $survey['notas']; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
                 <!-- Materials Box -->
                 <div class="glass-card" style="margin-bottom: 0;">

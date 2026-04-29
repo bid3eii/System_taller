@@ -251,7 +251,7 @@ $technicians = $stmtTechs->fetchAll();
                     <input type="datetime-local" id="start" name="start" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Diferencia Estimada</label>
+                    <label class="form-label">Fecha y Hora Fin</label>
                     <input type="datetime-local" id="end" name="end" class="form-control" required>
                 </div>
             </div>
@@ -399,8 +399,43 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             document.getElementById('deleteBtnContainer').innerHTML = '';
             if (startStr) {
-                document.getElementById('start').value = startStr.includes('T') ? startStr.slice(0, 16) : startStr + 'T09:00';
-                if (endStr) document.getElementById('end').value = endStr.includes('T') ? endStr.slice(0, 16) : endStr + 'T10:00';
+                let finalStart = startStr.includes('T') ? startStr.slice(0, 16) : startStr + 'T09:00';
+                document.getElementById('start').value = finalStart;
+                
+                if (endStr && endStr.includes('T')) {
+                    document.getElementById('end').value = endStr.slice(0, 16);
+                } else if (endStr) {
+                    // FullCalendar sends endStr as the EXCLUSIVE next day for all-day selections.
+                    // We check if it's a single day click by seeing if endStr - 1 day == startStr
+                    let ed = new Date(endStr);
+                    ed.setDate(ed.getDate() - 1);
+                    
+                    let isSingleDay = false;
+                    if (!startStr.includes('T')) {
+                        let sdCheck = new Date(startStr);
+                        if (ed.getTime() === sdCheck.getTime()) {
+                            isSingleDay = true;
+                        }
+                    }
+
+                    if (isSingleDay) {
+                        // Single day clicked: set end time to 1 hour after start time
+                        let sd = new Date(finalStart);
+                        sd.setHours(sd.getHours() + 1);
+                        let y = sd.getFullYear();
+                        let m = String(sd.getMonth() + 1).padStart(2, '0');
+                        let d = String(sd.getDate()).padStart(2, '0');
+                        let h = String(sd.getHours()).padStart(2, '0');
+                        let min = String(sd.getMinutes()).padStart(2, '0');
+                        document.getElementById('end').value = `${y}-${m}-${d}T${h}:${min}`;
+                    } else {
+                        // Multi-day selection: use the real inclusive end day
+                        let y = ed.getFullYear();
+                        let m = String(ed.getMonth() + 1).padStart(2, '0');
+                        let d = String(ed.getDate()).padStart(2, '0');
+                        document.getElementById('end').value = `${y}-${m}-${d}T10:00`;
+                    }
+                }
             }
         }
         modal.style.display = 'flex';

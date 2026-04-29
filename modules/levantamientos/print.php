@@ -527,6 +527,26 @@ if (!$date_format || strpos($date_format, '%') !== false) {
                 </div>
             </div>
 
+            <!-- Trabajos a Revisar -->
+            <?php if (!empty($survey['trabajos_revisar'])): ?>
+            <div class="section">
+                <h3 class="section-title">Trabajos a Revisar</h3>
+                <div class="rich-text">
+                    <?php echo $survey['trabajos_revisar']; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Notas Adicionales -->
+            <?php if (!empty($survey['notas'])): ?>
+            <div class="section">
+                <h3 class="section-title">Notas Adicionales</h3>
+                <div class="rich-text">
+                    <?php echo $survey['notas']; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Resources Estimation -->
             <div class="section">
                 <h3 class="section-title">Logística y Estimación</h3>

@@ -44,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = clean($_POST['title']);
     $general_description = clean($_POST['general_description']);
     $scope_activities = $_POST['scope_activities']; // Can contain HTML
+    $trabajos_revisar = $_POST['trabajos_revisar'] ?? ''; // Can contain HTML
+    $notas = $_POST['notas'] ?? ''; // Can contain HTML
     $estimated_time = clean($_POST['estimated_time']);
 
     $personnel_required = clean($_POST['personnel_required'] ?? '');
@@ -84,6 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'vendedor' => $survey['vendedor'],
                 'general_description' => $survey['general_description'],
                 'scope_activities' => $survey['scope_activities'],
+                'trabajos_revisar' => $survey['trabajos_revisar'],
+                'notas' => $survey['notas'],
                 'estimated_time' => $survey['estimated_time'],
                 'personnel_required' => $survey['personnel_required'],
                 'materials' => $old_materials,
@@ -93,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 1. Update Survey
             $stmtU = $pdo->prepare("
                 UPDATE project_surveys 
-                SET client_name = ?, title = ?, vendedor = ?, general_description = ?, scope_activities = ?, estimated_time = ?, personnel_required = ?
+                SET client_name = ?, title = ?, vendedor = ?, general_description = ?, scope_activities = ?, trabajos_revisar = ?, notas = ?, estimated_time = ?, personnel_required = ?
                 WHERE id = ?
             ");
 
@@ -103,6 +107,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $vendedor,
                 $general_description,
                 $scope_activities,
+                $trabajos_revisar,
+                $notas,
                 $estimated_time,
                 $personnel_required,
                 $id
@@ -176,6 +182,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'vendedor' => $vendedor,
                 'general_description' => $general_description,
                 'scope_activities' => $scope_activities,
+                'trabajos_revisar' => $trabajos_revisar,
+                'notas' => $notas,
                 'estimated_time' => $estimated_time,
                 'personnel_required' => $personnel_required,
                 'materials' => $new_materials,
@@ -223,22 +231,48 @@ require_once '../../includes/sidebar.php';
 <!-- TinyMCE CDN for Rich Text -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/5.10.9/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    tinymce.init({
-        selector: '#scope_activities',
-        height: 300,
-        menubar: false,
-        plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
-            'searchreplace', 'visualblocks', 'fullscreen',
-            'insertdatetime', 'table', 'help', 'wordcount'
-        ],
-        toolbar: 'undo redo | blocks | ' +
-            'bold italic | alignleft aligncenter ' +
-            'alignright alignjustify | bullist numlist outdent indent | ' +
-            'removeformat | help',
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-        skin: document.body.classList.contains('light-mode') ? 'oxide' : 'oxide-dark',
-        content_css: document.body.classList.contains('light-mode') ? 'default' : 'dark'
+    function initTinyMCE() {
+        const isLight = document.body.classList.contains('light-mode') || localStorage.getItem('theme') === 'light';
+        tinymce.init({
+            selector: '#scope_activities, #trabajos_revisar, #notas',
+            height: 500,
+            resize: 'vertical',
+            menubar: true,
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons'
+            ],
+            toolbar: 'undo redo | formatselect fontselect fontsizeselect | ' +
+                'bold italic underline strikethrough forecolor backcolor | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'link image media table emoticons | removeformat | fullscreen help',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:15px }',
+            skin: isLight ? 'oxide' : 'oxide-dark',
+            content_css: isLight ? 'default' : 'dark',
+            setup: function(editor) {
+                editor.on('change', function() {
+                    editor.save();
+                });
+            }
+        });
+    }
+
+    // Inicializar en carga
+    initTinyMCE();
+
+    // Re-inicializar cuando el usuario cambie el tema
+    window.addEventListener('DOMContentLoaded', () => {
+        const themeBtn = document.getElementById('themeToggle');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                // Pequeño retardo para permitir que se actualice el body.classList en el otro script
+                setTimeout(() => {
+                    tinymce.remove('#scope_activities, #trabajos_revisar, #notas');
+                    initTinyMCE();
+                }, 100);
+            });
+        }
     });
 </script>
 
@@ -312,8 +346,29 @@ require_once '../../includes/sidebar.php';
             </div>
 
             <div class="form-group">
-                <textarea id="scope_activities"
-                    name="scope_activities"><?php echo htmlspecialchars($survey['scope_activities']); ?></textarea>
+                <textarea id="scope_activities" name="scope_activities"><?php echo htmlspecialchars($survey['scope_activities']); ?></textarea>
+            </div>
+        </div>
+
+        <!-- 2.5 Trabajos a Revisar -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                <i class="ph ph-magnifying-glass" style="font-size: 1.2rem; color: var(--warning);"></i>
+                <h3 style="margin: 0; color: var(--text-primary);">Trabajos a Revisar</h3>
+            </div>
+            <div class="form-group">
+                <textarea id="trabajos_revisar" name="trabajos_revisar"><?php echo htmlspecialchars($survey['trabajos_revisar'] ?? ''); ?></textarea>
+            </div>
+        </div>
+
+        <!-- 2.6 Notas -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                <i class="ph ph-note" style="font-size: 1.2rem; color: var(--info);"></i>
+                <h3 style="margin: 0; color: var(--text-primary);">Notas Adicionales</h3>
+            </div>
+            <div class="form-group">
+                <textarea id="notas" name="notas"><?php echo htmlspecialchars($survey['notas'] ?? ''); ?></textarea>
             </div>
         </div>
 
