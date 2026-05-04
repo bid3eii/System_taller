@@ -175,24 +175,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $client_id = $pdo->lastInsertId();
         }
     } elseif (empty($client_id) && !empty($c_name)) {
-        // Find Existing by Name or Tax ID to prevent duplicates
-        $stmtCheck = $pdo->prepare("SELECT id FROM clients WHERE name = ? OR (tax_id = ? AND tax_id != '') LIMIT 1");
-        $stmtCheck->execute([$c_name, $c_tax]);
-        $existing = $stmtCheck->fetch();
-
-        if ($existing) {
-            $client_id = $existing['id'];
-            // Opcional: Si el existente era tercero y ahora es garantía, actualizarlo a cliente normal
-            if ($is_warranty_mode) {
-                $stmtC = $pdo->prepare("UPDATE clients SET is_third_party = 0 WHERE id = ?");
-                $stmtC->execute([$client_id]);
-            }
-        } else {
-            // Create New Client / Third Party
-            $stmtNewC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, is_third_party, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmtNewC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, $is_third, get_local_datetime()]);
-            $client_id = $pdo->lastInsertId();
-        }
+        // Create New Client / Third Party ALWAYS if no client_id was explicitly selected
+        // (Desactivada la búsqueda automática por nombre a petición del usuario para respetar los datos ingresados)
+        $stmtNewC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, is_third_party, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmtNewC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, $is_third, get_local_datetime()]);
+        $client_id = $pdo->lastInsertId();
     } elseif (!empty($client_id)) {
         // Update existing client info
         // User might have edited the phone number. Let's update it to keep data fresh.
