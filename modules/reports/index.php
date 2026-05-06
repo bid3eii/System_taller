@@ -388,13 +388,25 @@ body.light-mode .date-label {
     color: var(--text-main);
     font-size: 0.95rem;
     transition: all 0.3s ease;
+    color-scheme: dark;
 }
 
 .premium-input:focus {
-    background: rgba(var(--primary-rgb), 0.05);
+    background: rgba(0, 0, 0, 0.2);
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
     outline: none;
+    color: #ffffff;
+}
+
+/* Auto-fill fix to prevent light background overriding */
+.premium-input:-webkit-autofill,
+.premium-input:-webkit-autofill:hover, 
+.premium-input:-webkit-autofill:focus, 
+.premium-input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px #1e1e2d inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
 .select-wrapper {
@@ -424,7 +436,28 @@ body.light-mode .date-label {
     color: white; /* White text for options */
 }
 
-/* Light mode overrides for select dropdowns */
+/* Light mode overrides for select dropdowns and inputs */
+body.light-mode .premium-input {
+    background-color: white;
+    color: var(--slate-900);
+    border-color: var(--slate-300);
+}
+
+body.light-mode .premium-input:focus {
+    background-color: white;
+    border-color: var(--primary-500);
+    color: var(--slate-900);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .premium-input:-webkit-autofill,
+body.light-mode .premium-input:-webkit-autofill:hover, 
+body.light-mode .premium-input:-webkit-autofill:focus, 
+body.light-mode .premium-input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+    -webkit-text-fill-color: var(--slate-900) !important;
+}
+
 body.light-mode .premium-select {
     background-color: white;
     color: var(--slate-900);

@@ -34,8 +34,10 @@ $sql = "
         e.type as equipment_type,
         so.service_type,
         so.status, 
+        TRIM(so.status) as trimmed_status,
         so.diagnosis_number,
-        u.username as tech_name
+        u.username as tech_name,
+        u.full_name as tech_name_full
     FROM service_orders so
     LEFT JOIN clients c ON so.client_id = c.id
     LEFT JOIN equipments e ON so.equipment_id = e.id
@@ -60,7 +62,7 @@ if ($type !== 'all' && !empty($type)) {
 }
 
 if ($status !== 'all' && !empty($status)) {
-    $sql .= " AND so.status = ?";
+    $sql .= " AND TRIM(so.status) = ?";
     $params[] = $status;
 }
 
@@ -83,18 +85,28 @@ if (!empty($search)) {
     $term = "%$search%";
     $sql .= " AND (
         so.id LIKE ? OR 
+        so.display_id LIKE ? OR
         c.name LIKE ? OR 
+        so.owner_name LIKE ? OR
+        reg_owner.name LIKE ? OR
         c.phone LIKE ? OR 
         e.brand LIKE ? OR 
         e.model LIKE ? OR
-        e.serial_number LIKE ?
+        e.serial_number LIKE ? OR
+        u.username LIKE ? OR
+        u.full_name LIKE ?
     )";
     $params[] = $term; // id
+    $params[] = $term; // display_id
     $params[] = $term; // name
+    $params[] = $term; // owner_name
+    $params[] = $term; // reg_owner.name
     $params[] = $term; // phone
     $params[] = $term; // brand
     $params[] = $term; // model
     $params[] = $term; // serial
+    $params[] = $term; // tech username
+    $params[] = $term; // tech full name
 }
 
 $sql .= " ORDER BY so.entry_date DESC";
@@ -179,7 +191,7 @@ header("Expires: 0");
             <?php foreach ($rows as $row): ?>
                 <?php
                     // Helper to map status to class
-                    $s = $row['status'];
+                    $s = trim($row['status']);
                     $sClass = '';
                     if (in_array($s, ['ready', 'approved'])) $sClass = 'status-ready';
                     elseif ($s === 'delivered') $sClass = 'status-delivered';
@@ -214,7 +226,7 @@ header("Expires: 0");
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
                     <td class="<?php echo $sClass; ?>"><?php echo $label; ?></td>
                     <td><?php echo !empty($row['diagnosis_number']) ? '#'.str_pad($row['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></td>
-                    <td><?php echo htmlspecialchars($row['tech_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['tech_name_full'] ?: $row['tech_name']); ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
