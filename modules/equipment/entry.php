@@ -1163,7 +1163,7 @@ require_once '../../includes/sidebar.php';
                                     </div>
                                 </div>
 
-                                <div class="form-group" style="grid-column: span 3;">
+                                <div class="form-group owner-field-container" style="grid-column: span 3;">
                                     <label class="form-label">Dueño / Propietario (Si aplica)</label>
                                     <div class="input-group">
                                         <input type="text" name="owner_name[]" class="form-control"
@@ -1406,6 +1406,15 @@ require_once '../../includes/sidebar.php';
 
                     // Reset status msg
                     template.querySelector('.warranty-status-msg').innerHTML = '';
+
+                    // Hide the owner field for cloned equipments
+                    const ownerField = template.querySelector('.owner-field-container');
+                    if (ownerField) {
+                        ownerField.style.display = 'none';
+                        // also clear the value just in case
+                        const ownerInput = ownerField.querySelector('input');
+                        if (ownerInput) ownerInput.value = '';
+                    }
 
                     // Handle Radio Groups sync for the new block
                     const radios = template.querySelectorAll('input[type="radio"]');
