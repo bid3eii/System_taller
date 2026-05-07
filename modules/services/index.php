@@ -132,9 +132,19 @@ if (!$can_view_all) {
 }
 
 if ($search) {
-    $whereActive .= " AND (c.name LIKE ? OR e.model LIKE ? OR e.serial_number LIKE ? OR so.display_id LIKE ? OR so.owner_name LIKE ?)";
     $srch = "%$search%";
+    $clean_search = ltrim(strtoupper(trim($search)), '#');
+    $numeric_search = preg_replace('/[^0-9]/', '', $clean_search);
+
+    $whereActive .= " AND (c.name LIKE ? OR e.model LIKE ? OR e.serial_number LIKE ? OR so.display_id LIKE ? OR so.owner_name LIKE ?";
     $paramsActive = array_merge($paramsActive, [$srch, $srch, $srch, $srch, $srch]);
+
+    if (!empty($numeric_search)) {
+        $num_val = (int)$numeric_search;
+        $whereActive .= " OR so.id = ? OR so.display_id = ?";
+        $paramsActive = array_merge($paramsActive, [$num_val, $num_val]);
+    }
+    $whereActive .= ")";
 }
 
 // Get Total Count for Active
@@ -172,9 +182,19 @@ if (!$can_view_all) {
 }
 
 if ($search) {
-    $whereDelivered .= " AND (c.name LIKE ? OR e.model LIKE ? OR e.serial_number LIKE ? OR so.display_id LIKE ? OR so.owner_name LIKE ?)";
     $srch = "%$search%";
+    $clean_search = ltrim(strtoupper(trim($search)), '#');
+    $numeric_search = preg_replace('/[^0-9]/', '', $clean_search);
+
+    $whereDelivered .= " AND (c.name LIKE ? OR e.model LIKE ? OR e.serial_number LIKE ? OR so.display_id LIKE ? OR so.owner_name LIKE ?";
     $paramsDelivered = array_merge($paramsDelivered, [$srch, $srch, $srch, $srch, $srch]);
+
+    if (!empty($numeric_search)) {
+        $num_val = (int)$numeric_search;
+        $whereDelivered .= " OR so.id = ? OR so.display_id = ?";
+        $paramsDelivered = array_merge($paramsDelivered, [$num_val, $num_val]);
+    }
+    $whereDelivered .= ")";
 }
 
 // Get Total Count for Delivered
