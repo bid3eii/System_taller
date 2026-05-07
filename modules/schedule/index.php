@@ -340,6 +340,18 @@ document.addEventListener('DOMContentLoaded', function() {
             center: 'title',
             right: 'multiMonthYear,dayGridMonth,timeGridWeek,listYear'
         },
+        eventTimeFormat: {
+            hour: 'numeric',
+            minute: '2-digit',
+            meridiem: 'short',
+            hour12: true
+        },
+        slotLabelFormat: {
+            hour: 'numeric',
+            minute: '2-digit',
+            meridiem: 'short',
+            hour12: true
+        },
         events: function(info, successCallback, failureCallback) {
             const tId = techFilter ? techFilter.value : 'all';
             fetch(`get_events.php?start=${info.startStr}&end=${info.endStr}&tech_id=${tId}`)
@@ -361,6 +373,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const modal = document.getElementById('eventModal');
     const form = document.getElementById('eventForm');
+
+    function toLocalDatetimeString(date) {
+        if (!date) return '';
+        const pad = n => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
 
     window.openEventModal = function(event = null, startStr = null, endStr = null) {
         form.reset();
@@ -384,8 +402,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('tech_id').value = event.extendedProps.tech_id;
 
             
-            document.getElementById('start').value = event.start.toISOString().slice(0, 16);
-            if (event.end) document.getElementById('end').value = event.end.toISOString().slice(0, 16);
+            document.getElementById('start').value = toLocalDatetimeString(event.start);
+            if (event.end) document.getElementById('end').value = toLocalDatetimeString(event.end);
             
             if (canManage) {
                 document.getElementById('deleteBtnContainer').innerHTML = `
@@ -483,8 +501,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateEventQuick(event) {
         const data = {
             id: event.id,
-            start: event.start.toISOString().slice(0, 19).replace('T', ' '),
-            end: event.end ? event.end.toISOString().slice(0, 19).replace('T', ' ') : '',
+            start: toLocalDatetimeString(event.start).replace('T', ' ') + ':00',
+            end: event.end ? toLocalDatetimeString(event.end).replace('T', ' ') + ':00' : '',
             title: event.title,
             tech_id: event.extendedProps.tech_id,
             location: event.extendedProps.location,

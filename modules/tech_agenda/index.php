@@ -97,7 +97,7 @@ $status_map = [
                         <div style="padding: 1.5rem; display: flex; gap: 1.5rem; align-items: flex-start;">
                             <!-- Time Section -->
                             <div style="min-width: 100px; text-align: center; border-right: 1px solid var(--border-color); padding-right: 1.5rem;">
-                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);"><?php echo date('H:i', strtotime($v['start_datetime'])); ?></div>
+                                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);"><?php echo date('g:i A', strtotime($v['start_datetime'])); ?></div>
                                 <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); margin-top: 0.2rem;">
                                     <?php echo date('d M', strtotime($v['start_datetime'])); ?>
                                 </div>
