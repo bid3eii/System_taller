@@ -194,10 +194,10 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
         background-color: rgba(99, 102, 241, 0.25) !important;
     }
     body.light-mode .stock-row.selected-row {
-        background-color: rgba(99, 102, 241, 0.16) !important; /* Más oscuro/notorio en modo claro */
+        background-color: rgba(99, 102, 241, 0.3) !important; /* Más oscuro/notorio en modo claro */
     }
     body.light-mode .stock-row.selected-row:hover {
-        background-color: rgba(99, 102, 241, 0.22) !important;
+        background-color: rgba(99, 102, 241, 0.38) !important;
     }
     .stock-row.selected-row td:first-child {
         border-left: 4px solid var(--primary-500, #6366f1);
