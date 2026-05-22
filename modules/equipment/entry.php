@@ -199,6 +199,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
+            // Obtener el ID dinámico del cliente 'Bodega - Inventario' para evitar hardcoding del ID 11
+            $stmtBodegaId = $pdo->prepare("SELECT id FROM clients WHERE name = 'Bodega - Inventario' LIMIT 1");
+            $stmtBodegaId->execute();
+            $bodega_id = $stmtBodegaId->fetchColumn();
+
             $serial_numbers = $_POST['serial_number'] ?? [];
             if (!is_array($serial_numbers)) {
                 // Handle single entry or Edit mode (fallback)
@@ -325,7 +330,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // 3. History
-                $hist_note = ($client_id == 11) ? 'Equipo ingresado a inventario de bodega' : 'Equipo ingresado al taller';
+                $hist_note = ($bodega_id && $client_id == $bodega_id) ? 'Equipo ingresado a inventario de bodega' : 'Equipo ingresado al taller';
                 $stmtHist = $pdo->prepare("INSERT INTO service_order_history (service_order_id, action, notes, user_id, created_at) VALUES (?, 'received', ?, ?, ?)");
                 $stmtHist->execute([$order_id_new, $hist_note, $_SESSION['user_id'], $now]);
 
@@ -339,7 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->commit();
 
             if (!empty($order_ids)) {
-                if ($client_id == 11) {
+                if ($bodega_id && $client_id == $bodega_id) {
                     // Warehouse inventory entry: redirect to database with success msg
                     header("Location: ../warranties/database.php?msg=inventory_saved");
                 } else {

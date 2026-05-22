@@ -177,6 +177,23 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
         border-color: #10b981;
         box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
     }
+    .stock-row {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .stock-row:hover {
+        background-color: rgba(255, 255, 255, 0.02) !important;
+    }
+    .stock-row.selected-row {
+        background-color: rgba(99, 102, 241, 0.08) !important; /* Soft premium indigo highlight */
+    }
+    .stock-row.selected-row td:first-child {
+        border-left: 3px solid var(--primary-500, #6366f1);
+    }
+    .stock-row td:first-child {
+        border-left: 3px solid transparent;
+        transition: border-left-color 0.2s ease;
+    }
     </style>
 
     <!-- Search Bar -->
@@ -196,12 +213,22 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
         </form>
     </div>
 
-    <!-- Bulk Actions (Only in Stock) -->
+    <!-- Bulk Actions & Utility Buttons (Only in Stock) -->
     <?php if ($tab === 'stock'): ?>
-    <div style="margin-bottom: 1rem; display: none;" id="bulk-action-container">
-        <button class="btn btn-primary" onclick="openBulkAssignModal()" style="background: #10b981; border-color: #10b981;">
-            <i class="ph ph-shopping-cart"></i> Vender Seleccionados (<span id="bulk-count">0</span>)
-        </button>
+    <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;" id="bulk-action-bar">
+        <div style="display: none;" id="bulk-action-container">
+            <button class="btn btn-primary" onclick="openBulkAssignModal()" style="background: #10b981; border-color: #10b981; padding: 0.5rem 1rem;">
+                <i class="ph ph-shopping-cart"></i> Vender Seleccionados (<span id="bulk-count">0</span>)
+            </button>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="selectAllVisibleRows(true)" style="padding: 0.5rem 1rem; font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--primary-500); border-color: rgba(99, 102, 241, 0.2);">
+                <i class="ph ph-squares-four"></i> Seleccionar Todos
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="selectAllVisibleRows(false)" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                <i class="ph ph-x-circle"></i> Limpiar Selección
+            </button>
+        </div>
     </div>
     <?php endif; ?>
 
@@ -211,9 +238,6 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                 <thead>
                     <tr>
                         <?php if ($tab === 'stock'): ?>
-                            <th style="width: 40px; text-align: center;">
-                                <input type="checkbox" id="selectAllItems" onchange="toggleAllCheckboxes(this)">
-                            </th>
                             <th>Cód. Producto</th>
                             <th>Equipo / Serie</th>
                             <th>Origen</th>
@@ -294,10 +318,7 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                     $healthBar = '<span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); font-weight: 600; padding: 6px 10px; border-radius: 6px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;"><i class="ph ph-warning-circle" style="font-size: 0.85rem;"></i> SIN GARANTÍA PROV.</span>';
                                 }
                             ?>
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <td style="text-align: center;">
-                                    <input type="checkbox" class="bulk-cb" value="<?php echo $r['id']; ?>" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>'>
-                                </td>
+                            <tr class="stock-row" data-id="<?php echo $r['id']; ?>" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' style="border-bottom: 1px solid var(--border-color);">
                                 <td>
                                     <?php if (empty(trim($r['product_code']))): ?>
                                         <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">⚠️ Sin Código</span>
@@ -605,7 +626,7 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                         <?php endif; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="<?php echo $tab === 'stock' ? '7' : '4'; ?>" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                            <td colspan="<?php echo $tab === 'stock' ? '6' : '4'; ?>" style="padding: 3rem; text-align: center; color: var(--text-muted);">
                                 <i class="ph ph-warning-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
                                 No se encontraron registros.
                             </td>
@@ -988,28 +1009,27 @@ function saveCart() {
     localStorage.setItem('warehouse_cart', JSON.stringify(warehouse_cart));
 }
 
-function handleCheckboxChange(cb) {
-    if (cb.checked) {
-        warehouse_cart[cb.value] = JSON.parse(cb.dataset.json);
+function toggleRowSelection(row, forceState = null) {
+    const id = row.dataset.id;
+    const data = JSON.parse(row.dataset.json);
+    const isSelected = forceState !== null ? forceState : !row.classList.contains('selected-row');
+    
+    if (isSelected) {
+        row.classList.add('selected-row');
+        warehouse_cart[id] = data;
     } else {
-        delete warehouse_cart[cb.value];
+        row.classList.remove('selected-row');
+        delete warehouse_cart[id];
     }
     saveCart();
     updateBulkActionUI();
 }
 
-function toggleAllCheckboxes(source) {
-    const checkboxes = document.querySelectorAll('.bulk-cb');
-    checkboxes.forEach(cb => {
-        cb.checked = source.checked;
-        if (source.checked) {
-            warehouse_cart[cb.value] = JSON.parse(cb.dataset.json);
-        } else {
-            delete warehouse_cart[cb.value];
-        }
+function selectAllVisibleRows(select) {
+    const rows = document.querySelectorAll('.stock-row');
+    rows.forEach(row => {
+        toggleRowSelection(row, select);
     });
-    saveCart();
-    updateBulkActionUI();
 }
 
 function updateBulkActionUI() {
@@ -1025,8 +1045,6 @@ function updateBulkActionUI() {
         container.style.display = 'block';
     } else {
         container.style.display = 'none';
-        const selectAll = document.getElementById('selectAllItems');
-        if (selectAll) selectAll.checked = false;
     }
 }
 
@@ -1046,10 +1064,15 @@ function validateSelectedStock() {
                     warehouse_cart = newCart;
                     saveCart();
                     
-                    // Sincronizar checkboxes de la página actual
-                    const checkboxes = document.querySelectorAll('.bulk-cb');
-                    checkboxes.forEach(cb => {
-                        cb.checked = !!warehouse_cart[cb.value];
+                    // Sincronizar estado de selección de las filas visibles
+                    const rows = document.querySelectorAll('.stock-row');
+                    rows.forEach(row => {
+                        const id = row.dataset.id;
+                        if (warehouse_cart[id]) {
+                            row.classList.add('selected-row');
+                        } else {
+                            row.classList.remove('selected-row');
+                        }
                     });
                     updateBulkActionUI();
                 }
@@ -1073,10 +1096,15 @@ window.addEventListener('pageshow', (event) => {
     localStorage.removeItem('warehouse_assign_form_data');
     <?php endif; ?>
 
-    // Sincronizar checkboxes visibles en el DOM
-    const checkboxes = document.querySelectorAll('.bulk-cb');
-    checkboxes.forEach(cb => {
-        cb.checked = !!warehouse_cart[cb.value];
+    // Sincronizar estado de selección de las filas visibles
+    const rows = document.querySelectorAll('.stock-row');
+    rows.forEach(row => {
+        const id = row.dataset.id;
+        if (warehouse_cart[id]) {
+            row.classList.add('selected-row');
+        } else {
+            row.classList.remove('selected-row');
+        }
     });
     updateBulkActionUI();
     
@@ -1085,10 +1113,22 @@ window.addEventListener('pageshow', (event) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Vincular listener de cambio de checkbox
-    const checkboxes = document.querySelectorAll('.bulk-cb');
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', () => handleCheckboxChange(cb));
+    // Hacer que las filas de stock sean clicables
+    const rows = document.querySelectorAll('.stock-row');
+    rows.forEach(row => {
+        row.addEventListener('click', (e) => {
+            // Si el usuario hace clic en un botón, enlace, icono o badge, no interceptamos
+            if (
+                e.target.closest('button') || 
+                e.target.closest('a') || 
+                e.target.closest('.badge') || 
+                e.target.closest('.btn-icon')
+            ) {
+                return;
+            }
+            
+            toggleRowSelection(row);
+        });
     });
 
     // ── 3. Bind input persistence listeners ───────────────────────────────────
