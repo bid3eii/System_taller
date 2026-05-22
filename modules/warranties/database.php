@@ -9,6 +9,39 @@ if (!can_access_module('warranties', $pdo) && !can_access_module('new_warranty',
     die("Acceso denegado.");
 }
 
+// AJAX stock validation endpoint
+if (isset($_GET['action']) && $_GET['action'] === 'validate_stock') {
+    header('Content-Type: application/json');
+    $ids_str = $_GET['ids'] ?? '';
+    if (empty($ids_str)) {
+        echo json_encode([]);
+        exit;
+    }
+    $ids = explode(',', $ids_str);
+    $valid_ids = [];
+    $clean_ids = [];
+    foreach ($ids as $id) {
+        $val = (int)trim($id);
+        if ($val > 0) {
+            $clean_ids[] = $val;
+        }
+    }
+    if (!empty($clean_ids)) {
+        $placeholders = implode(',', array_fill(0, count($clean_ids), '?'));
+        $sql = "
+            SELECT so.id 
+            FROM service_orders so
+            JOIN clients c ON so.client_id = c.id
+            WHERE so.id IN ($placeholders) AND c.name = 'Bodega - Inventario'
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($clean_ids);
+        $valid_ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+    echo json_encode($valid_ids);
+    exit;
+}
+
 $page_title = 'Registros de Bodega';
 require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
@@ -32,8 +65,8 @@ if ($tab === 'stock') {
 }
 
 if (!empty($search)) {
-    $where .= " AND (e.serial_number LIKE ? OR w.product_code LIKE ? OR c.name LIKE ? OR w.sales_invoice_number LIKE ?)";
-    array_push($params, "%$search%", "%$search%", "%$search%", "%$search%");
+    $where .= " AND (e.serial_number LIKE ? OR w.product_code LIKE ? OR c.name LIKE ? OR w.sales_invoice_number LIKE ? OR e.brand LIKE ? OR e.model LIKE ? OR w.master_entry_invoice LIKE ? OR w.supplier_name LIKE ?)";
+    array_push($params, "%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%");
 }
 
 // Get Total Count
@@ -56,6 +89,7 @@ $sql = "
         so.id, so.entry_date, 
         w.product_code, w.sales_invoice_number, w.supplier_name,
         w.master_entry_invoice, w.master_entry_date, w.end_date, w.status, w.duration_months, w.purchase_origin,
+        w.supplier_duration_months, w.supplier_end_date,
         c.name as client_name, c.id as client_id, c.tax_id, c.phone,
         e.id as equipment_id, e.category_id, e.brand, e.model, e.serial_number
     FROM service_orders so
@@ -82,9 +116,17 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
             <h1><i class="ph ph-database" style="color: var(--primary-500);"></i> Registros de Bodega</h1>
             <p class="text-muted">Consulta el historial completo de hardware registrado en bodega.</p>
         </div>
-        <a href="../equipment/entry.php?type=warranty" class="btn btn-primary">
-            <i class="ph ph-plus-circle"></i> Nuevo Registro
-        </a>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="history.php" class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                <i class="ph ph-clock-counter-clockwise"></i> Historial de Emisión
+            </a>
+            <a href="report_expiring.php" class="btn btn-secondary" style="background: rgba(168, 85, 247, 0.1); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3);">
+                <i class="ph ph-trend-up"></i> Reporte por Vencer
+            </a>
+            <a href="../equipment/entry.php?type=warranty" class="btn btn-primary">
+                <i class="ph ph-plus-circle"></i> Nuevo Registro
+            </a>
+        </div>
     </div>
 
     <!-- Tabs -->
@@ -97,13 +139,58 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
         </a>
     </div>
 
+    <style>
+    @keyframes scanner-pulse {
+        0% {
+            transform: scale(0.9);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+        70% {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+        }
+        100% {
+            transform: scale(0.9);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+    }
+    .scanner-badge {
+        position: absolute;
+        right: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 4px 8px;
+        border-radius: 6px;
+        pointer-events: none;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #10b981;
+        user-select: none;
+        transition: all 0.2s ease-in-out;
+        z-index: 5;
+    }
+    .scanner-badge.active {
+        background: rgba(16, 185, 129, 0.18);
+        border-color: #10b981;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+    }
+    </style>
+
     <!-- Search Bar -->
     <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
         <form method="GET" action="database.php" style="display: flex; gap: 1rem; align-items: center;">
             <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">
-            <div class="input-group" style="flex: 1;">
-                <input type="text" name="search" class="form-control" placeholder="Buscar por Serie, Código, Cliente o Factura..." value="<?php echo htmlspecialchars($search); ?>">
+            <div class="input-group" style="flex: 1; position: relative; display: flex; align-items: center;">
+                <input type="text" name="search" class="form-control" placeholder="Buscar por Serie, Código, Marca, Modelo, Cliente o Factura..." value="<?php echo htmlspecialchars($search); ?>" style="padding-right: 7.5rem;">
                 <i class="ph ph-magnifying-glass input-icon"></i>
+                <div id="scanner-status" class="scanner-badge">
+                    <i class="ph ph-barcode" style="font-size: 0.95rem;"></i>
+                    <span>ESCANEAR</span>
+                    <span style="display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; animation: scanner-pulse 1.5s infinite;"></span>
+                </div>
             </div>
             <button type="submit" class="btn btn-secondary">Buscar</button>
         </form>
@@ -131,6 +218,7 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                             <th>Equipo / Serie</th>
                             <th>Origen</th>
                             <th>Fecha Entrada</th>
+                            <th>Garantía Prov.</th>
                             <th>Acción</th>
                         <?php else: ?>
                             <th style="width: 220px;">Cliente</th>
@@ -145,7 +233,66 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                         <?php if ($tab === 'stock'): ?>
                             <?php foreach ($records as $r): ?>
                             <?php
-                                $healthBar = '<span class="status-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">EN BODEGA</span>';
+                                $healthBar = '';
+                                if (!empty($r['end_date']) && $r['end_date'] !== '0000-00-00') {
+                                    $endDateStr = $r['end_date'];
+                                    $startDateStr = (!empty($r['master_entry_date']) && $r['master_entry_date'] !== '0000-00-00') ? $r['master_entry_date'] : $r['entry_date'];
+                                    
+                                    try {
+                                        $endDate = new DateTime($endDateStr);
+                                        $startDate = new DateTime($startDateStr);
+                                        $today = new DateTime();
+                                        
+                                        if ($startDate < $endDate) {
+                                            $totalDays = max(1, $startDate->diff($endDate)->days);
+                                            if ($today > $endDate) {
+                                                $daysLeft = 0;
+                                            } else {
+                                                $daysLeft = max(0, $today->diff($endDate)->days);
+                                            }
+                                            $percentage = min(100, max(0, ($daysLeft / $totalDays) * 100));
+                                        } else {
+                                            $percentage = 0;
+                                            $daysLeft = 0;
+                                        }
+                                    } catch (Exception $e) {
+                                        $percentage = 0;
+                                        $daysLeft = 0;
+                                    }
+                                    
+                                    $isExpired = (strtotime($endDateStr) < time());
+                                    
+                                    if ($isExpired) {
+                                        $barColor = '#ef4444';
+                                        $pctText = 'EXP';
+                                    } else {
+                                        if ($percentage > 75) $barColor = '#10b981';
+                                        elseif ($percentage > 50) $barColor = '#eab308';
+                                        elseif ($percentage > 25) $barColor = '#f97316';
+                                        else $barColor = '#ef4444';
+                                        $pctText = round($percentage) . '%';
+                                    }
+                                    
+                                    $healthBar = '
+                                    <div style="display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid ' . $barColor . '; min-width: 140px;">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                                            <div style="text-align: left;">
+                                                <span style="display: block; font-size: 0.65rem; color: var(--text-muted); line-height: 1.1;">Vence:</span>
+                                                <span style="font-size: 0.8rem; font-weight: 600; color: ' . ($isExpired ? '#ef4444' : 'var(--text-color)') . ';">' . date('d/m/Y', strtotime($endDateStr)) . '</span>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <span style="font-size: 0.6rem; font-weight: 700; color: ' . $barColor . '; background: ' . $barColor . '15; padding: 2px 6px; border-radius: 4px;">' . $pctText . '</span>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                            <div style="flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                                                <div style="height: 100%; width: ' . $percentage . '%; background: ' . $barColor . ';"></div>
+                                            </div>
+                                        </div>
+                                    </div>';
+                                } else {
+                                    $healthBar = '<span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); font-weight: 600; padding: 6px 10px; border-radius: 6px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;"><i class="ph ph-warning-circle" style="font-size: 0.85rem;"></i> SIN GARANTÍA PROV.</span>';
+                                }
                             ?>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <td style="text-align: center;">
@@ -174,10 +321,19 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <div style="font-weight: 600; font-size: 0.85rem;">
+                                    <div style="font-weight: 600; font-size: 0.85rem; cursor: help;" title="Fecha de registro de ingreso del equipo a la Bodega (Sistema)">
                                         <i class="ph ph-calendar-blank" style="color: var(--primary-500); vertical-align: middle;"></i> 
                                         <?php echo date('d/m/Y', strtotime($r['entry_date'])); ?>
                                     </div>
+                                    <?php if (!empty($r['master_entry_date']) && $r['master_entry_date'] !== '0000-00-00'): ?>
+                                        <div class="text-xs text-muted" style="margin-top: 4px; display: flex; align-items: center; gap: 4px; cursor: help;" title="Fecha de compra o factura de ingreso original del proveedor (Ingreso Master)">
+                                            <i class="ph ph-truck" style="font-size: 0.9rem; color: #a855f7;"></i> 
+                                            <span>Prov: <?php echo date('d/m/Y', strtotime($r['master_entry_date'])); ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="vertical-align: middle;">
+                                    <?php echo $healthBar; ?>
                                 </td>
                                 <td>
                                     <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -248,6 +404,57 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                             $pctText = round($firstPct) . '%';
                                         }
 
+                                        // Calculate percentage for supplier warranty
+                                        $supHealthBar = '';
+                                        if (!empty($first['supplier_end_date']) && $first['supplier_end_date'] !== '0000-00-00') {
+                                            $supEndDateStr = $first['supplier_end_date'];
+                                            $supStartDateStr = (!empty($first['master_entry_date']) && $first['master_entry_date'] !== '0000-00-00') ? $first['master_entry_date'] : $first['entry_date'];
+                                            
+                                            try {
+                                                $supEndDate = new DateTime($supEndDateStr);
+                                                $supStartDate = new DateTime($supStartDateStr);
+                                                $today = new DateTime();
+                                                
+                                                if ($supStartDate < $supEndDate) {
+                                                    $supTotalDays = max(1, $supStartDate->diff($supEndDate)->days);
+                                                    if ($today > $supEndDate) {
+                                                        $supDaysLeft = 0;
+                                                    } else {
+                                                        $supDaysLeft = max(0, $today->diff($supEndDate)->days);
+                                                    }
+                                                    $supPct = min(100, max(0, ($supDaysLeft / $supTotalDays) * 100));
+                                                } else {
+                                                    $supPct = 0;
+                                                }
+                                            } catch (Exception $e) {
+                                                $supPct = 0;
+                                            }
+                                            
+                                            $supExp = (strtotime($supEndDateStr) < time());
+                                            if ($supExp) {
+                                                $supBarColor = '#ef4444'; $supPctText = 'EXP';
+                                            } else {
+                                                if ($supPct > 75) $supBarColor = '#10b981';
+                                                elseif ($supPct > 50) $supBarColor = '#eab308';
+                                                elseif ($supPct > 25) $supBarColor = '#f97316';
+                                                else $supBarColor = '#ef4444';
+                                                $supPctText = round($supPct) . '%';
+                                            }
+                                            
+                                            $supMonths = $first['supplier_duration_months'] ?: 12;
+                                            
+                                            $supHealthBar = '
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.06);">
+                                                <span style="font-size: 0.65rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; min-width: 105px;" title="Garantía de Proveedor original">
+                                                    <i class="ph ph-truck" style="color: #a855f7; font-size: 0.85rem;"></i> Prov: ' . $supMonths . 'm (' . date('d/m/Y', strtotime($supEndDateStr)) . ')
+                                                </span>
+                                                <div style="flex: 1; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                                                    <div style="height: 100%; width: ' . $supPct . '%; background: ' . $supBarColor . ';"></div>
+                                                </div>
+                                                <span style="font-size: 0.6rem; font-weight: 700; color: ' . $supBarColor . '; min-width: 25px; text-align: right;">' . $supPctText . '</span>
+                                            </div>';
+                                        }
+
                                         $group_uid = 'grp_' . md5($gkey);
                                         ?>
                                         <!-- First item always visible -->
@@ -275,6 +482,8 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                                 </div>
                                                 <span style="font-size: 0.6rem; font-weight: 700; color: <?php echo $barColor; ?>; min-width: 25px; text-align: right;"><?php echo $pctText; ?></span>
                                             </div>
+                                            <!-- Supplier Warranty Bar -->
+                                            <?php echo $supHealthBar; ?>
                                         </div>
                                         <?php if ($item_count > 1): ?>
                                         <!-- Toggle to show rest -->
@@ -302,6 +511,57 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                                     else $giBarColor = '#ef4444';
                                                     $giPctText = round($giPct) . '%';
                                                 }
+
+                                                // Calculate percentage for supplier warranty on this item
+                                                $giSupHealthBar = '';
+                                                if (!empty($gi['supplier_end_date']) && $gi['supplier_end_date'] !== '0000-00-00') {
+                                                    $giSupEndDateStr = $gi['supplier_end_date'];
+                                                    $giSupStartDateStr = (!empty($gi['master_entry_date']) && $gi['master_entry_date'] !== '0000-00-00') ? $gi['master_entry_date'] : $gi['entry_date'];
+                                                    
+                                                    try {
+                                                        $giSupEndDate = new DateTime($giSupEndDateStr);
+                                                        $giSupStartDate = new DateTime($giSupStartDateStr);
+                                                        $giToday = new DateTime();
+                                                        
+                                                        if ($giSupStartDate < $giSupEndDate) {
+                                                            $giSupTotalDays = max(1, $giSupStartDate->diff($giSupEndDate)->days);
+                                                            if ($giToday > $giSupEndDate) {
+                                                                $giSupDaysLeft = 0;
+                                                            } else {
+                                                                $giSupDaysLeft = max(0, $giToday->diff($giSupEndDate)->days);
+                                                            }
+                                                            $giSupPct = min(100, max(0, ($giSupDaysLeft / $giSupTotalDays) * 100));
+                                                        } else {
+                                                            $giSupPct = 0;
+                                                        }
+                                                    } catch (Exception $e) {
+                                                        $giSupPct = 0;
+                                                    }
+                                                    
+                                                    $giSupExp = (strtotime($giSupEndDateStr) < time());
+                                                    if ($giSupExp) {
+                                                        $giSupBarColor = '#ef4444'; $giSupPctText = 'EXP';
+                                                    } else {
+                                                        if ($giSupPct > 75) $giSupBarColor = '#10b981';
+                                                        elseif ($giSupPct > 50) $giSupBarColor = '#eab308';
+                                                        elseif ($giSupPct > 25) $giSupBarColor = '#f97316';
+                                                        else $giSupBarColor = '#ef4444';
+                                                        $giSupPctText = round($giSupPct) . '%';
+                                                    }
+                                                    
+                                                    $giSupMonths = $gi['supplier_duration_months'] ?: 12;
+                                                    
+                                                    $giSupHealthBar = '
+                                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.06);">
+                                                        <span style="font-size: 0.65rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; min-width: 105px;" title="Garantía de Proveedor original">
+                                                            <i class="ph ph-truck" style="color: #a855f7; font-size: 0.85rem;"></i> Prov: ' . $giSupMonths . 'm (' . date('d/m/Y', strtotime($giSupEndDateStr)) . ')
+                                                        </span>
+                                                        <div style="flex: 1; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                                                            <div style="height: 100%; width: ' . $giSupPct . '%; background: ' . $giSupBarColor . ';"></div>
+                                                        </div>
+                                                        <span style="font-size: 0.6rem; font-weight: 700; color: ' . $giSupBarColor . '; min-width: 25px; text-align: right;">' . $giSupPctText . '</span>
+                                                    </div>';
+                                                }
                                                 ?>
                                                 <div style="display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid <?php echo $giBarColor; ?>;">
                                                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -327,6 +587,8 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                                         </div>
                                                         <span style="font-size: 0.6rem; font-weight: 700; color: <?php echo $giBarColor; ?>; min-width: 25px; text-align: right;"><?php echo $giPctText; ?></span>
                                                     </div>
+                                                    <!-- Supplier Warranty Bar -->
+                                                    <?php echo $giSupHealthBar; ?>
                                                 </div>
                                             <?php endfor; ?>
                                         </div>
@@ -343,7 +605,7 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                         <?php endif; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="<?php echo $tab === 'stock' ? '8' : '4'; ?>" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                            <td colspan="<?php echo $tab === 'stock' ? '7' : '4'; ?>" style="padding: 3rem; text-align: center; color: var(--text-muted);">
                                 <i class="ph ph-warning-circle" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
                                 No se encontraron registros.
                             </td>
@@ -418,6 +680,10 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
             <div>
                 <p class="text-xs text-muted mb-1">FACT. INGRESO MASTER</p>
                 <p id="m_master_inv" class="font-bold">-</p>
+            </div>
+            <div>
+                <p class="text-xs text-muted mb-1">FECHA INGRESO PROVEEDOR</p>
+                <p id="m_master_date" class="font-bold">-</p>
             </div>
             <div>
                 <p class="text-xs text-muted mb-1">ORIGEN DE COMPRA</p>
@@ -609,6 +875,90 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
 <script>
 window.equipmentCategories = <?php echo json_encode($categories); ?>;
 
+// ─── Toast helper (SweetAlert2-based) ─────────────────────────────────────────
+function showToast(message, type) {
+    const iconMap = { success: 'success', error: 'error', warning: 'warning', info: 'info' };
+    const colorMap = {
+        success: '#10b981',
+        error:   '#ef4444',
+        warning: '#f59e0b',
+        info:    '#3b82f6'
+    };
+    const icon = iconMap[type] || 'info';
+    const color = colorMap[type] || colorMap.info;
+
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: icon,
+        title: message,
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true,
+        background: 'var(--bg-card, #1e1e2e)',
+        color: 'var(--text-color, #e2e8f0)',
+        iconColor: color,
+        customClass: { timerProgressBar: 'swal-progress-bar' },
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
+}
+
+// Barcode scanner auto-focus and global listener
+document.addEventListener('keydown', function(e) {
+    // Avoid intercepting if user is typing in any input, textarea, or select
+    const active = document.activeElement;
+    if (active && (
+        active.tagName === 'INPUT' || 
+        active.tagName === 'TEXTAREA' || 
+        active.tagName === 'SELECT' || 
+        active.isContentEditable
+    )) {
+        return;
+    }
+    
+    // Ignore modifier keys and special function/control keys
+    if (e.ctrlKey || e.altKey || e.metaKey || e.key.length !== 1) {
+        return;
+    }
+    
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        searchInput.focus();
+    }
+});
+
+// Auto-focus search input on page load and add visual effects
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput && !searchInput.value.trim()) {
+        searchInput.focus();
+    }
+    
+    if (searchInput) {
+        const badge = document.getElementById('scanner-status');
+        if (badge) {
+            searchInput.addEventListener('focus', () => badge.classList.add('active'));
+            searchInput.addEventListener('blur', () => badge.classList.remove('active'));
+        }
+    }
+});
+
+function formatDate(dateStr) {
+    if (!dateStr || dateStr === '0000-00-00') return 'N/A';
+    try {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return new Date(dateStr).toLocaleDateString('es-HN');
+    } catch(e) {
+        return dateStr;
+    }
+}
+
 function openModalFromBtn(btn) {
     const data = JSON.parse(btn.dataset.json);
     document.getElementById('m_code').innerText = data.product_code || '-';
@@ -616,9 +966,10 @@ function openModalFromBtn(btn) {
     document.getElementById('m_client').innerText = data.client_name || '-';
     document.getElementById('m_equipment').innerText = (data.brand || '') + ' ' + (data.model || '');
     document.getElementById('m_invoice').innerText = data.sales_invoice_number || 'N/A';
-    document.getElementById('m_end').innerText = data.end_date ? data.end_date : 'N/A';
+    document.getElementById('m_end').innerText = formatDate(data.end_date);
     document.getElementById('m_supplier').innerText = data.supplier_name || 'N/A';
     document.getElementById('m_master_inv').innerText = data.master_entry_invoice || 'N/A';
+    document.getElementById('m_master_date').innerText = formatDate(data.master_entry_date);
     
     // Origin Badge
     const originBadge = document.getElementById('m_origin_badge');
@@ -662,12 +1013,15 @@ function toggleAllCheckboxes(source) {
 }
 
 function updateBulkActionUI() {
-    const keys = Object.keys(warehouse_cart);
     const container = document.getElementById('bulk-action-container');
+    // Guard: on the sold tab this container doesn't exist – exit safely to avoid TypeError
+    if (!container) return;
+
+    const keys = Object.keys(warehouse_cart);
     const countSpan = document.getElementById('bulk-count');
-    
-    if(keys.length > 0) {
-        countSpan.innerText = keys.length;
+
+    if (keys.length > 0) {
+        if (countSpan) countSpan.innerText = keys.length;
         container.style.display = 'block';
     } else {
         container.style.display = 'none';
@@ -676,27 +1030,103 @@ function updateBulkActionUI() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Restore checkboxes from cart state when page loads
+function validateSelectedStock() {
+    const keys = Object.keys(warehouse_cart);
+    if (keys.length > 0) {
+        fetch(`database.php?action=validate_stock&ids=${keys.join(',')}`)
+            .then(res => res.json())
+            .then(validIds => {
+                const newCart = {};
+                validIds.forEach(id => {
+                    if (warehouse_cart[id]) {
+                        newCart[id] = warehouse_cart[id];
+                    }
+                });
+                if (Object.keys(newCart).length !== keys.length) {
+                    warehouse_cart = newCart;
+                    saveCart();
+                    
+                    // Sincronizar checkboxes de la página actual
+                    const checkboxes = document.querySelectorAll('.bulk-cb');
+                    checkboxes.forEach(cb => {
+                        cb.checked = !!warehouse_cart[cb.value];
+                    });
+                    updateBulkActionUI();
+                }
+            })
+            .catch(err => console.error('Error validating stock:', err));
+    }
+}
+
+// Controlar navegación del navegador (incluyendo caché de retroceso/bfcache)
+window.addEventListener('pageshow', (event) => {
+    // Recargar el carrito de localStorage
+    warehouse_cart = JSON.parse(localStorage.getItem('warehouse_cart')) || {};
+
+    // Limpieza selectiva y precisa de los IDs recién vendidos
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'assigned' && isset($_GET['print_cert'])): ?>
+    const soldIds = <?php echo json_encode(explode(',', $_GET['print_cert'])); ?>;
+    soldIds.forEach(id => {
+        delete warehouse_cart[id];
+    });
+    saveCart();
+    localStorage.removeItem('warehouse_assign_form_data');
+    <?php endif; ?>
+
+    // Sincronizar checkboxes visibles en el DOM
     const checkboxes = document.querySelectorAll('.bulk-cb');
     checkboxes.forEach(cb => {
-        if (warehouse_cart[cb.value]) {
-            cb.checked = true;
-        }
-        cb.addEventListener('change', () => handleCheckboxChange(cb));
+        cb.checked = !!warehouse_cart[cb.value];
     });
     updateBulkActionUI();
     
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'assigned'): ?>
-    // Clear cart upon successful assignment
-    localStorage.removeItem('warehouse_cart');
-    warehouse_cart = {};
-    <?php endif; ?>
+    // Autolimpiar cualquier equipo seleccionado que ya no esté en stock
+    validateSelectedStock();
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Vincular listener de cambio de checkbox
+    const checkboxes = document.querySelectorAll('.bulk-cb');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => handleCheckboxChange(cb));
+    });
+
+    // ── 3. Bind input persistence listeners ───────────────────────────────────
+    document.querySelectorAll(
+        'input[name="assign_client_name"], input[name="assign_client_tax_id"], input[name="assign_client_phone"], input[name="sales_invoice_number"]'
+    ).forEach(input => input.addEventListener('input', saveAssignFormData));
+
+    restoreAssignFormData();
+});
+
+// ─── Global helpers – must be in global scope so setupAssignModal can call them ─
+function saveAssignFormData() {
+    const formData = {
+        client_name: (document.querySelector('input[name="assign_client_name"]')  || {}).value || '',
+        tax_id:      (document.querySelector('input[name="assign_client_tax_id"]') || {}).value || '',
+        phone:       (document.querySelector('input[name="assign_client_phone"]')  || {}).value || '',
+        invoice:     (document.querySelector('input[name="sales_invoice_number"]') || {}).value || ''
+    };
+    localStorage.setItem('warehouse_assign_form_data', JSON.stringify(formData));
+}
+
+function restoreAssignFormData() {
+    const stored = localStorage.getItem('warehouse_assign_form_data');
+    if (!stored) return;
+    try {
+        const data = JSON.parse(stored);
+        const set = (sel, val) => { const el = document.querySelector(sel); if (el && val) el.value = val; };
+        set('input[name="assign_client_name"]',  data.client_name);
+        set('input[name="assign_client_tax_id"]', data.tax_id);
+        set('input[name="assign_client_phone"]',  data.phone);
+        set('input[name="sales_invoice_number"]', data.invoice);
+    } catch(e) { /* malformed storage – ignore */ }
+}
 
 function openAssignModalFromBtn(btn) {
     const data = JSON.parse(btn.dataset.json);
-    setupAssignModal([data]);
+    const cartData = warehouse_cart[data.id] || data;
+    setupAssignModal([cartData]);
 }
 
 function openBulkAssignModal() {
@@ -721,6 +1151,7 @@ function openGroupDetailModal(btn) {
     html += `<div><p class="text-xs text-muted mb-1">FACTURA DE VENTA</p><p class="font-bold">${first.sales_invoice_number || '-'}</p></div>`;
     html += `<div><p class="text-xs text-muted mb-1">PROVEEDOR</p><p class="font-bold">${first.supplier_name || '-'}</p></div>`;
     html += `<div><p class="text-xs text-muted mb-1">FACT. INGRESO MASTER</p><p class="font-bold">${first.master_entry_invoice || '-'}</p></div>`;
+    html += `<div><p class="text-xs text-muted mb-1">FECHA INGRESO PROVEEDOR</p><p class="font-bold">${formatDate(first.master_entry_date)}</p></div>`;
     html += `</div>`;
     
     // Items list
@@ -749,13 +1180,134 @@ function openGroupDetailModal(btn) {
     modal.style.display = 'flex';
 }
 
+function syncGroupCategory(selectEl) {
+    const sig = selectEl.dataset.sig;
+    if (!sig) return;
+    
+    const selectedVal = selectEl.value;
+    const option = selectEl.options[selectEl.selectedIndex];
+    const months = option && option.value ? option.dataset.months : null;
+    
+    // Update sibling input for months
+    const siblingInput = selectEl.closest('div').nextElementSibling.querySelector('input');
+    if (siblingInput && months) {
+        siblingInput.value = months;
+        // Trigger syncGroupMonths on the sibling to update hidden inputs and warehouse_cart
+        syncGroupMonths(siblingInput);
+    }
+    
+    // Update hidden inputs for all items in this group
+    const hiddenInputs = document.querySelectorAll(`.group-category-hidden-${sig}`);
+    hiddenInputs.forEach(hidden => {
+        hidden.value = selectedVal;
+        
+        // Extract itemId from the hidden input's name attribute, e.g. category_id[123]
+        const match = hidden.name.match(/category_id\[(\d+)\]/);
+        if (match) {
+            const itemId = match[1];
+            if (!warehouse_cart[itemId]) {
+                const cb = document.querySelector(`.bulk-cb[value="${itemId}"]`);
+                if (cb) {
+                    warehouse_cart[itemId] = JSON.parse(cb.dataset.json);
+                    cb.checked = true;
+                } else if (window.currentAssignItems && window.currentAssignItems[itemId]) {
+                    warehouse_cart[itemId] = JSON.parse(JSON.stringify(window.currentAssignItems[itemId]));
+                } else {
+                    warehouse_cart[itemId] = { id: itemId };
+                }
+            }
+            warehouse_cart[itemId].category_id = selectedVal;
+            if (months !== null) {
+                warehouse_cart[itemId].duration_months = months;
+            }
+        }
+    });
+    
+    saveCart();
+    updateBulkActionUI();
+}
+
+function syncGroupMonths(inputEl) {
+    const sig = inputEl.dataset.sig;
+    if (!sig) return;
+    
+    const val = inputEl.value;
+    
+    // Update hidden inputs for all items in this group
+    const hiddenInputs = document.querySelectorAll(`.group-months-hidden-${sig}`);
+    hiddenInputs.forEach(hidden => {
+        hidden.value = val;
+        
+        // Extract itemId from the hidden input's name attribute, e.g. warranty_months[123]
+        const match = hidden.name.match(/warranty_months\[(\d+)\]/);
+        if (match) {
+            const itemId = match[1];
+            if (!warehouse_cart[itemId]) {
+                const cb = document.querySelector(`.bulk-cb[value="${itemId}"]`);
+                if (cb) {
+                    warehouse_cart[itemId] = JSON.parse(cb.dataset.json);
+                    cb.checked = true;
+                } else {
+                    if (window.currentAssignItems && window.currentAssignItems[itemId]) {
+                        warehouse_cart[itemId] = JSON.parse(JSON.stringify(window.currentAssignItems[itemId]));
+                    } else {
+                        warehouse_cart[itemId] = { id: itemId };
+                    }
+                }
+            }
+            warehouse_cart[itemId].duration_months = val;
+        }
+    });
+    
+    saveCart();
+    updateBulkActionUI();
+}
+
 function setupAssignModal(dataArr) {
+    // ── RESET text fields FIRST (before touching hidden fields) ──────────────
+    document.getElementById('assignForm').reset();
+
+    // ── Set order IDs on the hidden field AFTER the manual reset ─────────────
     const ids = dataArr.map(d => d.id).join(',');
     document.getElementById('assign_order_ids').value = ids;
     
+    // Save items to global temporary map to avoid double quote/backslash issues in HTML dataset JSON
+    window.currentAssignItems = {};
+    dataArr.forEach(d => {
+        window.currentAssignItems[d.id] = d;
+    });
+    
     const list = document.getElementById('assign_equipment_list');
     list.innerHTML = '';
-    dataArr.forEach((d, index) => {
+    
+    // Group identical items by signature (same brand, model, and product code)
+    const groups = {};
+    dataArr.forEach(d => {
+        const sig = `${d.brand || ''}_${d.model || ''}_${d.product_code || ''}`.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+        if (!groups[sig]) {
+            groups[sig] = {
+                sig: sig,
+                brand: d.brand,
+                model: d.model,
+                product_code: d.product_code,
+                category_id: d.category_id,
+                duration_months: d.duration_months,
+                items: []
+            };
+        }
+        groups[sig].items.push(d);
+        
+        // If an item in the group has category or warranty months configured, use it as default
+        if (d.category_id && !groups[sig].category_id) {
+            groups[sig].category_id = d.category_id;
+        }
+        if (d.duration_months && !groups[sig].duration_months) {
+            groups[sig].duration_months = d.duration_months;
+        }
+    });
+
+    const groupList = Object.values(groups);
+    groupList.forEach((g, index) => {
         let li = document.createElement('li');
         li.style.display = 'flex';
         li.style.justifyContent = 'space-between';
@@ -763,15 +1315,18 @@ function setupAssignModal(dataArr) {
         li.style.padding = '12px 15px';
         li.style.transition = 'background 0.2s ease';
         
-        if (index < dataArr.length - 1) {
+        if (index < groupList.length - 1) {
             li.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
         }
+        
+        // Comma-separated list of all serial numbers in this group
+        const serials = g.items.map(item => item.serial_number || 'N/A').join(', ');
         
         let label = document.createElement('div');
         label.style.flex = '1';
         label.style.paddingRight = '15px';
-        label.innerHTML = `<div style="font-size: 0.9rem; font-weight: 600; color: var(--text-color); margin-bottom: 4px; line-height: 1.3;">${d.brand || ''} ${d.model || ''}</div>
-                           <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="ph ph-barcode" style="vertical-align: middle; font-size: 0.9rem;"></i> S/N: <span style="font-family: monospace;">${d.serial_number || 'N/A'}</span></div>`;
+        label.innerHTML = `<div style="font-size: 0.9rem; font-weight: 600; color: var(--text-color); margin-bottom: 4px; line-height: 1.3;">${g.brand || ''} ${g.model || ''}</div>
+                           <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="ph ph-barcode" style="vertical-align: middle; font-size: 0.9rem;"></i> S/N: <span style="font-family: monospace;">${serials}</span></div>`;
         
         let actions = document.createElement('div');
         actions.style.display = 'flex';
@@ -780,19 +1335,29 @@ function setupAssignModal(dataArr) {
         
         let optionsHtml = '<option value="">Ninguna</option>';
         window.equipmentCategories.forEach(cat => {
-            optionsHtml += `<option value="${cat.id}" data-months="${cat.default_months}" ${(d.category_id == cat.id) ? 'selected' : ''}>${cat.name}</option>`;
+            optionsHtml += `<option value="${cat.id}" data-months="${cat.default_months}" ${(g.category_id == cat.id) ? 'selected' : ''}>${cat.name}</option>`;
+        });
+
+        // Hidden inputs for each item in the group to hold category and months for the POST submission
+        let hiddenInputsHtml = '';
+        g.items.forEach(item => {
+            hiddenInputsHtml += `
+                <input type="hidden" class="group-category-hidden-${g.sig}" name="category_id[${item.id}]" value="${g.category_id || ''}">
+                <input type="hidden" class="group-months-hidden-${g.sig}" name="warranty_months[${item.id}]" value="${g.duration_months || 12}">
+            `;
         });
 
         actions.innerHTML = `
+            ${hiddenInputsHtml}
             <div style="display:flex; flex-direction:column;">
                 <label style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600;">Categoría</label>
-                <select name="category_id[${d.id}]" onchange="const option = this.options[this.selectedIndex]; if(option.value){ this.closest('div').nextElementSibling.querySelector('input').value = option.dataset.months; }" style="padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); color: var(--text-primary); font-size: 0.85rem;">
+                <select class="assign-category-select" data-sig="${g.sig}" onchange="syncGroupCategory(this)" style="padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); color: var(--text-primary); font-size: 0.85rem;">
                     ${optionsHtml}
                 </select>
             </div>
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <label style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600;">Meses</label>
-                <input type="number" name="warranty_months[${d.id}]" value="${d.duration_months || 12}" min="1" style="width: 60px; padding: 6px 4px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); color: #10b981; font-weight: 700; text-align: center; font-size: 0.9rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='var(--border-color)'">
+                <input type="number" class="assign-months-input" data-sig="${g.sig}" value="${g.duration_months || 12}" min="1" oninput="syncGroupMonths(this)" style="width: 60px; padding: 6px 4px; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); color: #10b981; font-weight: 700; text-align: center; font-size: 0.9rem; transition: border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='var(--border-color)'">
             </div>
         `;
         
@@ -801,7 +1366,7 @@ function setupAssignModal(dataArr) {
         list.appendChild(li);
     });
     
-    document.getElementById('assignForm').reset();
+    restoreAssignFormData(); // Ensure form details are pre-filled if present in localStorage
     document.getElementById('assignModal').style.display = 'flex';
 }
 
@@ -848,7 +1413,27 @@ function openEditAssignmentModal(btn) {
 <?php if (isset($_GET['print_cert'])): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    window.open('print_certificate.php?id=<?php echo urlencode($_GET['print_cert']); ?>', '_blank', 'width=800,height=900');
+    // Use an interactive dialog so the browser doesn't block the popup
+    const certUrl = 'print_certificate.php?id=<?php echo urlencode($_GET['print_cert']); ?>';
+    Swal.fire({
+        title: '¡Venta procesada!',
+        text: '¿Deseas imprimir el certificado de garantía ahora?',
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonText: '<i class="ph ph-printer"></i> Sí, imprimir',
+        cancelButtonText: 'Ahora no',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        background: 'var(--bg-card, #1e1e2e)',
+        color: 'var(--text-color, #e2e8f0)',
+        backdrop: 'rgba(0,0,0,0.7)',
+        allowOutsideClick: false,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // User explicitly clicked – browser will NOT block this window.open
+            window.open(certUrl, '_blank', 'width=820,height=950');
+        }
+    });
 });
 </script>
 <?php endif; ?>

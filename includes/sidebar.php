@@ -95,6 +95,13 @@
                     'label' => 'Registros de Bodega',
                     'active' => strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false
                 ];
+                $menu_items['bodega_historial'] = [
+                    'type' => 'link',
+                    'url' => BASE_URL . 'modules/warranties/history.php',
+                    'icon' => 'ph-clock-counter-clockwise',
+                    'label' => 'Historial de Emisión',
+                    'active' => strpos($_SERVER['REQUEST_URI'], 'warranties/history.php') !== false
+                ];
                 $menu_items['bodega_categorias'] = [
                     'type' => 'link',
                     'url' => BASE_URL . 'modules/categories/index.php',
@@ -109,10 +116,11 @@
                     'url' => '#',
                     'icon' => 'ph-package',
                     'label' => 'Bodega',
-                    'active' => (strpos($_SERVER['REQUEST_URI'], 'type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/categories/') !== false),
+                    'active' => (strpos($_SERVER['REQUEST_URI'], 'type=warranty') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/database.php') !== false || strpos($_SERVER['REQUEST_URI'], 'warranties/history.php') !== false || strpos($_SERVER['REQUEST_URI'], 'modules/categories/') !== false),
                     'children' => [
                         ['url' => BASE_URL . 'modules/equipment/entry.php?type=warranty', 'icon' => 'ph-plus-circle', 'label' => 'Nuevo Ingreso Bodega'],
                         ['url' => BASE_URL . 'modules/warranties/database.php', 'icon' => 'ph-database', 'label' => 'Registros de Bodega'],
+                        ['url' => BASE_URL . 'modules/warranties/history.php', 'icon' => 'ph-clock-counter-clockwise', 'label' => 'Historial de Emisión'],
                         ['url' => BASE_URL . 'modules/categories/index.php', 'icon' => 'ph-list-dashes', 'label' => 'Categorías']
                     ]
                 ];

@@ -67,6 +67,23 @@ if (empty($data_items)) {
 
 $first_item = $data_items[0];
 
+// Group items by product details
+$grouped_items = [];
+foreach ($data_items as $item) {
+    $key = trim($item['brand']) . '___' . trim($item['model']) . '___' . trim($item['product_code']) . '___' . intval($item['duration_months']);
+    if (!isset($grouped_items[$key])) {
+        $grouped_items[$key] = [
+            'brand' => $item['brand'],
+            'model' => $item['model'],
+            'product_code' => $item['product_code'],
+            'duration_months' => $item['duration_months'],
+            'serials' => [],
+        ];
+    }
+    $grouped_items[$key]['serials'][] = trim($item['serial_number']);
+}
+$grouped_items = array_values($grouped_items);
+
 // Fetch Settings
 $settings = [];
 $stmtAll = $pdo->query("SELECT setting_key, setting_value FROM site_settings");
@@ -218,14 +235,27 @@ $current_date = "Managua, " . date('d') . " de " . $months[(int)date('m') - 1] .
             Factura# <span class="bold"><?php echo htmlspecialchars($first_item['sales_invoice_number']); ?></span>
         </p>
 
-        <?php foreach($data_items as $index => $item): ?>
-        <div class="product-details" style="<?php echo $index > 0 ? 'margin-top: 15px;' : ''; ?> padding-bottom: 15px; border-bottom: <?php echo $index < count($data_items) - 1 ? '1px dashed #ccc;' : 'none'; ?>">
+        <?php foreach($grouped_items as $index => $item): ?>
+        <div class="product-details" style="<?php echo $index > 0 ? 'margin-top: 15px;' : ''; ?> padding-bottom: 15px; border-bottom: <?php echo $index < count($grouped_items) - 1 ? '1px dashed #ccc;' : 'none'; ?>">
             <p class="bold" style="margin-bottom: 3px;">
                 <?php echo str_pad($index + 1, 2, '0', STR_PAD_LEFT); ?> <?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?> 
                 <?php if(!empty($item['product_code'])) echo ' - Cód: ' . htmlspecialchars($item['product_code']); ?>
             </p>
             <p style="margin: 3px 0;">GARANTIA <?php echo $item['duration_months']; ?> MESES (por desperfecto de fábrica)</p>
-            <p style="margin: 3px 0;">SERIES# <?php echo htmlspecialchars($item['serial_number']); ?></p>
+            <?php if (count($item['serials']) === 1): ?>
+                <p style="margin: 3px 0;"><span class="bold">SERIES#</span> <?php echo htmlspecialchars($item['serials'][0]); ?></p>
+            <?php else: ?>
+                <p style="margin: 3px 0;"><span class="bold">SERIES#:</span></p>
+                <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 40px; padding-left: 15px; margin-top: 5px;">
+                    <?php foreach (array_chunk($item['serials'], 5) as $chunk): ?>
+                        <div style="display: flex; flex-direction: column; gap: 2px; font-family: monospace; min-width: 140px;">
+                            <?php foreach ($chunk as $sn): ?>
+                                <div>• <?php echo htmlspecialchars($sn); ?></div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
         <?php endforeach; ?>
     </div>

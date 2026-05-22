@@ -320,8 +320,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $duration_val = (int)($_POST['warranty_duration'] ?? 0);
                     $duration_months = ($warranty_period === 'months') ? $duration_val : ($warranty_period === 'years' ? $duration_val * 12 : 0);
 
-                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, purchase_origin, status, end_date, duration_months, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)");
-                    $stmtW->execute([$order_id_new, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $purchase_origin, $warranty_end_date, $duration_months, $now]);
+                    $stmtW = $pdo->prepare("INSERT INTO warranties (service_order_id, equipment_id, product_code, sales_invoice_number, master_entry_invoice, master_entry_date, supplier_name, purchase_origin, status, end_date, duration_months, supplier_duration_months, supplier_end_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?)");
+                    $stmtW->execute([$order_id_new, $equipment_id, $product_code, $sales_invoice, $master_invoice, $master_date, $supplier, $purchase_origin, $warranty_end_date, $duration_months, $duration_months, $warranty_end_date, $now]);
                 }
 
                 // 3. History
@@ -940,10 +940,10 @@ require_once '../../includes/sidebar.php';
                             </div>
                         </div>
 
-                        <!-- Vigencia oculta (pero presente por si el JS la necesita, aunque en bodega no se capturan fechas) -->
-                        <div id="warranty-dates-section" style="display: none; grid-column: span 6; grid-template-columns: repeat(2, 1fr); gap: 1.75rem;">
+                        <!-- Vigencia de Garantía del Proveedor -->
+                        <div id="warranty-dates-section" style="display: grid; grid-column: span 6; grid-template-columns: repeat(2, 1fr); gap: 1.75rem;">
                             <div class="form-group">
-                                <label class="form-label">Duración Ofrecida</label>
+                                <label class="form-label">Garantía del Proveedor</label>
                                 <div class="input-group" style="display: flex; align-items: stretch; gap: 0;">
                                     <input type="number" name="warranty_duration" id="warranty_duration" class="form-control"
                                         placeholder="Cant." min="0" value="0"
@@ -2034,6 +2034,7 @@ require_once '../../includes/sidebar.php';
             const durationInput = document.getElementById('warranty_duration');
             const periodSelect = document.getElementById('warranty_period');
             const endInput = document.getElementById('warranty_end_date');
+            const masterDateInput = document.querySelector('input[name="master_entry_date"]');
 
             if (durationInput && periodSelect && endInput) {
                 function calculateEndDate() {
@@ -2045,7 +2046,9 @@ require_once '../../includes/sidebar.php';
                         return;
                     }
 
-                    const startDate = new Date(); // Today
+                    const masterDateVal = masterDateInput ? masterDateInput.value : '';
+                    // Use master entry date if available, otherwise fallback to today's date in local time
+                    const startDate = masterDateVal ? new Date(masterDateVal + 'T00:00:00') : new Date();
                     let endDate = new Date(startDate);
 
                     if (period === 'days') {
@@ -2068,6 +2071,10 @@ require_once '../../includes/sidebar.php';
 
                 durationInput.addEventListener('input', calculateEndDate);
                 periodSelect.addEventListener('change', calculateEndDate);
+                if (masterDateInput) {
+                    masterDateInput.addEventListener('change', calculateEndDate);
+                    masterDateInput.addEventListener('input', calculateEndDate);
+                }
 
                 // Trigger immediately in case of pre-filled values or browser history
                 calculateEndDate();
