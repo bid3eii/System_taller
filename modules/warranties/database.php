@@ -182,16 +182,28 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
         transition: background-color 0.2s ease;
     }
     .stock-row:hover {
-        background-color: rgba(255, 255, 255, 0.02) !important;
+        background-color: rgba(255, 255, 255, 0.03) !important;
+    }
+    body.light-mode .stock-row:hover {
+        background-color: rgba(0, 0, 0, 0.03) !important;
     }
     .stock-row.selected-row {
-        background-color: rgba(99, 102, 241, 0.08) !important; /* Soft premium indigo highlight */
+        background-color: rgba(99, 102, 241, 0.18) !important; /* Más notorio en modo oscuro */
+    }
+    .stock-row.selected-row:hover {
+        background-color: rgba(99, 102, 241, 0.25) !important;
+    }
+    body.light-mode .stock-row.selected-row {
+        background-color: rgba(99, 102, 241, 0.16) !important; /* Más oscuro/notorio en modo claro */
+    }
+    body.light-mode .stock-row.selected-row:hover {
+        background-color: rgba(99, 102, 241, 0.22) !important;
     }
     .stock-row.selected-row td:first-child {
-        border-left: 3px solid var(--primary-500, #6366f1);
+        border-left: 4px solid var(--primary-500, #6366f1);
     }
     .stock-row td:first-child {
-        border-left: 3px solid transparent;
+        border-left: 4px solid transparent;
         transition: border-left-color 0.2s ease;
     }
     </style>
