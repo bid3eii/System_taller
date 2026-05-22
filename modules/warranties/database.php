@@ -47,7 +47,9 @@ require_once '../../includes/header.php';
 require_once '../../includes/sidebar.php';
 
 // Pagination and Search
-$limit = 50;
+$allowed_limits = [25, 50, 100, 200, 500];
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
+if (!in_array($limit, $allowed_limits)) $limit = 50;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
 $offset = ($page - 1) * $limit;
@@ -131,10 +133,10 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
 
     <!-- Tabs -->
     <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem;">
-        <a href="?tab=stock&search=<?php echo urlencode($search); ?>" style="padding: 1rem 2rem; border-bottom: 3px solid <?php echo $tab === 'stock' ? 'var(--primary-500)' : 'transparent'; ?>; color: <?php echo $tab === 'stock' ? 'var(--primary-500)' : 'var(--text-muted)'; ?>; text-decoration: none; font-weight: 600;">
+        <a href="?tab=stock&search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>" style="padding: 1rem 2rem; border-bottom: 3px solid <?php echo $tab === 'stock' ? 'var(--primary-500)' : 'transparent'; ?>; color: <?php echo $tab === 'stock' ? 'var(--primary-500)' : 'var(--text-muted)'; ?>; text-decoration: none; font-weight: 600;">
             <i class="ph ph-package"></i> En Stock
         </a>
-        <a href="?tab=sold&search=<?php echo urlencode($search); ?>" style="padding: 1rem 2rem; border-bottom: 3px solid <?php echo $tab === 'sold' ? 'var(--primary-500)' : 'transparent'; ?>; color: <?php echo $tab === 'sold' ? 'var(--primary-500)' : 'var(--text-muted)'; ?>; text-decoration: none; font-weight: 600;">
+        <a href="?tab=sold&search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>" style="padding: 1rem 2rem; border-bottom: 3px solid <?php echo $tab === 'sold' ? 'var(--primary-500)' : 'transparent'; ?>; color: <?php echo $tab === 'sold' ? 'var(--primary-500)' : 'var(--text-muted)'; ?>; text-decoration: none; font-weight: 600;">
             <i class="ph ph-shopping-cart"></i> Vendidos / Garantías
         </a>
     </div>
@@ -221,6 +223,11 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                     <span style="display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; animation: scanner-pulse 1.5s infinite;"></span>
                 </div>
             </div>
+            <select name="limit" class="form-control" style="width: auto; min-width: 80px; padding: 0.55rem 0.75rem; font-size: 0.85rem; cursor: pointer;" title="Productos por página">
+                <?php foreach ($allowed_limits as $opt): ?>
+                    <option value="<?php echo $opt; ?>" <?php echo $limit == $opt ? 'selected' : ''; ?>><?php echo $opt; ?></option>
+                <?php endforeach; ?>
+            </select>
             <button type="submit" class="btn btn-secondary">Buscar</button>
         </form>
     </div>
@@ -656,19 +663,19 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                 $end = min($totalPages, $page + 2);
                 
                 if ($page > 1): ?>
-                    <a href="?page=1&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary">«</a>
-                    <a href="?page=<?php echo $page - 1; ?>&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary">‹</a>
+                    <a href="?page=1&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>" class="btn btn-sm btn-secondary">«</a>
+                    <a href="?page=<?php echo $page - 1; ?>&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>" class="btn btn-sm btn-secondary">‹</a>
                 <?php endif; ?>
 
                 <?php for ($i = $start; $i <= $end; $i++): ?>
-                    <a href="?page=<?php echo $i; ?>&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm <?php echo $i == $page ? 'btn-primary' : 'btn-secondary'; ?>">
+                    <a href="?page=<?php echo $i; ?>&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>" class="btn btn-sm <?php echo $i == $page ? 'btn-primary' : 'btn-secondary'; ?>">
                         <?php echo $i; ?>
                     </a>
                 <?php endfor; ?>
 
                 <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?php echo $page + 1; ?>&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary">›</a>
-                    <a href="?page=<?php echo $totalPages; ?>&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>" class="btn btn-sm btn-secondary">»</a>
+                    <a href="?page=<?php echo $page + 1; ?>&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>" class="btn btn-sm btn-secondary">›</a>
+                    <a href="?page=<?php echo $totalPages; ?>&tab=<?php echo urlencode($tab); ?>&search=<?php echo urlencode($search); ?>&limit=<?php echo $limit; ?>" class="btn btn-sm btn-secondary">»</a>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
