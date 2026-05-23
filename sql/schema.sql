@@ -171,12 +171,21 @@ CREATE TABLE `warranties` (
   `service_order_id` int(11) DEFAULT NULL COMMENT 'If warranty is for a repair',
   `equipment_id` int(11) DEFAULT NULL COMMENT 'If warranty is for an equipment sale/item',
   `supplier_name` varchar(100) DEFAULT NULL,
+  `purchase_origin` enum('local','importada') DEFAULT 'local',
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
+  `supplier_end_date` date DEFAULT NULL,
   `status` enum('active','expired','void','claimed') DEFAULT 'active',
   `docs_path` varchar(255) DEFAULT NULL,
   `notes` text DEFAULT NULL,
-  `created_at` timestamp DEFAULT current_timestamp()
+  `created_at` timestamp DEFAULT current_timestamp(),
+  `product_code` varchar(50) DEFAULT NULL,
+  `sales_invoice_number` varchar(50) DEFAULT NULL,
+  `master_entry_invoice` varchar(50) DEFAULT NULL,
+  `master_entry_date` date DEFAULT NULL,
+  `duration_months` int(11) DEFAULT 0,
+  `supplier_duration_months` int(11) DEFAULT 0,
+  `terms` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
