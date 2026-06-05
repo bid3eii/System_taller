@@ -2,14 +2,6 @@
 # Set default file
 DirectoryIndex index.php index.html
 
-# PHP Session Settings for InfinityFree/iFastNet compatibility
-<IfModule mod_php.c>
-    php_flag session.use_cookies 1
-    php_flag session.use_only_cookies 1
-    php_flag session.use_trans_sid 0
-    php_value session.cookie_samesite "Lax"
-</IfModule>
-
 # Enable URL rewriting
 <IfModule mod_rewrite.c>
     RewriteEngine On
