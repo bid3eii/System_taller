@@ -1,7 +1,7 @@
 <?php
 // modules/profile/save_navbar_order.php
-safe_session_start();
 require_once '../../config/db.php';
+safe_session_start();
 
 header('Content-Type: application/json');
 

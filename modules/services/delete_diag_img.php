@@ -1,6 +1,6 @@
 <?php
-safe_session_start();
 require_once '../../config/db.php';
+safe_session_start();
 
 // Disable silent failure for debugging
 error_reporting(E_ALL);

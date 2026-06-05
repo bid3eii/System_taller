@@ -1,7 +1,7 @@
 <?php
 // modules/proyectos/reporte_facturas.php
-safe_session_start();
 require_once '../../config/db.php';
+safe_session_start();
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 

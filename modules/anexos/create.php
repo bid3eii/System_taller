@@ -4,8 +4,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 ini_set('zlib.output_compression', '0');
-safe_session_start();
 require_once '../../config/db.php';
+safe_session_start();
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 

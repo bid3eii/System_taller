@@ -1,7 +1,7 @@
 <?php
 // modules/equipment/deliver_confirm_multi.php
-safe_session_start();
 require_once '../../config/db.php';
+safe_session_start();
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
 

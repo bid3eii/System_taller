@@ -1,8 +1,8 @@
 <?php
 // modules/tech_agenda/update_status.php
 header('Content-Type: application/json');
-safe_session_start();
 require_once '../../config/db.php';
+safe_session_start();
 require_once '../../includes/functions.php';
 
 if (!isset($_SESSION['user_id'])) {
