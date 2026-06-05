@@ -450,6 +450,21 @@ CREATE TABLE IF NOT EXISTS `tool_assignments` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `system_sequences`
+-- Used for auto-numbering service cases, diagnosis docs, etc.
+--
+
+CREATE TABLE IF NOT EXISTS `system_sequences` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) NOT NULL,
+  `current_value` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `tool_assignment_items`
 --
 
