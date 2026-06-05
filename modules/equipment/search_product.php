@@ -1,7 +1,7 @@
 <?php
 // modules/equipment/search_product.php
 // AJAX endpoint to search existing products by code, brand, or model
-@session_start(['gc_probability' => 0]);
+safe_session_start();
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 

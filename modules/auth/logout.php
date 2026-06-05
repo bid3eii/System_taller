@@ -1,7 +1,6 @@
 <?php
 // modules/auth/logout.php
-ini_set('session.gc_probability', 0);
-@session_start(['gc_probability' => 0]);
+safe_session_start();
 session_unset();
 session_destroy();
 header("Location: login.php");

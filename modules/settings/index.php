@@ -1,6 +1,6 @@
 <?php
 // modules/settings/index.php
-@session_start(['gc_probability' => 0]);
+safe_session_start();
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 require_once '../../includes/auth.php';
@@ -117,6 +117,15 @@ try {
     )");
 
     // --- AUTO MIGRATE RECENT SCHEMA CHANGES IF MISSING DUE TO OLD RESTORES ---
+    // Ensure system_sequences table exists (used for numbering service cases)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `system_sequences` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `code` varchar(50) NOT NULL,
+        `current_value` int(11) NOT NULL DEFAULT 0,
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `code` (`code`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     $migrations = [
         "ALTER TABLE service_orders ADD COLUMN service_type ENUM('service', 'warranty') DEFAULT 'service'",
         "ALTER TABLE service_orders ADD COLUMN display_id VARCHAR(20) DEFAULT NULL",
@@ -144,6 +153,9 @@ if (isset($_GET['success'])) {
 if (isset($_GET['msg']) && $_GET['msg'] === 'restored') {
     $success_msg = "✅ Base de datos restaurada correctamente.";
 }
+if (isset($_GET['msg']) && $_GET['msg'] === 'bodega_restored') {
+    $success_msg = "✅ Respaldo de Bodega restaurado e importado correctamente.";
+}
 if (isset($_GET['error'])) {
     $errType = $_GET['error'];
     $errDetails = isset($_GET['details']) ? htmlspecialchars(urldecode($_GET['details'])) : '';
@@ -152,8 +164,27 @@ if (isset($_GET['error'])) {
         $sessErr = isset($_SESSION['restore_fatal_error']) ? $_SESSION['restore_fatal_error'] : $errDetails;
         $error_msg = "❌ Error fatal al restaurar: " . htmlspecialchars($sessErr);
         unset($_SESSION['restore_fatal_error']);
+    } elseif ($errType === 'restore_bodega_failed') {
+        $sessErr = isset($_SESSION['restore_fatal_error']) ? $_SESSION['restore_fatal_error'] : $errDetails;
+        $error_msg = "❌ Error fatal al restaurar Bodega: " . htmlspecialchars($sessErr);
+        unset($_SESSION['restore_fatal_error']);
     } elseif ($errType === 'partial_restore') {
         $error_msg = "⚠️ Restauración completada con errores parciales.<br>";
+        if (isset($_SESSION['restore_errors']) && is_array($_SESSION['restore_errors'])) {
+            $error_msg .= "<ul style='margin-top: 5px; margin-bottom: 0; padding-left: 20px; text-align: left; font-size: 0.9em;'>";
+            foreach (array_slice($_SESSION['restore_errors'], 0, 10) as $err) {
+                $error_msg .= "<li>" . htmlspecialchars($err) . "</li>";
+            }
+            if (count($_SESSION['restore_errors']) > 10) {
+                $error_msg .= "<li>...y " . (count($_SESSION['restore_errors']) - 10) . " errores más.</li>";
+            }
+            $error_msg .= "</ul>";
+            unset($_SESSION['restore_errors']);
+        } else {
+            $error_msg .= htmlspecialchars($errDetails);
+        }
+    } elseif ($errType === 'partial_restore_bodega') {
+        $error_msg = "⚠️ Restauración de Bodega completada con algunos errores parciales.<br>";
         if (isset($_SESSION['restore_errors']) && is_array($_SESSION['restore_errors'])) {
             $error_msg .= "<ul style='margin-top: 5px; margin-bottom: 0; padding-left: 20px; text-align: left; font-size: 0.9em;'>";
             foreach (array_slice($_SESSION['restore_errors'], 0, 10) as $err) {
@@ -186,10 +217,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $filename = 'system_taller_backup_' . date('Y-m-d_H-i-s') . '.sql';
 
-        $sqlDump = "-- Database Backup\n-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
+        $sqlDump = "-- Database Backup (Excluding Bodega)\n-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
         $sqlDump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
         try {
+            $sharedTables = ['clients', 'equipments', 'service_orders', 'service_order_history', 'users', 'user_custom_modules', 'roles', 'permissions', 'role_permissions', 'site_settings', 'system_sequences'];
+
+            // Clear old Taller data first upon restore (clean Taller records from shared tables)
+            $sqlDump .= "-- Clean Taller-specific records from shared tables\n";
+            $sqlDump .= "DELETE FROM service_order_history WHERE service_order_id NOT IN (SELECT id FROM service_orders WHERE service_type = 'warranty');\n";
+            $sqlDump .= "DELETE FROM service_orders WHERE service_type != 'warranty';\n";
+            $sqlDump .= "DELETE FROM equipments WHERE id NOT IN (SELECT equipment_id FROM service_orders WHERE service_type = 'warranty');\n";
+            $sqlDump .= "DELETE FROM clients WHERE name != 'Bodega - Inventario' AND (id NOT IN (SELECT client_id FROM service_orders WHERE service_type = 'warranty') AND id NOT IN (SELECT client_id FROM equipments));\n";
+            $sqlDump .= "DELETE FROM users WHERE id != 1;\n";
+            $sqlDump .= "DELETE FROM user_custom_modules WHERE user_id != 1;\n";
+            $sqlDump .= "DELETE FROM system_sequences WHERE code != 'warranty_case';\n\n";
+
             $tables = [];
             $stmt = $pdo->query("SHOW TABLES");
             while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
@@ -197,15 +240,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             foreach ($tables as $table) {
-                $stmt = $pdo->query("SHOW CREATE TABLE `$table`");
-                $row = $stmt->fetch(PDO::FETCH_NUM);
-                $sqlDump .= "DROP TABLE IF EXISTS `$table`;\n";
-                $sqlDump .= $row[1] . ";\n\n";
+                // Exclude Bodega table entirely
+                if ($table === 'warranties') {
+                    continue;
+                }
 
-                $stmt = $pdo->query("SELECT * FROM `$table`");
+                $isShared = in_array($table, $sharedTables);
+
+                // For Taller-specific tables, write standard drop & create. For shared tables, skip drop & create.
+                if (!$isShared) {
+                    $stmt = $pdo->query("SHOW CREATE TABLE `$table`");
+                    $row = $stmt->fetch(PDO::FETCH_NUM);
+                    $sqlDump .= "DROP TABLE IF EXISTS `$table`;\n";
+                    $sqlDump .= $row[1] . ";\n\n";
+                }
+
+                // Filter Bodega-specific data from shared tables and format Taller-specific filters
+                $query = "SELECT * FROM `$table`";
+                if ($table === 'service_orders') {
+                    $query = "SELECT * FROM `service_orders` WHERE `service_type` != 'warranty'";
+                } elseif ($table === 'service_order_history') {
+                    $query = "SELECT * FROM `service_order_history` WHERE `service_order_id` NOT IN (SELECT `id` FROM `service_orders` WHERE `service_type` = 'warranty')";
+                } elseif ($table === 'equipments') {
+                    $query = "SELECT * FROM `equipments` WHERE `id` NOT IN (SELECT `equipment_id` FROM `service_orders` WHERE `service_type` = 'warranty')";
+                } elseif ($table === 'clients') {
+                    $query = "SELECT * FROM `clients` WHERE `name` != 'Bodega - Inventario' AND `id` NOT IN (SELECT `client_id` FROM `service_orders` WHERE `service_type` = 'warranty')";
+                } elseif ($table === 'users') {
+                    $query = "SELECT * FROM `users` WHERE `id` != 1";
+                } elseif ($table === 'user_custom_modules') {
+                    $query = "SELECT * FROM `user_custom_modules` WHERE `user_id` != 1";
+                } elseif ($table === 'system_sequences') {
+                    $query = "SELECT * FROM `system_sequences` WHERE `code` != 'warranty_case'";
+                }
+
+                $stmt = $pdo->query($query);
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 if (count($rows) > 0) {
-                    $sqlDump .= "INSERT INTO `$table` VALUES \n";
+                    $insertVerb = $isShared ? "REPLACE INTO" : "INSERT INTO";
+                    $sqlDump .= "$insertVerb `$table` (" . implode(", ", array_map(function($col) { return "`$col`"; }, array_keys($rows[0]))) . ") VALUES \n";
                     $values = [];
                     foreach ($rows as $r) {
                         $rowVals = [];
@@ -238,6 +310,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // --- BACKUP BODEGA (WARRANTIES) ---
+    if ($action === 'backup_bodega') {
+        if (!can_access_module('settings_restore', $pdo) && !can_access_module('settings', $pdo)) {
+            die("Acceso denegado.");
+        }
+
+        $filename = 'system_taller_bodega_backup_' . date('Y-m-d_H-i-s') . '.sql';
+
+        $sqlDump = "-- Bodega / Warranties Database Backup\n-- Generated: " . date('Y-m-d H:i:s') . "\n\n";
+        $sqlDump .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
+        
+        $sqlDump .= "-- Clean existing Bodega data\n";
+        $sqlDump .= "DELETE FROM warranties;\n";
+        $sqlDump .= "DELETE FROM service_order_history WHERE service_order_id IN (SELECT id FROM service_orders WHERE service_type = 'warranty');\n";
+        $sqlDump .= "DELETE FROM service_orders WHERE service_type = 'warranty';\n";
+        $sqlDump .= "DELETE FROM equipments WHERE id NOT IN (SELECT equipment_id FROM service_orders WHERE service_type = 'service');\n";
+        $sqlDump .= "DELETE FROM clients WHERE name = 'Bodega - Inventario' OR (id NOT IN (SELECT client_id FROM service_orders WHERE service_type = 'service') AND id NOT IN (SELECT client_id FROM equipments));\n";
+        $sqlDump .= "DELETE FROM system_sequences WHERE code = 'warranty_case';\n\n";
+
+        try {
+            // Helper function to generate REPLACE INTO statements for specific records
+            $generateReplaceDump = function($pdo, $tableName, $query) {
+                $output = "";
+                $stmt = $pdo->query($query);
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                if (count($rows) > 0) {
+                    $output .= "-- Data for table `$tableName`\n";
+                    $output .= "REPLACE INTO `$tableName` (" . implode(", ", array_map(function($col) { return "`$col`"; }, array_keys($rows[0]))) . ") VALUES \n";
+                    $values = [];
+                    foreach ($rows as $r) {
+                        $rowVals = [];
+                        foreach ($r as $key => $val) {
+                            if (is_null($val)) {
+                                $rowVals[] = "NULL";
+                            } else {
+                                $rowVals[] = $pdo->quote($val);
+                            }
+                        }
+                        $values[] = "(" . implode(", ", $rowVals) . ")";
+                    }
+                    $output .= implode(", \n", $values) . ";\n\n";
+                }
+                return $output;
+            };
+
+            // 1. clients
+            $sqlDump .= $generateReplaceDump($pdo, 'clients', "SELECT DISTINCT * FROM clients WHERE name = 'Bodega - Inventario' OR id IN (SELECT client_id FROM service_orders WHERE service_type = 'warranty')");
+            
+            // 2. equipments
+            $sqlDump .= $generateReplaceDump($pdo, 'equipments', "SELECT DISTINCT * FROM equipments WHERE id IN (SELECT equipment_id FROM service_orders WHERE service_type = 'warranty')");
+            
+            // 3. service_orders
+            $sqlDump .= $generateReplaceDump($pdo, 'service_orders', "SELECT * FROM service_orders WHERE service_type = 'warranty'");
+            
+            // 4. service_order_history
+            $sqlDump .= $generateReplaceDump($pdo, 'service_order_history', "SELECT * FROM service_order_history WHERE service_order_id IN (SELECT id FROM service_orders WHERE service_type = 'warranty')");
+            
+            // 5. warranties
+            $sqlDump .= $generateReplaceDump($pdo, 'warranties', "SELECT * FROM warranties");
+
+            $sqlDump .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+            header('Content-Description: File Transfer');
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Expires: 0');
+            header('Cache-Control: must-revalidate');
+            header('Pragma: public');
+            header('Content-Length: ' . strlen($sqlDump));
+            echo $sqlDump;
+            exit;
+        } catch (PDOException $e) {
+            header("Location: index.php?tab=restore&error=backup_bodega_failed&details=" . urlencode($e->getMessage()));
+            exit;
+        }
+    }
+
     // --- RESTORE DATABASE ---
     if ($action === 'restore_db') {
         if (!can_access_module('settings_restore', $pdo) && !can_access_module('settings', $pdo)) {
@@ -249,8 +398,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sqlContent = file_get_contents($tmpName);
 
             try {
+                $sharedTables = ['clients', 'equipments', 'service_orders', 'service_order_history', 'users', 'user_custom_modules', 'roles', 'permissions', 'role_permissions', 'site_settings', 'system_sequences', 'warranties'];
+
                 // Disable FK checks for the duration of the import
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+                // Clean Taller records from shared tables before restoring
+                $pdo->exec("DELETE FROM service_order_history WHERE service_order_id NOT IN (SELECT id FROM service_orders WHERE service_type = 'warranty')");
+                $pdo->exec("DELETE FROM service_orders WHERE service_type != 'warranty'");
+                $pdo->exec("DELETE FROM equipments WHERE id NOT IN (SELECT equipment_id FROM service_orders WHERE service_type = 'warranty')");
+                $pdo->exec("DELETE FROM clients WHERE name != 'Bodega - Inventario' AND (id NOT IN (SELECT client_id FROM service_orders WHERE service_type = 'warranty') AND id NOT IN (SELECT client_id FROM equipments))");
+                $pdo->exec("DELETE FROM users WHERE id != 1");
+                $pdo->exec("DELETE FROM user_custom_modules WHERE user_id != 1");
+                $pdo->exec("DELETE FROM system_sequences WHERE code != 'warranty_case'");
 
                 // Split SQL into individual statements, handling delimiter correctly
                 $delimiter = ';';
@@ -258,20 +418,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $currentStatement = '';
                 $lines = explode("\n", $sqlContent);
 
-                // --- NEW LOGIC: Pre-scan and drop all target tables AT ONCE ---
-                // This prevents Error 1005 where table A is dropped and recreated (without indexes), 
-                // but table B still exists and holds a foreign key to table A, blocking the CREATE TABLE
+                // --- NEW LOGIC: Pre-scan and drop all target tables AT ONCE (excluding shared tables) ---
                 $tablesToDrop = [];
                 foreach ($lines as $line) {
                     $trimmed = trim($line);
                     if (preg_match('/^CREATE TABLE (?:IF NOT EXISTS )?(?:`[^`]+`\.)?`?([^`\s\(]+)`?/i', $trimmed, $m)) {
-                        $tablesToDrop[] = $m[1];
+                        $tableName = $m[1];
+                        if (!in_array($tableName, $sharedTables)) {
+                            $tablesToDrop[] = $tableName;
+                        }
                     }
                 }
                 if (!empty($tablesToDrop)) {
                     $pdo->exec("DROP TABLE IF EXISTS `" . implode("`, `", $tablesToDrop) . "`");
                 }
-                // ----------------------------------------------------------------
 
                 // Prepend SET FOREIGN_KEY_CHECKS=0 to ensure it's executed as part of the statement batch
                 $statements[] = "SET FOREIGN_KEY_CHECKS = 0";
@@ -295,6 +455,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = trim($stmt);
                     if (empty($stmt))
                         continue;
+
+                    // Skip dropping or creating shared tables by checking actual table name in SQL statement
+                    $upperStmt = strtoupper($stmt);
+                    if (strpos($upperStmt, 'DROP TABLE') === 0 || strpos($upperStmt, 'CREATE TABLE') === 0) {
+                        $isSharedTable = false;
+                        if (preg_match('/^(?:DROP|CREATE)\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:`[^`]+`\.)?`?([a-zA-Z0-9_-]+)`?/i', $stmt, $m)) {
+                            $tableName = $m[1];
+                            if (in_array($tableName, $sharedTables)) {
+                                $isSharedTable = true;
+                            }
+                        }
+                        if ($isSharedTable) {
+                            continue;
+                        }
+                    }
+
+                    // Convert INSERT INTO to REPLACE INTO to make restoration idempotent and avoid duplicate key errors
+                    if (strpos($upperStmt, 'INSERT INTO') === 0) {
+                        $stmt = preg_replace('/^INSERT\s+INTO\b/i', 'REPLACE INTO', $stmt);
+                    }
+
                     try {
                         $pdo->exec($stmt);
                     } catch (PDOException $stmtErr) {
@@ -314,7 +495,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (empty($errors)) {
                     header("Location: index.php?tab=restore&msg=restored");
                 } else {
-                    // Partial restore — report issues securely via session to avoid 500 URI too long
                     $_SESSION['restore_errors'] = $errors;
                     header("Location: index.php?tab=restore&error=partial_restore");
                 }
@@ -327,6 +507,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $_SESSION['restore_fatal_error'] = $e->getMessage();
                 header("Location: index.php?tab=restore&error=restore_failed");
+                exit;
+            }
+        } else {
+            header("Location: index.php?tab=restore&error=upload_error");
+            exit;
+        }
+    }
+
+    // --- RESTORE BODEGA (WARRANTIES) ---
+    if ($action === 'restore_bodega') {
+        if (!can_access_module('settings_restore', $pdo) && !can_access_module('settings', $pdo)) {
+            die("Acceso denegado.");
+        }
+
+        if (isset($_FILES['backup_file']) && $_FILES['backup_file']['error'] == 0) {
+            $tmpName = $_FILES['backup_file']['tmp_name'];
+            $sqlContent = file_get_contents($tmpName);
+
+            try {
+                $sharedTables = ['clients', 'equipments', 'service_orders', 'service_order_history', 'users', 'user_custom_modules', 'roles', 'permissions', 'role_permissions', 'site_settings', 'system_sequences', 'warranties'];
+
+                $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+                // Clean Bodega-specific data from shared tables before restoring
+                $pdo->exec("TRUNCATE TABLE warranties");
+                $pdo->exec("DELETE FROM service_order_history WHERE service_order_id IN (SELECT id FROM service_orders WHERE service_type = 'warranty')");
+                $pdo->exec("DELETE FROM service_orders WHERE service_type = 'warranty'");
+                $pdo->exec("DELETE FROM equipments WHERE id NOT IN (SELECT equipment_id FROM service_orders WHERE service_type = 'service')");
+                $pdo->exec("DELETE FROM clients WHERE name = 'Bodega - Inventario' OR (id NOT IN (SELECT client_id FROM service_orders WHERE service_type = 'service') AND id NOT IN (SELECT client_id FROM equipments))");
+                $pdo->exec("DELETE FROM system_sequences WHERE code = 'warranty_case'");
+
+                $delimiter = ';';
+                $statements = [];
+                $currentStatement = '';
+                $lines = explode("\n", $sqlContent);
+
+                foreach ($lines as $line) {
+                    $trimmed = trim($line);
+                    if (empty($trimmed) || substr($trimmed, 0, 2) === '--' || substr($trimmed, 0, 2) === '/*') {
+                        continue;
+                    }
+
+                    $currentStatement .= $line . "\n";
+                    if (substr(rtrim($trimmed), -1) === $delimiter) {
+                        $statements[] = trim($currentStatement);
+                        $currentStatement = '';
+                    }
+                }
+
+                $errors = [];
+                foreach ($statements as $stmt) {
+                    $stmt = trim($stmt);
+                    if (empty($stmt))
+                        continue;
+
+                    // Skip dropping or creating shared tables by checking actual table name in SQL statement
+                    $upperStmt = strtoupper($stmt);
+                    if (strpos($upperStmt, 'DROP TABLE') === 0 || strpos($upperStmt, 'CREATE TABLE') === 0) {
+                        $isSharedTable = false;
+                        if (preg_match('/^(?:DROP|CREATE)\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:`[^`]+`\.)?`?([a-zA-Z0-9_-]+)`?/i', $stmt, $m)) {
+                            $tableName = $m[1];
+                            if (in_array($tableName, $sharedTables)) {
+                                $isSharedTable = true;
+                            }
+                        }
+                        if ($isSharedTable) {
+                            continue;
+                        }
+                    }
+
+                    // Convert INSERT INTO to REPLACE INTO to make restoration idempotent and avoid duplicate key errors
+                    if (strpos($upperStmt, 'INSERT INTO') === 0) {
+                        $stmt = preg_replace('/^INSERT\s+INTO\b/i', 'REPLACE INTO', $stmt);
+                    }
+
+                    try {
+                        $pdo->exec($stmt);
+                    } catch (PDOException $stmtErr) {
+                        $errors[] = "Error SQL: " . $stmtErr->getMessage() . " => " . substr($stmt, 0, 100) . "...";
+                    }
+                }
+
+                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+                if (empty($errors)) {
+                    header("Location: index.php?tab=restore&msg=bodega_restored");
+                } else {
+                    $_SESSION['restore_errors'] = $errors;
+                    header("Location: index.php?tab=restore&error=partial_restore_bodega");
+                }
+                exit;
+            } catch (PDOException $e) {
+                try {
+                    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+                } catch (Exception $fallbackE) {}
+                $_SESSION['restore_fatal_error'] = $e->getMessage();
+                header("Location: index.php?tab=restore&error=restore_bodega_failed");
                 exit;
             }
         } else {
@@ -567,21 +844,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($currentUser && password_verify($admin_pass, $currentUser['password_hash'])) {
             try {
-                // Truncate Tables (TRUNCATE causes implicit commit in MySQL, so no Transaction used)
+                // Truncate/Delete general data (leave warranties and warranty service orders intact)
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-                $pdo->exec("TRUNCATE TABLE service_order_history");
-                $pdo->exec("TRUNCATE TABLE warranties");
-                $pdo->exec("TRUNCATE TABLE service_orders");
+                
+                // Only delete histories of non-warranty service orders
+                $pdo->exec("DELETE FROM service_order_history WHERE service_order_id NOT IN (SELECT id FROM service_orders WHERE service_type = 'warranty')");
+                // warranties table is NOT touched
+                // Only delete non-warranty service orders
+                $pdo->exec("DELETE FROM service_orders WHERE service_type != 'warranty'");
+                
                 $pdo->exec("TRUNCATE TABLE tool_assignments");
                 $pdo->exec("TRUNCATE TABLE tool_assignment_items");
                 $pdo->exec("TRUNCATE TABLE tool_loans");
                 $pdo->exec("TRUNCATE TABLE tools");
-                $pdo->exec("TRUNCATE TABLE equipments");
-                $pdo->exec("TRUNCATE TABLE clients");
+
+                // Delete Projects module data
+                try { $pdo->exec("TRUNCATE TABLE anexo_tools"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE anexos_yazaki"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE project_survey_images"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE project_survey_tools"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE project_materials"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE project_surveys"); } catch (Exception $e) {}
+
+                // Delete Viaticos module data
+                try { $pdo->exec("TRUNCATE TABLE viatico_amounts"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE viatico_concepts"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE viatico_columns"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE viaticos"); } catch (Exception $e) {}
+
+                // Delete Comisiones module data
+                try { $pdo->exec("TRUNCATE TABLE comision_detalles"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE comisiones"); } catch (Exception $e) {}
+                try { $pdo->exec("TRUNCATE TABLE comisiones_antiguas_del_sistema"); } catch (Exception $e) {}
+
+                // Delete Schedule / Agenda events
+                try { $pdo->exec("TRUNCATE TABLE schedule_events"); } catch (Exception $e) {}
+
+                // Delete diagnosis images
+                try { $pdo->exec("TRUNCATE TABLE diagnosis_images"); } catch (Exception $e) {}
+                
+                // Only delete equipments and clients not linked to any warranty service orders
+                $pdo->exec("DELETE FROM equipments WHERE id NOT IN (SELECT equipment_id FROM service_orders WHERE service_type = 'warranty')");
+                $pdo->exec("DELETE FROM clients WHERE name != 'Bodega - Inventario' AND (id NOT IN (SELECT client_id FROM service_orders WHERE service_type = 'warranty') AND id NOT IN (SELECT client_id FROM equipments))");
+                
                 $pdo->exec("TRUNCATE TABLE audit_logs");
 
-                // Reset Sequences
-                $pdo->exec("UPDATE system_sequences SET current_value = 0");
+                // Reset Sequences for service cases (silenced in case table does not exist yet)
+                try {
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS `system_sequences` (
+                        `id` int(11) NOT NULL AUTO_INCREMENT,
+                        `code` varchar(50) NOT NULL,
+                        `current_value` int(11) NOT NULL DEFAULT 0,
+                        PRIMARY KEY (`id`),
+                        UNIQUE KEY `code` (`code`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                    $pdo->exec("UPDATE system_sequences SET current_value = 0");
+                } catch (Exception $seqErr) { /* Table might not exist in old installs, ignore */ }
+
+                // Reset AUTO_INCREMENT counters for project modules
+                try { $pdo->exec("ALTER TABLE project_surveys AUTO_INCREMENT = 1"); } catch (Exception $e) {}
+                try { $pdo->exec("ALTER TABLE viaticos AUTO_INCREMENT = 1"); } catch (Exception $e) {}
+                try { $pdo->exec("ALTER TABLE anexos_yazaki AUTO_INCREMENT = 1"); } catch (Exception $e) {}
+                try { $pdo->exec("ALTER TABLE comisiones AUTO_INCREMENT = 1"); } catch (Exception $e) {}
+                try { $pdo->exec("ALTER TABLE schedule_events AUTO_INCREMENT = 1"); } catch (Exception $e) {}
 
                 // Delete all users except SuperAdmin (ID 1)
                 $pdo->exec("DELETE FROM users WHERE id != 1");
@@ -590,10 +915,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
 
-                $success_msg = "Sistema restaurado correctamente. Todos los datos han sido eliminados.";
+                $success_msg = "Sistema (Taller y Herramientas) restaurado correctamente. Los datos de Bodega se han conservado.";
             } catch (Exception $e) {
                 // If checking FKs failed or connection error
                 $error_msg = "Error crítico al restaurar: " . $e->getMessage();
+            }
+        } else {
+            $error_msg = "Contraseña incorrecta. No se realizaron cambios.";
+        }
+    }
+
+    // --- BODEGA FACTORY RESET ---
+    if (isset($_POST['action']) && $_POST['action'] === 'bodega_factory_reset') {
+        if (!can_access_module('settings_restore', $pdo) && !can_access_module('settings', $pdo))
+            die("Acceso denegado.");
+        $active_tab = 'restore';
+        $admin_pass = $_POST['admin_password'] ?? '';
+
+        // Verify Admin Password
+        $stmtUser = $pdo->prepare("SELECT id, password_hash FROM users WHERE id = ?");
+        $stmtUser->execute([$_SESSION['user_id']]);
+        $currentUser = $stmtUser->fetch();
+
+        if ($currentUser && password_verify($admin_pass, $currentUser['password_hash'])) {
+            try {
+                $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+                // Step 1: Collect IDs of warranty service orders BEFORE deleting anything
+                $warrantyOrderIds = $pdo->query("SELECT id FROM service_orders WHERE service_type = 'warranty'")->fetchAll(PDO::FETCH_COLUMN);
+
+                // Step 2: Clear warranties table first
+                $pdo->exec("TRUNCATE TABLE warranties");
+
+                // Step 3: Delete histories using the pre-collected IDs
+                if (!empty($warrantyOrderIds)) {
+                    $ids = implode(',', array_map('intval', $warrantyOrderIds));
+                    $pdo->exec("DELETE FROM service_order_history WHERE service_order_id IN ($ids)");
+                    $pdo->exec("DELETE FROM service_orders WHERE id IN ($ids)");
+                }
+
+                // Step 4: Clean up orphan equipments and clients not linked to any remaining order
+                $pdo->exec("DELETE FROM equipments WHERE id NOT IN (SELECT equipment_id FROM service_orders)");
+                $pdo->exec("DELETE FROM clients WHERE name = 'Bodega - Inventario' OR (id NOT IN (SELECT client_id FROM service_orders) AND id NOT IN (SELECT client_id FROM equipments))");
+
+                // Step 5: Reset Sequences for warranty cases (silenced in case table does not exist yet)
+                try {
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS `system_sequences` (
+                        `id` int(11) NOT NULL AUTO_INCREMENT,
+                        `code` varchar(50) NOT NULL,
+                        `current_value` int(11) NOT NULL DEFAULT 0,
+                        PRIMARY KEY (`id`),
+                        UNIQUE KEY `code` (`code`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                    $pdo->exec("UPDATE system_sequences SET current_value = 0 WHERE code = 'warranty_case'");
+                } catch (Exception $seqErr) { /* Ignore */ }
+
+                $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+                $success_msg = "✅ El módulo de Bodega ha sido restablecido de fábrica correctamente.";
+            } catch (Exception $e) {
+                $error_msg = "Error crítico al restablecer Bodega: " . $e->getMessage();
             }
         } else {
             $error_msg = "Contraseña incorrecta. No se realizaron cambios.";
@@ -1718,7 +2099,11 @@ require_once '../../includes/sidebar.php';
                     </div>
             <?php endif; ?>
 
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; align-items: stretch;">
+            <!-- SISTEMA GENERAL -->
+            <h4 style="margin-top: 1rem; margin-bottom: 1.25rem; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <i class="ph ph-gear" style="color: var(--primary-500); font-size: 1.3rem;"></i> Control General del Sistema (Taller y Herramientas)
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; align-items: stretch; margin-bottom: 3rem;">
 
                 <!-- BACKUP SECTION -->
                 <div class="card card-premium purple">
@@ -1726,7 +2111,7 @@ require_once '../../includes/sidebar.php';
                         <i class="ph ph-database"></i>
                     </div>
                     <h3>Respaldo de BD</h3>
-                    <p>Descarga una copia SQL de seguridad para proteger tu información.</p>
+                    <p>Descarga una copia SQL de seguridad para proteger tu información de Taller y Herramientas (Excluye Bodega).</p>
                     <form method="POST" style="margin-top: auto;">
                         <input type="hidden" name="action" value="backup_db">
                         <button type="submit" class="btn btn-premium btn-premium-purple">
@@ -1741,7 +2126,7 @@ require_once '../../includes/sidebar.php';
                         <i class="ph ph-upload-simple"></i>
                     </div>
                     <h3>Restaurar BD</h3>
-                    <p>Importar archivo SQL. Esta acción sobrescribirá los datos actuales.</p>
+                    <p>Importar archivo SQL de Taller. Sobrescribirá los datos del taller y herramientas.</p>
                     <form method="POST" id="restoreForm" enctype="multipart/form-data" onsubmit="confirmRestore(event)"
                         style="margin-top: auto;">
                         <input type="hidden" name="action" value="restore_db">
@@ -1755,27 +2140,13 @@ require_once '../../includes/sidebar.php';
                     </form>
                 </div>
 
-                <!-- IMPORT SECTION -->
-                <div class="card card-premium blue">
-                    <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-400);">
-                        <i class="ph ph-file-csv"></i>
-                    </div>
-                    <h3>Importar Bodega</h3>
-                    <p>Carga masiva de registros (CSV). Ideal para migraciones o cargas iniciales de datos.</p>
-                    <div style="margin-top: auto;">
-                        <a href="import_warranties.php" class="btn btn-premium"
-                            style="background: var(--primary-500); color: white; border: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
-                            <i class="ph ph-rocket-launch"></i> Iniciar Importador
-                        </a>
-                    </div>
-                </div>
                 <!-- DANGER ZONE (Factory Reset) -->
                 <div class="card card-premium red">
                     <div class="icon-box">
                         <i class="ph ph-warning-octagon"></i>
                     </div>
                     <h3>Reset de Fábrica</h3>
-                    <p>Elimina clientes, equipos y órdenes. Mantiene usuarios y config.</p>
+                    <p>Elimina clientes, equipos y órdenes del taller general. Los datos de Bodega se conservarán.</p>
                     <form method="POST" id="factoryResetForm"
                         style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
                         <input type="hidden" name="action" value="system_restore">
@@ -1786,7 +2157,81 @@ require_once '../../includes/sidebar.php';
                         </button>
                     </form>
                 </div>
+            </div>
 
+            <!-- MODULO DE BODEGA -->
+            <h4 style="margin-top: 2rem; margin-bottom: 1.25rem; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <i class="ph ph-package" style="color: #a855f7; font-size: 1.3rem;"></i> Gestión y Respaldo del Módulo de Bodega (Garantías)
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; align-items: stretch; margin-bottom: 1rem;">
+
+                <!-- BODEGA BACKUP SECTION -->
+                <div class="card card-premium purple" style="border-top: 3px solid #a855f7;">
+                    <div class="icon-box" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">
+                        <i class="ph ph-archive"></i>
+                    </div>
+                    <h3>Respaldo Bodega</h3>
+                    <p>Descarga una copia SQL de seguridad exclusiva con todo el inventario y ventas de Bodega.</p>
+                    <form method="POST" style="margin-top: auto;">
+                        <input type="hidden" name="action" value="backup_bodega">
+                        <button type="submit" class="btn btn-premium" style="background: #a855f7; color: white; border: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="ph ph-download-simple"></i> Respaldar Bodega
+                        </button>
+                    </form>
+                </div>
+
+                <!-- BODEGA RESTORE SECTION -->
+                <div class="card card-premium yellow" style="border-top: 3px solid #eab308;">
+                    <div class="icon-box">
+                        <i class="ph ph-upload-simple"></i>
+                    </div>
+                    <h3>Restaurar Bodega</h3>
+                    <p>Importar archivo SQL de Bodega. Sobrescribirá únicamente los datos de inventario.</p>
+                    <form method="POST" id="restoreBodegaForm" enctype="multipart/form-data" onsubmit="confirmRestoreBodega(event)"
+                        style="margin-top: auto;">
+                        <input type="hidden" name="action" value="restore_bodega">
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <input type="file" name="backup_file" class="form-control" accept=".sql" required
+                                style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
+                            <button type="submit" class="btn btn-premium btn-premium-outline">
+                                <i class="ph ph-arrow-counter-clockwise"></i> Restaurar Bodega
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- IMPORT SECTION -->
+                <div class="card card-premium blue" style="border-top: 3px solid #3b82f6;">
+                    <div class="icon-box" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-400);">
+                        <i class="ph ph-file-csv"></i>
+                    </div>
+                    <h3>Importar masivo</h3>
+                    <p>Carga masiva de registros de inventario de Bodega a partir de archivos de formato CSV.</p>
+                    <div style="margin-top: auto;">
+                        <a href="import_warranties.php" class="btn btn-premium"
+                            style="background: var(--primary-500); color: white; border: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
+                            <i class="ph ph-rocket-launch"></i> Iniciar Importador
+                        </a>
+                    </div>
+                </div>
+
+                <!-- BODEGA FACTORY RESET SECTION -->
+                <div class="card card-premium red" style="border-top: 3px solid #ef4444;">
+                    <div class="icon-box" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                        <i class="ph ph-trash"></i>
+                    </div>
+                    <h3>Reset de Bodega</h3>
+                    <p>Elimina todo el stock y ventas de Bodega. No altera el taller general.</p>
+                    <form method="POST" id="factoryResetBodegaForm"
+                        style="margin-top: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <input type="hidden" name="action" value="bodega_factory_reset">
+                        <input type="password" name="admin_password" class="form-control" placeholder="Pass de SuperAdmin"
+                            required style="font-size: 0.85rem; padding: 0.4rem; width: 100%;">
+                        <button type="button" onclick="confirmBodegaFactoryReset()" class="btn btn-premium btn-premium-danger">
+                            <i class="ph ph-trash-simple"></i> Reset Bodega
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <script>
@@ -1794,7 +2239,7 @@ require_once '../../includes/sidebar.php';
                     e.preventDefault();
                     Swal.fire({
                         title: '¿Restaurar Base de Datos?',
-                        text: 'Se sobrescribirá TODA la información actual con la del archivo seleccionado. Esta acción es irreversible.',
+                        text: 'Se sobrescribirá TODA la información del Taller y Herramientas con la del archivo seleccionado. Los datos de Bodega no se verán afectados. Esta acción es irreversible.',
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#eab308',
@@ -1810,6 +2255,26 @@ require_once '../../includes/sidebar.php';
                     });
                 }
 
+                function confirmRestoreBodega(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: '¿Restaurar Bodega?',
+                        text: 'Se sobrescribirá toda la información del inventario y garantías de Bodega con la del archivo seleccionado. Los datos de taller y herramientas generales NO se verán afectados. Esta acción es irreversible.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#eab308',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Sí, restaurar Bodega',
+                        cancelButtonText: 'Cancelar',
+                        background: '#1e293b',
+                        color: '#fff'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('restoreBodegaForm').submit();
+                        }
+                    });
+                }
+
                 function confirmFactoryReset() {
                     const pass = document.querySelector('input[name="admin_password"]').value;
                     if (!pass) {
@@ -1818,13 +2283,13 @@ require_once '../../includes/sidebar.php';
                     }
 
                     Swal.fire({
-                        title: '¿RESET DE FÁBRICA?',
-                        text: '¡ESTA ACCIÓN ELIMINARÁ TODOS LOS DATOS! (Clientes, Equipos, Órdenes, etc). Solo quedarán los usuarios y configuraciones.',
+                        title: '¿RESET DE FÁBRICA GENERAL?',
+                        text: '¡ESTA ACCIÓN ELIMINARÁ TODOS LOS DATOS GENERALES DEL TALLER Y HERRAMIENTAS! Los datos de BODEGA e inventario se conservarán intactos.',
                         icon: 'error',
                         showCancelButton: true,
                         confirmButtonColor: '#ef4444',
                         cancelButtonColor: '#6b7280',
-                        confirmButtonText: 'SÍ, BORRAR TODO',
+                        confirmButtonText: 'SÍ, BORRAR TALLER',
                         cancelButtonText: 'Cancelar',
                         background: '#1e293b',
                         color: '#fff',
@@ -1832,6 +2297,32 @@ require_once '../../includes/sidebar.php';
                     }).then((result) => {
                         if (result.isConfirmed) {
                             document.getElementById('factoryResetForm').submit();
+                        }
+                    });
+                }
+
+                function confirmBodegaFactoryReset() {
+                    const pass = document.querySelector('#factoryResetBodegaForm input[name="admin_password"]').value;
+                    if (!pass) {
+                        Swal.fire('Error', 'Ingrese la contraseña de SuperAdmin', 'error');
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: '¿RESET DE BODEGA DE FÁBRICA?',
+                        text: '¡ESTA ACCIÓN ELIMINARÁ TODOS LOS REGISTROS Y VENTAS DE BODEGA Y GARANTÍAS! El resto del sistema (taller, herramientas y usuarios) permanecerá intacto. Esta acción es irreversible.',
+                        icon: 'error',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'SÍ, VACIAR BODEGA',
+                        cancelButtonText: 'Cancelar',
+                        background: '#1e293b',
+                        color: '#fff',
+                        focusCancel: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('factoryResetBodegaForm').submit();
                         }
                     });
                 }

@@ -1,9 +1,6 @@
 <?php
 // includes/auth.php
-if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.gc_probability', 0);
-    @session_start(['gc_probability' => 0]);
-}
+safe_session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {

@@ -1,7 +1,7 @@
 <?php
 // modules/tech_agenda/update_status.php
 header('Content-Type: application/json');
-@session_start(['gc_probability' => 0]);
+safe_session_start();
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 

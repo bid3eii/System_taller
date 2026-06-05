@@ -40,6 +40,24 @@ if ($is_local) {
     @ini_set('session.gc_probability', 0);
 }
 
+/**
+ * Safe session start for InfinityFree compatibility.
+ * Configures cookie params before starting the session to prevent
+ * the "Cookies are not enabled" redirect on iFastNet hosting.
+ */
+function safe_session_start() {
+    if (session_status() === PHP_SESSION_NONE) {
+        @ini_set('session.gc_probability', 0);
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+        @session_start(['gc_probability' => 0]);
+    }
+}
+
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8mb4", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

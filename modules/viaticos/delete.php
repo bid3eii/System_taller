@@ -3,7 +3,7 @@ require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 
 if (session_status() === PHP_SESSION_NONE) {
-    @session_start(['gc_probability' => 0]);
+    safe_session_start();
 }
 if (!isset($_SESSION['user_id'])) {
     header("Location: " . BASE_URL . "index.php");

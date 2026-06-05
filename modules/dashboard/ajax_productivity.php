@@ -1,5 +1,5 @@
 <?php
-@session_start(['gc_probability' => 0]);
+safe_session_start();
 require_once dirname(__DIR__, 2) . '/config/db.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/auth.php';

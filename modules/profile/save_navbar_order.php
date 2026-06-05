@@ -1,6 +1,6 @@
 <?php
 // modules/profile/save_navbar_order.php
-@session_start(['gc_probability' => 0]);
+safe_session_start();
 require_once '../../config/db.php';
 
 header('Content-Type: application/json');

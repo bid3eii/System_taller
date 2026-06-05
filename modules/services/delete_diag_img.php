@@ -1,5 +1,5 @@
 <?php
-@session_start(['gc_probability' => 0]);
+safe_session_start();
 require_once '../../config/db.php';
 
 // Disable silent failure for debugging
