@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/warranties/database.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -213,9 +213,9 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
     <!-- Search Bar -->
     <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
         <form method="GET" action="database.php" style="display: flex; gap: 1rem; align-items: center;">
-            <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">
+            <input type="hidden" name="tab" value="<?php echo esc($tab); ?>">
             <div class="input-group" style="flex: 1; position: relative; display: flex; align-items: center;">
-                <input type="text" name="search" class="form-control" placeholder="Buscar por Serie, Código, Marca, Modelo, Cliente o Factura..." value="<?php echo htmlspecialchars($search); ?>" style="padding-right: 7.5rem;">
+                <input type="text" name="search" class="form-control" placeholder="Buscar por Serie, Código, Marca, Modelo, Cliente o Factura..." value="<?php echo esc($search); ?>" style="padding-right: 7.5rem;">
                 <i class="ph ph-magnifying-glass input-icon"></i>
                 <div id="scanner-status" class="scanner-badge">
                     <i class="ph ph-barcode" style="font-size: 0.95rem;"></i>
@@ -337,17 +337,17 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                     $healthBar = '<span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); font-weight: 600; padding: 6px 10px; border-radius: 6px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;"><i class="ph ph-warning-circle" style="font-size: 0.85rem;"></i> SIN GARANTÍA PROV.</span>';
                                 }
                             ?>
-                            <tr class="stock-row" data-id="<?php echo $r['id']; ?>" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' style="border-bottom: 1px solid var(--border-color);">
+                            <tr class="stock-row" data-id="<?php echo $r['id']; ?>" data-json='<?php echo esc(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' style="border-bottom: 1px solid var(--border-color);">
                                 <td>
                                     <?php if (empty(trim($r['product_code']))): ?>
                                         <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">⚠️ Sin Código</span>
                                     <?php else: ?>
-                                        <span class="badge"><?php echo htmlspecialchars($r['product_code']); ?></span>
+                                        <span class="badge"><?php echo esc($r['product_code']); ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <strong><?php echo htmlspecialchars($r['brand'] . ' ' . $r['model']); ?></strong>
-                                    <div class="text-xs text-muted"><?php echo htmlspecialchars($r['serial_number']); ?></div>
+                                    <strong><?php echo esc($r['brand'] . ' ' . $r['model']); ?></strong>
+                                    <div class="text-xs text-muted"><?php echo esc($r['serial_number']); ?></div>
                                 </td>
                                 <td>
                                     <?php if (($r['purchase_origin'] ?? 'local') === 'importada'): ?>
@@ -377,10 +377,10 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                 </td>
                                 <td>
                                     <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                        <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openAssignModalFromBtn(this)" title="Asignar / Vender" style="color: #10b981;"><i class="ph ph-shopping-cart"></i></button>
-                                        <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openModalFromBtn(this)" title="Ver Detalles"><i class="ph ph-eye"></i></button>
+                                        <button class="btn-icon" data-json='<?php echo esc(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openAssignModalFromBtn(this)" title="Asignar / Vender" style="color: #10b981;"><i class="ph ph-shopping-cart"></i></button>
+                                        <button class="btn-icon" data-json='<?php echo esc(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openModalFromBtn(this)" title="Ver Detalles"><i class="ph ph-eye"></i></button>
                                         <?php if ($_SESSION['role_name'] === 'SuperAdmin'): ?>
-                                            <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditModalFromBtn(this)" title="Editar Registro" style="color: #f59e0b;"><i class="ph ph-pencil-simple"></i></button>
+                                            <button class="btn-icon" data-json='<?php echo esc(json_encode($r), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditModalFromBtn(this)" title="Editar Registro" style="color: #f59e0b;"><i class="ph ph-pencil-simple"></i></button>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -422,8 +422,8 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                     }
                                 ?>
                                 <tr style="border-bottom: 1px solid var(--border-color);">
-                                    <td style="vertical-align: middle;"><strong style="font-size: 0.82rem; line-height: 1.2; word-wrap: break-word;"><?php echo htmlspecialchars($group['client_name']); ?></strong></td>
-                                    <td style="vertical-align: middle;"><span style="color: var(--primary-500); font-weight: 600; font-size: 0.85rem;"><?php echo htmlspecialchars($group['sales_invoice_number'] ?: 'N/A'); ?></span></td>
+                                    <td style="vertical-align: middle;"><strong style="font-size: 0.82rem; line-height: 1.2; word-wrap: break-word;"><?php echo esc($group['client_name']); ?></strong></td>
+                                    <td style="vertical-align: middle;"><span style="color: var(--primary-500); font-weight: 600; font-size: 0.85rem;"><?php echo esc($group['sales_invoice_number'] ?: 'N/A'); ?></span></td>
                                     <td style="vertical-align: middle; padding-top: 0.5rem; padding-bottom: 0.5rem;">
                                         <?php 
                                         $first = $group['items'][0];
@@ -501,8 +501,8 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                         <div style="display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid <?php echo $barColor; ?>;">
                                             <div style="display: flex; align-items: center; gap: 10px;">
                                                 <div style="flex: 1; min-width: 0;">
-                                                    <div style="font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($first['brand'] . ' ' . $first['model']); ?></div>
-                                                    <div style="font-size: 0.68rem; color: var(--text-muted);"><i class="ph ph-barcode"></i> <?php echo htmlspecialchars($first['serial_number']); ?></div>
+                                                    <div style="font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo esc($first['brand'] . ' ' . $first['model']); ?></div>
+                                                    <div style="font-size: 0.68rem; color: var(--text-muted);"><i class="ph ph-barcode"></i> <?php echo esc($first['serial_number']); ?></div>
                                                 </div>
                                                     <div style="text-align: right; min-width: 130px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
                                                         <div style="margin-right: 4px;">
@@ -511,7 +511,7 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                                         </div>
                                                         <!-- Edit Assignment (Pencil) - Accessible by Admin/Reception -->
                                                         <?php if (has_permission('assign_equipment', $pdo)): ?>
-                                                            <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($first), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditAssignmentModal(this)" title="Editar Venta / Asignación" style="width: 26px; height: 26px; font-size: 0.9rem; color: #10b981; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);"><i class="ph ph-pencil-simple"></i></button>
+                                                            <button class="btn-icon" data-json='<?php echo esc(json_encode($first), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditAssignmentModal(this)" title="Editar Venta / Asignación" style="width: 26px; height: 26px; font-size: 0.9rem; color: #10b981; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);"><i class="ph ph-pencil-simple"></i></button>
                                                         <?php endif; ?>
                                                     </div>
                                             </div>
@@ -606,8 +606,8 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                                 <div style="display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid <?php echo $giBarColor; ?>;">
                                                     <div style="display: flex; align-items: center; gap: 10px;">
                                                         <div style="flex: 1; min-width: 0;">
-                                                            <div style="font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($gi['brand'] . ' ' . $gi['model']); ?></div>
-                                                            <div style="font-size: 0.68rem; color: var(--text-muted);"><i class="ph ph-barcode"></i> <?php echo htmlspecialchars($gi['serial_number']); ?></div>
+                                                            <div style="font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo esc($gi['brand'] . ' ' . $gi['model']); ?></div>
+                                                            <div style="font-size: 0.68rem; color: var(--text-muted);"><i class="ph ph-barcode"></i> <?php echo esc($gi['serial_number']); ?></div>
                                                         </div>
                                                         <div style="text-align: right; min-width: 130px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; justify-content: flex-end;">
                                                             <div style="margin-right: 4px;">
@@ -616,7 +616,7 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                                             </div>
                                                             <!-- Edit Assignment (Pencil) - Accessible by Admin/Reception -->
                                                             <?php if (has_permission('assign_equipment', $pdo) || $_SESSION['role_name'] === 'SuperAdmin' || $_SESSION['role_name'] === 'Administrador'): ?>
-                                                                <button class="btn-icon" data-json='<?php echo htmlspecialchars(json_encode($gi), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditAssignmentModal(this)" title="Editar Venta / Asignación" style="width: 26px; height: 26px; font-size: 0.9rem; color: #10b981; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);"><i class="ph ph-pencil-simple"></i></button>
+                                                                <button class="btn-icon" data-json='<?php echo esc(json_encode($gi), ENT_QUOTES, "UTF-8"); ?>' onclick="openEditAssignmentModal(this)" title="Editar Venta / Asignación" style="width: 26px; height: 26px; font-size: 0.9rem; color: #10b981; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);"><i class="ph ph-pencil-simple"></i></button>
                                                             <?php endif; ?>
                                                         </div>
                                                     </div>
@@ -636,7 +636,7 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                                     </td>
                                     <td style="vertical-align: middle; text-align: center;">
                                         <div style="display: flex; gap: 0.4rem; align-items: center; justify-content: center;">
-                                            <button class="btn-icon" data-group-json='<?php echo htmlspecialchars(json_encode($group['items']), ENT_QUOTES, "UTF-8"); ?>' onclick="openGroupDetailModal(this)" title="Ver Detalles del Lote"><i class="ph ph-eye"></i></button>
+                                            <button class="btn-icon" data-group-json='<?php echo esc(json_encode($group['items']), ENT_QUOTES, "UTF-8"); ?>' onclick="openGroupDetailModal(this)" title="Ver Detalles del Lote"><i class="ph ph-eye"></i></button>
                                             <a href="print_certificate.php?id=<?php echo $group['ids'][0]; ?>" target="_blank" class="btn-icon" title="Imprimir Certificado" style="color: #a855f7;"><i class="ph ph-printer"></i></a>
                                         </div>
                                     </td>
@@ -830,7 +830,7 @@ $categories = $stmtCats->fetchAll(PDO::FETCH_ASSOC);
                     <select name="category_id" id="e_assign_category" class="form-control" onchange="const option = this.options[this.selectedIndex]; if(option.value){ document.getElementById('e_assign_months').value = option.dataset.months; }">
                         <option value="">Ninguna</option>
                         <?php foreach($categories as $cat): ?>
-                            <option value="<?php echo $cat['id']; ?>" data-months="<?php echo $cat['default_months']; ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
+                            <option value="<?php echo $cat['id']; ?>" data-months="<?php echo $cat['default_months']; ?>"><?php echo esc($cat['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

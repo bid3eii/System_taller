@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/project_history/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -58,7 +58,7 @@ $surveys = $stmt->fetchAll();
                     <div class="input-group" style="width: 300px;">
                         <input type="text" name="search" class="form-control"
                             placeholder="Buscar por cliente, título..."
-                            value="<?php echo htmlspecialchars($search); ?>">
+                            value="<?php echo esc($search); ?>">
                         <i class="ph ph-magnifying-glass input-icon"></i>
                     </div>
                     <button type="submit" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Buscar</button>
@@ -98,18 +98,18 @@ $surveys = $stmt->fetchAll();
                                             <?php echo strtoupper(substr($item['client_name'], 0, 1)); ?>
                                         </div>
                                         <span class="font-medium">
-                                            <?php echo htmlspecialchars($item['client_name']); ?>
+                                            <?php echo esc($item['client_name']); ?>
                                         </span>
                                     </div>
                                 </td>
                                 <td>
                                     <div style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;"
-                                        title="<?php echo htmlspecialchars($item['title']); ?>">
-                                        <?php echo htmlspecialchars($item['title']); ?>
+                                        title="<?php echo esc($item['title']); ?>">
+                                        <?php echo esc($item['title']); ?>
                                     </div>
                                 </td>
                                 <td>
-                                    <?php echo htmlspecialchars($item['tech_name']); ?>
+                                    <?php echo esc($item['tech_name']); ?>
                                 </td>
                                 <td>
                                     <?php

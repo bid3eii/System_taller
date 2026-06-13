@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/users/add.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -129,7 +129,7 @@ require_once '../../includes/sidebar.php';
                     <select name="role_id" class="form-control" required style="padding-left: 3rem;">
                         <option value="">Seleccione un rol...</option>
                         <?php foreach($roles as $role): ?>
-                            <option value="<?php echo $role['id']; ?>"><?php echo htmlspecialchars($role['name']); ?></option>
+                            <option value="<?php echo $role['id']; ?>"><?php echo esc($role['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
                     <i class="ph ph-shield-star input-icon"></i>

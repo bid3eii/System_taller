@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 
@@ -268,7 +268,7 @@ require_once '../../includes/sidebar.php';
                 <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem;">
                     PROYECTO:</div>
                 <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-main);">
-                    <?php echo htmlspecialchars($viatico['project_title']); ?>
+                    <?php echo esc($viatico['project_title']); ?>
                 </h2>
             </div>
             <div style="text-align: right;">
@@ -276,7 +276,7 @@ require_once '../../includes/sidebar.php';
                         style="color: var(--text-main);"><?php echo date('d/m/Y', strtotime($viatico['date'])); ?></strong>
                 </p>
                 <p class="text-muted" style="margin: 0;">Creado por: <strong
-                        style="color: var(--text-main);"><?php echo htmlspecialchars($viatico['creator_full_name'] ?: $viatico['creator_username']); ?></strong>
+                        style="color: var(--text-main);"><?php echo esc($viatico['creator_full_name'] ?: $viatico['creator_username']); ?></strong>
                 </p>
             </div>
         </div>
@@ -302,7 +302,7 @@ require_once '../../includes/sidebar.php';
                     echo '<tr class="sub-header-row">';
                     echo '<td style="font-weight: 800; background: var(--bg-body); color: var(--text-main); border-bottom: 2px solid var(--border-color);">DETALLE</td>';
                     foreach ($columns as $col) {
-                        echo '<td style="text-align: center; font-weight: 800; background: var(--bg-body); border-bottom: 2px solid var(--border-color);">' . htmlspecialchars(strtoupper($col['tech_name'])) . '</td>';
+                        echo '<td style="text-align: center; font-weight: 800; background: var(--bg-body); border-bottom: 2px solid var(--border-color);">' . esc(strtoupper($col['tech_name'])) . '</td>';
                     }
                     echo '</tr>';
 
@@ -310,7 +310,7 @@ require_once '../../includes/sidebar.php';
 
                     foreach ($rows_by_cat[$catKey] as $row) {
                         echo '<tr>';
-                        echo '<td>' . htmlspecialchars(strtoupper($row['label'])) . '</td>';
+                        echo '<td>' . esc(strtoupper($row['label'])) . '</td>';
 
                         foreach ($columns as $col) {
                             $amount = isset($matrix[$row['id']][$col['id']]) ? $matrix[$row['id']][$col['id']] : 0;

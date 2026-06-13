@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/proyectos/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -75,12 +75,12 @@ $surveys = $stmt->fetchAll();
             <div style="display: flex; gap: 1rem;">
                 <form method="GET" style="display: flex; gap: 0.5rem; margin: 0;">
                     <?php if ($status_filter): ?>
-                        <input type="hidden" name="status" value="<?php echo htmlspecialchars($status_filter); ?>">
+                        <input type="hidden" name="status" value="<?php echo esc($status_filter); ?>">
                     <?php endif; ?>
                     <div class="input-group" style="width: 300px;">
                         <input type="text" name="search" class="form-control"
                             placeholder="Buscar por cliente, título, técnico..."
-                            value="<?php echo htmlspecialchars($search); ?>">
+                            value="<?php echo esc($search); ?>">
                         <i class="ph ph-magnifying-glass input-icon"></i>
                     </div>
                     <button type="submit" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Buscar</button>
@@ -122,11 +122,11 @@ $surveys = $stmt->fetchAll();
                                         </div>
                                         <div>
                                             <div style="font-weight: 600; color: #fff; margin-bottom: 0.2rem;">
-                                                <?php echo htmlspecialchars($item['client_name']); ?>
+                                                <?php echo esc($item['client_name']); ?>
                                             </div>
                                             <div style="font-size: 0.85rem; color: #94a3b8; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                                                title="<?php echo htmlspecialchars($item['title']); ?>">
-                                                <?php echo htmlspecialchars($item['title']); ?>
+                                                title="<?php echo esc($item['title']); ?>">
+                                                <?php echo esc($item['title']); ?>
                                             </div>
                                         </div>
                                     </div>
@@ -134,7 +134,7 @@ $surveys = $stmt->fetchAll();
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <i class="ph ph-user" style="color: var(--text-muted);"></i>
-                                        <?php echo htmlspecialchars($item['tech_name']); ?>
+                                        <?php echo esc($item['tech_name']); ?>
                                     </div>
                                 </td>
                                 <td>

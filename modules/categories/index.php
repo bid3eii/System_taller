@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../config/db.php';
 safe_session_start();
 require_once '../../includes/functions.php';
@@ -20,7 +20,7 @@ $error = '';
 $success = '';
 if (isset($_GET['msg']) && $_GET['msg'] === 'saved') $success = "Categoría guardada correctamente.";
 if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') $success = "Categoría eliminada correctamente.";
-if (isset($_GET['err'])) $error = htmlspecialchars($_GET['err']);
+if (isset($_GET['err'])) $error = esc($_GET['err']);
 ?>
 
 <div class="animate-enter" style="max-width: 900px; margin: 0 auto;">
@@ -62,7 +62,7 @@ if (isset($_GET['err'])) $error = htmlspecialchars($_GET['err']);
                         <?php foreach ($categories as $cat): ?>
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <td><?php echo $cat['id']; ?></td>
-                                <td><strong><?php echo htmlspecialchars($cat['name']); ?></strong></td>
+                                <td><strong><?php echo esc($cat['name']); ?></strong></td>
                                 <td><span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><?php echo $cat['default_months']; ?> meses</span></td>
                                 <td style="text-align: center;">
                                     <div style="display: flex; gap: 0.5rem; justify-content: center;">

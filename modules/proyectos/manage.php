@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/proyectos/manage.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -508,7 +508,7 @@ require_once '../../includes/sidebar.php';
                             <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-buildings" style="font-size: 1.2rem;"></i></div>
                             <div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Cliente / Empresa</div>
-                                <div style="font-weight: 500; font-size: 1.05rem; color: var(--text-primary);"><?php echo htmlspecialchars($survey['client_name']); ?></div>
+                                <div style="font-weight: 500; font-size: 1.05rem; color: var(--text-primary);"><?php echo esc($survey['client_name']); ?></div>
                             </div>
                         </div>
 
@@ -517,7 +517,7 @@ require_once '../../includes/sidebar.php';
                             <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-folder" style="font-size: 1.2rem;"></i></div>
                             <div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Proyecto</div>
-                                <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);"><?php echo htmlspecialchars($survey['title']); ?></div>
+                                <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);"><?php echo esc($survey['title']); ?></div>
                             </div>
                         </div>
 
@@ -526,7 +526,7 @@ require_once '../../includes/sidebar.php';
                             <div style="color: var(--text-muted); margin-top: 2px;"><i class="ph ph-user-circle" style="font-size: 1.2rem;"></i></div>
                             <div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Técnico Responsable</div>
-                                <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);"><?php echo htmlspecialchars($survey['tech_name']); ?></div>
+                                <div style="font-weight: 400; font-size: 1rem; color: var(--text-primary);"><?php echo esc($survey['tech_name']); ?></div>
                             </div>
                         </div>
 
@@ -598,17 +598,17 @@ require_once '../../includes/sidebar.php';
                                         <tr>
                                             <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                                                 <div style="font-weight: 500; color: var(--text-primary);">
-                                                    <?php echo htmlspecialchars($item['item_description']); ?>
+                                                    <?php echo esc($item['item_description']); ?>
                                                 </div>
                                                 <?php if (!empty($item['notes'])): ?>
                                                     <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
-                                                        <?php echo htmlspecialchars($item['notes']); ?>
+                                                        <?php echo esc($item['notes']); ?>
                                                     </div>
                                                 <?php endif; ?>
                                             </td>
                                             <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
                                                 <span style="display: inline-block; white-space: nowrap; background: rgba(52, 211, 153, 0.1); color: #34d399; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.2); font-size: 0.85rem;">
-                                                    <?php echo htmlspecialchars($item['quantity'] . ' ' . $item['unit']); ?>
+                                                    <?php echo esc($item['quantity'] . ' ' . $item['unit']); ?>
                                                 </span>
                                             </td>
                                         </tr>
@@ -675,11 +675,11 @@ require_once '../../includes/sidebar.php';
                                         <tr>
                                             <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                                                 <div style="font-weight: 500; color: var(--text-primary);">
-                                                    <?php echo htmlspecialchars($tool['name']); ?>
+                                                    <?php echo esc($tool['name']); ?>
                                                 </div>
                                             </td>
                                             <td style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: var(--text-muted);">
-                                                <?php echo htmlspecialchars($tool['assigned_to']); ?>
+                                                <?php echo esc($tool['assigned_to']); ?>
                                                 <br>
                                                 <?php 
                                                     $statusColor = $tool['status'] === 'returned' ? '#34d399' : '#fbbf24';
@@ -700,7 +700,7 @@ require_once '../../includes/sidebar.php';
                                     <tr>
                                         <td colspan="3" class="text-center text-muted" style="padding: 2rem; border-bottom: none; font-size: 0.9rem;">
                                             No hay herramientas registradas para este proyecto.<br>
-                                            <span style="font-size: 0.8rem; opacity: 0.7; color: var(--text-muted);">(Nota: Se consultan emparejando el nombre exacto del proyecto: "<?php echo htmlspecialchars($survey['title']); ?>")</span>
+                                            <span style="font-size: 0.8rem; opacity: 0.7; color: var(--text-muted);">(Nota: Se consultan emparejando el nombre exacto del proyecto: "<?php echo esc($survey['title']); ?>")</span>
                                         </td>
                                     </tr>
                                 <?php endif; ?>
@@ -755,7 +755,7 @@ require_once '../../includes/sidebar.php';
                                                        onchange="updateTechSelectText()"
                                                        style="accent-color: #6366f1; width: 16px; height: 16px; flex-shrink: 0; cursor: pointer;">
                                                 <i class="ph ph-user" style="color: #6366f1; font-size: 1rem;"></i>
-                                                <span><?php echo htmlspecialchars($t['username']); ?></span>
+                                                <span><?php echo esc($t['username']); ?></span>
                                             </label>
                                         <?php endforeach; ?>
                                     </div>
@@ -775,7 +775,7 @@ require_once '../../includes/sidebar.php';
                             </label>
                             <div style="font-weight: 600; color: #fbbf24; font-size: 1rem; align-items: center; display: inline-flex; gap: 0.5rem; background: rgba(251,191,36,0.1); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid rgba(251,191,36,0.2);">
                                 <i class="ph ph-timer"></i>
-                                <?php echo !empty($survey['estimated_time']) ? htmlspecialchars($survey['estimated_time']) : '<span style="color: rgba(251,191,36,0.5); font-style: italic; font-weight: 400; font-size: 0.9rem;">No especificado</span>'; ?>
+                                <?php echo !empty($survey['estimated_time']) ? esc($survey['estimated_time']) : '<span style="color: rgba(251,191,36,0.5); font-style: italic; font-weight: 400; font-size: 0.9rem;">No especificado</span>'; ?>
                             </div>
                         </div>
 
@@ -887,7 +887,7 @@ require_once '../../includes/sidebar.php';
                     <?php if (!empty($survey['invoice_number'])): ?>
                         <div style="margin-top: 1rem; padding: 0.85rem; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: #34d399; font-size: 0.85rem; font-weight: 600;">
-                                <i class="ph ph-receipt"></i> Nº Factura: <?php echo htmlspecialchars($survey['invoice_number']); ?>
+                                <i class="ph ph-receipt"></i> Nº Factura: <?php echo esc($survey['invoice_number']); ?>
                             </div>
                         </div>
                     <?php endif; ?>

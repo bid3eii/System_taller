@@ -10,6 +10,18 @@ function clean($data)
 }
 
 /**
+ * Safe output for HTML display.
+ * Normalizes any pre-stored HTML entities (&#039; etc.) before re-encoding,
+ * preventing the double-encoding bug that shows &#039; literally on screen.
+ */
+function esc($str, $flags = ENT_QUOTES, $encoding = 'UTF-8')
+{
+    if ($str === null || $str === '') return '';
+    return htmlspecialchars(html_entity_decode((string)$str, ENT_QUOTES, $encoding), $flags, $encoding);
+}
+
+
+/**
  * Check if user has a specific permission
  * Uses the permissions and role_permissions tables
  */
@@ -309,13 +321,13 @@ function render_service_order_actions($item, $context, $pdo) {
                 data-id="<?php echo $item['id']; ?>"
                 data-equipment-id="<?php echo $item['equipment_id']; ?>"
                 data-context="<?php echo $context; ?>"
-                data-brand="<?php echo htmlspecialchars($item['brand'] ?? ''); ?>"
-                data-model="<?php echo htmlspecialchars($item['model'] ?? ''); ?>"
-                data-serial="<?php echo htmlspecialchars($item['serial_number'] ?? ''); ?>"
-                data-problem="<?php echo htmlspecialchars($item['problem_reported'] ?? ''); ?>"
-                data-accessories="<?php echo htmlspecialchars($item['accessories_received'] ?? ''); ?>"
-                data-owner-name="<?php echo htmlspecialchars($item['owner_name'] ?? ''); ?>"
-                data-invoice="<?php echo htmlspecialchars($item['invoice_number'] ?? ''); ?>"
+                data-brand="<?php echo esc($item['brand'] ?? ''); ?>"
+                data-model="<?php echo esc($item['model'] ?? ''); ?>"
+                data-serial="<?php echo esc($item['serial_number'] ?? ''); ?>"
+                data-problem="<?php echo esc($item['problem_reported'] ?? ''); ?>"
+                data-accessories="<?php echo esc($item['accessories_received'] ?? ''); ?>"
+                data-owner-name="<?php echo esc($item['owner_name'] ?? ''); ?>"
+                data-invoice="<?php echo esc($item['invoice_number'] ?? ''); ?>"
                 onclick="openEditModal(this)">
                 <i class="ph ph-pencil-simple"></i>
             </button>
@@ -389,15 +401,15 @@ function render_audit_diff($old_json, $new_json) {
         $format_val = function($v) {
             if (is_null($v)) return '<span class="diff-null">N/A</span>';
             if (is_bool($v)) return $v ? 'TRUE' : 'FALSE';
-            if (is_array($v)) return '<pre class="diff-json-inline">' . htmlspecialchars(json_encode($v, JSON_PRETTY_PRINT)) . '</pre>';
-            return htmlspecialchars((string)$v);
+            if (is_array($v)) return '<pre class="diff-json-inline">' . esc(json_encode($v, JSON_PRETTY_PRINT)) . '</pre>';
+            return esc((string)$v);
         };
         
         $display_old = $format_val($old_val);
         $display_new = $format_val($new_val);
         
         $html .= '<tr>';
-        $html .= '<td class="diff-label"><strong>' . htmlspecialchars(ucfirst(str_replace('_', ' ', $key))) . '</strong><br><small>' . htmlspecialchars($key) . '</small></td>';
+        $html .= '<td class="diff-label"><strong>' . esc(ucfirst(str_replace('_', ' ', $key))) . '</strong><br><small>' . esc($key) . '</small></td>';
         $html .= '<td class="diff-value diff-deleted">' . $display_old . '</td>';
         $html .= '<td class="diff-value diff-added">' . $display_new . '</td>';
         $html .= '</tr>';

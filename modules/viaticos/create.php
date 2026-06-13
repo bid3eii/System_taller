@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 
@@ -274,8 +274,8 @@ require_once '../../includes/sidebar.php';
                             <?php 
                             $stmtP = $pdo->query("SELECT id, title, client_name FROM project_surveys WHERE status NOT IN ('completed', 'cancelled') ORDER BY created_at DESC");
                             while($p = $stmtP->fetch()): ?>
-                                <option value="<?php echo $p['id']; ?>" data-title="<?php echo htmlspecialchars($p['client_name'] . ' - ' . $p['title']); ?>">
-                                    <?php echo htmlspecialchars($p['client_name'] . ' - ' . $p['title']); ?>
+                                <option value="<?php echo $p['id']; ?>" data-title="<?php echo esc($p['client_name'] . ' - ' . $p['title']); ?>">
+                                    <?php echo esc($p['client_name'] . ' - ' . $p['title']); ?>
                                 </option>
                             <?php endwhile; ?>
                         </optgroup>
@@ -319,7 +319,7 @@ require_once '../../includes/sidebar.php';
                             <option value="" disabled selected>Selecciona un técnico...</option>
                             <?php foreach ($all_techs as $t): ?>
                                 <option value="<?php echo $t['id']; ?>">
-                                    <?php echo htmlspecialchars($t['full_name'] ?: $t['username']); ?>
+                                    <?php echo esc($t['full_name'] ?: $t['username']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/clients/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -70,7 +70,7 @@ $clients = $stmt->fetchAll();
             <div style="display: flex; gap: 1rem;">
                 <form method="GET" style="display: flex; gap: 0.5rem; margin: 0;">
                     <div class="input-group" style="width: 300px;">
-                        <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, DNI..." value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, DNI..." value="<?php echo esc($search); ?>">
                         <i class="ph ph-magnifying-glass input-icon"></i>
                     </div>
                 </form>
@@ -105,22 +105,22 @@ $clients = $stmt->fetchAll();
                                     <div style="width: 32px; height: 32px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary-500); font-weight: bold;">
                                         <?php echo strtoupper(substr($client['name'], 0, 1)); ?>
                                     </div>
-                                    <span class="font-medium"><?php echo htmlspecialchars($client['name']); ?></span>
+                                    <span class="font-medium"><?php echo esc($client['name']); ?></span>
                                 </div>
                             </td>
-                            <td><?php echo htmlspecialchars($client['tax_id']); ?></td>
+                            <td><?php echo esc($client['tax_id']); ?></td>
                             <td>
                                 <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                                    <span class="text-sm"><i class="ph ph-phone"></i> <?php echo htmlspecialchars($client['phone']); ?></span>
-                                    <span class="text-sm text-muted"><i class="ph ph-envelope"></i> <?php echo htmlspecialchars($client['email']); ?></span>
+                                    <span class="text-sm"><i class="ph ph-phone"></i> <?php echo esc($client['phone']); ?></span>
+                                    <span class="text-sm text-muted"><i class="ph ph-envelope"></i> <?php echo esc($client['email']); ?></span>
                                 </div>
                             </td>
-                            <td class="text-sm"><?php echo htmlspecialchars($client['address']); ?></td>
+                            <td class="text-sm"><?php echo esc($client['address']); ?></td>
                             <td>
                                 <a href="edit.php?id=<?php echo $client['id']; ?>" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem;" title="Editar"><i class="ph ph-pencil-simple"></i></a>
                                 <a href="history.php?id=<?php echo $client['id']; ?>" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem;" title="Ver Historial"><i class="ph ph-clock-counter-clockwise"></i></a>
                                 <?php if (can_access_module('clients_delete', $pdo)): ?>
-                                <button type="button" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem; color: var(--danger);" title="Eliminar" onclick="openDeleteModal(<?php echo $client['id']; ?>, '<?php echo htmlspecialchars($client['name'], ENT_QUOTES); ?>')"><i class="ph ph-trash"></i></button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.4rem; font-size: 1rem; color: var(--danger);" title="Eliminar" onclick="openDeleteModal(<?php echo $client['id']; ?>, '<?php echo esc($client['name'], ENT_QUOTES); ?>')"><i class="ph ph-trash"></i></button>
                                 <?php endif; ?>
                             </td>
                         </tr>

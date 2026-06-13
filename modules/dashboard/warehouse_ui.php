@@ -1,4 +1,4 @@
-<style>
+﻿<style>
     /* Premium Warehouse Dashboard Aesthetics */
     .wh-premium-card {
         background: var(--bg-card);
@@ -207,22 +207,22 @@
                                                 <i class="ph-fill ph-user" style="color: var(--primary);"></i>
                                             </div>
                                             <span style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">
-                                                <?php echo htmlspecialchars($item['client_name']); ?>
+                                                <?php echo esc($item['client_name']); ?>
                                             </span>
                                         </div>
                                     </td>
                                     <td>
                                         <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.2rem;">
-                                            <?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?>
+                                            <?php echo esc($item['brand'] . ' ' . $item['model']); ?>
                                         </div>
                                         <div style="font-size: 0.8rem; color: var(--text-secondary); font-family: monospace; letter-spacing: 0.5px;">
-                                            S/N: <?php echo htmlspecialchars($item['serial_number']); ?>
+                                            S/N: <?php echo esc($item['serial_number']); ?>
                                         </div>
                                     </td>
                                     <td>
                                         <span class="wh-badge-premium">
                                             <i class="ph ph-barcode" style="margin-right: 4px; vertical-align: -1px;"></i>
-                                            <?php echo htmlspecialchars($item['product_code']); ?>
+                                            <?php echo esc($item['product_code']); ?>
                                         </span>
                                     </td>
                                 </tr>

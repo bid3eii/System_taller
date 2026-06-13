@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/tools/assign.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+        <div class="alert alert-danger"><?php echo esc($error); ?></div>
     <?php endif; ?>
 
     <form method="POST" id="assignmentForm">
@@ -147,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- Project Info -->
                     <div class="form-group box-input">
                         <label class="form-label">Proyecto *</label>
-                        <input type="text" name="project_name" class="form-control" required placeholder="Nombre del proyecto" value="<?php echo htmlspecialchars($prefilled_project); ?>" autofocus>
+                        <input type="text" name="project_name" class="form-control" required placeholder="Nombre del proyecto" value="<?php echo esc($prefilled_project); ?>" autofocus>
                     </div>
 
                     <div class="form-group box-input">
@@ -217,12 +217,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <input type="checkbox" name="tools[]" value="<?php echo $tool['id']; ?>" class="tool-checkbox">
                                 </td>
                                 <td>
-                                    <span class="font-medium"><?php echo htmlspecialchars($tool['name']); ?></span>
+                                    <span class="font-medium"><?php echo esc($tool['name']); ?></span>
                                 </td>
-                                <td><?php echo htmlspecialchars($tool['description']); ?></td>
+                                <td><?php echo esc($tool['description']); ?></td>
                                 <td>
-                                    <span class="badge available-badge" data-original="<?php echo htmlspecialchars($tool['quantity']); ?>" style="background: var(--bg-hover);">
-                                        <?php echo htmlspecialchars($tool['quantity']); ?> 
+                                    <span class="badge available-badge" data-original="<?php echo esc($tool['quantity']); ?>" style="background: var(--bg-hover);">
+                                        <?php echo esc($tool['quantity']); ?> 
                                     </span>
                                 </td>
                                 <td>

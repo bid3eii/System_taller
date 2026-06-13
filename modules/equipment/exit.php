@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/equipment/exit.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -96,8 +96,8 @@ require_once '../../includes/sidebar.php'; // Navbar
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">
                             <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
                                 <i class="ph-fill ph-user-circle" style="color: #10b981; font-size: 1.25rem; flex-shrink: 0;"></i>
-                                <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($clientName); ?>">
-                                    <?php echo htmlspecialchars($clientName); ?>
+                                <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc($clientName); ?>">
+                                    <?php echo esc($clientName); ?>
                                 </span>
                             </div>
                             <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; white-space: nowrap;">
@@ -110,7 +110,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                             <?php foreach (array_slice($equipmentList, 0, 3) as $index => $equipment): ?>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; font-size: 0.85rem; color: var(--text-secondary);">
                                     <i class="ph ph-laptop" style="color: var(--text-secondary); font-size: 0.9rem;"></i>
-                                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?php echo htmlspecialchars($equipment); ?></span>
+                                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?php echo esc($equipment); ?></span>
                                 </div>
                             <?php endforeach; ?>
                             <?php if (count($equipmentList) > 3): ?>
@@ -161,7 +161,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                             <td><strong><?php echo get_order_number($order); ?></strong></td>
                             <td>
                                 <?php if($order['invoice_number']): ?>
-                                    <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);"><?php echo htmlspecialchars($order['invoice_number']); ?></span>
+                                    <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);"><?php echo esc($order['invoice_number']); ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">-</span>
                                 <?php endif; ?>
@@ -169,14 +169,14 @@ require_once '../../includes/sidebar.php'; // Navbar
                             <td>
                                 <?php 
                                     $final_client = trim(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['client_name']));
-                                    echo htmlspecialchars($final_client); 
+                                    echo esc($final_client); 
                                 ?>
                             </td>
                             <td>
-                                <span><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></span>
+                                <span><?php echo esc($order['brand'] . ' ' . $order['model']); ?></span>
                             </td>
                             <td>
-                                <span class="text-sm font-medium"><?php echo htmlspecialchars($order['serial_number']); ?></span>
+                                <span class="text-sm font-medium"><?php echo esc($order['serial_number']); ?></span>
                             </td>
                             <td style="vertical-align: middle;">
                                 <span style="color: var(--success); font-weight: 600; background: rgba(16, 185, 129, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; white-space: nowrap;">
@@ -260,7 +260,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                                 <td><strong><?php echo get_order_number($dItem); ?></strong></td>
                                 <td>
                                     <?php if($dItem['invoice_number']): ?>
-                                        <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);"><?php echo htmlspecialchars($dItem['invoice_number']); ?></span>
+                                        <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);"><?php echo esc($dItem['invoice_number']); ?></span>
                                     <?php else: ?>
                                         <span class="text-muted">-</span>
                                     <?php endif; ?>
@@ -268,14 +268,14 @@ require_once '../../includes/sidebar.php'; // Navbar
                                 <td>
                                     <?php 
                                         $final_client_d = trim(!empty($dItem['owner_name']) ? $dItem['owner_name'] : (!empty($dItem['registered_owner_name']) ? $dItem['registered_owner_name'] : $dItem['client_name']));
-                                        echo htmlspecialchars($final_client_d); 
+                                        echo esc($final_client_d); 
                                     ?>
                                 </td>
                                 <td>
-                                <span><?php echo htmlspecialchars($dItem['brand'] . ' ' . $dItem['model']); ?></span>
+                                <span><?php echo esc($dItem['brand'] . ' ' . $dItem['model']); ?></span>
                                 </td>
                                 <td>
-                                    <span class="text-sm font-medium"><?php echo htmlspecialchars($dItem['serial_number']); ?></span>
+                                    <span class="text-sm font-medium"><?php echo esc($dItem['serial_number']); ?></span>
                                 </td>
                                 <td><?php echo date('d/m/Y H:i', strtotime($dItem['exit_date'])); ?></td>
                                 <td>
@@ -284,7 +284,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                                             <div style="width: 24px; height: 24px; background: var(--primary-500); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold;">
                                                 <?php echo strtoupper(substr($dItem['delivered_by_full'] ?: $dItem['delivered_by_username'], 0, 1)); ?>
                                             </div>
-                                            <span style="font-size: 0.9rem;"><?php echo htmlspecialchars($dItem['delivered_by_full'] ?: $dItem['delivered_by_username']); ?></span>
+                                            <span style="font-size: 0.9rem;"><?php echo esc($dItem['delivered_by_full'] ?: $dItem['delivered_by_username']); ?></span>
                                         </div>
                                     <?php else: ?>
                                         <span class="text-muted text-sm">-</span>

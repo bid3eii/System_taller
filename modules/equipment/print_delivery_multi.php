@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/equipment/print_delivery_multi.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -401,12 +401,12 @@ if (empty($exit_doc_number)) {
                 <?php if($system_logo): ?>
                     <img src="../../assets/uploads/<?php echo $system_logo; ?>" class="logo-img">
                 <?php endif; ?>
-                <div style="font-weight: bold; font-size: 12px; margin-top: 5px;"><?php echo htmlspecialchars($company_name); ?></div>
+                <div style="font-weight: bold; font-size: 12px; margin-top: 5px;"><?php echo esc($company_name); ?></div>
             </div>
             <div class="header-col header-center">
                 <h2>ENTREGA DE EQUIPOS</h2>
                 <h3>SOPORTE TÉCNICO</h3>
-                <p>Tel: <?php echo htmlspecialchars($company_phone); ?> | Email: <?php echo htmlspecialchars($company_email); ?></p>
+                <p>Tel: <?php echo esc($company_phone); ?> | Email: <?php echo esc($company_email); ?></p>
             </div>
             <div class="header-col header-right">
                 <div class="doc-box"><?php echo str_pad($exit_doc_number ?? 0, 5, '0', STR_PAD_LEFT); ?></div>
@@ -425,27 +425,27 @@ if (empty($exit_doc_number)) {
                     </div>
                     <div class="info-row">
                         <div class="info-label">Cliente:</div>
-                        <div class="info-val"><?php echo htmlspecialchars($clientData['owner_name_final']); ?></div>
+                        <div class="info-val"><?php echo esc($clientData['owner_name_final']); ?></div>
                     </div>
                 </div>
                 <div>
                     <?php if($show_secondary_contact): ?>
                     <div class="info-row">
                         <div class="info-label">Contacto:</div>
-                        <div class="info-val"><?php echo htmlspecialchars($clientData['contact_name']); ?></div>
+                        <div class="info-val"><?php echo esc($clientData['contact_name']); ?></div>
                     </div>
                     <?php endif; ?>
                     <div class="info-row">
                         <div class="info-label">RUC/Cédula:</div>
-                        <div class="info-val"><?php echo htmlspecialchars($clientData['tax_id'] ?? '-'); ?></div>
+                        <div class="info-val"><?php echo esc($clientData['tax_id'] ?? '-'); ?></div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">Celular:</div>
-                        <div class="info-val"><?php echo htmlspecialchars($clientData['phone']); ?></div>
+                        <div class="info-val"><?php echo esc($clientData['phone']); ?></div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">Correo:</div>
-                        <div class="info-val"><?php echo htmlspecialchars($clientData['email']); ?></div>
+                        <div class="info-val"><?php echo esc($clientData['email']); ?></div>
                     </div>
                 </div>
             </div>
@@ -468,13 +468,13 @@ if (empty($exit_doc_number)) {
                 <tr>
                     <td><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                     <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($order, 5); ?></td>
-                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($order['brand'])); ?></td>
+                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo esc(trim($order['brand'])); ?></td>
                     <td style="text-transform: uppercase;">
-                        <?php echo htmlspecialchars($order['serial_number']); ?>
+                        <?php echo esc($order['serial_number']); ?>
                         <?php if (!empty($order['replacement_serial_number'])): ?>
                             <div style="margin-top: 3px; padding-top: 3px; border-top: 1px dashed #000; font-size: 8px;">
                                 <strong>REEMPLAZO:</strong><br>
-                                <?php echo htmlspecialchars($order['replacement_serial_number']); ?>
+                                <?php echo esc($order['replacement_serial_number']); ?>
                             </div>
                         <?php endif; ?>
                     </td>
@@ -490,7 +490,7 @@ if (empty($exit_doc_number)) {
             foreach($equipmentData as $item) {
                 $order = $item['order'];
                 $prefix = (count($equipmentData) > 1) ? "<strong>" . get_order_number($order, 5) . ":</strong> " : "";
-                $acc_list[] = $prefix . htmlspecialchars($order['accessories_received'] ?: 'NINGUNO');
+                $acc_list[] = $prefix . esc($order['accessories_received'] ?: 'NINGUNO');
             }
             echo implode("<br>", $acc_list);
             ?>
@@ -503,7 +503,7 @@ if (empty($exit_doc_number)) {
             foreach($equipmentData as $item) {
                 $order = $item['order'];
                 $prefix = (count($equipmentData) > 1) ? "<strong>" . get_order_number($order, 5) . ":</strong> " : "";
-                $prob_list[] = $prefix . nl2br(htmlspecialchars($order['problem_reported']));
+                $prob_list[] = $prefix . nl2br(esc($order['problem_reported']));
             }
             echo implode("<br>", $prob_list);
             ?>
@@ -516,7 +516,7 @@ if (empty($exit_doc_number)) {
             <div class="comments-box">
                 <?php 
                     if ($deliveryComments) {
-                        echo nl2br(htmlspecialchars($deliveryComments));
+                        echo nl2br(esc($deliveryComments));
                     } else {
                         echo "&nbsp;";
                     }
@@ -524,7 +524,7 @@ if (empty($exit_doc_number)) {
             </div>
             <div class="legal-footer">
                 <?php 
-                    $footer_txt = htmlspecialchars($print_footer_text);
+                    $footer_txt = esc($print_footer_text);
                     $footer_txt = str_replace('Declaración de Conformidad:', '<strong>Declaración de Conformidad:</strong>', $footer_txt);
                     echo nl2br($footer_txt); 
                 ?>
@@ -568,8 +568,8 @@ if (empty($exit_doc_number)) {
                     <div class="sig-line"></div>
 
                     <div style="font-weight: bold; margin-top: 5px; margin-bottom: 5px;">Entrega Conforme</div>
-                    <div style="font-size: 10px;"><?php echo htmlspecialchars($deliveredBy); ?></div>
-                    <div style="font-size: 10px; font-weight: bold;"><?php echo htmlspecialchars($roleName); ?></div>
+                    <div style="font-size: 10px;"><?php echo esc($deliveredBy); ?></div>
+                    <div style="font-size: 10px; font-weight: bold;"><?php echo esc($roleName); ?></div>
                 </div>
 
                 <?php if ($driverName): ?>
@@ -578,10 +578,10 @@ if (empty($exit_doc_number)) {
                     <div class="sig-line"></div>
                     <div style="font-weight: bold; margin-top: 5px; margin-bottom: 5px;">Conductor (Transporte)</div>
                     <div style="text-align: center; margin-top: 5px; font-size: 10px;">
-                        <?php echo htmlspecialchars($driverName); ?>
+                        <?php echo esc($driverName); ?>
                     </div>
                      <div style="text-align: center; margin-top: 5px; font-size: 10px;">
-                        <?php echo htmlspecialchars($driverId); ?>
+                        <?php echo esc($driverId); ?>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -591,10 +591,10 @@ if (empty($exit_doc_number)) {
                     <div class="sig-line"></div>
                     <div style="font-weight: bold; margin-top: 5px; margin-bottom: 5px;">Recibe Conforme</div>
                     <div style="text-align: center; margin-top: 5px; min-height: 12px;">
-                        <?php echo $driverName ? '&nbsp;' : htmlspecialchars($receiverName); ?>
+                        <?php echo $driverName ? '&nbsp;' : esc($receiverName); ?>
                     </div>
                      <div style="text-align: center; margin-top: 5px; min-height: 12px;">
-                        <?php echo $driverName ? '&nbsp;' : htmlspecialchars($receiverId); ?>
+                        <?php echo $driverName ? '&nbsp;' : esc($receiverId); ?>
                     </div>
                 </div>
             </div>

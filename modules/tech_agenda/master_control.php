@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/tech_agenda/master_control.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -104,7 +104,7 @@ $status_map = [
                 <select id="techFilter" class="form-control">
                     <option value="all">Todos</option>
                     <?php foreach ($technicians as $t): ?>
-                        <option value="<?php echo htmlspecialchars($t['full_name'] ?: $t['username']); ?>"><?php echo htmlspecialchars($t['full_name'] ?: $t['username']); ?></option>
+                        <option value="<?php echo esc($t['full_name'] ?: $t['username']); ?>"><?php echo esc($t['full_name'] ?: $t['username']); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -147,7 +147,7 @@ $status_map = [
                         $s = $status_map[$v['status']];
                         $has_ps = !empty($v['ps_id']);
                     ?>
-                        <tr data-tech="<?php echo htmlspecialchars($v['tech_full_name'] ?: ($v['tech_username'] ?? 'N/A')); ?>" 
+                        <tr data-tech="<?php echo esc($v['tech_full_name'] ?: ($v['tech_username'] ?? 'N/A')); ?>" 
                             data-status="<?php echo $v['status']; ?>"
                             data-report="<?php echo $has_ps ? 'completed' : 'pending'; ?>">
                             <td style="padding-left: 2rem;">
@@ -155,7 +155,7 @@ $status_map = [
                                     <div class="user-avatar-sm" style="width: 32px; height: 32px; font-size: 0.8rem; background: var(--bg-body);">
                                         <?php echo strtoupper(substr($v['tech_full_name'] ?: ($v['tech_username'] ?? 'U'), 0, 1)); ?>
                                     </div>
-                                    <span style="font-weight: 500;"><?php echo htmlspecialchars($v['tech_full_name'] ?: ($v['tech_username'] ?? 'N/A')); ?></span>
+                                    <span style="font-weight: 500;"><?php echo esc($v['tech_full_name'] ?: ($v['tech_username'] ?? 'N/A')); ?></span>
                                 </div>
                             </td>
                             <td>
@@ -163,9 +163,9 @@ $status_map = [
                                 <div style="font-size: 0.75rem; color: var(--text-muted);"><?php echo date('H:i', strtotime($v['start_datetime'])); ?></div>
                             </td>
                             <td>
-                                <div style="font-weight: 600;"><?php echo htmlspecialchars($v['title']); ?></div>
+                                <div style="font-weight: 600;"><?php echo esc($v['title']); ?></div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.25rem;">
-                                    <i class="ph ph-map-pin"></i> <?php echo htmlspecialchars($v['location'] ?: 'Sin ubicación'); ?>
+                                    <i class="ph ph-map-pin"></i> <?php echo esc($v['location'] ?: 'Sin ubicación'); ?>
                                 </div>
                             </td>
                             <td>

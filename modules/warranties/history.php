@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/warranties/history.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -179,14 +179,14 @@ $records = $stmt->fetchAll();
     <!-- Search Bar -->
     <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
         <form method="GET" action="history.php" style="display: flex; gap: 1rem; align-items: center;">
-            <input type="hidden" name="tab" value="<?php echo htmlspecialchars($tab); ?>">
+            <input type="hidden" name="tab" value="<?php echo esc($tab); ?>">
             <div class="input-group" style="flex: 1; position: relative; display: flex; align-items: center;">
-                <input type="text" id="history-search-input" name="search" class="form-control" placeholder="Buscar por Serie, Código, Equipo, Proveedor, Cliente o Usuario..." value="<?php echo htmlspecialchars($search); ?>">
+                <input type="text" id="history-search-input" name="search" class="form-control" placeholder="Buscar por Serie, Código, Equipo, Proveedor, Cliente o Usuario..." value="<?php echo esc($search); ?>">
                 <i class="ph ph-magnifying-glass input-icon"></i>
             </div>
             <button type="submit" class="btn btn-secondary">Buscar</button>
             <?php if (!empty($search)): ?>
-                <a href="?tab=<?php echo htmlspecialchars($tab); ?>" class="btn btn-icon" title="Limpiar Búsqueda" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);"><i class="ph ph-x"></i></a>
+                <a href="?tab=<?php echo esc($tab); ?>" class="btn btn-icon" title="Limpiar Búsqueda" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.2);"><i class="ph ph-x"></i></a>
             <?php endif; ?>
         </form>
     </div>
@@ -336,14 +336,14 @@ $records = $stmt->fetchAll();
                             ?>
                             <tr style="border-bottom: 1px solid var(--border-color);" class="history-row">
                                 <td>
-                                    <strong style="color: var(--primary-500); font-size: 0.85rem; display: block;">#<?php echo htmlspecialchars($r['display_id'] ?: $r['id']); ?></strong>
-                                    <span class="text-xs text-muted" style="font-family: monospace; font-size: 0.72rem; word-break: break-all;"><i class="ph ph-barcode"></i> <?php echo htmlspecialchars($r['serial_number']); ?></span>
+                                    <strong style="color: var(--primary-500); font-size: 0.85rem; display: block;">#<?php echo esc($r['display_id'] ?: $r['id']); ?></strong>
+                                    <span class="text-xs text-muted" style="font-family: monospace; font-size: 0.72rem; word-break: break-all;"><i class="ph ph-barcode"></i> <?php echo esc($r['serial_number']); ?></span>
                                     <?php if (!empty(trim($r['product_code']))): ?>
-                                        <div style="margin-top: 2px;"><span class="badge" style="font-size: 0.62rem; padding: 1px 4px;"><?php echo htmlspecialchars($r['product_code']); ?></span></div>
+                                        <div style="margin-top: 2px;"><span class="badge" style="font-size: 0.62rem; padding: 1px 4px;"><?php echo esc($r['product_code']); ?></span></div>
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <strong style="font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo htmlspecialchars($r['brand'] . ' ' . $r['model']); ?>"><?php echo htmlspecialchars($r['brand'] . ' ' . $r['model']); ?></strong>
+                                    <strong style="font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc($r['brand'] . ' ' . $r['model']); ?>"><?php echo esc($r['brand'] . ' ' . $r['model']); ?></strong>
                                     <span class="text-xs text-muted">
                                         <?php if (($r['purchase_origin'] ?? 'local') === 'importada'): ?>
                                             <span style="color: #a855f7;"><i class="ph-fill ph-airplane-tilt"></i> Importado</span>
@@ -359,10 +359,10 @@ $records = $stmt->fetchAll();
                                         </span>
                                     <?php else: ?>
                                         <div style="display: flex; flex-direction: column; overflow: hidden;">
-                                            <strong style="font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php echo htmlspecialchars($r['client_name']); ?>"><?php echo htmlspecialchars($r['client_name']); ?></strong>
+                                            <strong style="font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php echo esc($r['client_name']); ?>"><?php echo esc($r['client_name']); ?></strong>
                                             <?php if (!empty($r['sales_invoice_number'])): ?>
                                                 <span class="text-xs" style="color: var(--primary-500); font-weight: 600; margin-top: 2px;">
-                                                    <i class="ph ph-receipt"></i> Factura: <?php echo htmlspecialchars($r['sales_invoice_number']); ?>
+                                                    <i class="ph ph-receipt"></i> Factura: <?php echo esc($r['sales_invoice_number']); ?>
                                                 </span>
                                             <?php endif; ?>
                                         </div>
@@ -387,8 +387,8 @@ $records = $stmt->fetchAll();
                                                 <?php echo strtoupper(substr($r['creator_name'] ?: $r['creator_username'], 0, 1)); ?>
                                             </div>
                                             <div style="overflow: hidden;">
-                                                <span style="font-weight: 600; font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-color);" title="<?php echo htmlspecialchars($r['creator_name'] ?: $r['creator_username']); ?>"><?php echo htmlspecialchars($r['creator_name'] ?: $r['creator_username']); ?></span>
-                                                <span class="text-xs text-muted" style="font-family: monospace; font-size: 0.65rem;">@<?php echo htmlspecialchars($r['creator_username']); ?></span>
+                                                <span style="font-weight: 600; font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-color);" title="<?php echo esc($r['creator_name'] ?: $r['creator_username']); ?>"><?php echo esc($r['creator_name'] ?: $r['creator_username']); ?></span>
+                                                <span class="text-xs text-muted" style="font-family: monospace; font-size: 0.65rem;">@<?php echo esc($r['creator_username']); ?></span>
                                             </div>
                                         </div>
                                     <?php else: ?>
@@ -407,8 +407,8 @@ $records = $stmt->fetchAll();
                                                 <?php echo strtoupper(substr($r['deliverer_name'] ?: $r['deliverer_username'], 0, 1)); ?>
                                             </div>
                                             <div style="overflow: hidden;">
-                                                <span style="font-weight: 600; font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-color);" title="<?php echo htmlspecialchars($r['deliverer_name'] ?: $r['deliverer_username']); ?>"><?php echo htmlspecialchars($r['deliverer_name'] ?: $r['deliverer_username']); ?></span>
-                                                <span class="text-xs text-muted" style="font-family: monospace; font-size: 0.65rem;">@<?php echo htmlspecialchars($r['deliverer_username']); ?></span>
+                                                <span style="font-weight: 600; font-size: 0.8rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-color);" title="<?php echo esc($r['deliverer_name'] ?: $r['deliverer_username']); ?>"><?php echo esc($r['deliverer_name'] ?: $r['deliverer_username']); ?></span>
+                                                <span class="text-xs text-muted" style="font-family: monospace; font-size: 0.65rem;">@<?php echo esc($r['deliverer_username']); ?></span>
                                             </div>
                                         </div>
                                     <?php else: ?>

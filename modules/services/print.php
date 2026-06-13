@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/services/print.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -293,10 +293,10 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                     <img src="../../assets/uploads/<?php echo $system_logo; ?>" style="max-width: 200px; max-height: 80px; margin-bottom: 10px; object-fit: contain;" alt="Logo">
                 <?php endif; ?>
                 <div>
-                   <h1><?php echo htmlspecialchars($company_name); ?></h1>
+                   <h1><?php echo esc($company_name); ?></h1>
                    <p style="font-size: 0.8rem; color: #64748b;">Orden de Servicio</p>
-                   <p style="font-size: 0.8rem; margin: 0; color: #64748b;"><?php echo htmlspecialchars($company_address); ?></p>
-                   <p style="font-size: 0.8rem; margin: 0; color: #64748b;"><?php echo htmlspecialchars($company_phone); ?></p>
+                   <p style="font-size: 0.8rem; margin: 0; color: #64748b;"><?php echo esc($company_address); ?></p>
+                   <p style="font-size: 0.8rem; margin: 0; color: #64748b;"><?php echo esc($company_phone); ?></p>
                 </div>
             </div>
             <div class="doc-meta">
@@ -315,28 +315,28 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                         <span class="info-value"><?php 
                             $final_client = trim(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name']));
                             $contact_name = trim($order['contact_name'] ?? '');
-                            echo htmlspecialchars($final_client); 
+                            echo esc($final_client); 
                         ?></span>
                     </div>
                     <?php if($final_client !== $contact_name && !empty($contact_name)): ?>
                     <div class="info-group">
                         <span class="info-label">Contacto:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($contact_name); ?></span>
+                        <span class="info-value"><?php echo esc($contact_name); ?></span>
                     </div>
                     <?php endif; ?>
                     <?php if($order['tax_id']): ?>
                     <div class="info-group">
                         <span class="info-label">ID/RUC:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($order['tax_id']); ?></span>
+                        <span class="info-value"><?php echo esc($order['tax_id']); ?></span>
                     </div>
                     <?php endif; ?>
                     <div class="info-group">
                         <span class="info-label">Teléfono:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($order['phone']); ?></span>
+                        <span class="info-value"><?php echo esc($order['phone']); ?></span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Email:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($order['email']); ?></span>
+                        <span class="info-value"><?php echo esc($order['email']); ?></span>
                     </div>
                 </div>
 
@@ -345,15 +345,15 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                     <div class="section-header">DATOS DEL EQUIPO</div>
                     <div class="info-group">
                         <span class="info-label">Tipo:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($order['equipment_type']); ?></span>
+                        <span class="info-value"><?php echo esc($order['equipment_type']); ?></span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Equipo:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($order['brand']); ?></span>
+                        <span class="info-value"><?php echo esc($order['brand']); ?></span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Serie (SN):</span>
-                        <span class="info-value"><?php echo htmlspecialchars($order['serial_number']); ?></span>
+                        <span class="info-value"><?php echo esc($order['serial_number']); ?></span>
                     </div>
                 </div>
             </div>
@@ -366,11 +366,11 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                 <div class="grid-2">
                     <div class="service-row">
                         <span class="service-label">Problema Reportado:</span>
-                        <div class="service-content"><?php echo htmlspecialchars($order['problem_reported']); ?></div>
+                        <div class="service-content"><?php echo esc($order['problem_reported']); ?></div>
                     </div>
                     <div class="service-row">
                         <span class="service-label">Accesorios Recibidos:</span>
-                         <div class="service-content"><?php echo htmlspecialchars($order['accessories_received'] ?: 'Ninguno'); ?></div>
+                         <div class="service-content"><?php echo esc($order['accessories_received'] ?: 'Ninguno'); ?></div>
                     </div>
                 </div>
 
@@ -383,7 +383,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
             <?php if($order['entry_notes']): ?>
             <div class="service-row" style="margin-bottom: 30px; padding: 15px; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px;">
                 <span class="service-label">Notas de Ingreso:</span>
-                <div class="service-content"><?php echo nl2br(htmlspecialchars($order['entry_notes'])); ?></div>
+                <div class="service-content"><?php echo nl2br(esc($order['entry_notes'])); ?></div>
             </div>
             <?php endif; ?>
             
@@ -391,7 +391,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
                 <div class="signature-block">
                 <div class="signature-line"></div>
                 <div class="signature-name">
-                    <?php echo htmlspecialchars($order['created_by'] ?? 'Taller'); ?>
+                    <?php echo esc($order['created_by'] ?? 'Taller'); ?>
                 </div>
                 <div class="signature-role">RECIBIDO POR (TALLER)</div>
             </div>
@@ -399,7 +399,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
             <div class="signature-block">
                 <div class="signature-line"></div>
                 <div class="signature-name">
-                    <?php echo htmlspecialchars($final_client); ?>
+                    <?php echo esc($final_client); ?>
                 </div>
                 <div class="signature-role">Firma del Cliente</div>
             </div>
@@ -407,8 +407,8 @@ $print_footer_text = $settings['print_footer_text'] ?? 'La empresa no se hace re
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>Condiciones de Servicio:</strong> <?php echo htmlspecialchars($print_footer_text); ?></p>
-            <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($company_name); ?>. Todos los derechos reservados.</p>
+            <p><strong>Condiciones de Servicio:</strong> <?php echo esc($print_footer_text); ?></p>
+            <p>&copy; <?php echo date('Y'); ?> <?php echo esc($company_name); ?>. Todos los derechos reservados.</p>
         </div>
     </div>
 </body>

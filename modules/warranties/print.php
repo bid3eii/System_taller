@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/warranties/print.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -277,10 +277,10 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
                 <?php if($system_logo && file_exists("../../assets/uploads/" . $system_logo)): ?>
                     <img src="../../assets/uploads/<?php echo $system_logo; ?>" style="max-width: 200px; max-height: 80px; margin-bottom: 10px; object-fit: contain;" alt="Logo">
                 <?php endif; ?>
-                <h1><?php echo htmlspecialchars($company_name); ?></h1>
+                <h1><?php echo esc($company_name); ?></h1>
                 <p>Reparación y Mantenimiento de Equipos</p>
-                <p><?php echo htmlspecialchars($company_address); ?></p>
-                <p><?php echo htmlspecialchars($company_phone); ?></p>
+                <p><?php echo esc($company_address); ?></p>
+                <p><?php echo esc($company_phone); ?></p>
             </div>
             <div class="order-meta">
                 <div class="order-number">GARANTÍA<br><?php echo str_pad($warranty['id'], 4, '0', STR_PAD_LEFT); ?></div>
@@ -297,21 +297,21 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
                     <div class="section-header">INFORMACIÓN DEL CLIENTE</div>
                     <div class="info-group">
                         <span class="info-label">Cliente:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($warranty['client_name']); ?></span>
+                        <span class="info-value"><?php echo esc($warranty['client_name']); ?></span>
                     </div>
                     <?php if($warranty['tax_id']): ?>
                     <div class="info-group">
                         <span class="info-label">ID/RUC:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($warranty['tax_id']); ?></span>
+                        <span class="info-value"><?php echo esc($warranty['tax_id']); ?></span>
                     </div>
                     <?php endif; ?>
                     <div class="info-group">
                         <span class="info-label">Teléfono:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($warranty['phone']); ?></span>
+                        <span class="info-value"><?php echo esc($warranty['phone']); ?></span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Email:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($warranty['email']); ?></span>
+                        <span class="info-value"><?php echo esc($warranty['email']); ?></span>
                     </div>
                 </div>
 
@@ -320,19 +320,19 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
                     <div class="section-header">DATOS DEL EQUIPO</div>
                     <div class="info-group">
                         <span class="info-label">Tipo:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($warranty['equipment_type']); ?></span>
+                        <span class="info-value"><?php echo esc($warranty['equipment_type']); ?></span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Marca:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($warranty['brand']); ?></span>
+                        <span class="info-value"><?php echo esc($warranty['brand']); ?></span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Modelo:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($warranty['model']); ?></span>
+                        <span class="info-value"><?php echo esc($warranty['model']); ?></span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Serie (SN):</span>
-                        <span class="info-value"><?php echo htmlspecialchars($warranty['serial_number']); ?></span>
+                        <span class="info-value"><?php echo esc($warranty['serial_number']); ?></span>
                     </div>
                 </div>
             </div>
@@ -345,7 +345,7 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
                 <div class="grid-2">
                     <div class="service-row">
                         <span class="service-label">Proveedor / Comercio:</span>
-                        <div class="service-content"><?php echo htmlspecialchars($warranty['provider_name'] ?? 'Interno'); ?></div>
+                        <div class="service-content"><?php echo esc($warranty['provider_name'] ?? 'Interno'); ?></div>
                     </div>
                      <div class="service-row">
                         <span class="service-label">Estado:</span>
@@ -354,14 +354,14 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
                     <!-- Custom Fields for Warranty -->
                     <div class="service-row">
                          <span class="service-label">Factura de Compra:</span>
-                         <div class="service-content"><?php echo htmlspecialchars($warranty['purchase_invoice'] ?? 'N/A'); ?></div>
+                         <div class="service-content"><?php echo esc($warranty['purchase_invoice'] ?? 'N/A'); ?></div>
                     </div>
                 </div>
 
                 <?php if($warranty['notes']): ?>
                 <div class="service-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
                     <span class="service-label">Observaciones:</span>
-                    <div class="service-content"><?php echo nl2br(htmlspecialchars($warranty['notes'])); ?></div>
+                    <div class="service-content"><?php echo nl2br(esc($warranty['notes'])); ?></div>
                 </div>
                 <?php endif; ?>
             </div>
@@ -369,8 +369,8 @@ $print_footer_text = $settings['print_footer_text'] ?? 'Condiciones de Garantía
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>Condiciones de Garantía:</strong> <?php echo htmlspecialchars($print_footer_text); ?></p>
-            <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($company_name); ?>. Todos los derechos reservados.</p>
+            <p><strong>Condiciones de Garantía:</strong> <?php echo esc($print_footer_text); ?></p>
+            <p>&copy; <?php echo date('Y'); ?> <?php echo esc($company_name); ?>. Todos los derechos reservados.</p>
         </div>
     </div>
 </body>

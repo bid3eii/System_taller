@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/tools/print_assignment.php
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
@@ -226,13 +226,13 @@ try {
                 <div class="info-row">
                     <span class="info-label">Proyecto:</span>
                     <div class="info-value">
-                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo htmlspecialchars($assignment['project_name']); ?></span>
+                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo esc($assignment['project_name']); ?></span>
                     </div>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Encargado:</span>
                     <div class="info-value">
-                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo htmlspecialchars($assignment['assigned_to']); ?></span>
+                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo esc($assignment['assigned_to']); ?></span>
                     </div>
                 </div>
                 <!-- Technicians -->
@@ -240,21 +240,21 @@ try {
                     <span class="info-label">Técnicos:</span>
                     <div class="info-value">
                         <span style="margin-right: 5px; font-weight: bold;">1.</span>
-                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo htmlspecialchars($assignment['technician_1']); ?></span>
+                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo esc($assignment['technician_1']); ?></span>
                     </div>
                 </div>
                 <div class="info-row">
                     <span class="info-label">&nbsp;</span>
                     <div class="info-value">
                         <span style="margin-right: 5px; font-weight: bold;">2.</span>
-                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo htmlspecialchars($assignment['technician_2']); ?></span>
+                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo esc($assignment['technician_2']); ?></span>
                     </div>
                 </div>
                 <div class="info-row">
                     <span class="info-label">&nbsp;</span>
                     <div class="info-value">
                         <span style="margin-right: 5px; font-weight: bold;">3.</span>
-                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo htmlspecialchars($assignment['technician_3']); ?></span>
+                        <span style="border-bottom: 1px solid #000; flex-grow: 1; padding-left: 5px;"><?php echo esc($assignment['technician_3']); ?></span>
                     </div>
                 </div>
             </div>
@@ -294,7 +294,7 @@ try {
                 <?php foreach ($items as $item): ?>
                 <tr>
                     <td><?php echo $item['quantity']; ?></td>
-                    <td class="col-desc"><?php echo htmlspecialchars($item['name']); ?></td>
+                    <td class="col-desc"><?php echo esc($item['name']); ?></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -308,7 +308,7 @@ try {
         </table>
 
         <div style="font-weight: bold; font-size: 10px; margin-bottom: 2px;">OBSERVACIÓN:</div>
-        <div class="observations"><?php echo nl2br(htmlspecialchars($assignment['observations'])); ?></div>
+        <div class="observations"><?php echo nl2br(esc($assignment['observations'])); ?></div>
 
         <div style="margin-top: auto;">
             <div class="legal-text">

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/reports/export.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -215,18 +215,18 @@ header("Expires: 0");
                     <td><?php echo date('d/m/Y', strtotime($row['entry_date'])); ?></td>
                     <td class="text-left bold">
                         <?php 
-                            echo htmlspecialchars(!empty($row['owner_name']) ? $row['owner_name'] : 
+                            echo esc(!empty($row['owner_name']) ? $row['owner_name'] : 
                                  (!empty($row['registered_owner_name']) ? $row['registered_owner_name'] : 
                                  $row['contact_name'])); 
                         ?>
                     </td>
-                    <td><?php echo htmlspecialchars($row['client_phone']); ?></td>
-                    <td class="text-left"><?php echo htmlspecialchars($row['brand'] . ' ' . $row['model']); ?></td>
-                    <td><?php echo htmlspecialchars($row['serial_number']); ?></td>
+                    <td><?php echo esc($row['client_phone']); ?></td>
+                    <td class="text-left"><?php echo esc($row['brand'] . ' ' . $row['model']); ?></td>
+                    <td><?php echo esc($row['serial_number']); ?></td>
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
                     <td class="<?php echo $sClass; ?>"><?php echo $label; ?></td>
                     <td><?php echo !empty($row['diagnosis_number']) ? '#'.str_pad($row['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?></td>
-                    <td><?php echo htmlspecialchars($row['tech_name_full'] ?: $row['tech_name']); ?></td>
+                    <td><?php echo esc($row['tech_name_full'] ?: $row['tech_name']); ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

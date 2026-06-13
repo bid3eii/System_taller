@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/settings/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -158,22 +158,22 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'bodega_restored') {
 }
 if (isset($_GET['error'])) {
     $errType = $_GET['error'];
-    $errDetails = isset($_GET['details']) ? htmlspecialchars(urldecode($_GET['details'])) : '';
+    $errDetails = isset($_GET['details']) ? esc(urldecode($_GET['details'])) : '';
 
     if ($errType === 'restore_failed') {
         $sessErr = isset($_SESSION['restore_fatal_error']) ? $_SESSION['restore_fatal_error'] : $errDetails;
-        $error_msg = "❌ Error fatal al restaurar: " . htmlspecialchars($sessErr);
+        $error_msg = "❌ Error fatal al restaurar: " . esc($sessErr);
         unset($_SESSION['restore_fatal_error']);
     } elseif ($errType === 'restore_bodega_failed') {
         $sessErr = isset($_SESSION['restore_fatal_error']) ? $_SESSION['restore_fatal_error'] : $errDetails;
-        $error_msg = "❌ Error fatal al restaurar Bodega: " . htmlspecialchars($sessErr);
+        $error_msg = "❌ Error fatal al restaurar Bodega: " . esc($sessErr);
         unset($_SESSION['restore_fatal_error']);
     } elseif ($errType === 'partial_restore') {
         $error_msg = "⚠️ Restauración completada con errores parciales.<br>";
         if (isset($_SESSION['restore_errors']) && is_array($_SESSION['restore_errors'])) {
             $error_msg .= "<ul style='margin-top: 5px; margin-bottom: 0; padding-left: 20px; text-align: left; font-size: 0.9em;'>";
             foreach (array_slice($_SESSION['restore_errors'], 0, 10) as $err) {
-                $error_msg .= "<li>" . htmlspecialchars($err) . "</li>";
+                $error_msg .= "<li>" . esc($err) . "</li>";
             }
             if (count($_SESSION['restore_errors']) > 10) {
                 $error_msg .= "<li>...y " . (count($_SESSION['restore_errors']) - 10) . " errores más.</li>";
@@ -181,14 +181,14 @@ if (isset($_GET['error'])) {
             $error_msg .= "</ul>";
             unset($_SESSION['restore_errors']);
         } else {
-            $error_msg .= htmlspecialchars($errDetails);
+            $error_msg .= esc($errDetails);
         }
     } elseif ($errType === 'partial_restore_bodega') {
         $error_msg = "⚠️ Restauración de Bodega completada con algunos errores parciales.<br>";
         if (isset($_SESSION['restore_errors']) && is_array($_SESSION['restore_errors'])) {
             $error_msg .= "<ul style='margin-top: 5px; margin-bottom: 0; padding-left: 20px; text-align: left; font-size: 0.9em;'>";
             foreach (array_slice($_SESSION['restore_errors'], 0, 10) as $err) {
-                $error_msg .= "<li>" . htmlspecialchars($err) . "</li>";
+                $error_msg .= "<li>" . esc($err) . "</li>";
             }
             if (count($_SESSION['restore_errors']) > 10) {
                 $error_msg .= "<li>...y " . (count($_SESSION['restore_errors']) - 10) . " errores más.</li>";
@@ -196,7 +196,7 @@ if (isset($_GET['error'])) {
             $error_msg .= "</ul>";
             unset($_SESSION['restore_errors']);
         } else {
-            $error_msg .= htmlspecialchars($errDetails);
+            $error_msg .= esc($errDetails);
         }
     } elseif ($errType === 'upload_error') {
         $error_msg = "❌ Error al subir el archivo. Verifica que sea un .sql válido.";
@@ -1144,14 +1144,14 @@ require_once '../../includes/sidebar.php';
                                                 style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Nombre
                                                 de la Empresa</label>
                                             <input type="text" name="company_name" class="form-control premium-input"
-                                                value="<?php echo htmlspecialchars($company_name); ?>"
+                                                value="<?php echo esc($company_name); ?>"
                                                 placeholder="Ej. Mastertec">
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label"
                                                 style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Dirección</label>
                                             <input type="text" name="company_address" class="form-control premium-input"
-                                                value="<?php echo htmlspecialchars($company_address); ?>"
+                                                value="<?php echo esc($company_address); ?>"
                                                 placeholder="Ej. Calle Principal #123">
                                         </div>
                                     </div>
@@ -1166,7 +1166,7 @@ require_once '../../includes/sidebar.php';
                                                     style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
                                                 <input type="text" name="company_phone" class="form-control premium-input"
                                                     style="padding-left: 2.5rem;"
-                                                    value="<?php echo htmlspecialchars($company_phone); ?>"
+                                                    value="<?php echo esc($company_phone); ?>"
                                                     placeholder="Ej. +505 8888 8888">
                                             </div>
                                         </div>
@@ -1179,7 +1179,7 @@ require_once '../../includes/sidebar.php';
                                                     style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
                                                 <input type="email" name="company_email" class="form-control premium-input"
                                                     style="padding-left: 2.5rem;"
-                                                    value="<?php echo htmlspecialchars($company_email); ?>"
+                                                    value="<?php echo esc($company_email); ?>"
                                                     placeholder="contacto@empresa.com">
                                             </div>
                                         </div>
@@ -1202,7 +1202,7 @@ require_once '../../includes/sidebar.php';
                                                 al cliente</span>
                                         </div>
                                         <textarea name="print_entry_text" class="form-control premium-input" rows="6"
-                                            style="resize: vertical; white-space: pre-wrap; line-height: 1.5; font-size: 0.9rem;"><?php echo htmlspecialchars($settings['print_entry_text'] ?? ""); ?></textarea>
+                                            style="resize: vertical; white-space: pre-wrap; line-height: 1.5; font-size: 0.9rem;"><?php echo esc($settings['print_entry_text'] ?? ""); ?></textarea>
                                     </div>
 
                                     <div class="form-group">
@@ -1215,7 +1215,7 @@ require_once '../../includes/sidebar.php';
                                                 en Salida</span>
                                         </div>
                                         <textarea name="print_footer_text" class="form-control premium-input" rows="4"
-                                            style="resize: vertical; line-height: 1.5; font-size: 0.9rem;"><?php echo htmlspecialchars($print_footer_text); ?></textarea>
+                                            style="resize: vertical; line-height: 1.5; font-size: 0.9rem;"><?php echo esc($print_footer_text); ?></textarea>
                                     </div>
 
                                     <div style="margin-top: 2rem; text-align: right;">
@@ -1356,7 +1356,7 @@ require_once '../../includes/sidebar.php';
                                         <?php else: ?>
                                                 <i class="ph ph-shield" style="color: var(--text-muted); margin-right: 0.5rem;"></i>
                                         <?php endif; ?>
-                                        <?php echo htmlspecialchars($rs['name']); ?>
+                                        <?php echo esc($rs['name']); ?>
                                     </td>
                                     <td style="text-align: center;">
                                         <span class="badge" style="background: var(--bg-hover); color: var(--text-main);">
@@ -1425,13 +1425,13 @@ require_once '../../includes/sidebar.php';
                                     <div style="display: flex; align-items: center; gap: 1rem;">
                                         <span style="font-size: 0.9rem; color: var(--text-muted);">
                                             Editando excepciones de: <strong
-                                                style="color: var(--text-main); font-weight: 600;"><?php echo htmlspecialchars($hUser['username']); ?></strong>
+                                                style="color: var(--text-main); font-weight: 600;"><?php echo esc($hUser['username']); ?></strong>
                                         </span>
                                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                                             <span class="badge"
                                                 style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary);">
                                                 <i class="ph-fill ph-shield-star" style="margin-right: 4px; color: var(--primary);"></i>
-                                                <?php echo htmlspecialchars($hUser['role_name']); ?>
+                                                <?php echo esc($hUser['role_name']); ?>
                                             </span>
                                             <a href="?tab=modules&subtab=users" class="btn btn-sm btn-icon btn-text"
                                                 title="Cerrar y volver a lista" style="color: var(--text-muted);">
@@ -1534,7 +1534,7 @@ require_once '../../includes/sidebar.php';
                                         onchange="window.location.href='?tab=modules&subtab=roles&target_role_id='+this.value">
                                         <?php foreach ($users_roles_edit as $r): ?>
                                                 <option value="<?php echo $r['id']; ?>" <?php echo $target_role_id == $r['id'] ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($r['name']); ?>
+                                                    <?php echo esc($r['name']); ?>
                                                 </option>
                                         <?php endforeach; ?>
                                     </select>
@@ -1549,7 +1549,7 @@ require_once '../../includes/sidebar.php';
                             <div class="permissions-container">
                                 <?php foreach ($grouped_modules as $category => $modules): ?>
                                         <div class="category-section">
-                                            <h4 class="category-title"><?php echo htmlspecialchars($category); ?></h4>
+                                            <h4 class="category-title"><?php echo esc($category); ?></h4>
                                             <div class="modules-grid">
                                                 <?php foreach ($modules as $mod_key => $mod_info): ?>
                                                         <?php
@@ -1563,7 +1563,7 @@ require_once '../../includes/sidebar.php';
                                                                         <i class="ph <?php echo $mod_info['icon']; ?>"></i>
                                                                     </div>
                                                                     <div class="module-name">
-                                                                        <?php echo htmlspecialchars($mod_info['label']); ?>
+                                                                        <?php echo esc($mod_info['label']); ?>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1707,14 +1707,14 @@ require_once '../../includes/sidebar.php';
                                                     </td>
                                                     <td>
                                                         <div style="font-weight: 500; color: var(--text-main);">
-                                                            <?php echo htmlspecialchars($u['full_name'] ?: $u['username']); ?>
+                                                            <?php echo esc($u['full_name'] ?: $u['username']); ?>
                                                         </div>
                                                         <div style="font-size: 0.8rem; color: var(--text-muted);">
-                                                            <?php echo htmlspecialchars($u['email']); ?>
+                                                            <?php echo esc($u['email']); ?>
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <span class="badge"><?php echo htmlspecialchars($u['role_name']); ?></span>
+                                                        <span class="badge"><?php echo esc($u['role_name']); ?></span>
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <span class="badge" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary);">
@@ -1773,7 +1773,7 @@ require_once '../../includes/sidebar.php';
                                             <div class="permissions-container">
                                                 <?php foreach ($grouped_modules as $category => $modules): ?>
                                                         <div class="category-section">
-                                                            <h4 class="category-title"><?php echo htmlspecialchars($category); ?></h4>
+                                                            <h4 class="category-title"><?php echo esc($category); ?></h4>
                                                             <div class="modules-grid">
                                                                 <?php foreach ($modules as $mod_key => $mod_info): ?>
                                                                         <?php
@@ -1810,7 +1810,7 @@ require_once '../../includes/sidebar.php';
                                                                                         <i class="ph <?php echo $mod_info['icon']; ?>"></i>
                                                                                     </div>
                                                                                     <div>
-                                                                                        <div class="module-name"><?php echo htmlspecialchars($mod_info['label']); ?>
+                                                                                        <div class="module-name"><?php echo esc($mod_info['label']); ?>
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
@@ -2015,15 +2015,15 @@ require_once '../../includes/sidebar.php';
                                                                     <?php echo strtoupper(substr($user['full_name'] ?: $user['username'], 0, 1)); ?>
                                                             <?php endif; ?>
                                                         </div>
-                                                        <span class="font-medium"><?php echo htmlspecialchars($user['full_name'] ?: $user['username']); ?></span>
+                                                        <span class="font-medium"><?php echo esc($user['full_name'] ?: $user['username']); ?></span>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <?php echo $user['email'] ? htmlspecialchars($user['email']) : '<span class="text-muted">-</span>'; ?>
+                                                    <?php echo $user['email'] ? esc($user['email']) : '<span class="text-muted">-</span>'; ?>
                                                 </td>
                                                 <td>
                                                     <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);">
-                                                        <?php echo htmlspecialchars($user['role_name']); ?>
+                                                        <?php echo esc($user['role_name']); ?>
                                                     </span>
                                                 </td>
                                                 <td>
@@ -2095,7 +2095,7 @@ require_once '../../includes/sidebar.php';
             <?php if (isset($_GET['error'])): ?>
                     <div class="alert alert-danger"
                         style="margin-bottom: 1.5rem; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger);">
-                        <i class="ph ph-warning"></i> Error en la operación: <?php echo htmlspecialchars($_GET['error']); ?>
+                        <i class="ph ph-warning"></i> Error en la operación: <?php echo esc($_GET['error']); ?>
                     </div>
             <?php endif; ?>
 

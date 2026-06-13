@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/equipment/history.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -42,7 +42,7 @@ if (!empty($search_serial)) {
         $stmtOrders->execute([$equipment['id']]);
         $orders = $stmtOrders->fetchAll();
     } else {
-        $error = "No se encontró ningún equipo registrado con el S/N: " . htmlspecialchars($search_serial);
+        $error = "No se encontró ningún equipo registrado con el S/N: " . esc($search_serial);
     }
 }
 ?>
@@ -61,7 +61,7 @@ if (!empty($search_serial)) {
             <div class="form-group" style="flex-grow: 1; min-width: 250px;">
                 <label class="form-label">Número de Serie (S/N)</label>
                 <div class="input-group">
-                    <input type="text" name="serial" class="form-control" placeholder="Ingrese el Número de Serie" value="<?php echo htmlspecialchars($search_serial); ?>" required autofocus>
+                    <input type="text" name="serial" class="form-control" placeholder="Ingrese el Número de Serie" value="<?php echo esc($search_serial); ?>" required autofocus>
                     <i class="ph ph-barcode input-icon"></i>
                 </div>
             </div>
@@ -96,20 +96,20 @@ if (!empty($search_serial)) {
                 <div>
                     <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Marca / Equipo</span>
                     <div style="font-weight: 600; font-size: 1.1rem; color: var(--text-primary);">
-                        <?php echo htmlspecialchars($equipment['brand']); ?>
-                        <?php if ($equipment['model']) echo ' / ' . htmlspecialchars($equipment['model']); ?>
+                        <?php echo esc($equipment['brand']); ?>
+                        <?php if ($equipment['model']) echo ' / ' . esc($equipment['model']); ?>
                     </div>
                 </div>
                 <div>
                     <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Serie (S/N)</span>
                     <div style="font-weight: 600; font-size: 1.1rem; color: var(--primary-400);">
-                        <?php echo htmlspecialchars($equipment['serial_number']); ?>
+                        <?php echo esc($equipment['serial_number']); ?>
                     </div>
                 </div>
                 <div>
                     <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Cliente Actual</span>
                     <div style="font-weight: 600; font-size: 1.1rem; color: var(--text-primary);">
-                        <?php echo htmlspecialchars($equipment['client_name'] ?? 'Desconocido'); ?>
+                        <?php echo esc($equipment['client_name'] ?? 'Desconocido'); ?>
                     </div>
                 </div>
                 <div>
@@ -201,14 +201,14 @@ if (!empty($search_serial)) {
                                 <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Técnico Asignado</label>
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                     <i class="ph ph-user-circle text-muted" style="font-size: 1.25rem;"></i>
-                                    <span><?php echo ($order['tech_name_full'] || $order['tech_username']) ? htmlspecialchars($order['tech_name_full'] ?: $order['tech_username']) : '<span class="text-muted">No asignado</span>'; ?></span>
+                                    <span><?php echo ($order['tech_name_full'] || $order['tech_username']) ? esc($order['tech_name_full'] ?: $order['tech_username']) : '<span class="text-muted">No asignado</span>'; ?></span>
                                 </div>
                             </div>
 
                             <div>
                                 <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Problema Reportado (Motivo de Ingreso)</label>
                                 <p style="margin: 0; font-size: 0.9rem; line-height: 1.4; color: var(--text-primary);">
-                                    <?php echo nl2br(htmlspecialchars($order['problem_reported'] ?? 'Sin registro')); ?>
+                                    <?php echo nl2br(esc($order['problem_reported'] ?? 'Sin registro')); ?>
                                 </p>
                             </div>
 
@@ -218,7 +218,7 @@ if (!empty($search_serial)) {
                                     <i class="ph ph-magnifying-glass-plus"></i> Diagnóstico Técnico
                                 </label>
                                 <p style="margin: 0; font-size: 0.9rem; line-height: 1.4; color: var(--text-primary);">
-                                    <?php echo nl2br(htmlspecialchars($order['diagnosis_notes'])); ?>
+                                    <?php echo nl2br(esc($order['diagnosis_notes'])); ?>
                                 </p>
                             </div>
                             <?php endif; ?>
@@ -229,9 +229,9 @@ if (!empty($search_serial)) {
                                     <i class="ph ph-check-square"></i> Trabajo Realizado / Resolución
                                 </label>
                                 <p style="margin: 0; font-size: 0.9rem; line-height: 1.4; color: var(--text-primary);">
-                                    <?php echo nl2br(htmlspecialchars($order['work_done'])); ?>
+                                    <?php echo nl2br(esc($order['work_done'])); ?>
                                     <?php if (!empty($order['parts_replaced'])): ?>
-                                        <br><br><strong>Repuestos utilizados:</strong><br><?php echo nl2br(htmlspecialchars($order['parts_replaced'])); ?>
+                                        <br><br><strong>Repuestos utilizados:</strong><br><?php echo nl2br(esc($order['parts_replaced'])); ?>
                                     <?php endif; ?>
                                 </p>
                             </div>

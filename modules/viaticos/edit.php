@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 
@@ -170,7 +170,7 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label" style="font-size: 0.85rem; font-weight: bold;">MANTENIMIENTO
                         / PROYECTO</label>
                     <input type="text" name="project_title" class="form-control"
-                        value="<?php echo htmlspecialchars($viatico['project_title']); ?>" required
+                        value="<?php echo esc($viatico['project_title']); ?>" required
                         style="font-size: 1.1rem; font-weight: bold; padding: 0.75rem;">
                 </div>
                 <div class="form-group" style="margin: 0;">
@@ -187,7 +187,7 @@ require_once '../../includes/sidebar.php';
                             <option value="" disabled selected>Selecciona un técnico...</option>
                             <?php foreach ($all_techs as $t): ?>
                                 <option value="<?php echo $t['id']; ?>">
-                                    <?php echo htmlspecialchars($t['username']); ?>
+                                    <?php echo esc($t['username']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>

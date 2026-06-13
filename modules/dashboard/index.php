@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/dashboard/index.php
 require_once dirname(__DIR__, 2) . '/config/db.php';
 safe_session_start();
@@ -555,7 +555,7 @@ if (!$is_warehouse) {
 
 <div class="animate-enter">
     <div style="margin-bottom: 2rem;">
-        <h1>Bienvenido, <?php echo htmlspecialchars($_SESSION['full_name'] ?: $_SESSION['username']); ?></h1>
+        <h1>Bienvenido, <?php echo esc($_SESSION['full_name'] ?: $_SESSION['username']); ?></h1>
         <p class="text-muted">
             <?php
             if ($is_reception)
@@ -690,12 +690,12 @@ if (!$is_warehouse) {
                                     <div style="font-size: 1.25rem; font-weight: 800;"><?php echo date('d', strtotime($visit['start_datetime'])); ?></div>
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);"><?php echo htmlspecialchars($visit['title']); ?></div>
+                                    <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);"><?php echo esc($visit['title']); ?></div>
                                     <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem;">
                                         <i class="ph ph-clock"></i> <?php echo date('h:i A', strtotime($visit['start_datetime'])); ?>
                                         <?php if (!empty($visit['location'])): ?>
                                             <span style="opacity: 0.5;">•</span>
-                                            <i class="ph ph-map-pin"></i> <?php echo htmlspecialchars($visit['location']); ?>
+                                            <i class="ph ph-map-pin"></i> <?php echo esc($visit['location']); ?>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -827,7 +827,7 @@ if (!$is_warehouse) {
                                                     <option value="all">Todos los Técnicos</option>
                                                     <?php foreach ($techs_for_filter as $tf): ?>
                                                         <option value="<?php echo $tf['id']; ?>">
-                                                            <?php echo htmlspecialchars($tf['username']); ?>
+                                                            <?php echo esc($tf['username']); ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>
@@ -924,10 +924,10 @@ if (!$is_warehouse) {
                                             <?php echo date('d/m/Y', strtotime($proj['created_at'])); ?>
                                         </td>
                                         <td style="padding: 0.75rem; font-weight: 600;">
-                                            <?php echo htmlspecialchars($proj['title']); ?>
+                                            <?php echo esc($proj['title']); ?>
                                         </td>
                                         <td style="padding: 0.75rem;">
-                                            <?php echo htmlspecialchars($proj['client_name']); ?>
+                                            <?php echo esc($proj['client_name']); ?>
                                         </td>
                                         <td style="padding: 0.75rem;">
                                             <?php
@@ -1065,8 +1065,8 @@ if (!$is_warehouse) {
                                         </td>
 
                                         <?php if ($recentType == 'tools'): ?>
-                                            <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['user_name']); ?></td>
-                                            <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['item_name']); ?></td>
+                                            <td style="padding: 0.75rem;"><?php echo esc($item['user_name']); ?></td>
+                                            <td style="padding: 0.75rem;"><?php echo esc($item['item_name']); ?></td>
                                             <td style="padding: 0.75rem;">
                                                 <span class="badge"><?php echo ucfirst($item['status']); ?></span>
                                             </td>
@@ -1082,20 +1082,20 @@ if (!$is_warehouse) {
                                             </td>
                                             <td style="padding: 0.75rem;">
                                                 <?php
-                                                echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] :
+                                                echo esc(!empty($item['owner_name']) ? $item['owner_name'] :
                                                     (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] :
                                                         $item['client_name']));
                                                 ?>
                                             </td>
                                             <td style="padding: 0.75rem;">
                                                 <span
-                                                    class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
+                                                    class="text-sm text-muted"><?php echo esc($item['brand'] . ' ' . $item['model']); ?></span>
                                             </td>
                                             <td style="padding: 0.75rem;">
                                                 <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
                                                     <i class="ph ph-user-circle" style="color: var(--slate-400);"></i>
                                                     <span
-                                                        style="color: var(--text-secondary);"><?php echo htmlspecialchars($item['tech_name'] ?? '---'); ?></span>
+                                                        style="color: var(--text-secondary);"><?php echo esc($item['tech_name'] ?? '---'); ?></span>
                                                 </div>
                                             </td>
                                             <td style="padding: 0.75rem;">
@@ -1262,7 +1262,7 @@ if (!$is_warehouse) {
                                                     <option value="all">Todos los Técnicos</option>
                                                     <?php foreach ($techs_for_filter as $tf): ?>
                                                         <option value="<?php echo $tf['id']; ?>">
-                                                            <?php echo htmlspecialchars($tf['username']); ?>
+                                                            <?php echo esc($tf['username']); ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/warranties/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -258,19 +258,19 @@ require_once '../../includes/sidebar.php';
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>
                                     <?php 
-                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                        echo esc(!empty($item['owner_name']) ? $item['owner_name'] : 
                                              (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
                                              $item['contact_name'])); 
                                     ?>
                                 </td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <span><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
+                                        <span><?php echo esc($item['brand'] . ' ' . $item['model']); ?></span>
                                     </div>
                                 </td>
                                 <td>
                                     <span
-                                        class="text-sm font-medium" style="white-space: nowrap;"><?php echo htmlspecialchars($item['serial_number']); ?></span>
+                                        class="text-sm font-medium" style="white-space: nowrap;"><?php echo esc($item['serial_number']); ?></span>
                                 </td>
                                 <!-- Falla Reportada column removed -->
 
@@ -281,7 +281,7 @@ require_once '../../includes/sidebar.php';
                                             <span
                                                 style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.5rem; background: var(--bg-hover); border-radius: 6px; font-size: 0.85rem;">
                                                 <i class="ph ph-user-circle"></i>
-                                                <?php echo htmlspecialchars($item['tech_name_full'] ?: $item['tech_username']); ?>
+                                                <?php echo esc($item['tech_name_full'] ?: $item['tech_username']); ?>
                                             </span>
                                             <?php if (can_access_module('assign_equipment', $pdo)): ?>
                                                 <button type="button" class="btn-icon" style="padding: 2px;" title="Cambiar Técnico"
@@ -431,24 +431,24 @@ require_once '../../includes/sidebar.php';
                                 <td><?php echo date('d/m/Y', strtotime($item['entry_date'])); ?></td>
                                 <td>
                                     <?php 
-                                        echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                        echo esc(!empty($item['owner_name']) ? $item['owner_name'] : 
                                              (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
                                              $item['contact_name'])); 
                                     ?>
                                 </td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <span><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
+                                        <span><?php echo esc($item['brand'] . ' ' . $item['model']); ?></span>
                                     </div>
                                 </td>
                                 <td>
                                     <span
-                                        class="text-sm font-medium"><?php echo htmlspecialchars($item['serial_number']); ?></span>
+                                        class="text-sm font-medium"><?php echo esc($item['serial_number']); ?></span>
                                 </td>
                                 <!-- Falla Reportada column removed -->
                                 <td>
                                     <?php if ($item['tech_name_full'] || $item['tech_username']): ?>
-                                        <span class="text-sm"><?php echo htmlspecialchars($item['tech_name_full'] ?: $item['tech_username']); ?></span>
+                                        <span class="text-sm"><?php echo esc($item['tech_name_full'] ?: $item['tech_username']); ?></span>
                                     <?php else: ?>
                                         <span class="text-muted text-sm">-</span>
                                     <?php endif; ?>
@@ -520,7 +520,7 @@ require_once '../../includes/sidebar.php';
                 <select name="tech_id" id="assignTechId" class="form-control" style="width: 100%;">
                     <option value="">-- Sin Asignar --</option>
                     <?php foreach ($technicians as $tech): ?>
-                        <option value="<?php echo $tech['id']; ?>"><?php echo htmlspecialchars($tech['full_name'] ?: $tech['username']); ?>
+                        <option value="<?php echo $tech['id']; ?>"><?php echo esc($tech['full_name'] ?: $tech['username']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

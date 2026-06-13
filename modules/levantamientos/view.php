@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/levantamientos/view.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -517,8 +517,8 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                     style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.2rem;">
                     Cliente</div>
                 <div style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                    title="<?php echo htmlspecialchars($survey['client_name']); ?>">
-                    <?php echo htmlspecialchars($survey['client_name']); ?>
+                    title="<?php echo esc($survey['client_name']); ?>">
+                    <?php echo esc($survey['client_name']); ?>
                 </div>
             </div>
         </div>
@@ -535,7 +535,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                     Técnico</div>
                 <div
                     style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <?php echo htmlspecialchars($survey['tech_name']); ?>
+                    <?php echo esc($survey['tech_name']); ?>
                 </div>
             </div>
         </div>
@@ -552,7 +552,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                     Vendedor</div>
                 <div
                     style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    <?php echo htmlspecialchars($survey['vendedor'] ?? 'No asignado'); ?>
+                    <?php echo esc($survey['vendedor'] ?? 'No asignado'); ?>
                 </div>
             </div>
         </div>
@@ -568,7 +568,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                     style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.2rem;">
                     Personal</div>
                 <div style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">
-                    <?php echo htmlspecialchars($survey['personnel_required'] ?: 'No especificado'); ?>
+                    <?php echo esc($survey['personnel_required'] ?: 'No especificado'); ?>
                 </div>
             </div>
         </div>
@@ -584,7 +584,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                     style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.2rem;">
                     Tiempo Est.</div>
                 <div style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">
-                    <?php echo htmlspecialchars($survey['estimated_time'] ?: 'N/E'); ?>
+                    <?php echo esc($survey['estimated_time'] ?: 'N/E'); ?>
                 </div>
             </div>
         </div>
@@ -607,12 +607,12 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                         <span class="card-project-title">
                             <i class="ph ph-folder-open"
                                 style="-webkit-text-fill-color: initial; background: none; font-size: 0.85rem;"></i>
-                            <?php echo htmlspecialchars($survey['title']); ?>
+                            <?php echo esc($survey['title']); ?>
                         </span>
                     </div>
                     <div
                         style="border-left: 3px solid rgba(99,102,241,0.35); padding-left: 1rem; color: #cbd5e1; line-height: 1.8; font-size: 0.95rem;">
-                        <?php echo nl2br(htmlspecialchars($survey['general_description'])); ?>
+                        <?php echo nl2br(esc($survey['general_description'])); ?>
                     </div>
                 </div>
             <?php endif; ?>
@@ -715,17 +715,17 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                                         <div style="min-width: 0;">
                                             <div
                                                 style="font-weight: 500; color: #f1f5f9; font-size: 0.875rem; line-height: 1.3;">
-                                                <?php echo htmlspecialchars($m['item_description']); ?>
+                                                <?php echo esc($m['item_description']); ?>
                                             </div>
                                             <div class="inline-note-cell" data-material-id="<?php echo $m['id']; ?>"
-                                                data-notes="<?php echo htmlspecialchars($m['notes'] ?? ''); ?>"
+                                                data-notes="<?php echo esc($m['notes'] ?? ''); ?>"
                                                 title="Clic para agregar nota"
                                                 style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.15rem; border-radius: 4px; border: 1px solid transparent; padding: 0.1rem 0.25rem; transition: all 0.15s; max-width: 100%;">
                                                 <?php if ($m['notes']): ?>
                                                     <i class="ph ph-note"
                                                         style="color: #64748b; font-size: 0.72rem; flex-shrink: 0;"></i>
                                                     <span class="note-display"
-                                                        style="color: #94a3b8; font-size: 0.78rem;"><?php echo htmlspecialchars($m['notes']); ?></span>
+                                                        style="color: #94a3b8; font-size: 0.78rem;"><?php echo esc($m['notes']); ?></span>
                                                 <?php else: ?>
                                                     <span class="note-display"
                                                         style="color: #3f4f63; font-size: 0.76rem; font-style: italic;">+
@@ -738,7 +738,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                                     </div>
                                     <span
                                         style="background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.2); border-radius: 999px; padding: 0.12rem 0.55rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; margin-top: 2px;">
-                                        <?php echo floatval($m['quantity']) . ' ' . htmlspecialchars($m['unit']); ?>
+                                        <?php echo floatval($m['quantity']) . ' ' . esc($m['unit']); ?>
                                     </span>
                                 </div>
                             <?php endforeach; ?>
@@ -849,10 +849,10 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                                     <?php if ($isManual): ?><i class="ph-fill ph-warning" style="position: absolute; bottom: -4px; right: -4px; color: var(--danger); font-size: 0.85rem;" title="Ingreso manual"></i><?php endif; ?>
                                 </div>
                                 <div style="flex: 1; overflow: hidden;">
-                                    <h4 style="margin: 0; color: #f1f5f9; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;"><?php echo htmlspecialchars($display_name ?? ''); ?></h4>
+                                    <h4 style="margin: 0; color: #f1f5f9; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;"><?php echo esc($display_name ?? ''); ?></h4>
                                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                                        <span style="font-size: 0.75rem; color: var(--warning); background: rgba(245, 158, 11, 0.15); padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600;">Cant: <?php echo htmlspecialchars($qty); ?></span>
-                                        <?php if ($notes): ?><span style="font-size: 0.8rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="ph ph-text-align-left"></i> <?php echo htmlspecialchars($notes); ?></span><?php endif; ?>
+                                        <span style="font-size: 0.75rem; color: var(--warning); background: rgba(245, 158, 11, 0.15); padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600;">Cant: <?php echo esc($qty); ?></span>
+                                        <?php if ($notes): ?><span style="font-size: 0.8rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="ph ph-text-align-left"></i> <?php echo esc($notes); ?></span><?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -903,12 +903,12 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                                     elseif ($log['action'] === 'UPDATE STATUS')
                                         echo '<i class="ph ph-arrows-clockwise" style="color: var(--info);"></i> Cambio Estado';
                                     else
-                                        echo htmlspecialchars($log['action']);
+                                        echo esc($log['action']);
                                     ?>
                                 </div>
                                 <div style="font-size: 0.82rem; color: #94a3b8;">
                                     por <span
-                                        style="color: var(--primary-300);"><?php echo htmlspecialchars($log['action_user'] ?: 'Sistema'); ?></span>
+                                        style="color: var(--primary-300);"><?php echo esc($log['action_user'] ?: 'Sistema'); ?></span>
                                 </div>
 
                                 <?php if ($log['action'] === 'EDICION' && !empty($log['new_value'])): ?>
@@ -946,7 +946,7 @@ $pData = $paymentMaps[$survey['payment_status']] ?? ['Desconocido', 'gray', 'ph-
                                 <?php elseif ($log['action'] === 'UPDATE STATUS'): ?>
                                     <div
                                         style="margin-top: 0.4rem; font-size: 0.82rem; color: #cbd5e1; padding: 0.35rem 0.6rem; border-radius: 5px; background: rgba(0,0,0,0.2); border-left: 2px solid var(--info);">
-                                        → <strong style="color: #fff;"><?php echo htmlspecialchars($log['new_value']); ?></strong>
+                                        → <strong style="color: #fff;"><?php echo esc($log['new_value']); ?></strong>
                                     </div>
                                 <?php endif; ?>
                             </div>

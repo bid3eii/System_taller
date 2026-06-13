@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/equipment/entry.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -749,7 +749,7 @@ require_once '../../includes/sidebar.php';
                                     value="<?php echo $edit_order ? $edit_order['client_id'] : ''; ?>">
                                 <input type="text" name="client_name_input" class="form-control"
                                     placeholder="Nombre completo del cliente" <?php echo $is_warranty_mode ? '' : 'required'; ?>
-                                    value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>"
+                                    value="<?php echo $edit_order ? esc($edit_order['client_name']) : ''; ?>"
                                     autocomplete="off">
                                 <i class="ph ph-user input-icon" style="color: var(--primary-500);"></i>
                             </div>
@@ -772,7 +772,7 @@ require_once '../../includes/sidebar.php';
                             <div class="input-group">
                                 <input type="text" name="client_phone" class="form-control" placeholder="Ej. 5555-4444"
                                     <?php echo $is_warranty_mode ? '' : 'required'; ?>
-                                    value="<?php echo $edit_order ? htmlspecialchars($edit_order['phone'] ?? '') : ''; ?>">
+                                    value="<?php echo $edit_order ? esc($edit_order['phone'] ?? '') : ''; ?>">
                                 <i class="ph ph-phone input-icon"></i>
                             </div>
                         </div>
@@ -783,7 +783,7 @@ require_once '../../includes/sidebar.php';
                             <div class="input-group">
                                 <input type="email" name="client_email" class="form-control"
                                     placeholder="cliente@ejemplo.com"
-                                    value="<?php echo $edit_order ? htmlspecialchars($edit_order['email'] ?? '') : ''; ?>">
+                                    value="<?php echo $edit_order ? esc($edit_order['email'] ?? '') : ''; ?>">
                                 <i class="ph ph-envelope input-icon"></i>
                             </div>
                         </div>
@@ -793,7 +793,7 @@ require_once '../../includes/sidebar.php';
                             <div class="input-group">
                                 <input type="text" name="client_address" class="form-control"
                                     placeholder="Dirección completa"
-                                    value="<?php echo $edit_order ? htmlspecialchars($edit_order['address'] ?? '') : ''; ?>">
+                                    value="<?php echo $edit_order ? esc($edit_order['address'] ?? '') : ''; ?>">
                                 <i class="ph ph-map-pin input-icon"></i>
                             </div>
                         </div>
@@ -1014,7 +1014,7 @@ require_once '../../includes/sidebar.php';
                                 <div class="input-group">
                                     <input type="text" name="client_name_input" id="client_name_input_std"
                                         class="form-control" placeholder="Ej. Juan Pérez"
-                                        value="<?php echo $edit_order ? htmlspecialchars($edit_order['client_name']) : ''; ?>"
+                                        value="<?php echo $edit_order ? esc($edit_order['client_name']) : ''; ?>"
                                         required autocomplete="off">
                                     <i class="ph ph-user input-icon"></i>
                                 </div>
@@ -1039,7 +1039,7 @@ require_once '../../includes/sidebar.php';
                                 <div class="input-group">
                                     <input type="text" name="client_phone" id="client_phone_std" class="form-control"
                                         placeholder="Ej. 5555-4444" required
-                                        value="<?php echo $edit_order ? htmlspecialchars($edit_order['phone'] ?? '') : ''; ?>">
+                                        value="<?php echo $edit_order ? esc($edit_order['phone'] ?? '') : ''; ?>">
                                     <i class="ph ph-phone input-icon"></i>
                                 </div>
                             </div>
@@ -2143,16 +2143,16 @@ require_once '../../includes/sidebar.php';
                             <?php foreach ($expiredWarranties as $w): ?>
                                 <tr class="clickable-row" onclick='openWarrantyModal(<?php echo json_encode($w); ?>)'>
                                     <td><?php echo date('d/m/Y', strtotime($w['end_date'])); ?></td>
-                                    <td><?php echo htmlspecialchars($w['supplier_name'] ?? 'N/A'); ?></td>
-                                    <td><?php echo htmlspecialchars($w['product_code'] ?? 'N/A'); ?></td>
-                                    <td><?php echo htmlspecialchars($w['client_name'] ?? 'Sin Cliente'); ?></td>
+                                    <td><?php echo esc($w['supplier_name'] ?? 'N/A'); ?></td>
+                                    <td><?php echo esc($w['product_code'] ?? 'N/A'); ?></td>
+                                    <td><?php echo esc($w['client_name'] ?? 'Sin Cliente'); ?></td>
                                     <td>
-                                        <div><?php echo htmlspecialchars($w['brand'] . ' ' . $w['model']); ?></div>
+                                        <div><?php echo esc($w['brand'] . ' ' . $w['model']); ?></div>
                                         <div class="text-muted" style="font-size: 0.85rem;">
-                                            <?php echo htmlspecialchars($w['serial_number']); ?>
+                                            <?php echo esc($w['serial_number']); ?>
                                         </div>
                                     </td>
-                                    <td><?php echo htmlspecialchars($w['sales_invoice_number'] ?? 'N/A'); ?></td>
+                                    <td><?php echo esc($w['sales_invoice_number'] ?? 'N/A'); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

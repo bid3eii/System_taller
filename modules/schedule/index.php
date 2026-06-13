@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/schedule/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -206,7 +206,7 @@ $technicians = $stmtTechs->fetchAll();
                     <select id="techFilter" class="form-control" style="background: var(--bg-card); border-color: var(--border-color);">
                         <option value="all">TODOS LOS TÉCNICOS</option>
                         <?php foreach ($technicians as $t): ?>
-                            <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['username']); ?></option>
+                            <option value="<?php echo $t['id']; ?>"><?php echo esc($t['username']); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -260,7 +260,7 @@ $technicians = $stmtTechs->fetchAll();
                 <label class="form-label">Técnico Responsable</label>
                 <select id="tech_id" name="tech_id" class="form-control" required>
                     <?php foreach ($technicians as $t): ?>
-                        <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['username']); ?></option>
+                        <option value="<?php echo $t['id']; ?>"><?php echo esc($t['username']); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>

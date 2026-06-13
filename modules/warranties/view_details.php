@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/warranties/view_details.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -75,22 +75,22 @@ require_once '../../includes/sidebar.php';
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                     <div>
                         <label class="text-muted" style="font-size: 0.85rem; font-weight: 600;">Producto / Código</label>
-                        <div style="font-size: 1.1rem; font-weight: 500;"><?php echo htmlspecialchars($warranty['product_code']); ?></div>
+                        <div style="font-size: 1.1rem; font-weight: 500;"><?php echo esc($warranty['product_code']); ?></div>
                     </div>
                     <div>
                         <label class="text-muted" style="font-size: 0.85rem; font-weight: 600;">Factura Venta</label>
                         <div style="font-size: 1.1rem; font-weight: 500; color: var(--text-primary);">
-                             <?php echo htmlspecialchars($warranty['sales_invoice_number']); ?>
+                             <?php echo esc($warranty['sales_invoice_number']); ?>
                         </div>
                     </div>
                     
                     <div>
                         <label class="text-muted" style="font-size: 0.85rem; font-weight: 600;">Factura Master (Ingreso)</label>
-                        <div><?php echo htmlspecialchars($warranty['master_entry_invoice']); ?></div>
+                        <div><?php echo esc($warranty['master_entry_invoice']); ?></div>
                     </div>
                      <div>
                         <label class="text-muted" style="font-size: 0.85rem; font-weight: 600;">Proveedor</label>
-                        <div><?php echo htmlspecialchars($warranty['supplier_name']); ?></div>
+                        <div><?php echo esc($warranty['supplier_name']); ?></div>
                     </div>
 
                     <div>
@@ -114,19 +114,19 @@ require_once '../../includes/sidebar.php';
                     <div>
                         <label class="text-muted" style="font-size: 0.85rem; font-weight: 600;">Marca / Modelo</label>
                         <div style="font-size: 1rem; font-weight: 500;">
-                            <?php echo htmlspecialchars($warranty['brand'] . ' ' . $warranty['model']); ?>
+                            <?php echo esc($warranty['brand'] . ' ' . $warranty['model']); ?>
                         </div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary);"><?php echo htmlspecialchars($warranty['submodel']); ?></div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);"><?php echo esc($warranty['submodel']); ?></div>
                     </div>
                     <div>
                         <label class="text-muted" style="font-size: 0.85rem; font-weight: 600;">Número de Serie</label>
                         <div style="font-family: monospace; font-size: 1rem; background: var(--bg-body); padding: 0.25rem 0.5rem; border-radius: 4px; display: inline-block;">
-                            <?php echo htmlspecialchars($warranty['serial_number']); ?>
+                            <?php echo esc($warranty['serial_number']); ?>
                         </div>
                     </div>
                      <div>
                         <label class="text-muted" style="font-size: 0.85rem; font-weight: 600;">Tipo</label>
-                        <div><?php echo htmlspecialchars($warranty['equipment_type']); ?></div>
+                        <div><?php echo esc($warranty['equipment_type']); ?></div>
                     </div>
                 </div>
             </div>
@@ -141,22 +141,22 @@ require_once '../../includes/sidebar.php';
                 </h3>
                 
                 <div style="margin-bottom: 1rem;">
-                    <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($warranty['client_name']); ?></div>
-                    <div style="font-size: 0.9rem; color: var(--text-secondary);"><?php echo htmlspecialchars($warranty['tax_id']); ?></div>
+                    <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;"><?php echo esc($warranty['client_name']); ?></div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);"><?php echo esc($warranty['tax_id']); ?></div>
                 </div>
                 
                 <div style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
                     <i class="ph ph-phone" style="color: var(--primary-500);"></i>
-                    <?php echo htmlspecialchars($warranty['phone']); ?>
+                    <?php echo esc($warranty['phone']); ?>
                 </div>
                 <div style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
                     <i class="ph ph-envelope" style="color: var(--primary-500);"></i>
-                    <?php echo htmlspecialchars($warranty['email']); ?>
+                    <?php echo esc($warranty['email']); ?>
                 </div>
                 <?php if($warranty['address']): ?>
                 <div style="margin-bottom: 0.75rem; display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.9rem;">
                     <i class="ph ph-map-pin" style="color: var(--primary-500); margin-top: 2px;"></i>
-                    <?php echo htmlspecialchars($warranty['address']); ?>
+                    <?php echo esc($warranty['address']); ?>
                 </div>
                 <?php endif; ?>
             </div>
@@ -165,7 +165,7 @@ require_once '../../includes/sidebar.php';
             <div class="card" style="padding: 1.5rem; margin-top: 1.5rem;">
                 <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1rem;">Observaciones</h3>
                 <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
-                    <?php echo nl2br(htmlspecialchars($warranty['notes'])); ?>
+                    <?php echo nl2br(esc($warranty['notes'])); ?>
                 </p>
             </div>
             <?php endif; ?>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/reports/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -125,7 +125,7 @@ require_once '../../includes/sidebar.php';
             <select id="techFilter" class="premium-select">
                 <option value="all">Todos los Técnicos</option>
                 <?php foreach($techs as $t): ?>
-                    <option value="<?php echo $t['id']; ?>"><?php echo htmlspecialchars($t['full_name'] ?: $t['username']); ?></option>
+                    <option value="<?php echo $t['id']; ?>"><?php echo esc($t['full_name'] ?: $t['username']); ?></option>
                 <?php endforeach; ?>
             </select>
             <i class="ph ph-caret-down select-caret"></i>
@@ -190,23 +190,23 @@ require_once '../../includes/sidebar.php';
                                     <td class="text-center"><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                                 <td style="max-width: 180px;">
                                     <div class="fw-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php 
-                                            echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : 
+                                            echo esc(!empty($order['owner_name']) ? $order['owner_name'] : 
                                                  (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : 
                                                  $order['contact_name'])); 
                                         ?>">
                                         <?php 
-                                            echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : 
+                                            echo esc(!empty($order['owner_name']) ? $order['owner_name'] : 
                                                  (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : 
                                                  $order['contact_name'])); 
                                         ?>
                                     </div>
-                                    <div class="text-xs text-muted"><?php echo htmlspecialchars($order['client_phone']); ?></div>
+                                    <div class="text-xs text-muted"><?php echo esc($order['client_phone']); ?></div>
                                 </td>
                                 <td style="max-width: 220px;">
-                                    <div class="fw-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>">
-                                        <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
+                                    <div class="fw-medium" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?php echo esc($order['brand'] . ' ' . $order['model']); ?>">
+                                        <?php echo esc($order['brand'] . ' ' . $order['model']); ?>
                                     </div>
-                                    <div class="text-xs text-muted" style="opacity: 0.7;">S/N: <?php echo htmlspecialchars($order['serial_number'] ?: '-'); ?></div>
+                                    <div class="text-xs text-muted" style="opacity: 0.7;">S/N: <?php echo esc($order['serial_number'] ?: '-'); ?></div>
                                 </td>
                                 <td>
                                     <?php if ($order['service_type'] == 'warranty'): ?>
@@ -234,7 +234,7 @@ require_once '../../includes/sidebar.php';
                                         <?php echo $st[0]; ?>
                                     </span>
                                 </td>
-                                <td><?php echo ($order['tech_name_full'] || $order['tech_username']) ? htmlspecialchars($order['tech_name_full'] ?: $order['tech_username']) : '<span class="text-muted">-</span>'; ?></td>
+                                <td><?php echo ($order['tech_name_full'] || $order['tech_username']) ? esc($order['tech_name_full'] ?: $order['tech_username']) : '<span class="text-muted">-</span>'; ?></td>
                                 <td class="text-end" style="padding-right: 1.5rem;">
                                     <div class="report-dropdown">
                                         <button class="premium-action-btn" onclick="toggleReportDropdown(this)">

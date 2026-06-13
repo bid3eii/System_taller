@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/anexos/view.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -50,7 +50,7 @@ require_once '../../includes/sidebar.php';
         <div>
             <h1>Anexo Yazaki #<?php echo str_pad($anexo['id'], 5, '0', STR_PAD_LEFT); ?></h1>
             <p class="text-muted">Creado el <?php echo date('d/m/Y h:i A', strtotime($anexo['created_at'])); ?> por
-                <?php echo htmlspecialchars($anexo['creator_name']); ?></p>
+                <?php echo esc($anexo['creator_name']); ?></p>
         </div>
         <div style="display: flex; gap: 0.5rem;">
             <a href="index.php" class="btn btn-secondary">
@@ -81,7 +81,7 @@ require_once '../../includes/sidebar.php';
                     <?php if ($anexo['survey_id']): ?>
                         <a href="../levantamientos/view.php?id=<?php echo $anexo['survey_id']; ?>"
                             style="color: var(--primary-500); text-decoration: none;">#<?php echo $anexo['survey_id']; ?> -
-                            <?php echo htmlspecialchars($anexo['survey_title']); ?></a>
+                            <?php echo esc($anexo['survey_title']); ?></a>
                     <?php else: ?>
                         Independiente
                     <?php endif; ?>
@@ -89,7 +89,7 @@ require_once '../../includes/sidebar.php';
             </div>
             <div>
                 <span class="text-muted" style="font-size: 0.85rem; display: block;">Empresa Receptora</span>
-                <strong><?php echo htmlspecialchars($anexo['client_name']); ?></strong>
+                <strong><?php echo esc($anexo['client_name']); ?></strong>
             </div>
             <div>
                 <span class="text-muted" style="font-size: 0.85rem; display: block;">Estado de Generación</span>
@@ -124,16 +124,16 @@ require_once '../../includes/sidebar.php';
                                 <td>
                                     <?php
                                     if ($t['tool_id']) {
-                                        echo htmlspecialchars($t['tool_name']);
+                                        echo esc($t['tool_name']);
                                     } else {
-                                        echo htmlspecialchars($t['custom_description']);
+                                        echo esc($t['custom_description']);
                                     }
                                     ?>
                                 </td>
                                 <td>
                                     <?php if ($t['tool_id']): ?>
                                         <span class="status-badge status-blue"><i class="ph ph-database"></i>
-                                            <?php echo htmlspecialchars($t['tool_type']); ?></span>
+                                            <?php echo esc($t['tool_type']); ?></span>
                                     <?php else: ?>
                                         <span class="status-badge status-gray"><i class="ph ph-pencil-simple"></i> Texto
                                             Manual</span>

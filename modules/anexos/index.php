@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/anexos/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -96,7 +96,7 @@ $anexos = $stmt->fetchAll();
                     <div class="input-group" style="width: 300px;">
                         <input type="text" name="search" class="form-control"
                             placeholder="Buscar por proyecto, empresa, creador..."
-                            value="<?php echo htmlspecialchars($search); ?>">
+                            value="<?php echo esc($search); ?>">
                         <i class="ph ph-magnifying-glass input-icon"></i>
                     </div>
                     <button type="submit" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Buscar</button>
@@ -131,7 +131,7 @@ $anexos = $stmt->fetchAll();
                                     <?php echo date('d/m/Y h:i A', strtotime($item['created_at'])); ?>
                                 </td>
                                 <td>
-                                    <?php echo htmlspecialchars($item['client_name'] ?? 'YAZAKI DE NICARAGUA SA'); ?>
+                                    <?php echo esc($item['client_name'] ?? 'YAZAKI DE NICARAGUA SA'); ?>
                                 </td>
                                 <td>
                                     <?php if ($item['survey_id']): ?>
@@ -139,7 +139,7 @@ $anexos = $stmt->fetchAll();
                                             style="color: var(--primary-500); text-decoration: none;">
                                             #
                                             <?php echo $item['survey_id']; ?> -
-                                            <?php echo htmlspecialchars(substr($item['survey_title'], 0, 30)) . (strlen($item['survey_title']) > 30 ? '...' : ''); ?>
+                                            <?php echo esc(substr($item['survey_title'], 0, 30)) . (strlen($item['survey_title']) > 30 ? '...' : ''); ?>
                                         </a>
                                     <?php else: ?>
                                         <span class="text-muted">Ninguno Independiente</span>
@@ -149,7 +149,7 @@ $anexos = $stmt->fetchAll();
                                         <?php echo $item['tools_count']; ?> Ítems
                                     </span></td>
                                 <td>
-                                    <?php echo htmlspecialchars($item['creator_name']); ?>
+                                    <?php echo esc($item['creator_name']); ?>
                                 </td>
                                 <td>
                                     <?php if ($item['status'] == 'draft'): ?>

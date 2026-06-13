@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/proyectos/reporte_facturas.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -86,12 +86,12 @@ require_once '../../includes/sidebar.php';
                                 data-date="<?php echo date('Y-m-d', strtotime($inv['created_at'])); ?>">
                                 <td>
                                     <span style="font-weight: 600; color: var(--primary);">
-                                        <?php echo !empty($inv['invoice_number']) ? htmlspecialchars($inv['invoice_number']) : '<span style="color:var(--text-muted); font-weight:normal; font-style:italic;">- Sin Factura -</span>'; ?>
+                                        <?php echo !empty($inv['invoice_number']) ? esc($inv['invoice_number']) : '<span style="color:var(--text-muted); font-weight:normal; font-style:italic;">- Sin Factura -</span>'; ?>
                                     </span>
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($inv['created_at'])); ?></td>
-                                <td><?php echo htmlspecialchars($inv['client_name']); ?></td>
-                                <td><?php echo htmlspecialchars($inv['title']); ?></td>
+                                <td><?php echo esc($inv['client_name']); ?></td>
+                                <td><?php echo esc($inv['title']); ?></td>
                                 <td>
                                     <?php
                                     $s = $inv['status'];

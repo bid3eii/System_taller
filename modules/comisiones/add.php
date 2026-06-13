@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/comisiones/add.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -81,7 +81,7 @@ require_once '../../includes/sidebar.php';
 
     <?php if (isset($error)): ?>
         <div class="alert alert-danger" style="margin-bottom: 1.5rem;"><i class="ph ph-warning-circle"></i>
-            <?php echo htmlspecialchars($error); ?>
+            <?php echo esc($error); ?>
         </div>
     <?php endif; ?>
 
@@ -95,7 +95,7 @@ require_once '../../includes/sidebar.php';
                         <option value="">Seleccione un técnico</option>
                         <?php foreach ($technicians as $tech): ?>
                             <option value="<?php echo $tech['id']; ?>">
-                                <?php echo htmlspecialchars($tech['username']); ?>
+                                <?php echo esc($tech['username']); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>

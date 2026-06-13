@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/clients/history.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -65,21 +65,21 @@ require_once '../../includes/sidebar.php'; // Navbar
                 <?php echo strtoupper(substr($client['name'], 0, 1)); ?>
             </div>
             <div>
-                <h2 style="font-size: 1.25rem; margin: 0 0 0.5rem 0;"><?php echo htmlspecialchars($client['name']); ?></h2>
+                <h2 style="font-size: 1.25rem; margin: 0 0 0.5rem 0;"><?php echo esc($client['name']); ?></h2>
                 <div style="display: flex; gap: 1.5rem; color: var(--text-secondary); font-size: 0.95rem;">
                     <?php if($client['tax_id']): ?>
-                        <span><i class="ph ph-identification-card"></i> <?php echo htmlspecialchars($client['tax_id']); ?></span>
+                        <span><i class="ph ph-identification-card"></i> <?php echo esc($client['tax_id']); ?></span>
                     <?php endif; ?>
                     <?php if($client['phone']): ?>
-                        <span><i class="ph ph-phone"></i> <?php echo htmlspecialchars($client['phone']); ?></span>
+                        <span><i class="ph ph-phone"></i> <?php echo esc($client['phone']); ?></span>
                     <?php endif; ?>
                     <?php if($client['email']): ?>
-                        <span><i class="ph ph-envelope"></i> <?php echo htmlspecialchars($client['email']); ?></span>
+                        <span><i class="ph ph-envelope"></i> <?php echo esc($client['email']); ?></span>
                     <?php endif; ?>
                 </div>
                 <?php if($client['address']): ?>
                     <div style="margin-top: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
-                        <i class="ph ph-map-pin"></i> <?php echo htmlspecialchars($client['address']); ?>
+                        <i class="ph ph-map-pin"></i> <?php echo esc($client['address']); ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -120,8 +120,8 @@ require_once '../../includes/sidebar.php'; // Navbar
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <strong><?php echo htmlspecialchars($order['equipment_type']); ?></strong>
-                                    <div class="text-sm text-muted"><?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?></div>
+                                    <strong><?php echo esc($order['equipment_type']); ?></strong>
+                                    <div class="text-sm text-muted"><?php echo esc($order['brand'] . ' ' . $order['model']); ?></div>
                                 </td>
                                 <td>
                                     <?php 

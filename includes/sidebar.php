@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // includes/sidebar.php (Now actually a Navbar)
 ?>
 <header class="navbar">
@@ -330,8 +330,8 @@
             <?php echo strtoupper(substr($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'U', 0, 1)); ?>
         </div>
         <div class="user-info" style="line-height: 1.2;">
-            <p class="text-sm font-medium"><?php echo htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'User'); ?></p>
-            <p class="text-xs text-muted"><?php echo htmlspecialchars($_SESSION['role_name'] ?? 'Role'); ?></p>
+            <p class="text-sm font-medium"><?php echo esc($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'User'); ?></p>
+            <p class="text-xs text-muted"><?php echo esc($_SESSION['role_name'] ?? 'Role'); ?></p>
         </div>
         <i class="ph-bold ph-caret-down user-caret"
             style="font-size: 0.8rem; margin-left: 0.5rem; color: var(--text-secondary);"></i>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/profile/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -93,9 +93,9 @@ require_once '../../includes/sidebar.php';
                     <div class="avatar-ring"></div>
                 </div>
                 <div class="identity-info">
-                    <h2 class="user-name"><?php echo htmlspecialchars($user['full_name'] ?: $user['username']); ?></h2>
-                    <span class="user-role-badge"><?php echo htmlspecialchars($user['role_name']); ?></span>
-                    <p class="user-email"><i class="ph ph-envelope"></i> <?php echo htmlspecialchars($user['email']); ?></p>
+                    <h2 class="user-name"><?php echo esc($user['full_name'] ?: $user['username']); ?></h2>
+                    <span class="user-role-badge"><?php echo esc($user['role_name']); ?></span>
+                    <p class="user-email"><i class="ph ph-envelope"></i> <?php echo esc($user['email']); ?></p>
                 </div>
                 <div class="sidebar-divider"></div>
                 <div class="signature-section">

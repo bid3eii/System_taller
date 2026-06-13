@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/services/manage.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -395,20 +395,20 @@ require_once '../../includes/sidebar.php';
                     <div>
                         <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Cliente</div>
                         <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 0.5rem;">
-                            <?php echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name'])); ?>
+                            <?php echo esc(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name'])); ?>
                         </div>
                     </div>
                     <div>
                         <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Equipo</div>
                         <div style="font-weight: 500; color: var(--text-primary);">
-                            <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
+                            <?php echo esc($order['brand'] . ' ' . $order['model']); ?>
                         </div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">S/N: <?php echo htmlspecialchars($order['serial_number']); ?></div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">S/N: <?php echo esc($order['serial_number']); ?></div>
                     </div>
                     <div>
                         <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Técnico Asignado</div>
                         <div style="font-weight: 500; color: var(--text-primary);">
-                            <i class="ph ph-user" style="color: var(--text-muted);"></i> <?php echo htmlspecialchars($order['tech_name_full'] ?: ($order['tech_username'] ?? 'Sin asignar')); ?>
+                            <i class="ph ph-user" style="color: var(--text-muted);"></i> <?php echo esc($order['tech_name_full'] ?: ($order['tech_username'] ?? 'Sin asignar')); ?>
                         </div>
                     </div>
                 </div>
@@ -416,7 +416,7 @@ require_once '../../includes/sidebar.php';
                 <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
                     <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">Falla Reportada</div>
                     <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; color: #e2e8f0; font-size: 0.95rem; line-height: 1.5;">
-                        <?php echo nl2br(htmlspecialchars($order['problem_reported'])); ?>
+                        <?php echo nl2br(esc($order['problem_reported'])); ?>
                     </div>
                 </div>
             </div>
@@ -442,7 +442,7 @@ require_once '../../includes/sidebar.php';
                 <div style="margin-bottom: 1rem;">
                     <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Procedimiento</div>
                     <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; color: #e2e8f0; font-size: 0.95rem; line-height: 1.5;">
-                        <?php echo nl2br(htmlspecialchars($order['diagnosis_procedure'])); ?>
+                        <?php echo nl2br(esc($order['diagnosis_procedure'])); ?>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -451,7 +451,7 @@ require_once '../../includes/sidebar.php';
                 <div style="margin-bottom: 1rem;">
                     <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.3rem;">Conclusión / Solución</div>
                     <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; color: #e2e8f0; font-size: 0.95rem; line-height: 1.5;">
-                        <?php echo nl2br(htmlspecialchars($order['diagnosis_conclusion'])); ?>
+                        <?php echo nl2br(esc($order['diagnosis_conclusion'])); ?>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -478,11 +478,11 @@ require_once '../../includes/sidebar.php';
                         <input type="hidden" name="action" value="edit_diagnosis">
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Procedimiento</label>
-                            <textarea name="diagnosis_procedure" class="modern-textarea" rows="4"><?php echo htmlspecialchars($order['diagnosis_procedure'] ?? ''); ?></textarea>
+                            <textarea name="diagnosis_procedure" class="modern-textarea" rows="4"><?php echo esc($order['diagnosis_procedure'] ?? ''); ?></textarea>
                         </div>
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Conclusión / Solución</label>
-                            <textarea name="diagnosis_conclusion" class="modern-textarea" rows="4"><?php echo htmlspecialchars($order['diagnosis_conclusion'] ?? ''); ?></textarea>
+                            <textarea name="diagnosis_conclusion" class="modern-textarea" rows="4"><?php echo esc($order['diagnosis_conclusion'] ?? ''); ?></textarea>
                         </div>
                         <div style="margin-bottom: 1.5rem;">
                             <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Imágenes</label>
@@ -550,7 +550,7 @@ require_once '../../includes/sidebar.php';
                         <div id="replacement_serial_container" style="display: <?php echo $order['status'] === 'replaced' ? 'block' : 'none'; ?>; margin-bottom: 1.5rem; background: rgba(236, 72, 153, 0.1); border: 1px dashed rgba(236, 72, 153, 0.3); padding: 1rem; border-radius: 8px;">
                             <label style="display: block; font-size: 0.85rem; color: #f472b6; margin-bottom: 0.5rem;"><i class="ph ph-barcode"></i> Nuevo Número de Serie (Reemplazo) <span style="color: #ef4444;">*</span></label>
                             <input type="text" name="replacement_serial_number" id="replacement_serial_number" class="modern-input" 
-                                   value="<?php echo htmlspecialchars($order['replacement_serial_number'] ?? ''); ?>" 
+                                   value="<?php echo esc($order['replacement_serial_number'] ?? ''); ?>" 
                                    placeholder="Ingresa el S/N del equipo de reemplazo" style="border-color: rgba(236, 72, 153, 0.3);">
                         </div>
 
@@ -593,7 +593,7 @@ require_once '../../includes/sidebar.php';
                     <div id="invoice_field_container" style="display: <?php echo $order['payment_status'] === 'pagado' ? 'block' : 'none'; ?>; margin-bottom: 1.5rem;">
                         <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Número de Factura / Ticket <span style="color: #ef4444;">*</span></label>
                         <input type="text" name="invoice_number" id="invoice_number" class="modern-input" 
-                               value="<?php echo htmlspecialchars($order['invoice_number'] ?? ''); ?>" 
+                               value="<?php echo esc($order['invoice_number'] ?? ''); ?>" 
                                placeholder="Ej. F-1020 o T-099" <?php echo $order['payment_status'] === 'pagado' ? 'disabled' : ''; ?>>
                         <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; margin-bottom: 0;">Requerido para el cálculo de comisiones.</p>
                     </div>

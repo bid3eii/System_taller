@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/levantamientos/print_tools.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -43,7 +43,7 @@ $date_format = date('d/m/Y', strtotime($survey['created_at']));
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Lista de Herramientas - <?php echo htmlspecialchars($survey['title']); ?></title>
+    <title>Lista de Herramientas - <?php echo esc($survey['title']); ?></title>
     <link rel="stylesheet" href="../../assets/css/variables.css">
     <style>
         @page {
@@ -144,10 +144,10 @@ $date_format = date('d/m/Y', strtotime($survey['created_at']));
         </div>
 
         <div class="meta-grid">
-            <div class="meta-item"><b>Proyecto:</b> <?php echo htmlspecialchars($survey['title']); ?></div>
+            <div class="meta-item"><b>Proyecto:</b> <?php echo esc($survey['title']); ?></div>
             <div class="meta-item"><b>Fecha:</b> <?php echo $date_format; ?></div>
-            <div class="meta-item"><b>Cliente:</b> <?php echo htmlspecialchars($survey['client_name']); ?></div>
-            <div class="meta-item"><b>Responsable:</b> <?php echo htmlspecialchars($survey['tech_name']); ?></div>
+            <div class="meta-item"><b>Cliente:</b> <?php echo esc($survey['client_name']); ?></div>
+            <div class="meta-item"><b>Responsable:</b> <?php echo esc($survey['tech_name']); ?></div>
         </div>
 
         <table>
@@ -162,9 +162,9 @@ $date_format = date('d/m/Y', strtotime($survey['created_at']));
                 <?php if (count($tools) > 0): ?>
                     <?php foreach ($tools as $t): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($t['inventory_name'] ?: ($t['tool_name'] ?: 'N/E')); ?></td>
+                            <td><?php echo esc($t['inventory_name'] ?: ($t['tool_name'] ?: 'N/E')); ?></td>
                             <td style="text-align: center;"><?php echo intval($t['quantity']); ?></td>
-                            <td><?php echo htmlspecialchars($t['notes'] ?: '-'); ?></td>
+                            <td><?php echo esc($t['notes'] ?: '-'); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

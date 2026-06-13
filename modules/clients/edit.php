@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/clients/edit.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -87,7 +87,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                 <div class="form-group" style="grid-column: span 2;">
                     <label class="form-label">Nombre Completo *</label>
                     <div class="input-group">
-                        <input type="text" name="name" class="form-control" placeholder="Ej. Juan Pérez" value="<?php echo htmlspecialchars($client['name']); ?>" required>
+                        <input type="text" name="name" class="form-control" placeholder="Ej. Juan Pérez" value="<?php echo esc($client['name']); ?>" required>
                         <i class="ph ph-user input-icon"></i>
                     </div>
                 </div>
@@ -96,7 +96,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                 <div class="form-group">
                     <label class="form-label">DNI / RUC</label>
                     <div class="input-group">
-                        <input type="text" name="tax_id" class="form-control" placeholder="Número de identificación" value="<?php echo htmlspecialchars($client['tax_id']); ?>">
+                        <input type="text" name="tax_id" class="form-control" placeholder="Número de identificación" value="<?php echo esc($client['tax_id']); ?>">
                         <i class="ph ph-identification-card input-icon"></i>
                     </div>
                 </div>
@@ -105,7 +105,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                 <div class="form-group">
                     <label class="form-label">Teléfono</label>
                     <div class="input-group">
-                        <input type="text" name="phone" class="form-control" placeholder="Ej. 5555-4444" value="<?php echo htmlspecialchars($client['phone']); ?>">
+                        <input type="text" name="phone" class="form-control" placeholder="Ej. 5555-4444" value="<?php echo esc($client['phone']); ?>">
                         <i class="ph ph-phone input-icon"></i>
                     </div>
                 </div>
@@ -114,7 +114,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                 <div class="form-group" style="grid-column: span 2;">
                     <label class="form-label">Correo Electrónico</label>
                     <div class="input-group">
-                        <input type="email" name="email" class="form-control" placeholder="cliente@ejemplo.com" value="<?php echo htmlspecialchars($client['email']); ?>">
+                        <input type="email" name="email" class="form-control" placeholder="cliente@ejemplo.com" value="<?php echo esc($client['email']); ?>">
                         <i class="ph ph-envelope input-icon"></i>
                     </div>
                 </div>
@@ -123,7 +123,7 @@ require_once '../../includes/sidebar.php'; // Navbar
                 <div class="form-group" style="grid-column: span 2;">
                     <label class="form-label">Dirección</label>
                     <div class="input-group">
-                        <input type="text" name="address" class="form-control" placeholder="Dirección completa" value="<?php echo htmlspecialchars($client['address']); ?>">
+                        <input type="text" name="address" class="form-control" placeholder="Dirección completa" value="<?php echo esc($client['address']); ?>">
                         <i class="ph ph-map-pin input-icon"></i>
                     </div>
                 </div>

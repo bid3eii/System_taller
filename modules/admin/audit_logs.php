@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/admin/audit_logs.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -492,9 +492,9 @@ $totalPages = ceil($totalLogs / $limit);
                     
                     <div class="card-content-grid">
                         <div class="grid-primary">
-                            <h3 class="log-action-title"><?php echo $log['action']; ?> en <?php echo htmlspecialchars($log['table_name']); ?></h3>
+                            <h3 class="log-action-title"><?php echo $log['action']; ?> en <?php echo esc($log['table_name']); ?></h3>
                             <div class="log-meta">
-                                <span class="meta-item"><i class="ph ph-user"></i> <?php echo htmlspecialchars($log['username'] ?? 'Sistema'); ?></span>
+                                <span class="meta-item"><i class="ph ph-user"></i> <?php echo esc($log['username'] ?? 'Sistema'); ?></span>
                                 <span class="meta-item"><i class="ph ph-calendar"></i> <?php echo date('d M, Y H:i', strtotime($log['created_at'])); ?></span>
                                 <span class="meta-item"><i class="ph ph-hash"></i> ID: <?php echo $log['record_id']; ?></span>
                             </div>
@@ -502,7 +502,7 @@ $totalPages = ceil($totalLogs / $limit);
                         
                         <div class="grid-reason">
                             <span class="reason-label">Motivo:</span>
-                            <p class="reason-text"><?php echo htmlspecialchars($log['reason'] ?? 'Sin motivo registrado'); ?></p>
+                            <p class="reason-text"><?php echo esc($log['reason'] ?? 'Sin motivo registrado'); ?></p>
                         </div>
                         
                         <div class="grid-toggle">

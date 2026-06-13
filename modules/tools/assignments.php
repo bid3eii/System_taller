@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/tools/assignments.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -40,7 +40,7 @@ try {
     </div>
 
     <?php if (isset($error) || isset($_GET['error'])): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($error ?? $_GET['error']); ?></div>
+        <div class="alert alert-danger"><?php echo esc($error ?? $_GET['error']); ?></div>
     <?php endif; ?>
 
     <div class="card">
@@ -49,7 +49,7 @@ try {
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <form method="GET" style="display: flex; gap: 0.5rem; margin: 0;">
                     <div class="input-group" style="width: 300px;">
-                        <input type="text" name="search" class="form-control" placeholder="Buscar por proyecto o encargado..." value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar por proyecto o encargado..." value="<?php echo esc($search); ?>">
                         <i class="ph ph-magnifying-glass input-icon"></i>
                     </div>
                 </form>
@@ -75,9 +75,9 @@ try {
                         <tr>
                             <td>#<?php echo $assignment['id']; ?></td>
                             <td>
-                                <span class="font-medium"><?php echo htmlspecialchars($assignment['project_name']); ?></span>
+                                <span class="font-medium"><?php echo esc($assignment['project_name']); ?></span>
                             </td>
-                            <td><?php echo htmlspecialchars($assignment['assigned_to']); ?></td>
+                            <td><?php echo esc($assignment['assigned_to']); ?></td>
                             <td>
                                 <div style="display: flex; flex-direction: column; gap: 0.2rem;">
                                     <span class="text-sm"><i class="ph ph-arrow-right"></i> <?php echo date('d/m/Y', strtotime($assignment['delivery_date'])); ?></span>

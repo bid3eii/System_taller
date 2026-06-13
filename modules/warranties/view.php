@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/warranties/view.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -492,7 +492,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                 <div style="margin-top: 0.5rem;">
                     <span style="color: var(--p-text-muted); font-size: 0.9rem;">Factura:</span>
                     <strong style="font-size: 1.1rem; color: var(--p-text-main);">
-                        <?php echo $invoice_show ? htmlspecialchars($invoice_show) : '<span style="color:var(--p-text-muted); font-weight:normal;">Sin Factura</span>'; ?>
+                        <?php echo $invoice_show ? esc($invoice_show) : '<span style="color:var(--p-text-muted); font-weight:normal;">Sin Factura</span>'; ?>
                     </strong>
                 </div>
             </div>
@@ -520,10 +520,10 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             
                             <div class="info-group">
                                 <span class="info-label">Nombre Completo</span>
-                                <div class="info-value highlight"><?php echo htmlspecialchars(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name'])); ?></div>
+                                <div class="info-value highlight"><?php echo esc(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name'])); ?></div>
                                 <?php if(!empty($order['owner_name']) || !empty($order['registered_owner_name'])): ?>
                                     <div style="font-size: 0.8rem; color: var(--p-text-muted); font-weight: normal; margin-top: 2px;">
-                                        Contacto: <?php echo htmlspecialchars($order['contact_name']); ?>
+                                        Contacto: <?php echo esc($order['contact_name']); ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -531,11 +531,11 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem;">
                                 <div class="info-group" style="margin-bottom: 0;">
                                     <span class="info-label">Teléfono</span>
-                                    <div class="info-value"><i class="ph ph-phone"></i> <?php echo htmlspecialchars($order['phone']); ?></div>
+                                    <div class="info-value"><i class="ph ph-phone"></i> <?php echo esc($order['phone']); ?></div>
                                 </div>
                                 <div class="info-group" style="margin-bottom: 0;">
                                     <span class="info-label">Email</span>
-                                    <div class="info-value"><i class="ph ph-envelope"></i> <?php echo htmlspecialchars($order['email']); ?></div>
+                                    <div class="info-value"><i class="ph ph-envelope"></i> <?php echo esc($order['email']); ?></div>
                                 </div>
                             </div>
 
@@ -573,23 +573,23 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             <div class="info-group">
                                 <span class="info-label">Marca / Modelo</span>
                                 <div class="info-value highlight">
-                                    <?php echo htmlspecialchars($order['brand']); ?>
+                                    <?php echo esc($order['brand']); ?>
                                 </div>
-                                <div class="info-value"><?php echo htmlspecialchars($order['model']); ?></div>
+                                <div class="info-value"><?php echo esc($order['model']); ?></div>
                                 <?php if($order['submodel']): ?>
-                                    <div class="info-value" style="font-size: 0.9rem; color: var(--p-text-muted);"><?php echo htmlspecialchars($order['submodel']); ?></div>
+                                    <div class="info-value" style="font-size: 0.9rem; color: var(--p-text-muted);"><?php echo esc($order['submodel']); ?></div>
                                 <?php endif; ?>
                             </div>
 
                             <div class="info-group">
                                 <span class="info-label">Número de Serie Original</span>
-                                <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em;"><?php echo htmlspecialchars($order['serial_number']); ?></div>
+                                <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em;"><?php echo esc($order['serial_number']); ?></div>
                             </div>
 
                             <?php if (!empty($order['replacement_serial_number'])): ?>
                             <div class="info-group" style="background: rgba(236, 72, 153, 0.1); padding: 0.75rem; border-radius: 8px; border: 1px dashed rgba(236, 72, 153, 0.3);">
                                 <span class="info-label" style="color: #f472b6;"><i class="ph ph-arrows-clockwise"></i> Número de Serie (Reemplazo)</span>
-                                <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em; font-weight: bold; color: #f9a8d4;"><?php echo htmlspecialchars($order['replacement_serial_number']); ?></div>
+                                <div class="info-value" style="font-family: monospace; letter-spacing: 0.05em; font-weight: bold; color: #f9a8d4;"><?php echo esc($order['replacement_serial_number']); ?></div>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -605,7 +605,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                     <div class="info-group">
                         <span class="info-label">Problema Reportado</span>
                         <div class="problem-box">
-                            <?php echo nl2br(htmlspecialchars($order['problem_reported'])); ?>
+                            <?php echo nl2br(esc($order['problem_reported'])); ?>
                         </div>
                     </div>
 
@@ -613,14 +613,14 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                         <div class="info-group">
                             <span class="info-label">Accesorios Recibidos</span>
                             <div class="problem-box" style="min-height: auto; background: var(--p-bg-input);">
-                                <?php echo htmlspecialchars($order['accessories_received'] ?: 'Ninguno'); ?>
+                                <?php echo esc($order['accessories_received'] ?: 'Ninguno'); ?>
                             </div>
                         </div>
                         
                         <div class="info-group">
                             <span class="info-label">Observaciones de Ingreso</span>
                             <div class="problem-box" style="min-height: auto; background: var(--p-bg-input);">
-                                <?php echo nl2br(htmlspecialchars($order['entry_notes'] ?: 'Ninguna')); ?>
+                                <?php echo nl2br(esc($order['entry_notes'] ?: 'Ninguna')); ?>
                             </div>
                         </div>
                     </div>
@@ -648,7 +648,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                     <div class="info-group">
                         <span class="info-label">Procedimiento</span>
                         <div class="problem-box" style="background: var(--p-bg-input);">
-                            <?php echo nl2br(htmlspecialchars($order['diagnosis_procedure'])); ?>
+                            <?php echo nl2br(esc($order['diagnosis_procedure'])); ?>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -657,7 +657,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                     <div class="info-group">
                         <span class="info-label">Conclusión / Solución</span>
                         <div class="problem-box" style="background: var(--p-bg-input);">
-                            <?php echo nl2br(htmlspecialchars($order['diagnosis_conclusion'])); ?>
+                            <?php echo nl2br(esc($order['diagnosis_conclusion'])); ?>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -687,12 +687,12 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                             
                             <div style="margin-bottom: 1rem;">
                                 <label style="display: block; margin-bottom: 0.5rem; color: var(--p-text-muted); font-size: 0.85rem;">Procedimiento</label>
-                                <textarea name="diagnosis_procedure" class="modern-textarea" rows="4"><?php echo htmlspecialchars($order['diagnosis_procedure'] ?? ''); ?></textarea>
+                                <textarea name="diagnosis_procedure" class="modern-textarea" rows="4"><?php echo esc($order['diagnosis_procedure'] ?? ''); ?></textarea>
                             </div>
 
                             <div style="margin-bottom: 1rem;">
                                 <label style="display: block; margin-bottom: 0.5rem; color: var(--p-text-muted); font-size: 0.85rem;">Conclusión / Solución</label>
-                                <textarea name="diagnosis_conclusion" class="modern-textarea" rows="4"><?php echo htmlspecialchars($order['diagnosis_conclusion'] ?? ''); ?></textarea>
+                                <textarea name="diagnosis_conclusion" class="modern-textarea" rows="4"><?php echo esc($order['diagnosis_conclusion'] ?? ''); ?></textarea>
                             </div>
 
                             <div style="margin-bottom: 1.5rem;">
@@ -779,7 +779,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                     <div id="replacement_serial_container" style="display: <?php echo $order['status'] === 'replaced' ? 'block' : 'none'; ?>; margin-bottom: 1rem; background: rgba(236, 72, 153, 0.1); border: 1px dashed rgba(236, 72, 153, 0.3); padding: 1rem; border-radius: 8px;">
                                         <label style="display: block; font-size: 0.85rem; color: #f472b6; margin-bottom: 0.5rem;"><i class="ph ph-barcode"></i> Nuevo Número de Serie (Reemplazo) <span style="color: #ef4444;">*</span></label>
                                         <input type="text" name="replacement_serial_number" id="replacement_serial_number" class="modern-input" 
-                                               value="<?php echo htmlspecialchars($order['replacement_serial_number'] ?? ''); ?>" 
+                                               value="<?php echo esc($order['replacement_serial_number'] ?? ''); ?>" 
                                                placeholder="Ingresa el S/N del equipo de reemplazo" style="border-color: rgba(236, 72, 153, 0.3);">
                                     </div>
 
@@ -800,13 +800,13 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                                         <span style="color: #fbbf24;">Diag #<?php echo str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT); ?></span>
                                                     <?php endif; ?>
                                                 </div>
-                                                <div style="font-weight: bold; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($display_client_name); ?></div>
+                                                <div style="font-weight: bold; margin-bottom: 0.25rem;"><?php echo esc($display_client_name); ?></div>
                                                 <div style="font-size: 0.85rem; color: var(--p-text-muted);">
-                                                    <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
+                                                    <?php echo esc($order['brand'] . ' ' . $order['model']); ?>
                                                 </div>
                                                 <div style="margin-top: 0.5rem; font-size: 0.9rem;">
                                                     <span style="color: var(--p-text-muted);">Falla:</span> 
-                                                    <?php echo htmlspecialchars($order['problem_reported']); ?>
+                                                    <?php echo esc($order['problem_reported']); ?>
                                                 </div>
                                             </div>
 
@@ -846,13 +846,13 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                                         <span style="color: #34d399;">Rep #<?php echo str_pad($order['repair_number'], 5, '0', STR_PAD_LEFT); ?></span>
                                                     <?php endif; ?>
                                                 </div>
-                                                <div style="font-weight: bold; margin-bottom: 0.25rem;"><?php echo htmlspecialchars($display_client_name); ?></div>
+                                                <div style="font-weight: bold; margin-bottom: 0.25rem;"><?php echo esc($display_client_name); ?></div>
                                                 <div style="font-size: 0.85rem; color: var(--p-text-muted);">
-                                                    <?php echo htmlspecialchars($order['brand'] . ' ' . $order['model']); ?>
+                                                    <?php echo esc($order['brand'] . ' ' . $order['model']); ?>
                                                 </div>
                                                 <div style="margin-top: 0.5rem; font-size: 0.9rem;">
                                                     <span style="color: var(--p-text-muted);">Falla:</span> 
-                                                    <?php echo htmlspecialchars($order['problem_reported']); ?>
+                                                    <?php echo esc($order['problem_reported']); ?>
                                                 </div>
                                             </div>
 
@@ -861,7 +861,7 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                             <div style="margin-bottom: 1.5rem; padding: 0.75rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 8px;">
                                                 <label style="display: block; font-size: 0.8rem; color: #fbbf24; margin-bottom: 0.25rem; font-weight: 600;">Diagnóstico Previo</label>
                                                 <div style="font-size: 0.9rem; color: var(--p-text-main); white-space: pre-line;">
-                                                    <?php echo htmlspecialchars($order['diagnosis_conclusion']); ?>
+                                                    <?php echo esc($order['diagnosis_conclusion']); ?>
                                                 </div>
                                             </div>
                                             <?php endif; ?>
@@ -1073,11 +1073,11 @@ $is_history_view = (isset($_GET['view_source']) && $_GET['view_source'] === 'his
                                     <?php echo $statusLabels[$event['action']] ?? $event['action']; ?>
                                 </div>
                                 <div class="timeline-date">
-                                    <?php echo date('d/m/Y H:i', strtotime($event['created_at'])); ?> • <?php echo htmlspecialchars($event['user_full_name'] ?: ($event['user_username'] ?: 'Sistema')); ?>
+                                    <?php echo date('d/m/Y H:i', strtotime($event['created_at'])); ?> • <?php echo esc($event['user_full_name'] ?: ($event['user_username'] ?: 'Sistema')); ?>
                                 </div>
                                 <?php if($event['notes']): ?>
                                     <div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--p-text-muted); background: var(--p-bg-input); padding: 0.5rem; border-radius: 4px;">
-                                        <?php echo htmlspecialchars($event['notes']); ?>
+                                        <?php echo esc($event['notes']); ?>
                                     </div>
                                 <?php endif; ?>
                             </div>

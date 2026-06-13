@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/anexos/edit.php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -119,7 +119,7 @@ require_once '../../includes/sidebar.php';
     <?php if ($error): ?>
         <div class="alert alert-danger"
             style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem;">
-            <?php echo htmlspecialchars($error); ?>
+            <?php echo esc($error); ?>
         </div>
     <?php endif; ?>
 
@@ -130,12 +130,12 @@ require_once '../../includes/sidebar.php';
                     Levantamiento (Opcional)</label>
                 <div style="display: flex; gap: 0.5rem;">
                     <input type="hidden" name="survey_id" id="survey_id"
-                        value="<?php echo htmlspecialchars($anexo['survey_id'] ?? ''); ?>">
+                        value="<?php echo esc($anexo['survey_id'] ?? ''); ?>">
 
                     <?php
                     $display_value = "-- Independiente (Sin vínculo a proyecto) --";
                     if ($anexo['survey_id']) {
-                        $display_value = "#" . $anexo['survey_id'] . " - " . htmlspecialchars($anexo['survey_title']);
+                        $display_value = "#" . $anexo['survey_id'] . " - " . esc($anexo['survey_title']);
                     }
                     ?>
                     <input type="text" id="survey_display" class="form-control" value="<?php echo $display_value; ?>"
@@ -155,7 +155,7 @@ require_once '../../includes/sidebar.php';
                 <label class="form-label font-medium"><i class="ph ph-buildings text-muted"></i> Empresa Receptora (Fijo
                     para formato)</label>
                 <input type="text" name="client_name" class="form-control"
-                    value="<?php echo htmlspecialchars($anexo['client_name'] ?? 'YAZAKI DE NICARAGUA SA'); ?>" readonly
+                    value="<?php echo esc($anexo['client_name'] ?? 'YAZAKI DE NICARAGUA SA'); ?>" readonly
                     style="opacity: 0.8; cursor: not-allowed;">
             </div>
         </div>
@@ -286,14 +286,14 @@ require_once '../../includes/sidebar.php';
                             <td style="padding: 0.8rem;"><strong>#
                                     <?php echo $s['id']; ?>
                                 </strong> -
-                                <?php echo htmlspecialchars($s['title']); ?>
+                                <?php echo esc($s['title']); ?>
                             </td>
                             <td style="padding: 0.8rem;">
-                                <?php echo htmlspecialchars($s['client_name'] ?? ''); ?>
+                                <?php echo esc($s['client_name'] ?? ''); ?>
                             </td>
                             <td style="padding: 0.8rem; text-align: right;">
                                 <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem;"
-                                    onclick="selectProject(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars(addslashes($s['title'])); ?>')">Seleccionar</button>
+                                    onclick="selectProject(<?php echo $s['id']; ?>, '<?php echo esc(addslashes($s['title'])); ?>')">Seleccionar</button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -329,15 +329,15 @@ require_once '../../includes/sidebar.php';
                     foreach ($toolsDecoded as $t): ?>
                         <tr class="select-row" style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 0.8rem;"><strong>
-                                    <?php echo htmlspecialchars($t['name']); ?>
+                                    <?php echo esc($t['name']); ?>
                                 </strong></td>
                             <td style="padding: 0.8rem; color: var(--text-muted); font-size: 0.9em;">
-                                <?php echo htmlspecialchars($t['type'] ?? ''); ?>
+                                <?php echo esc($t['type'] ?? ''); ?>
                             </td>
                             <td style="padding: 0.8rem; text-align: right;">
                                 <button type="button" class="btn btn-primary"
                                     style="padding: 0.3rem 0.6rem; background: var(--primary-600);"
-                                    onclick="addToolRow(this, <?php echo $t['id']; ?>, '<?php echo htmlspecialchars(addslashes($t['name'])); ?>')">
+                                    onclick="addToolRow(this, <?php echo $t['id']; ?>, '<?php echo esc(addslashes($t['name'])); ?>')">
                                     <i class="ph ph-plus"></i> Añadir
                                 </button>
                             </td>

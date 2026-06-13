@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // includes/header.php
 if (!isset($page_title)) $page_title = 'System Taller';
 ?>
@@ -7,7 +7,7 @@ if (!isset($page_title)) $page_title = 'System Taller';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($page_title); ?> - System Taller</title>
+    <title><?php echo esc($page_title); ?> - System Taller</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>assets/favicon.png?v=<?php echo time(); ?>">

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
 
@@ -112,11 +112,11 @@ require_once '../../includes/sidebar.php';
                                         <?php echo date('d/m/Y', strtotime($v['date'])); ?>
                                     </td>
                                     <td class="text-center" style="font-weight: 500;">
-                                        <?php echo htmlspecialchars($v['project_title']); ?>
+                                        <?php echo esc($v['project_title']); ?>
                                     </td>
                                     <td class="text-center"><span class="badge" style="background: var(--bg-card);"><i
                                                 class="ph ph-user"></i>
-                                            <?php echo htmlspecialchars($v['creator_full_name'] ?: $v['creator_username']); ?>
+                                            <?php echo esc($v['creator_full_name'] ?: $v['creator_username']); ?>
                                         </span></td>
                                     <td class="text-center" style="font-weight: 600; color: var(--success);">$
                                         <?php echo number_format($v['total_amount'], 2); ?>

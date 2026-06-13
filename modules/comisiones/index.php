@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/comisiones/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -232,7 +232,7 @@ if (isset($_SESSION['error'])) {
                         <div class="input-group">
                             <input type="text" name="search" class="form-control filter-input"
                                 placeholder="Cliente, servicio, caso, factura..."
-                                value="<?php echo htmlspecialchars($search); ?>">
+                                value="<?php echo esc($search); ?>">
                             <i class="ph ph-magnifying-glass input-icon" style="color: #64748b;"></i>
                         </div>
                     </div>
@@ -253,7 +253,7 @@ if (isset($_SESSION['error'])) {
                                     <option value="">Todos los técnicos</option>
                                     <?php foreach ($technicians as $tech): ?>
                                             <option value="<?php echo $tech['id']; ?>" <?php echo $tech_filter == $tech['id'] ? 'selected' : ''; ?>>
-                                                <?php echo htmlspecialchars($tech['username']); ?>
+                                                <?php echo esc($tech['username']); ?>
                                             </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -354,14 +354,14 @@ if (isset($_SESSION['error'])) {
                     <div class="alert alert-success"
                         style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                         <i class="ph ph-check-circle"></i>
-                        <?php echo htmlspecialchars($success_msg); ?>
+                        <?php echo esc($success_msg); ?>
                     </div>
             <?php endif; ?>
 
             <?php if ($error_msg): ?>
                     <div class="alert alert-danger" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                         <i class="ph ph-warning-circle"></i>
-                        <?php echo htmlspecialchars($error_msg); ?>
+                        <?php echo esc($error_msg); ?>
                     </div>
             <?php endif; ?>
 
@@ -390,7 +390,7 @@ if (isset($_SESSION['error'])) {
                         <?php if (count($rows) > 0): ?>
                             <?php foreach ($rows as $c): ?>
                                 <?php
-                                $c_json2 = htmlspecialchars(json_encode([
+                                $c_json2 = esc(json_encode([
                                     'id' => $c['id'],
                                     'caso' => $c['caso'],
                                     'tipo' => $c['tipo'],
@@ -421,19 +421,19 @@ if (isset($_SESSION['error'])) {
                                 ?>
                                 <tr class="table-row-hover" style="cursor: pointer;" onclick="openInfoModal(<?php echo $c_json2; ?>)">
                                     <td>
-                                        <a href="<?php echo htmlspecialchars($origin_link); ?>" title="Ir al Origen" onclick="event.stopPropagation();"
+                                        <a href="<?php echo esc($origin_link); ?>" title="Ir al Origen" onclick="event.stopPropagation();"
                                            style="color: #60a5fa; text-decoration: none; font-weight: 600; font-size: 1.05rem;">
                                             <?php 
                                             if ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
-                                                echo htmlspecialchars(get_order_number($c));
+                                                echo esc(get_order_number($c));
                                             } else {
-                                                echo htmlspecialchars($c['caso']);
+                                                echo esc($c['caso']);
                                             }
                                             ?> <i class="ph ph-link-simple" style="font-size: 0.8rem;"></i>
                                         </a><br>
                                         <span class="badge" style="font-size:.70rem; margin-top:.4rem; padding:.2rem .6rem; border-radius:4px; border:1px solid <?php echo $tipoBorder; ?>; background:<?php echo $tipoColor; ?>; color:<?php echo $tipoText; ?>; display:inline-flex; align-items:center; gap:.3rem; letter-spacing:.5px;">
                                             <i class="ph <?php echo $tipoIcon; ?>" style="font-size:.85rem;"></i>
-                                            <?php echo htmlspecialchars($c['tipo']); ?>
+                                            <?php echo esc($c['tipo']); ?>
                                         </span>
                                     </td>
                                     <td>
@@ -443,24 +443,24 @@ if (isset($_SESSION['error'])) {
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <div><?php echo htmlspecialchars($c['cliente']); ?></div>
+                                        <div><?php echo esc($c['cliente']); ?></div>
                                         <?php if ($c['lugar']): ?>
-                                            <div style="font-size:.8rem; color:var(--text-muted);"><i class="ph ph-map-pin"></i> <?php echo htmlspecialchars($c['lugar']); ?></div>
+                                            <div style="font-size:.8rem; color:var(--text-muted);"><i class="ph ph-map-pin"></i> <?php echo esc($c['lugar']); ?></div>
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <div style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?php echo htmlspecialchars($c['servicio']); ?>">
-                                            <?php echo htmlspecialchars($c['servicio']); ?>
+                                        <div style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?php echo esc($c['servicio']); ?>">
+                                            <?php echo esc($c['servicio']); ?>
                                         </div>
                                         <?php if ($c['computed_factura']): ?>
-                                            <div style="font-size:.8rem; color:var(--text-muted); margin-top:.25rem;"><i class="ph ph-receipt"></i> Factura: <?php echo htmlspecialchars($c['computed_factura']); ?></div>
+                                            <div style="font-size:.8rem; color:var(--text-muted); margin-top:.25rem;"><i class="ph ph-receipt"></i> Factura: <?php echo esc($c['computed_factura']); ?></div>
                                         <?php endif; ?>
                                     </td>
                                     <?php if ($is_admin): ?>
                                         <td>
                                             <div style="display:flex; align-items:center; gap:.5rem;">
                                                 <i class="ph ph-user-circle" style="color:var(--text-muted); font-size:1.2rem;"></i>
-                                                <span><?php echo htmlspecialchars($c['tech_name'] ?: 'Desconocido'); ?></span>
+                                                <span><?php echo esc($c['tech_name'] ?: 'Desconocido'); ?></span>
                                             </div>
                                         </td>
                                     <?php endif; ?>
@@ -476,12 +476,12 @@ if (isset($_SESSION['error'])) {
                                                         title="Liquidar Incentivo"
                                                         onclick="openPayModal(
                                                             <?php echo $c['id']; ?>,
-                                                            '<?php echo addslashes(htmlspecialchars($c['caso'])); ?>',
-                                                            '<?php echo addslashes(htmlspecialchars($c['cliente'])); ?>',
-                                                            '<?php echo addslashes(htmlspecialchars($c['computed_factura'] ?? '')); ?>',
+                                                            '<?php echo addslashes(esc($c['caso'])); ?>',
+                                                            '<?php echo addslashes(esc($c['cliente'])); ?>',
+                                                            '<?php echo addslashes(esc($c['computed_factura'] ?? '')); ?>',
                                                             '<?php echo $c['fecha_facturacion'] ? date('Y-m-d', strtotime($c['fecha_facturacion'])) : ''; ?>',
-                                                            '<?php echo addslashes(htmlspecialchars($c['lugar'] ?? '')); ?>',
-                                                            '<?php echo addslashes(htmlspecialchars($c['vendedor'] ?? '')); ?>'
+                                                            '<?php echo addslashes(esc($c['lugar'] ?? '')); ?>',
+                                                            '<?php echo addslashes(esc($c['vendedor'] ?? '')); ?>'
                                                         )">
                                                         <i class="ph ph-check"></i>
                                                     </button>
@@ -556,7 +556,7 @@ if (isset($_SESSION['error'])) {
     </style>
 
     <?php
-    $username_display = htmlspecialchars($_SESSION['username'] ?? 'Técnico');
+    $username_display = esc($_SESSION['username'] ?? 'Técnico');
     $active_tab_status = $_GET['status'] ?? '';
     ?>
 
@@ -591,12 +591,12 @@ if (isset($_SESSION['error'])) {
 
         <?php if ($success_msg): ?>
                 <div class="alert alert-success" style="margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem;">
-                    <i class="ph ph-check-circle"></i> <?php echo htmlspecialchars($success_msg); ?>
+                    <i class="ph ph-check-circle"></i> <?php echo esc($success_msg); ?>
                 </div>
         <?php endif; ?>
         <?php if ($error_msg): ?>
                 <div class="alert alert-danger" style="margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem;">
-                    <i class="ph ph-warning-circle"></i> <?php echo htmlspecialchars($error_msg); ?>
+                    <i class="ph ph-warning-circle"></i> <?php echo esc($error_msg); ?>
                 </div>
         <?php endif; ?>
 
@@ -635,14 +635,14 @@ if (isset($_SESSION['error'])) {
 
             <form method="GET" action="index.php" style="display: flex; gap: 0.75rem; align-items: center; margin: 0;">
                 <?php if ($active_tab_status): ?>
-                    <input type="hidden" name="status" value="<?php echo htmlspecialchars($active_tab_status); ?>">
+                    <input type="hidden" name="status" value="<?php echo esc($active_tab_status); ?>">
                 <?php endif; ?>
                 
                 <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(15,23,42,0.6); padding: 0.3rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                    <input type="date" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>" 
+                    <input type="date" name="date_from" value="<?php echo esc($date_from); ?>" 
                            style="background: transparent; border: none; color: #e2e8f0; font-size: 0.85rem; padding: 0.3rem; outline: none;">
                     <span style="color: #64748b;">-</span>
-                    <input type="date" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>"
+                    <input type="date" name="date_to" value="<?php echo esc($date_to); ?>"
                            style="background: transparent; border: none; color: #e2e8f0; font-size: 0.85rem; padding: 0.3rem; outline: none;">
                 </div>
                 
@@ -678,12 +678,12 @@ if (isset($_SESSION['error'])) {
                     <div class="com-card">
                         <div class="com-card-left">
                             <div class="com-meta">
-                                <a href="<?php echo htmlspecialchars($origin_link); ?>" class="com-caso" onclick="event.stopPropagation()">
+                                <a href="<?php echo esc($origin_link); ?>" class="com-caso" onclick="event.stopPropagation()">
                                     <?php 
                                     if ($c['tipo'] === 'SERVICIO' && !empty($c['reference_id'])) {
-                                        echo htmlspecialchars(get_order_number($c));
+                                        echo esc(get_order_number($c));
                                     } else {
-                                        echo htmlspecialchars($c['caso']);
+                                        echo esc($c['caso']);
                                     }
                                     ?> <i class="ph ph-link-simple" style="font-size:.8rem;"></i>
                                 </a>
@@ -693,13 +693,13 @@ if (isset($_SESSION['error'])) {
                             </div>
 
                             <div class="com-desc">
-                                <?php echo htmlspecialchars($c['cliente']); ?>
+                                <?php echo esc($c['cliente']); ?>
                                 <?php if ($c['lugar']): ?>
-                                        <span style="color:#475569;"> &mdash; <i class="ph ph-map-pin" style="font-size:.85em;"></i> <?php echo htmlspecialchars($c['lugar']); ?></span>
+                                        <span style="color:#475569;"> &mdash; <i class="ph ph-map-pin" style="font-size:.85em;"></i> <?php echo esc($c['lugar']); ?></span>
                                 <?php endif; ?>
                             </div>
                             <div class="com-desc" style="color:#94a3b8;font-size:.85rem;">
-                                <?php echo htmlspecialchars($c['servicio']); ?>
+                                <?php echo esc($c['servicio']); ?>
                             </div>
 
                             <div style="display:flex;gap:1.2rem;margin-top:.3rem;flex-wrap:wrap;">
@@ -710,7 +710,7 @@ if (isset($_SESSION['error'])) {
                                 <?php if ($c['factura']): ?>
                                     <div class="com-detail">
                                         <i class="ph ph-receipt"></i>
-                                        Factura: <strong style="color:#e2e8f0;"><?php echo htmlspecialchars($c['factura']); ?></strong>
+                                        Factura: <strong style="color:#e2e8f0;"><?php echo esc($c['factura']); ?></strong>
                                     </div>
                                 <?php endif; ?>
                                 <?php if ($c['fecha_facturacion']): ?>

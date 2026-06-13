@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/comisiones/export.php — Exports as a styled Excel XML (SpreadsheetML)
 require_once '../../config/db.php';
 safe_session_start();
@@ -81,7 +81,7 @@ $tech_suffix = $tech_display_name ? '_' . str_replace(' ', '_', $tech_display_na
 /* -------- Helper: escape XML characters -------- */
 function xesc(string $v): string
 {
-    return htmlspecialchars($v, ENT_XML1, 'UTF-8');
+    return esc($v, ENT_XML1, 'UTF-8');
 }
 
 /* -------- Build filter description for the report subheader -------- */

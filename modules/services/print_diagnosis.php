@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/services/print_diagnosis.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -384,13 +384,13 @@ $diagnosis_imgs = $stmtImages->fetchAll();
                                 <?php if($system_logo): ?>
                                     <img src="../../assets/uploads/<?php echo $system_logo; ?>" alt="Logo">
                                 <?php else: ?>
-                                    <h2><?php echo htmlspecialchars($company_name); ?></h2>
+                                    <h2><?php echo esc($company_name); ?></h2>
                                 <?php endif; ?>
                             </div>
                             <div class="header-info">
                                 <h2>SOPORTE TÉCNICO</h2>
-                                <p>Telf: <?php echo htmlspecialchars($company_phone); ?></p>
-                                <p><?php echo htmlspecialchars($company_email); ?></p>
+                                <p>Telf: <?php echo esc($company_phone); ?></p>
+                                <p><?php echo esc($company_email); ?></p>
                             </div>
                         </div>
                     </td>
@@ -416,7 +416,7 @@ $diagnosis_imgs = $stmtImages->fetchAll();
                             <?php 
                                 $final_client_name = !empty($order['owner_name']) ? $order['owner_name'] : $order['client_name'];
                             ?>
-                            <div class="client-subtitle"><?php echo htmlspecialchars($final_client_name); ?></div>
+                            <div class="client-subtitle"><?php echo esc($final_client_name); ?></div>
                         </div>
 
                         <div class="info-grid">
@@ -434,20 +434,20 @@ $diagnosis_imgs = $stmtImages->fetchAll();
                             </div>
                             <div class="info-item">
                                 <span class="info-label">No. Factura:</span>
-                                <span class="info-value"><?php echo htmlspecialchars($order['invoice_number'] ?: '---'); ?></span>
+                                <span class="info-value"><?php echo esc($order['invoice_number'] ?: '---'); ?></span>
                             </div>
                             
                             <div class="info-item">
                                 <span class="info-label">Equipo:</span>
-                                <span class="info-value"><?php echo htmlspecialchars($order['brand']); ?></span>
+                                <span class="info-value"><?php echo esc($order['brand']); ?></span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">No. Serie:</span>
-                                <span class="info-value"><?php echo htmlspecialchars($order['serial_number']); ?></span>
+                                <span class="info-value"><?php echo esc($order['serial_number']); ?></span>
                             </div>
                             <div class="info-item" style="grid-column: span 2;">
                                 <span class="info-label">Falla Reportada:</span>
-                                <span class="info-value"><?php echo htmlspecialchars($order['problem_reported']); ?></span>
+                                <span class="info-value"><?php echo esc($order['problem_reported']); ?></span>
                             </div>
                         </div>
 
@@ -455,14 +455,14 @@ $diagnosis_imgs = $stmtImages->fetchAll();
                         <div class="diagnosis-section">
                             <div class="section-title">Procedimiento:</div>
                             <div class="text-content">
-                                <?php echo $order['diagnosis_procedure'] ? htmlspecialchars($order['diagnosis_procedure']) : 'No registrado.'; ?>
+                                <?php echo $order['diagnosis_procedure'] ? esc($order['diagnosis_procedure']) : 'No registrado.'; ?>
                             </div>
                         </div>
 
                         <div class="diagnosis-section">
                             <div class="section-title">Conclusión/Solución:</div>
                             <div class="text-content">
-                                <?php echo $order['diagnosis_conclusion'] ? htmlspecialchars($order['diagnosis_conclusion']) : 'No registrado.'; ?>
+                                <?php echo $order['diagnosis_conclusion'] ? esc($order['diagnosis_conclusion']) : 'No registrado.'; ?>
                             </div>
                         </div>
 
@@ -474,7 +474,7 @@ $diagnosis_imgs = $stmtImages->fetchAll();
                             <div class="images-grid">
                                 <?php foreach ($diagnosis_imgs as $img): ?>
                                     <div class="image-card">
-                                        <img src="../../<?php echo htmlspecialchars($img['image_path']); ?>" alt="Evidencia">
+                                        <img src="../../<?php echo esc($img['image_path']); ?>" alt="Evidencia">
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -486,8 +486,8 @@ $diagnosis_imgs = $stmtImages->fetchAll();
         <!-- Signature Section (Flows naturally, not absolute) -->
         <div class="signature-section">
             <div class="elaborated-by-label">Elaborado por:</div>
-            <div style="font-size: 14px; font-weight: bold; margin-top: 5px;"><?php echo htmlspecialchars($elaborated_by); ?></div>
-            <div style="font-size: 13px; color: #555;"><?php echo htmlspecialchars($elaborated_role); ?> - <?php echo htmlspecialchars($company_name); ?></div>
+            <div style="font-size: 14px; font-weight: bold; margin-top: 5px;"><?php echo esc($elaborated_by); ?></div>
+            <div style="font-size: 13px; color: #555;"><?php echo esc($elaborated_role); ?> - <?php echo esc($company_name); ?></div>
         </div>
 
     </div>

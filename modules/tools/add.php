@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/tools/add.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -53,11 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+        <div class="alert alert-danger"><?php echo esc($error); ?></div>
     <?php endif; ?>
     
     <?php if ($success): ?>
-        <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
+        <div class="alert alert-success"><?php echo esc($success); ?></div>
     <?php endif; ?>
 
     <div class="card">

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/history/export.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -172,12 +172,12 @@ header("Expires: 0");
                     <td class="bold">#<?php echo str_pad($row['id'], 4, '0', STR_PAD_LEFT); ?></td>
                     <td class="<?php echo $statusClass; ?>"><?php echo $statusLabel; ?></td>
                     <td class="<?php echo $typeClass; ?>"><?php echo $typeLabel; ?></td>
-                    <td class="text-left"><?php echo htmlspecialchars($displayName); ?></td>
-                    <td class="text-left"><?php echo htmlspecialchars($row['brand'] . ' ' . $row['model']); ?></td>
-                    <td><?php echo htmlspecialchars($row['serial_number']); ?></td>
+                    <td class="text-left"><?php echo esc($displayName); ?></td>
+                    <td class="text-left"><?php echo esc($row['brand'] . ' ' . $row['model']); ?></td>
+                    <td><?php echo esc($row['serial_number']); ?></td>
                     <td><?php echo date('d/m/Y', strtotime($row['entry_date'])); ?></td>
                     <td><?php echo $row['exit_date'] ? date('d/m/Y', strtotime($row['exit_date'])) : '-'; ?></td>
-                    <td><?php echo htmlspecialchars($deliveredBy); ?></td>
+                    <td><?php echo esc($deliveredBy); ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

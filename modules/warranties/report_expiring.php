@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/warranties/report_expiring.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -326,7 +326,7 @@ foreach ($records as $r) {
             </div>
             <div style="text-align: right;">
                 <p style="margin: 0; font-size: 0.9rem; font-weight: 600; color: #000;">Fecha de Emisión: <?php echo date('d/m/Y H:i'); ?></p>
-                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #444;">Auditado por: <?php echo htmlspecialchars($_SESSION['username'] ?? 'Administrador'); ?></p>
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #444;">Auditado por: <?php echo esc($_SESSION['username'] ?? 'Administrador'); ?></p>
             </div>
         </div>
     </div>
@@ -477,31 +477,31 @@ foreach ($records as $r) {
                             <tr class="report-row" 
                                 style="border-bottom: 1px solid var(--border-color); transition: background-color 0.2s;"
                                 data-health="<?php echo $r['health_type']; ?>" 
-                                data-search="<?php echo htmlspecialchars(strtolower($r['serial_number'] . ' ' . $r['product_code'] . ' ' . $r['brand'] . ' ' . $r['model'] . ' ' . $r['supplier_name'] . ' ' . $r['master_entry_invoice'])); ?>">
+                                data-search="<?php echo esc(strtolower($r['serial_number'] . ' ' . $r['product_code'] . ' ' . $r['brand'] . ' ' . $r['model'] . ' ' . $r['supplier_name'] . ' ' . $r['master_entry_invoice'])); ?>">
                                 
                                 <td style="padding: 12px; vertical-align: middle;">
                                     <?php if (empty(trim($r['product_code']))): ?>
                                         <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">⚠️ Sin Código</span>
                                     <?php else: ?>
-                                        <span class="badge" style="font-family: monospace; font-size: 0.78rem; font-weight: 600;"><?php echo htmlspecialchars($r['product_code']); ?></span>
+                                        <span class="badge" style="font-family: monospace; font-size: 0.78rem; font-weight: 600;"><?php echo esc($r['product_code']); ?></span>
                                     <?php endif; ?>
                                 </td>
 
                                 <td style="padding: 12px; vertical-align: middle;">
-                                    <div style="font-weight: 600; color: var(--text-color); font-size: 0.9rem;"><?php echo htmlspecialchars($r['brand'] . ' ' . $r['model']); ?></div>
+                                    <div style="font-weight: 600; color: var(--text-color); font-size: 0.9rem;"><?php echo esc($r['brand'] . ' ' . $r['model']); ?></div>
                                     <div class="text-xs text-muted" style="margin-top: 2px; font-family: monospace; display: flex; align-items: center; gap: 4px;">
-                                        <i class="ph ph-barcode" style="font-size: 0.9rem;"></i> <?php echo htmlspecialchars($r['serial_number']); ?>
+                                        <i class="ph ph-barcode" style="font-size: 0.9rem;"></i> <?php echo esc($r['serial_number']); ?>
                                     </div>
                                 </td>
 
                                 <td style="padding: 12px; vertical-align: middle;">
                                     <div style="font-weight: 500; font-size: 0.85rem;">
                                         <i class="ph ph-truck" style="color: #a855f7; vertical-align: middle; margin-right: 4px;"></i>
-                                        <?php echo htmlspecialchars($r['supplier_name'] ?: 'No asignado'); ?>
+                                        <?php echo esc($r['supplier_name'] ?: 'No asignado'); ?>
                                     </div>
                                     <div class="text-xs text-muted" style="margin-top: 4px; display: flex; align-items: center; gap: 4px;" title="Factura Master del Proveedor">
                                         <i class="ph ph-file-text" style="font-size: 0.85rem;"></i>
-                                        <span>Factura: <?php echo htmlspecialchars($r['master_entry_invoice'] ?: 'N/A'); ?></span>
+                                        <span>Factura: <?php echo esc($r['master_entry_invoice'] ?: 'N/A'); ?></span>
                                     </div>
                                 </td>
 

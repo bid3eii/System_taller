@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/tools/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -56,7 +56,7 @@ try {
     </div>
 
     <?php if (isset($error)): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+        <div class="alert alert-danger"><?php echo esc($error); ?></div>
     <?php endif; ?>
 
     <!-- Tools Table -->
@@ -66,7 +66,7 @@ try {
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <form method="GET" style="display: flex; gap: 0.5rem; margin: 0;">
                     <div class="input-group" style="width: 300px;">
-                        <input type="text" id="searchInput" name="search" class="form-control" placeholder="Buscar herramienta..." value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" id="searchInput" name="search" class="form-control" placeholder="Buscar herramienta..." value="<?php echo esc($search); ?>">
                         <i class="ph ph-magnifying-glass input-icon"></i>
                     </div>
                 </form>
@@ -96,13 +96,13 @@ try {
                                     <div style="width: 32px; height: 32px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary-500);">
                                         <i class="ph ph-wrench"></i>
                                     </div>
-                                    <span class="font-medium"><?php echo htmlspecialchars($tool['name']); ?></span>
+                                    <span class="font-medium"><?php echo esc($tool['name']); ?></span>
                                 </div>
                             </td>
-                            <td><?php echo htmlspecialchars($tool['description']); ?></td>
+                            <td><?php echo esc($tool['description']); ?></td>
                             <td>
                                 <span class="badge" style="background: var(--bg-hover); color: var(--text-primary);">
-                                    <?php echo htmlspecialchars($tool['quantity']); ?> 
+                                    <?php echo esc($tool['quantity']); ?> 
                                 </span>
                             </td>
                             <td>

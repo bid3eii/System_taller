@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/tech_agenda/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -109,7 +109,7 @@ $status_map = [
                             <!-- Content Section -->
                             <div style="flex: 1;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                                    <h3 style="margin:0; font-size: 1.2rem; color: var(--text-primary);"><?php echo htmlspecialchars($v['title']); ?></h3>
+                                    <h3 style="margin:0; font-size: 1.2rem; color: var(--text-primary);"><?php echo esc($v['title']); ?></h3>
                                     <span style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 700; color: <?php echo $s['color']; ?>; background: rgba(255,255,255,0.03); padding: 4px 10px; border-radius: 20px; border: 1px solid <?php echo $s['color']; ?>; opacity: 0.8;">
                                         <i class="ph <?php echo $s['icon']; ?>"></i> <?php echo strtoupper($s['label']); ?>
                                     </span>
@@ -119,20 +119,20 @@ $status_map = [
                                     <?php if ($v['location']): ?>
                                         <div style="display: flex; align-items: center; gap: 0.4rem;">
                                             <i class="ph ph-map-pin" style="color: var(--danger);"></i>
-                                            <?php echo htmlspecialchars($v['location']); ?>
+                                            <?php echo esc($v['location']); ?>
                                         </div>
                                     <?php endif; ?>
                                     <?php if ($v['survey_id']): ?>
                                         <div style="display: flex; align-items: center; gap: 0.4rem;">
                                             <i class="ph ph-briefcase" style="color: var(--primary-500);"></i>
-                                            Proyecto: <?php echo htmlspecialchars($v['survey_client']); ?>
+                                            Proyecto: <?php echo esc($v['survey_client']); ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>
 
                                 <?php if (!empty($v['description'])): ?>
                                     <p style="margin: 1rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary); opacity: 0.8; line-height: 1.4;">
-                                        <?php echo nl2br(htmlspecialchars($v['description'])); ?>
+                                        <?php echo nl2br(esc($v['description'])); ?>
                                     </p>
                                 <?php endif; ?>
                             </div>

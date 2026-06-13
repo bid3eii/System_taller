@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/comisiones/edit.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -102,7 +102,7 @@ require_once '../../includes/sidebar.php';
 
     <?php if (isset($error)): ?>
         <div class="alert alert-danger" style="margin-bottom: 1.5rem;"><i class="ph ph-warning-circle"></i>
-            <?php echo htmlspecialchars($error); ?>
+            <?php echo esc($error); ?>
         </div>
     <?php endif; ?>
 
@@ -129,7 +129,7 @@ require_once '../../includes/sidebar.php';
                     <select name="tech_id" class="form-control" required>
                         <?php foreach ($technicians as $tech): ?>
                             <option value="<?php echo $tech['id']; ?>" <?php echo $tech['id'] == $comision['tech_id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($tech['username']); ?>
+                                <?php echo esc($tech['username']); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -138,38 +138,38 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label" style="font-weight: 600;">Fecha de Servicio <span
                             style="color:red;">*</span></label>
                     <input type="date" name="fecha_servicio" class="form-control"
-                        value="<?php echo htmlspecialchars($comision['fecha_servicio']); ?>" required>
+                        value="<?php echo esc($comision['fecha_servicio']); ?>" required>
                 </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label" style="font-weight: 600;">Cliente <span style="color:red;">*</span></label>
                 <input type="text" name="cliente" class="form-control"
-                    value="<?php echo htmlspecialchars($comision['cliente']); ?>" required>
+                    value="<?php echo esc($comision['cliente']); ?>" required>
             </div>
 
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="form-label" style="font-weight: 600;">Servicio Realizado <span
                         style="color:red;">*</span></label>
                 <textarea name="servicio" class="form-control" rows="3"
-                    required><?php echo htmlspecialchars($comision['servicio']); ?></textarea>
+                    required><?php echo esc($comision['servicio']); ?></textarea>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
                 <div class="form-group">
                     <label class="form-label" style="font-weight: 600;">Lugar</label>
                     <input type="text" name="lugar" class="form-control"
-                        value="<?php echo htmlspecialchars($comision['lugar'] ?? ''); ?>">
+                        value="<?php echo esc($comision['lugar'] ?? ''); ?>">
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="font-weight: 600;">No. Factura</label>
                     <input type="text" name="factura" class="form-control"
-                        value="<?php echo htmlspecialchars($comision['factura'] ?? ''); ?>">
+                        value="<?php echo esc($comision['factura'] ?? ''); ?>">
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="font-weight: 600;">Ref. / Caso / OT</label>
                     <input type="text" name="caso" class="form-control"
-                        value="<?php echo htmlspecialchars($comision['caso']); ?>">
+                        value="<?php echo esc($comision['caso']); ?>">
                 </div>
             </div>
 
@@ -184,7 +184,7 @@ require_once '../../includes/sidebar.php';
                             style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-weight: bold; color: var(--text-muted);">$</span>
                         <input type="number" step="0.01" min="0" name="cantidad" class="form-control"
                             style="padding-left: 2rem; font-size: 1.1rem; font-weight: bold;"
-                            value="<?php echo htmlspecialchars($comision['cantidad']); ?>" required>
+                            value="<?php echo esc($comision['cantidad']); ?>" required>
                     </div>
                 </div>
                 <div class="form-group">

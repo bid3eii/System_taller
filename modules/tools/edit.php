@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/tools/edit.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -78,11 +78,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+        <div class="alert alert-danger"><?php echo esc($error); ?></div>
     <?php endif; ?>
     
     <?php if ($success): ?>
-        <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
+        <div class="alert alert-success"><?php echo esc($success); ?></div>
     <?php endif; ?>
 
     <div class="card">
@@ -90,18 +90,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="POST">
                 <div class="form-group box-input">
                     <label class="form-label">Nombre de la Herramienta *</label>
-                    <input type="text" name="name" class="form-control" required value="<?php echo htmlspecialchars($tool['name']); ?>">
+                    <input type="text" name="name" class="form-control" required value="<?php echo esc($tool['name']); ?>">
                 </div>
 
                 <div class="form-group box-input">
                     <label class="form-label">Descripción</label>
-                    <textarea name="description" class="form-control" rows="3"><?php echo htmlspecialchars($tool['description']); ?></textarea>
+                    <textarea name="description" class="form-control" rows="3"><?php echo esc($tool['description']); ?></textarea>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                     <div class="form-group box-input">
                         <label class="form-label">Cantidad *</label>
-                        <input type="number" name="quantity" class="form-control" value="<?php echo htmlspecialchars($tool['quantity']); ?>" min="0" required>
+                        <input type="number" name="quantity" class="form-control" value="<?php echo esc($tool['quantity']); ?>" min="0" required>
                     </div>
 
                     <div class="form-group box-input">

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/levantamientos/edit.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -357,7 +357,7 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label">Cliente / Empresa *</label>
                     <div class="input-group">
                         <input type="text" name="client_name" class="form-control"
-                            value="<?php echo htmlspecialchars($survey['client_name']); ?>" required>
+                            value="<?php echo esc($survey['client_name']); ?>" required>
                         <i class="ph ph-buildings input-icon"></i>
                     </div>
                 </div>
@@ -367,7 +367,7 @@ require_once '../../includes/sidebar.php';
                     <div class="input-group">
                         <input type="text" name="title" class="form-control"
                             placeholder="Ej. Implementación NAS y 20 Usuarios"
-                            value="<?php echo htmlspecialchars($survey['title']); ?>" required>
+                            value="<?php echo esc($survey['title']); ?>" required>
                         <i class="ph ph-text-t input-icon"></i>
                     </div>
                 </div>
@@ -375,14 +375,14 @@ require_once '../../includes/sidebar.php';
                 <div class="form-group" style="grid-column: span 3;">
                     <label class="form-label">Descripción General del Proyecto</label>
                     <textarea name="general_description" class="form-control"
-                        rows="3"><?php echo htmlspecialchars($survey['general_description']); ?></textarea>
+                        rows="3"><?php echo esc($survey['general_description']); ?></textarea>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Vendedor Asignado</label>
                     <div class="input-group">
                         <input type="text" name="vendedor" class="form-control" 
-                            value="<?php echo htmlspecialchars($survey['vendedor'] ?? ''); ?>"
+                            value="<?php echo esc($survey['vendedor'] ?? ''); ?>"
                             placeholder="Nombre del Vendedor">
                         <i class="ph ph-user-tag input-icon"></i>
                     </div>
@@ -399,7 +399,7 @@ require_once '../../includes/sidebar.php';
             </div>
 
             <div class="form-group">
-                <textarea id="scope_activities" name="scope_activities"><?php echo htmlspecialchars($survey['scope_activities']); ?></textarea>
+                <textarea id="scope_activities" name="scope_activities"><?php echo esc($survey['scope_activities']); ?></textarea>
             </div>
         </div>
 
@@ -410,7 +410,7 @@ require_once '../../includes/sidebar.php';
                 <h3 style="margin: 0; color: var(--text-primary);">Trabajo a Realizar</h3>
             </div>
             <div class="form-group">
-                <textarea id="trabajos_revisar" name="trabajos_revisar"><?php echo htmlspecialchars($survey['trabajos_revisar'] ?? ''); ?></textarea>
+                <textarea id="trabajos_revisar" name="trabajos_revisar"><?php echo esc($survey['trabajos_revisar'] ?? ''); ?></textarea>
             </div>
         </div>
 
@@ -421,7 +421,7 @@ require_once '../../includes/sidebar.php';
                 <h3 style="margin: 0; color: var(--text-primary);">Notas Adicionales</h3>
             </div>
             <div class="form-group">
-                <textarea id="notas" name="notas"><?php echo htmlspecialchars($survey['notas'] ?? ''); ?></textarea>
+                <textarea id="notas" name="notas"><?php echo esc($survey['notas'] ?? ''); ?></textarea>
             </div>
         </div>
 
@@ -523,7 +523,7 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label">Personal Requerido</label>
                     <div class="input-group">
                         <input type="text" name="personnel_required" class="form-control"
-                            value="<?php echo htmlspecialchars($survey['personnel_required']); ?>"
+                            value="<?php echo esc($survey['personnel_required']); ?>"
                             placeholder="Ej. 2 Técnicos, o 1 Especialista">
                         <i class="ph ph-users input-icon"></i>
                     </div>
@@ -533,7 +533,7 @@ require_once '../../includes/sidebar.php';
                     <label class="form-label">Tiempo Estimado</label>
                     <div class="input-group">
                         <input type="text" name="estimated_time" class="form-control"
-                            value="<?php echo htmlspecialchars($survey['estimated_time']); ?>">
+                            value="<?php echo esc($survey['estimated_time']); ?>">
                         <i class="ph ph-calendar input-icon"></i>
                     </div>
                 </div>
@@ -565,7 +565,7 @@ require_once '../../includes/sidebar.php';
                                 <tr class="material-row">
                                     <td>
                                         <input type="text" name="mat_description[]" class="form-control"
-                                            value="<?php echo htmlspecialchars($m['item_description']); ?>"
+                                            value="<?php echo esc($m['item_description']); ?>"
                                             style="width: 100%;">
                                     </td>
                                     <td>
@@ -574,11 +574,11 @@ require_once '../../includes/sidebar.php';
                                     </td>
                                     <td>
                                         <input type="text" name="mat_unit[]" class="form-control"
-                                            value="<?php echo htmlspecialchars($m['unit']); ?>" style="width: 100%;">
+                                            value="<?php echo esc($m['unit']); ?>" style="width: 100%;">
                                     </td>
                                     <td>
                                         <input type="text" name="mat_notes[]" class="form-control"
-                                            value="<?php echo htmlspecialchars($m['notes']); ?>" style="width: 100%;">
+                                            value="<?php echo esc($m['notes']); ?>" style="width: 100%;">
                                     </td>
                                     <td style="text-align: center;">
                                         <button type="button" class="btn-icon" style="color: var(--danger);"
@@ -660,19 +660,19 @@ require_once '../../includes/sidebar.php';
                                     <?php if ($isManual): ?><i class="ph-fill ph-warning" style="position: absolute; bottom: -4px; right: -4px; color: var(--danger); font-size: 0.85rem;" title="Ingreso manual"></i><?php endif; ?>
                                 </div>
                                 <div style="flex: 1; overflow: hidden;">
-                                    <h4 style="margin: 0; color: #f1f5f9; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;"><?php echo htmlspecialchars($display_name ?? ''); ?></h4>
+                                    <h4 style="margin: 0; color: #f1f5f9; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;"><?php echo esc($display_name ?? ''); ?></h4>
                                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                                        <span style="font-size: 0.75rem; color: var(--warning); background: rgba(245, 158, 11, 0.15); padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600;">Cant: <?php echo htmlspecialchars($qty); ?></span>
-                                        <?php if ($notes): ?><span style="font-size: 0.8rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="ph ph-text-align-left"></i> <?php echo htmlspecialchars($notes); ?></span><?php endif; ?>
+                                        <span style="font-size: 0.75rem; color: var(--warning); background: rgba(245, 158, 11, 0.15); padding: 0.1rem 0.5rem; border-radius: 4px; font-weight: 600;">Cant: <?php echo esc($qty); ?></span>
+                                        <?php if ($notes): ?><span style="font-size: 0.8rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="ph ph-text-align-left"></i> <?php echo esc($notes); ?></span><?php endif; ?>
                                     </div>
                                 </div>
                                 <button type="button" class="btn-icon" style="color: #64748b; background: rgba(0,0,0,0.2); border-radius: 50%; padding: 0.4rem; transition: all 0.2s;" onclick="this.closest('.tool-card').remove()" onmouseover="this.style.color='var(--danger)'; this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.color='#64748b'; this.style.background='rgba(0,0,0,0.2)'" title="Eliminar">
                                     <i class="ph ph-x" style="font-size: 1rem;"></i>
                                 </button>
-                                <input type="hidden" name="tool_id[]" value="<?php echo htmlspecialchars($display_id ?? ''); ?>">
-                                <input type="hidden" name="tool_name_manual[]" value="<?php echo htmlspecialchars($isManual ? $display_name : ''); ?>">
-                                <input type="hidden" name="tool_quantity[]" value="<?php echo htmlspecialchars($qty); ?>">
-                                <input type="hidden" name="tool_notes[]" value="<?php echo htmlspecialchars($notes ?? ''); ?>">
+                                <input type="hidden" name="tool_id[]" value="<?php echo esc($display_id ?? ''); ?>">
+                                <input type="hidden" name="tool_name_manual[]" value="<?php echo esc($isManual ? $display_name : ''); ?>">
+                                <input type="hidden" name="tool_quantity[]" value="<?php echo esc($qty); ?>">
+                                <input type="hidden" name="tool_notes[]" value="<?php echo esc($notes ?? ''); ?>">
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -732,9 +732,9 @@ require_once '../../includes/sidebar.php';
                     
                     <div id="toolList" style="height: 220px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.2);">
                         <?php foreach ($available_tools as $at): ?>
-                            <div class="tool-list-item" data-id="<?php echo $at['id']; ?>" data-name="<?php echo htmlspecialchars($at['name']); ?>" onclick="selectToolItem(this)" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); transition: all 0.2s; color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="tool-list-item" data-id="<?php echo $at['id']; ?>" data-name="<?php echo esc($at['name']); ?>" onclick="selectToolItem(this)" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); transition: all 0.2s; color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem;">
                                 <i class="ph ph-circle sel-icon" style="color: #64748b; font-size: 1.1rem;"></i>
-                                <?php echo htmlspecialchars($at['name']); ?>
+                                <?php echo esc($at['name']); ?>
                             </div>
                         <?php endforeach; ?>
                     </div>

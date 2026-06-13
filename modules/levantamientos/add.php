@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/levantamientos/add.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -246,7 +246,7 @@ require_once '../../includes/sidebar.php';
                     <div class="input-group">
                         <input type="text" name="client_name" class="form-control"
                             placeholder="Nombre completo del cliente o empresa" required
-                            value="<?php echo htmlspecialchars($pre_client); ?>">
+                            value="<?php echo esc($pre_client); ?>">
                         <i class="ph ph-buildings input-icon"></i>
                     </div>
                 </div>
@@ -256,7 +256,7 @@ require_once '../../includes/sidebar.php';
                     <div class="input-group">
                         <input type="text" name="title" class="form-control"
                             placeholder="Ej. Implementación NAS y 20 Usuarios" required
-                            value="<?php echo htmlspecialchars($pre_title); ?>">
+                            value="<?php echo esc($pre_title); ?>">
                         <i class="ph ph-text-t input-icon"></i>
                     </div>
                 </div>
@@ -550,9 +550,9 @@ require_once '../../includes/sidebar.php';
                     
                     <div id="toolList" style="height: 220px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.2);">
                         <?php foreach ($available_tools as $at): ?>
-                            <div class="tool-list-item" data-id="<?php echo $at['id']; ?>" data-name="<?php echo htmlspecialchars($at['name']); ?>" onclick="selectToolItem(this)" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); transition: all 0.2s; color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="tool-list-item" data-id="<?php echo $at['id']; ?>" data-name="<?php echo esc($at['name']); ?>" onclick="selectToolItem(this)" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); transition: all 0.2s; color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem;">
                                 <i class="ph ph-circle sel-icon" style="color: #64748b; font-size: 1.1rem;"></i>
-                                <?php echo htmlspecialchars($at['name']); ?>
+                                <?php echo esc($at['name']); ?>
                             </div>
                         <?php endforeach; ?>
                     </div>

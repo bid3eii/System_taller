@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/auth/track.php
 require_once '../../config/db.php';
 require_once '../../includes/functions.php';
@@ -593,7 +593,7 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
 
             <form method="GET" action="">
                 <div class="input-wrapper">
-                    <input type="text" name="order_id" class="form-control" placeholder="Ej: S0001 o G0001" value="<?php echo htmlspecialchars($search); ?>" required autofocus>
+                    <input type="text" name="order_id" class="form-control" placeholder="Ej: S0001 o G0001" value="<?php echo esc($search); ?>" required autofocus>
                     <i class="ph-fill ph-hash input-icon"></i>
                 </div>
                 <button type="submit" class="btn-track">
@@ -640,7 +640,7 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
                                                     <span><?php echo $n['user']; ?></span>
                                                     <span><?php echo $n['date']; ?></span>
                                                 </div>
-                                                <div class="note-text"><?php echo nl2br(htmlspecialchars($n['note'])); ?></div>
+                                                <div class="note-text"><?php echo nl2br(esc($n['note'])); ?></div>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -660,23 +660,23 @@ if ($current_index === false && $current_status === 'delivered') $current_index 
                         <span class="detail-value">
                             <?php 
                             $final_client_name = !empty($order_data['owner_name']) ? $order_data['owner_name'] : (!empty($order_data['registered_owner_name']) ? $order_data['registered_owner_name'] : $order_data['contact_name']);
-                            echo htmlspecialchars($final_client_name); 
+                            echo esc($final_client_name); 
                             ?>
                             <?php if($final_client_name !== $order_data['contact_name']): ?>
                                 <div style="font-size: 0.75rem; color: var(--text-mute); font-weight: normal; margin-top: 2px;">
-                                    Contacto: <?php echo htmlspecialchars($order_data['contact_name']); ?>
+                                    Contacto: <?php echo esc($order_data['contact_name']); ?>
                                 </div>
                             <?php endif; ?>
                         </span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Equipo</span>
-                        <span class="detail-value"><?php echo htmlspecialchars($order_data['brand'] . ' ' . $order_data['model']); ?></span>
+                        <span class="detail-value"><?php echo esc($order_data['brand'] . ' ' . $order_data['model']); ?></span>
                     </div>
                     <?php if ($order_data['tech_full_name']): ?>
                     <div class="detail-item">
                         <span class="detail-label">Técnico</span>
-                        <span class="detail-value"><?php echo htmlspecialchars($order_data['tech_full_name']); ?></span>
+                        <span class="detail-value"><?php echo esc($order_data['tech_full_name']); ?></span>
                     </div>
                     <?php endif; ?>
                     <div class="detail-item">

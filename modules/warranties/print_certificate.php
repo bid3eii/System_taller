@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/warranties/print_certificate.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -101,7 +101,7 @@ $current_date = "Managua, " . date('d') . " de " . $months[(int)date('m') - 1] .
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Certificado de Garantía - <?php echo htmlspecialchars($first_item['sales_invoice_number']); ?></title>
+    <title>Certificado de Garantía - <?php echo esc($first_item['sales_invoice_number']); ?></title>
     <style>
         body {
             font-family: 'Times New Roman', Times, serif; /* Typical for formal certificates */
@@ -216,7 +216,7 @@ $current_date = "Managua, " . date('d') . " de " . $months[(int)date('m') - 1] .
 
     <div class="header-logo">
         <?php if($system_logo): ?>
-            <img src="../../assets/uploads/<?php echo htmlspecialchars($system_logo); ?>" alt="Logo del Sistema">
+            <img src="../../assets/uploads/<?php echo esc($system_logo); ?>" alt="Logo del Sistema">
         <?php endif; ?>
     </div>
 
@@ -230,27 +230,27 @@ $current_date = "Managua, " . date('d') . " de " . $months[(int)date('m') - 1] .
 
     <div class="content">
         <p>
-            <span class="bold">Sres &nbsp; <?php echo htmlspecialchars($first_item['client_name']); ?></span><br>
+            <span class="bold">Sres &nbsp; <?php echo esc($first_item['client_name']); ?></span><br>
             Se extiende la presente por los productos detallados a continuación, con<br>
-            Factura# <span class="bold"><?php echo htmlspecialchars($first_item['sales_invoice_number']); ?></span>
+            Factura# <span class="bold"><?php echo esc($first_item['sales_invoice_number']); ?></span>
         </p>
 
         <?php foreach($grouped_items as $index => $item): ?>
         <div class="product-details" style="<?php echo $index > 0 ? 'margin-top: 15px;' : ''; ?> padding-bottom: 15px; border-bottom: <?php echo $index < count($grouped_items) - 1 ? '1px dashed #ccc;' : 'none'; ?>">
             <p class="bold" style="margin-bottom: 3px;">
-                <?php echo str_pad($index + 1, 2, '0', STR_PAD_LEFT); ?> <?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?> 
-                <?php if(!empty($item['product_code'])) echo ' - Cód: ' . htmlspecialchars($item['product_code']); ?>
+                <?php echo str_pad($index + 1, 2, '0', STR_PAD_LEFT); ?> <?php echo esc($item['brand'] . ' ' . $item['model']); ?> 
+                <?php if(!empty($item['product_code'])) echo ' - Cód: ' . esc($item['product_code']); ?>
             </p>
             <p style="margin: 3px 0;">GARANTIA <?php echo $item['duration_months']; ?> MESES (por desperfecto de fábrica)</p>
             <?php if (count($item['serials']) === 1): ?>
-                <p style="margin: 3px 0;"><span class="bold">SERIES#</span> <?php echo htmlspecialchars($item['serials'][0]); ?></p>
+                <p style="margin: 3px 0;"><span class="bold">SERIES#</span> <?php echo esc($item['serials'][0]); ?></p>
             <?php else: ?>
                 <p style="margin: 3px 0;"><span class="bold">SERIES#:</span></p>
                 <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 40px; padding-left: 15px; margin-top: 5px;">
                     <?php foreach (array_chunk($item['serials'], 5) as $chunk): ?>
                         <div style="display: flex; flex-direction: column; gap: 2px; font-family: monospace; min-width: 140px;">
                             <?php foreach ($chunk as $sn): ?>
-                                <div>• <?php echo htmlspecialchars($sn); ?></div>
+                                <div>• <?php echo esc($sn); ?></div>
                             <?php endforeach; ?>
                         </div>
                     <?php endforeach; ?>

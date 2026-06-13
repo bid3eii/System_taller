@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/users/edit.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -119,7 +119,7 @@ require_once '../../includes/sidebar.php';
                      <div class="form-group">
                         <label class="form-label">Nombre <span style="color: var(--danger)">*</span></label>
                         <div class="input-group">
-                            <input type="text" name="full_name" class="form-control" required value="<?php echo htmlspecialchars($user['full_name']); ?>">
+                            <input type="text" name="full_name" class="form-control" required value="<?php echo esc($user['full_name']); ?>">
                             <i class="ph ph-identification-card input-icon"></i>
                         </div>
                     </div>
@@ -127,7 +127,7 @@ require_once '../../includes/sidebar.php';
                      <div class="form-group">
                         <label class="form-label">Nombre de Usuario <span style="color: var(--danger)">*</span></label>
                         <div class="input-group">
-                            <input type="text" name="username" class="form-control" required value="<?php echo htmlspecialchars($user['username']); ?>">
+                            <input type="text" name="username" class="form-control" required value="<?php echo esc($user['username']); ?>">
                             <i class="ph ph-user input-icon"></i>
                         </div>
                     </div>
@@ -135,7 +135,7 @@ require_once '../../includes/sidebar.php';
                     <div class="form-group">
                         <label class="form-label">Correo Electrónico <span style="color: var(--danger)">*</span></label>
                         <div class="input-group">
-                            <input type="email" name="email" class="form-control" required value="<?php echo htmlspecialchars($user['email']); ?>">
+                            <input type="email" name="email" class="form-control" required value="<?php echo esc($user['email']); ?>">
                             <i class="ph ph-envelope input-icon"></i>
                         </div>
                     </div>
@@ -158,7 +158,7 @@ require_once '../../includes/sidebar.php';
                             <select name="role_id" class="form-control" required style="padding-left: 3rem;">
                                 <?php foreach($roles as $role): ?>
                                     <option value="<?php echo $role['id']; ?>" <?php echo $user['role_id'] == $role['id'] ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($role['name']); ?>
+                                        <?php echo esc($role['name']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>

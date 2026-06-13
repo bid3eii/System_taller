@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/equipment/deliver_confirm.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -162,20 +162,20 @@ require_once '../../includes/sidebar.php';
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div>
                     <span class="text-muted d-block text-sm">Cliente</span>
-                    <span class="font-medium"><?php echo htmlspecialchars($order['client_name']); ?></span>
+                    <span class="font-medium"><?php echo esc($order['client_name']); ?></span>
                 </div>
                 <div>
                     <span class="text-muted d-block text-sm">Equipo</span>
-                    <span class="font-medium"><?php echo htmlspecialchars($order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model']); ?></span>
+                    <span class="font-medium"><?php echo esc($order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model']); ?></span>
                     <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
-                        S/N: <?php echo htmlspecialchars($order['serial_number']); ?>
+                        S/N: <?php echo esc($order['serial_number']); ?>
                     </div>
                 </div>
                 <?php if ($latestRepairNote): ?>
                 <div style="grid-column: 1 / -1; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
                     <span class="text-muted d-block text-sm mb-1"><i class="ph ph-wrench"></i> Detalles de Reparación</span>
                     <div style="font-size: 0.95rem; color: var(--text-main); background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 6px; border-left: 3px solid var(--primary-400);">
-                        <?php echo nl2br(htmlspecialchars($latestRepairNote)); ?>
+                        <?php echo nl2br(esc($latestRepairNote)); ?>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -236,7 +236,7 @@ require_once '../../includes/sidebar.php';
             <div class="form-group">
                 <label class="form-label">Nombre Completo *</label>
                 <div class="input-group">
-                    <input type="text" name="receiver_name" class="form-control" placeholder="Nombre de la persona que retira" required value="<?php echo htmlspecialchars($order['client_name']); ?>">
+                    <input type="text" name="receiver_name" class="form-control" placeholder="Nombre de la persona que retira" required value="<?php echo esc($order['client_name']); ?>">
                     <i class="ph ph-user input-icon"></i>
                 </div>
                 <small class="text-muted">Por defecto se sugiere el nombre del cliente titular.</small>

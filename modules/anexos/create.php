@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/anexos/create.php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -86,7 +86,7 @@ require_once '../../includes/sidebar.php';
     <?php if ($error): ?>
         <div class="alert alert-danger"
             style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem;">
-            <?php echo htmlspecialchars($error); ?>
+            <?php echo esc($error); ?>
         </div>
     <?php endif; ?>
 
@@ -190,10 +190,10 @@ require_once '../../includes/sidebar.php';
                 <tbody>
                     <?php foreach ($surveys as $s): ?>
                         <tr class="select-row" style="border-bottom: 1px solid var(--border-color);">
-                            <td style="padding: 0.8rem;"><strong>#<?php echo $s['id']; ?></strong> - <?php echo htmlspecialchars($s['title']); ?></td>
-                            <td style="padding: 0.8rem;"><?php echo htmlspecialchars($s['client_name'] ?? ''); ?></td>
+                            <td style="padding: 0.8rem;"><strong>#<?php echo $s['id']; ?></strong> - <?php echo esc($s['title']); ?></td>
+                            <td style="padding: 0.8rem;"><?php echo esc($s['client_name'] ?? ''); ?></td>
                             <td style="padding: 0.8rem; text-align: right;">
-                                <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem;" onclick="selectProject(<?php echo $s['id']; ?>, '<?php echo htmlspecialchars(addslashes($s['title'])); ?>')">Seleccionar</button>
+                                <button type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem;" onclick="selectProject(<?php echo $s['id']; ?>, '<?php echo esc(addslashes($s['title'])); ?>')">Seleccionar</button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -221,10 +221,10 @@ require_once '../../includes/sidebar.php';
                     $toolsDecoded = json_decode($tools_json, true);
                     foreach ($toolsDecoded as $t): ?>
                         <tr class="select-row" style="border-bottom: 1px solid var(--border-color);">
-                            <td style="padding: 0.8rem;"><strong><?php echo htmlspecialchars($t['name']); ?></strong></td>
-                            <td style="padding: 0.8rem; color: var(--text-muted); font-size: 0.9em;"><?php echo htmlspecialchars($t['type'] ?? ''); ?></td>
+                            <td style="padding: 0.8rem;"><strong><?php echo esc($t['name']); ?></strong></td>
+                            <td style="padding: 0.8rem; color: var(--text-muted); font-size: 0.9em;"><?php echo esc($t['type'] ?? ''); ?></td>
                             <td style="padding: 0.8rem; text-align: right;">
-                                <button type="button" class="btn btn-primary" style="padding: 0.3rem 0.6rem; background: var(--primary-600);" onclick="addToolRow(this, <?php echo $t['id']; ?>, '<?php echo htmlspecialchars(addslashes($t['name'])); ?>')">
+                                <button type="button" class="btn btn-primary" style="padding: 0.3rem 0.6rem; background: var(--primary-600);" onclick="addToolRow(this, <?php echo $t['id']; ?>, '<?php echo esc(addslashes($t['name'])); ?>')">
                                     <i class="ph ph-plus"></i> Añadir
                                 </button>
                             </td>

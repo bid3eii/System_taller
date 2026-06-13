@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/comisiones/view.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -281,7 +281,7 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
             <p class="text-muted" style="margin:0.25rem 0 0 0; font-size:0.9rem;">
                 Registrado el <?php echo date('d/m/Y', strtotime($comision['fecha_servicio'])); ?>
                 <?php if ($comision['tipo']): ?>
-                    &nbsp;·&nbsp; <span class="badge"><?php echo htmlspecialchars($comision['tipo']); ?></span>
+                    &nbsp;·&nbsp; <span class="badge"><?php echo esc($comision['tipo']); ?></span>
                 <?php endif; ?>
             </p>
         </div>
@@ -291,7 +291,7 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
         <div class="glass-card"
             style="max-width:1200px; margin:0 auto 1rem; display:flex; align-items:center; gap:0.5rem; border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.08); color:#34d399;">
             <i class="ph ph-check-circle" style="font-size:1.2rem;"></i>
-            <?php echo htmlspecialchars($success_msg); ?>
+            <?php echo esc($success_msg); ?>
         </div>
     <?php endif; ?>
 
@@ -305,30 +305,30 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
                 <div class="field-grid">
                     <div class="field-item">
                         <span class="label">Caso / Número</span>
-                        <div class="value"><?php echo htmlspecialchars($comision['caso'] ?: '—'); ?></div>
+                        <div class="value"><?php echo esc($comision['caso'] ?: '—'); ?></div>
                     </div>
                     <div class="field-item">
                         <span class="label">Cliente</span>
-                        <div class="value"><?php echo htmlspecialchars($comision['cliente'] ?: '—'); ?></div>
+                        <div class="value"><?php echo esc($comision['cliente'] ?: '—'); ?></div>
                     </div>
                     <div class="field-item">
                         <span class="label">Técnico Asignado</span>
-                        <div class="value"><?php echo htmlspecialchars($comision['tech_username'] ?: '—'); ?></div>
+                        <div class="value"><?php echo esc($comision['tech_username'] ?: '—'); ?></div>
                     </div>
                     <div class="field-item">
                         <span class="label">Vendedor / Captador</span>
                         <div class="value <?php echo empty($comision['vendedor']) ? 'empty' : ''; ?>">
-                            <?php echo htmlspecialchars($comision['vendedor'] ?: 'Sin especificar'); ?>
+                            <?php echo esc($comision['vendedor'] ?: 'Sin especificar'); ?>
                         </div>
                     </div>
                     <div class="field-item">
                         <span class="label">Servicio</span>
-                        <div class="value"><?php echo htmlspecialchars($comision['servicio'] ?: '—'); ?></div>
+                        <div class="value"><?php echo esc($comision['servicio'] ?: '—'); ?></div>
                     </div>
                     <div class="field-item">
                         <span class="label">Lugar / Zona</span>
                         <div class="value <?php echo empty($comision['lugar']) ? 'empty' : ''; ?>">
-                            <?php echo htmlspecialchars($comision['lugar'] ?: 'Sin especificar'); ?>
+                            <?php echo esc($comision['lugar'] ?: 'Sin especificar'); ?>
                         </div>
                     </div>
                 </div>
@@ -343,7 +343,7 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
                     <div class="field-item">
                         <span class="label">Número de Factura</span>
                         <div class="value <?php echo empty($comision['factura']) ? 'empty' : ''; ?>">
-                            <?php echo htmlspecialchars($comision['factura'] ?: 'Pendiente'); ?>
+                            <?php echo esc($comision['factura'] ?: 'Pendiente'); ?>
                         </div>
                     </div>
                     <div class="field-item">
@@ -366,7 +366,7 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
                     <hr class="divider">
                     <p class="card-title"><i class="ph ph-note"></i> Notas</p>
                     <div style="color:#cbd5e1; font-size:0.95rem; line-height:1.7; white-space:pre-line;">
-                        <?php echo htmlspecialchars($comision['notas']); ?>
+                        <?php echo esc($comision['notas']); ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -381,7 +381,7 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
                             <div>
                                 <label class="edit-label">Número de Factura / O.S.</label>
                                 <input type="text" name="factura" class="edit-input" placeholder="Ej. 162453"
-                                    value="<?php echo htmlspecialchars($comision['factura'] ?? ''); ?>">
+                                    value="<?php echo esc($comision['factura'] ?? ''); ?>">
                             </div>
                             <div>
                                 <label class="edit-label">Fecha de Facturación</label>
@@ -392,18 +392,18 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
                                 <label class="edit-label">Lugar / Zona</label>
                                 <input type="text" name="lugar" class="edit-input"
                                     placeholder="Ej. Taller, León, Managua..."
-                                    value="<?php echo htmlspecialchars($comision['lugar'] ?? ''); ?>">
+                                    value="<?php echo esc($comision['lugar'] ?? ''); ?>">
                             </div>
                             <div>
                                 <label class="edit-label">Vendedor / Captador</label>
                                 <input type="text" name="vendedor" class="edit-input" placeholder="Nombre del vendedor"
-                                    value="<?php echo htmlspecialchars($comision['vendedor'] ?? ''); ?>">
+                                    value="<?php echo esc($comision['vendedor'] ?? ''); ?>">
                             </div>
                         </div>
                         <div style="margin-bottom:1.25rem;">
                             <label class="edit-label">Notas / Observaciones</label>
                             <textarea name="notas" class="edit-input" rows="3"
-                                placeholder="Agregar observaciones relevantes..."><?php echo htmlspecialchars($comision['notas'] ?? ''); ?></textarea>
+                                placeholder="Agregar observaciones relevantes..."><?php echo esc($comision['notas'] ?? ''); ?></textarea>
                         </div>
                         <button type="submit" class="action-btn btn-edit" style="width:auto; padding: 0.65rem 2rem;">
                             <i class="ph ph-floppy-disk"></i> Guardar Cambios
@@ -428,7 +428,7 @@ $canEdit = can_access_module('comisiones_edit', $pdo);
                         <div
                             style="background:rgba(16,185,129,0.1); border-radius:6px; padding:0.75rem; margin-bottom:1rem; font-size:0.85rem; color:#6ee7b7; display:flex; gap:0.5rem; align-items:center;">
                             <i class="ph ph-check"></i> Factura
-                            <strong><?php echo htmlspecialchars($comision['factura']); ?></strong> registrada.
+                            <strong><?php echo esc($comision['factura']); ?></strong> registrada.
                         </div>
                     <?php else: ?>
                         <div

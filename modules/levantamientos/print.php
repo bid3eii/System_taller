@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/levantamientos/print.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -56,7 +56,7 @@ $date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Levantamiento #<?php echo str_pad($id, 5, '0', STR_PAD_LEFT); ?> -
-        <?php echo htmlspecialchars($survey['client_name']); ?>
+        <?php echo esc($survey['client_name']); ?>
     </title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -488,11 +488,11 @@ $date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de
                 <div class="meta-col">
                     <div class="meta-group">
                         <span class="meta-label">Titular / Constructora</span>
-                        <p class="meta-val"><?php echo htmlspecialchars($survey['client_name']); ?></p>
+                        <p class="meta-val"><?php echo esc($survey['client_name']); ?></p>
                     </div>
                     <div class="meta-group">
                         <span class="meta-label">Denominación del Proyecto</span>
-                        <p class="meta-val"><?php echo htmlspecialchars($survey['title']); ?></p>
+                        <p class="meta-val"><?php echo esc($survey['title']); ?></p>
                     </div>
                 </div>
                 <div class="meta-col">
@@ -502,11 +502,11 @@ $date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de
                     </div>
                     <div class="meta-group">
                         <span class="meta-label">Asesor Comercial</span>
-                        <p class="meta-val"><?php echo htmlspecialchars($survey['vendedor'] ?: 'N/A'); ?></p>
+                        <p class="meta-val"><?php echo esc($survey['vendedor'] ?: 'N/A'); ?></p>
                     </div>
                     <div class="meta-group">
                         <span class="meta-label">Responsable Técnico</span>
-                        <p class="meta-val"><?php echo htmlspecialchars($survey['tech_name']); ?></p>
+                        <p class="meta-val"><?php echo esc($survey['tech_name']); ?></p>
                     </div>
                 </div>
             </div>
@@ -516,7 +516,7 @@ $date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de
                 <h3 class="section-title">Descripción General</h3>
                 <div class="text-content">
                     <?php if ($survey['general_description']): ?>
-                        <p><?php echo nl2br(htmlspecialchars($survey['general_description'])); ?></p>
+                        <p><?php echo nl2br(esc($survey['general_description'])); ?></p>
                     <?php else: ?>
                         <p style="color: var(--text-muted); font-style: italic;">Sin especificaciones generales.</p>
                     <?php endif; ?>
@@ -566,7 +566,7 @@ $date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de
                                     style="margin-right: 4px; font-size: 1.1em; vertical-align: middle;"></i> Fuerza
                                 Laboral Requerida</span>
                             <p class="meta-val">
-                                <?php echo htmlspecialchars($survey['personnel_required'] ?: 'No documentado'); ?>
+                                <?php echo esc($survey['personnel_required'] ?: 'No documentado'); ?>
                             </p>
                         </div>
                     </div>
@@ -576,7 +576,7 @@ $date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de
                                     style="margin-right: 4px; font-size: 1.1em; vertical-align: middle;"></i> Proyección
                                 de Tiempo</span>
                             <p class="meta-val">
-                                <?php echo htmlspecialchars($survey['estimated_time'] ?: 'No documentado'); ?>
+                                <?php echo esc($survey['estimated_time'] ?: 'No documentado'); ?>
                             </p>
                         </div>
                     </div>
@@ -624,13 +624,13 @@ $date_format = $days[date('w', $timestamp)] . ' ' . date('d', $timestamp) . ' de
                         <?php foreach ($materials as $m): ?>
                             <tr>
                                 <td style="font-weight: 500; font-size: 9.5pt; color: var(--brand-dark);">
-                                    <?php echo htmlspecialchars($m['item_description']); ?>
+                                    <?php echo esc($m['item_description']); ?>
                                 </td>
                                 <td class="center" style="font-weight: 600;">
-                                    <?php echo floatval($m['quantity']) . ' ' . htmlspecialchars($m['unit']); ?>
+                                    <?php echo floatval($m['quantity']) . ' ' . esc($m['unit']); ?>
                                 </td>
                                 <td style="font-size: 9pt; color: var(--text-muted);">
-                                    <?php echo htmlspecialchars($m['notes'] ?: '-'); ?>
+                                    <?php echo esc($m['notes'] ?: '-'); ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

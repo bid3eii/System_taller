@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/anexos/print.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -317,7 +317,7 @@ $date_format = date('d/m/Y', strtotime($anexo['created_at']));
 
                         if (isset($chunkTools[$i])) {
                             $cant = floatval($chunkTools[$i]['quantity']);
-                            $desc = htmlspecialchars($chunkTools[$i]['tool_id'] ? $chunkTools[$i]['tool_name'] : $chunkTools[$i]['custom_description']);
+                            $desc = esc($chunkTools[$i]['tool_id'] ? $chunkTools[$i]['tool_name'] : $chunkTools[$i]['custom_description']);
                             $itemNum = $startIndex + $i + 1;
                         }
                         ?>

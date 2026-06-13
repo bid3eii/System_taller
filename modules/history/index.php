@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/history/index.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -245,23 +245,23 @@ require_once '../../includes/sidebar.php';
                             </td>
                             <td>
                                 <?php 
-                                    echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] : 
+                                    echo esc(!empty($item['owner_name']) ? $item['owner_name'] : 
                                          (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] : 
                                          $item['client_name'])); 
                                 ?>
                             </td>
                             <td>
                                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <span><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
+                                    <span><?php echo esc($item['brand'] . ' ' . $item['model']); ?></span>
                                     <span
-                                        class="text-sm text-muted">(<?php echo htmlspecialchars($item['serial_number']); ?>)</span>
+                                        class="text-sm text-muted">(<?php echo esc($item['serial_number']); ?>)</span>
                                 </div>
                             </td>
                             <td>
                                 <?php if (!empty($item['assigned_tech_name'])): ?>
                                     <span style="display:inline-flex; align-items:center; gap:0.4rem;">
                                         <i class="ph ph-user-circle" style="color: var(--primary);"></i>
-                                        <?php echo htmlspecialchars($item['assigned_tech_name']); ?>
+                                        <?php echo esc($item['assigned_tech_name']); ?>
                                     </span>
                                 <?php else: ?>
                                     <span class="text-muted">Sin asignar</span>

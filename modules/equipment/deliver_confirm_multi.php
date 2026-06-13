@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/equipment/deliver_confirm_multi.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -142,11 +142,11 @@ require_once '../../includes/sidebar.php';
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div>
                     <span class="text-muted d-block text-sm">Nombre del Cliente / Empresa</span>
-                    <span class="font-medium" style="font-size: 1.1rem;"><?php echo htmlspecialchars($finalClientDisplayName); ?></span>
+                    <span class="font-medium" style="font-size: 1.1rem;"><?php echo esc($finalClientDisplayName); ?></span>
                 </div>
                 <div>
                     <span class="text-muted d-block text-sm">Teléfono</span>
-                    <span class="font-medium"><?php echo htmlspecialchars($clientData['phone']); ?></span>
+                    <span class="font-medium"><?php echo esc($clientData['phone']); ?></span>
                 </div>
             </div>
         </div>
@@ -175,19 +175,19 @@ require_once '../../includes/sidebar.php';
                         </div>
                         <div style="flex: 1;">
                             <div style="font-weight: 600; margin-bottom: 0.25rem; display: flex; justify-content: space-between; align-items: center;">
-                                <span><?php echo htmlspecialchars($order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model']); ?></span>
+                                <span><?php echo esc($order['equipment_type'] . ' ' . $order['brand'] . ' ' . $order['model']); ?></span>
                                 <button type="button" class="btn-icon" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border: none; width: 28px; height: 28px; border-radius: 6px;" 
                                     onclick="removeItem(<?php echo $order['id']; ?>)" title="Quitar de esta entrega">
                                     <i class="ph ph-trash"></i>
                                 </button>
                             </div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-                                Serie: <?php echo htmlspecialchars($order['serial_number']); ?> | 
+                                Serie: <?php echo esc($order['serial_number']); ?> | 
                                 Orden: <?php echo get_order_number($order, 5); ?>
                             </div>
                             <?php if ($latestRepairNote): ?>
                             <div style="font-size: 0.9rem; color: var(--text-main); background: rgba(0,0,0,0.2); padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 2px solid var(--primary-400); margin-top: 0.5rem;">
-                                <strong>Detalle Téc.:</strong> <?php echo nl2br(htmlspecialchars($latestRepairNote)); ?>
+                                <strong>Detalle Téc.:</strong> <?php echo nl2br(esc($latestRepairNote)); ?>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -206,7 +206,7 @@ require_once '../../includes/sidebar.php';
             <div class="form-group">
                 <label class="form-label">Nombre Completo *</label>
                 <div class="input-group">
-                    <input type="text" name="receiver_name" class="form-control" placeholder="Nombre de la persona que retira" required value="<?php echo htmlspecialchars($finalClientDisplayName); ?>">
+                    <input type="text" name="receiver_name" class="form-control" placeholder="Nombre de la persona que retira" required value="<?php echo esc($finalClientDisplayName); ?>">
                     <i class="ph ph-user input-icon"></i>
                 </div>
                 <small class="text-muted">Por defecto se sugiere el nombre del cliente titular.</small>

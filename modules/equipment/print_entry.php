@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // modules/equipment/print_entry.php
 require_once '../../config/db.php';
 safe_session_start();
@@ -184,7 +184,7 @@ if (empty($doc_number)) {
         <div class="header-grid">
             <div class="header-col header-logo">
                 <?php if($system_logo): ?><img src="../../assets/uploads/<?php echo $system_logo; ?>" class="logo-img"><?php endif; ?>
-                <div style="font-weight: bold; font-size: 11px; margin-top: 4px;"><?php echo htmlspecialchars($company_name); ?></div>
+                <div style="font-weight: bold; font-size: 11px; margin-top: 4px;"><?php echo esc($company_name); ?></div>
             </div>
             <div class="header-col header-center">
                 <?php if ($first_order['client_id'] == 11): ?>
@@ -194,7 +194,7 @@ if (empty($doc_number)) {
                     <h2>RECEPCIÓN DE EQUIPOS</h2>
                     <h3>SOPORTE TÉCNICO</h3>
                 <?php endif; ?>
-                <p style="margin:4px 0; font-size: 10px;">Tel: <?php echo htmlspecialchars($company_phone); ?> | Email: <?php echo htmlspecialchars($company_email); ?></p>
+                <p style="margin:4px 0; font-size: 10px;">Tel: <?php echo esc($company_phone); ?> | Email: <?php echo esc($company_email); ?></p>
             </div>
             <div class="header-col header-right">
                 <div class="doc-box"><?php echo str_pad($doc_number, 5, '0', STR_PAD_LEFT); ?></div>
@@ -214,22 +214,22 @@ if (empty($doc_number)) {
                         $invoice_display = !empty($first_order['invoice_number']) ? $first_order['invoice_number'] : ($first_order['sales_invoice_number'] ?? '');
                         if(!empty($invoice_display)): 
                     ?>
-                        <div class="info-row"><div class="info-label">Factura:</div><div class="info-val" style="font-weight: bold;"><?php echo htmlspecialchars($invoice_display); ?></div></div>
+                        <div class="info-row"><div class="info-label">Factura:</div><div class="info-val" style="font-weight: bold;"><?php echo esc($invoice_display); ?></div></div>
                     <?php endif; ?>
                     <div class="info-row"><div class="info-label">Cliente:</div><div class="info-val"><?php 
                         $final_client = trim(!empty($first_order['owner_name']) ? $first_order['owner_name'] : (!empty($first_order['registered_owner_name']) ? $first_order['registered_owner_name'] : $first_order['contact_name']));
                         $contact_name = trim($first_order['contact_name'] ?? '');
-                        echo htmlspecialchars($final_client); 
+                        echo esc($final_client); 
                     ?></div></div>
                 </div>
                 <div>
                     <?php if($final_client !== $contact_name && !empty($contact_name)): ?>
-                    <div class="info-row"><div class="info-label">Contacto:</div><div class="info-val"><?php echo htmlspecialchars($contact_name); ?></div></div>
+                    <div class="info-row"><div class="info-label">Contacto:</div><div class="info-val"><?php echo esc($contact_name); ?></div></div>
                     <?php endif; ?>
                     <?php $tax_label_print = ($first_order['service_type'] == 'warranty') ? 'Cédula/RUC:' : 'Cédula:'; ?>
-                    <div class="info-row"><div class="info-label"><?php echo $tax_label_print; ?></div><div class="info-val"><?php echo htmlspecialchars($first_order['tax_id'] ?: '-'); ?></div></div>
-                    <div class="info-row"><div class="info-label">Celular:</div><div class="info-val"><?php echo htmlspecialchars($first_order['phone']); ?></div></div>
-                    <div class="info-row"><div class="info-label">Correo:</div><div class="info-val"><?php echo htmlspecialchars($first_order['email'] ?: '-'); ?></div></div>
+                    <div class="info-row"><div class="info-label"><?php echo $tax_label_print; ?></div><div class="info-val"><?php echo esc($first_order['tax_id'] ?: '-'); ?></div></div>
+                    <div class="info-row"><div class="info-label">Celular:</div><div class="info-val"><?php echo esc($first_order['phone']); ?></div></div>
+                    <div class="info-row"><div class="info-label">Correo:</div><div class="info-val"><?php echo esc($first_order['email'] ?: '-'); ?></div></div>
                 </div>
             </div>
         </div>
@@ -248,8 +248,8 @@ if (empty($doc_number)) {
                 <?php foreach($orders as $o): ?>
                 <tr>
                     <td style="font-weight: bold; color: #2563eb;"><?php echo get_order_number($o); ?></td>
-                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo htmlspecialchars(trim($o['brand'])); ?></td>
-                    <td style="text-transform: uppercase;"><?php echo htmlspecialchars($o['serial_number']); ?></td>
+                    <td style="text-transform: uppercase; font-weight: 500;"><?php echo esc(trim($o['brand'])); ?></td>
+                    <td style="text-transform: uppercase;"><?php echo esc($o['serial_number']); ?></td>
                     <td><?php echo $o['service_type'] == 'warranty' ? 'GARANTÍA' : 'SERVICIO'; ?></td>
                 </tr>
                 <?php endforeach; ?>
@@ -262,7 +262,7 @@ if (empty($doc_number)) {
             $acc_list = [];
             foreach($orders as $o) {
                 $prefix = (count($orders) > 1) ? "<strong>" . get_order_number($o) . ":</strong> " : "";
-                $acc_list[] = $prefix . htmlspecialchars($o['accessories_received'] ?: 'NINGUNO');
+                $acc_list[] = $prefix . esc($o['accessories_received'] ?: 'NINGUNO');
             }
             echo implode("<br>", $acc_list);
             ?>
@@ -274,7 +274,7 @@ if (empty($doc_number)) {
             $prob_list = [];
             foreach($orders as $o) {
                 $prefix = (count($orders) > 1) ? "<strong>" . get_order_number($o) . ":</strong> " : "";
-                $prob_list[] = $prefix . nl2br(htmlspecialchars($o['problem_reported']));
+                $prob_list[] = $prefix . nl2br(esc($o['problem_reported']));
             }
             echo implode("<br>", $prob_list);
             ?>
@@ -283,24 +283,24 @@ if (empty($doc_number)) {
         <div class="bottom-section">
             <?php if(!empty($first_order['entry_notes'])): ?>
             <div class="section-header" style="margin-bottom: 0;">OBSERVACIONES GENERALES</div>
-            <div class="section-box" style="font-size: 11px; margin-bottom: 10px;"><?php echo nl2br(htmlspecialchars($first_order['entry_notes'])); ?></div>
+            <div class="section-box" style="font-size: 11px; margin-bottom: 10px;"><?php echo nl2br(esc($first_order['entry_notes'])); ?></div>
             <?php endif; ?>
 
             <?php if ($first_order['client_id'] != 11): ?>
-                <div class="legal-footer"><?php echo nl2br(htmlspecialchars($print_entry_text)); ?></div>
+                <div class="legal-footer"><?php echo nl2br(esc($print_entry_text)); ?></div>
             <?php endif; ?>
 
             <div class="signatures-area">
                 <div class="sig-box">
                     <div class="sig-line"></div>
                     <div style="font-weight: bold;">Recibí Conforme (Taller)</div>
-                    <div style="font-size: 10px;"><?php echo htmlspecialchars($received_by); ?></div>
+                    <div style="font-size: 10px;"><?php echo esc($received_by); ?></div>
                 </div>
                 <div class="sig-box">
                     <div class="sig-line"></div>
                     <div style="font-weight: bold;">Entregué Conforme</div>
                     <div style="font-weight: bold; margin-top: 5px;"><?php 
-                        echo htmlspecialchars($contact_name ?: $final_client); 
+                        echo esc($contact_name ?: $final_client); 
                     ?></div>
                 </div>
             </div>
