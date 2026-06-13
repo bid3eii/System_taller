@@ -18,10 +18,17 @@ require_once '../../includes/sidebar.php';
 $role_id = $_SESSION['role_id'];
 $user_id = $_SESSION['user_id'];
 
-$is_admin = in_array($role_id, [1, 7]);
+$is_gerencia = ($role_id == 9);
+$is_admin = in_array($role_id, [1, 7]) || $is_gerencia;
 $is_reception = ($role_id == 4);
 $is_tech = ($role_id == 3);
 $is_warehouse = ($role_id == 5);
+
+// Chart Visibility Flags
+$show_status = ($is_gerencia || $is_admin || $is_reception || $is_tech);
+$show_weekly = ($is_gerencia || $is_admin || $is_reception || $is_tech);
+$show_workload = ($is_gerencia || $is_admin || $is_reception);
+$show_productivity = ($is_gerencia || $is_admin || $is_reception);
 
 // KPI Variables Initialization
 $kpi1_val = 0;
@@ -57,8 +64,6 @@ $sort = isset($_GET['sort']) ? $_GET['sort'] : 'date';
 $order = isset($_GET['order']) && $_GET['order'] == 'asc' ? 'asc' : 'desc';
 $nextOrder = ($order == 'asc') ? 'desc' : 'asc';
 $sortIcon = ($order == 'asc') ? 'ph-caret-up' : 'ph-caret-down';
-
-// --- DATA FETCHING LOGIC ---
 
 // --- DATA FETCHING LOGIC ---
 
@@ -129,7 +134,7 @@ if ($is_warehouse) {
 } else {
     // --- WORKSHOP VIEW (Admin, Reception, Tech) ---
     $recentType = 'services';
-    $can_view_all = has_permission('module_view_all_entries', $pdo);
+    $can_view_all = has_permission('module_view_all_entries', $pdo) || $role_id == 9;
 
     // KPIs Logic
     // Active Services
@@ -150,116 +155,159 @@ if ($is_warehouse) {
     $active_warranties = $stmt->fetchColumn();
 
     // Stats for Display
-    if (!$can_view_all) {
-        // --- TECH NEW KPIs ---
-        // KPI 1: Pendientes de Diagnóstico
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) 
-            FROM service_orders so
-            LEFT JOIN warranties w ON so.id = w.service_order_id
-            WHERE so.assigned_tech_id = ? 
-            AND so.status IN ('received', 'diagnosing', 'pending_approval')
-            AND (w.product_code IS NULL OR w.product_code = '') 
-            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-        ");
-        $stmt->execute([$user_id]);
-        $kpi1_val = $stmt->fetchColumn();
-        $kpi1_label = "Pendientes Diagnóstico";
-        $kpi1_icon = "ph-warning-circle";
-        $kpi1_color = "var(--warning)";
-        $kpi1_bg = "rgba(234, 179, 8, 0.1)";
-    } else {
+    if ($is_gerencia) {
+        // KPI 1: Servicios en Taller
         $kpi1_val = $active_services;
         $kpi1_label = "Servicios en Taller";
         $kpi1_icon = "ph-wrench";
         $kpi1_color = "var(--primary-500)";
         $kpi1_bg = "rgba(99, 102, 241, 0.1)";
-    }
-    $kpi1_color = "var(--primary-500)";
-    $kpi1_bg = "rgba(99, 102, 241, 0.1)";
 
-    if (!$can_view_all) {
-        // KPI 2: En Reparación
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) FROM service_orders so
-            LEFT JOIN warranties w ON so.id = w.service_order_id
-            WHERE so.assigned_tech_id = ? AND so.status IN ('in_repair', 'ready')
-            AND (w.product_code IS NULL OR w.product_code = '') 
-            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-        ");
-        $stmt->execute([$user_id]);
-        $kpi2_val = $stmt->fetchColumn();
-        $kpi2_label = "En Reparación (Activos)";
-        $kpi2_icon = "ph-tools";
-        $kpi2_color = "var(--primary-500)";
-        $kpi2_bg = "rgba(99, 102, 241, 0.1)";
-
-        // KPI 3: Listos esta semana (Productividad)
-        $startOfWeek = date('Y-m-d', strtotime('monday this week'));
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) FROM service_orders so
-            LEFT JOIN warranties w ON so.id = w.service_order_id
-            WHERE so.assigned_tech_id = ? AND so.status IN ('ready', 'delivered') AND so.exit_date >= ?
-            AND (w.product_code IS NULL OR w.product_code = '') 
-            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-        ");
-        $stmt->execute([$user_id, $startOfWeek]);
-        $kpi3_val = $stmt->fetchColumn();
-        $kpi3_label = "Completos esta semana";
-        $kpi3_icon = "ph-trend-up";
-        $kpi3_color = "var(--success)";
-        $kpi3_bg = "rgba(34, 197, 94, 0.1)";
-
-        // KPI 4: Reingresos / Garantías Activas (Prioridad)
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) FROM service_orders so
-            LEFT JOIN warranties w ON so.id = w.service_order_id
-            WHERE so.assigned_tech_id = ? AND so.service_type = 'warranty' AND so.status NOT IN ('delivered', 'cancelled')
-            AND (w.product_code IS NULL OR w.product_code = '') 
-            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-        ");
-        $stmt->execute([$user_id]);
-        $kpi4_val = $stmt->fetchColumn();
-        $kpi4_label = "Garantías Activas (Urgentes)";
-        $kpi4_icon = "ph-warning-octagon";
-        $kpi4_color = "var(--danger)";
-        $kpi4_bg = "rgba(239, 68, 68, 0.1)";
-    } else {
+        // KPI 2: Garantías en Taller
         $kpi2_val = $active_warranties;
         $kpi2_label = "Garantías en Taller";
         $kpi2_icon = "ph-shield-warning";
         $kpi2_color = "var(--warning)";
         $kpi2_bg = "rgba(234, 179, 8, 0.1)";
 
-        $k3Sql = "
-            SELECT COUNT(*) 
-            FROM service_orders so 
-            LEFT JOIN warranties w ON so.id = w.service_order_id
-            WHERE so.status = 'ready'
-            AND (w.product_code IS NULL OR w.product_code = '') 
-            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-        ";
-        $stmt = $pdo->query($k3Sql);
-        $kpi3_val = $stmt->fetchColumn();
-        $kpi3_label = "Listos para Entrega";
-        $kpi3_icon = "ph-package";
+        // KPI 3: Proyectos Activos
+        $stmtProj = $pdo->query("SELECT COUNT(*) FROM project_surveys WHERE status IN ('approved', 'in_progress')");
+        $active_projects = $stmtProj->fetchColumn();
+        $kpi3_val = $active_projects;
+        $kpi3_label = "Proyectos Activos";
+        $kpi3_icon = "ph-kanban";
         $kpi3_color = "var(--success)";
         $kpi3_bg = "rgba(34, 197, 94, 0.1)";
 
-        $k4Sql = "
-            SELECT COUNT(*) 
-            FROM service_orders so 
-            LEFT JOIN warranties w ON so.id = w.service_order_id
-            WHERE so.status = 'delivered'
-            AND (w.product_code IS NULL OR w.product_code = '') 
-            AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
-        ";
-        $stmt = $pdo->query($k4Sql);
-        $kpi4_val = $stmt->fetchColumn();
-        $kpi4_label = "Total Entregados";
-        $kpi4_icon = "ph-check-circle";
+        // KPI 4: Levantamientos por Aprobar
+        $stmtSubmitted = $pdo->query("SELECT COUNT(*) FROM project_surveys WHERE status = 'submitted'");
+        $submitted_surveys = $stmtSubmitted->fetchColumn();
+        $kpi4_val = $submitted_surveys;
+        $kpi4_label = "Levantamientos por Aprobar";
+        $kpi4_icon = "ph-clipboard-text";
         $kpi4_color = "var(--purple-500)";
         $kpi4_bg = "rgba(168, 85, 247, 0.1)";
+
+        // Load Gerencia tables
+        $stmtGProj = $pdo->query("
+            SELECT ps.id, ps.client_name, ps.title, ps.status, ps.payment_status, ps.invoice_number, ps.created_at, u.username as created_by
+            FROM project_surveys ps
+            JOIN users u ON ps.user_id = u.id
+            ORDER BY ps.created_at DESC
+            LIMIT 8
+        ");
+        $gerenciaProjects = $stmtGProj->fetchAll(PDO::FETCH_ASSOC);
+
+    } else {
+        if (!$can_view_all) {
+            // --- TECH NEW KPIs ---
+            // KPI 1: Pendientes de Diagnóstico
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) 
+                FROM service_orders so
+                LEFT JOIN warranties w ON so.id = w.service_order_id
+                WHERE so.assigned_tech_id = ? 
+                AND so.status IN ('received', 'diagnosing', 'pending_approval')
+                AND (w.product_code IS NULL OR w.product_code = '') 
+                AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
+            ");
+            $stmt->execute([$user_id]);
+            $kpi1_val = $stmt->fetchColumn();
+            $kpi1_label = "Pendientes Diagnóstico";
+            $kpi1_icon = "ph-warning-circle";
+            $kpi1_color = "var(--warning)";
+            $kpi1_bg = "rgba(234, 179, 8, 0.1)";
+        } else {
+            $kpi1_val = $active_services;
+            $kpi1_label = "Servicios en Taller";
+            $kpi1_icon = "ph-wrench";
+            $kpi1_color = "var(--primary-500)";
+            $kpi1_bg = "rgba(99, 102, 241, 0.1)";
+        }
+
+        if (!$can_view_all) {
+            // KPI 2: En Reparación
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) FROM service_orders so
+                LEFT JOIN warranties w ON so.id = w.service_order_id
+                WHERE so.assigned_tech_id = ? AND so.status IN ('in_repair', 'ready')
+                AND (w.product_code IS NULL OR w.product_code = '') 
+                AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
+            ");
+            $stmt->execute([$user_id]);
+            $kpi2_val = $stmt->fetchColumn();
+            $kpi2_label = "En Reparación (Activos)";
+            $kpi2_icon = "ph-tools";
+            $kpi2_color = "var(--primary-500)";
+            $kpi2_bg = "rgba(99, 102, 241, 0.1)";
+
+            // KPI 3: Listos esta semana (Productividad)
+            $startOfWeek = date('Y-m-d', strtotime('monday this week'));
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) FROM service_orders so
+                LEFT JOIN warranties w ON so.id = w.service_order_id
+                WHERE so.assigned_tech_id = ? AND so.status IN ('ready', 'delivered') AND so.exit_date >= ?
+                AND (w.product_code IS NULL OR w.product_code = '') 
+                AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
+            ");
+            $stmt->execute([$user_id, $startOfWeek]);
+            $kpi3_val = $stmt->fetchColumn();
+            $kpi3_label = "Completos esta semana";
+            $kpi3_icon = "ph-trend-up";
+            $kpi3_color = "var(--success)";
+            $kpi3_bg = "rgba(34, 197, 94, 0.1)";
+
+            // KPI 4: Garantías Activas Urgentes (del técnico)
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) FROM service_orders so
+                LEFT JOIN warranties w ON so.id = w.service_order_id
+                WHERE so.assigned_tech_id = ? AND so.service_type = 'warranty' AND so.status NOT IN ('delivered', 'cancelled')
+                AND (w.product_code IS NULL OR w.product_code = '') 
+                AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
+            ");
+            $stmt->execute([$user_id]);
+            $kpi4_val = $stmt->fetchColumn();
+            $kpi4_label = "Garantías Activas (Urgentes)";
+            $kpi4_icon = "ph-warning-octagon";
+            $kpi4_color = "var(--danger)";
+            $kpi4_bg = "rgba(239, 68, 68, 0.1)";
+        } else {
+            $kpi2_val = $active_warranties;
+            $kpi2_label = "Garantías en Taller";
+            $kpi2_icon = "ph-shield-warning";
+            $kpi2_color = "var(--warning)";
+            $kpi2_bg = "rgba(234, 179, 8, 0.1)";
+
+            $k3Sql = "
+                SELECT COUNT(*) 
+                FROM service_orders so 
+                LEFT JOIN warranties w ON so.id = w.service_order_id
+                WHERE so.status = 'ready'
+                AND (w.product_code IS NULL OR w.product_code = '') 
+                AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
+            ";
+            $stmt = $pdo->query($k3Sql);
+            $kpi3_val = $stmt->fetchColumn();
+            $kpi3_label = "Listos para Entrega";
+            $kpi3_icon = "ph-package";
+            $kpi3_color = "var(--success)";
+            $kpi3_bg = "rgba(34, 197, 94, 0.1)";
+
+            $k4Sql = "
+                SELECT COUNT(*) 
+                FROM service_orders so 
+                LEFT JOIN warranties w ON so.id = w.service_order_id
+                WHERE so.status = 'delivered'
+                AND (w.product_code IS NULL OR w.product_code = '') 
+                AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
+            ";
+            $stmt = $pdo->query($k4Sql);
+            $kpi4_val = $stmt->fetchColumn();
+            $kpi4_label = "Total Entregados";
+            $kpi4_icon = "ph-check-circle";
+            $kpi4_color = "var(--purple-500)";
+            $kpi4_bg = "rgba(168, 85, 247, 0.1)";
+        }
     }
 
     // Status Distribution Chart
@@ -563,6 +611,15 @@ if (!$is_warehouse) {
                     case 'Total Entregados':
                         $cardUrl = '../history/index.php';
                         break;
+                    case 'Clientes Registrados':
+                        $cardUrl = '../clients/index.php';
+                        break;
+                    case 'Proyectos Activos':
+                        $cardUrl = '../proyectos/index.php';
+                        break;
+                    case 'Levantamientos por Aprobar':
+                        $cardUrl = '../levantamientos/index.php';
+                        break;
                     default:
                         $isClickable = false;
                 }
@@ -656,8 +713,8 @@ if (!$is_warehouse) {
             <?php endif; ?>
         <?php endif; ?>
 
-    <!-- ADMIN / RECEPTION QUICK ACTIONS -->
-    <?php if ($is_admin || $is_reception): ?>
+    <!-- ADMIN / RECEPTION QUICK ACTIONS (excluir Gerencia) -->
+    <?php if (($is_admin || $is_reception) && !$is_gerencia): ?>
         <div
             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
             <a href="../clients/add.php" class="card btn btn-secondary"
@@ -700,323 +757,576 @@ if (!$is_warehouse) {
         </div>
     <?php endif; ?>
 
-    <!-- RECENT ACTIVITY & QUICK ACTIONS -->
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- LAYOUT SELECTION BY ROLE -->
+    <?php if ($is_gerencia): ?>
+        <!-- ==================== GERENCIA LAYOUT ==================== -->
+        <!-- CHARTS GRID (2x2) -->
+        <?php if ($show_status || $show_weekly || $show_workload || $show_productivity): ?>
+            <div class="dashboard-charts-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-bottom: 2rem; align-items: stretch;">
+                <?php if ($show_status): ?>
+                    <!-- Status Chart -->
+                    <div class="card" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; min-height: 350px;">
+                        <h3 class="mb-4">Estado de Reparaciones</h3>
+                        <div style="position: relative; height: 260px; width: 100%;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
-        <!-- Recent Table / Pipeline -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ph-fill ph-clock-counter-clockwise" style="color: var(--primary);"></i>
-                    <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente'; ?>
-                </h3>
-                <div style="display: flex; gap: 0.75rem; align-items: center;">
-                    <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>"
-                        class="btn btn-sm btn-secondary">Ver Todo</a>
-                </div>
-            </div>
+                <?php if ($show_weekly): ?>
+                    <!-- Weekly Chart -->
+                    <div class="card" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; min-height: 350px;">
+                        <h3 class="mb-4">Ingresos de la Semana</h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="padding: 0.75rem;">Fecha</th>
-                            <?php if ($recentType == 'tools'): ?>
-                                <th style="padding: 0.75rem;">Usuario</th>
-                                <th style="padding: 0.75rem;">Herramienta</th>
-                                <th style="padding: 0.75rem;">Estado</th>
-                            <?php else: ?>
-                                <th style="padding: 0.75rem;">Tipo</th>
-                                <th style="padding: 0.75rem;">Cliente</th>
-                                <th style="padding: 0.75rem;">Equipo</th>
-                                <th style="padding: 0.75rem;">
-                                    <a href="?sort=tech&order=<?php echo $nextOrder; ?>"
-                                        style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;">
-                                        Técnico
-                                        <?php if ($sort == 'tech'): ?>
-                                            <i class="ph <?php echo $sortIcon; ?>"
-                                                style="font-size: 0.8rem; color: var(--primary);"></i>
-                                        <?php else: ?>
-                                            <i class="ph ph-caret-up-down" style="font-size: 0.8rem; opacity: 0.3;"></i>
-                                        <?php endif; ?>
-                                    </a>
-                                </th>
-                                <th style="padding: 0.75rem;">Estado</th>
-                                <th style="padding: 0.75rem; width: 1%; text-align: right;"></th>
-                            <?php endif; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (count($recentItems) > 0): ?>
-                            <?php foreach ($recentItems as $item): ?>
-                                <tr style="border-bottom: 1px solid var(--border-color);">
-                                    <td style="padding: 0.75rem;">
-                                        <?php
-                                        $d = $recentType == 'tools' ? $item['date'] : $item['entry_date'];
-                                        echo date('d/m', strtotime($d));
-                                        ?>
-                                    </td>
+                <?php if ($show_workload): ?>
+                    <!-- Tech Workload Chart -->
+                    <div class="card" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; min-height: 350px;">
+                        <h3 class="mb-4">Carga por Técnico (Equipos Activos)</h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="techWorkloadChart"></canvas>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
-                                    <?php if ($recentType == 'tools'): ?>
-                                        <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['user_name']); ?></td>
-                                        <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['item_name']); ?></td>
-                                        <td style="padding: 0.75rem;">
-                                            <span class="badge"><?php echo ucfirst($item['status']); ?></span>
-                                        </td>
-                                    <?php else: ?>
-                                        <td style="padding: 0.75rem;">
-                                            <?php if (isset($item['service_type']) && $item['service_type'] == 'warranty'): ?>
-                                                <span
-                                                    style="background: rgba(249, 115, 22, 0.1); color: #f97316; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">GARANTÍA</span>
-                                            <?php else: ?>
-                                                <span
-                                                    style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">SERVICIO</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td style="padding: 0.75rem;">
-                                            <?php
-                                            echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] :
-                                                (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] :
-                                                    $item['client_name']));
-                                            ?>
-                                        </td>
-                                        <td style="padding: 0.75rem;">
-                                            <span
-                                                class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
-                                        </td>
-                                        <td style="padding: 0.75rem;">
-                                            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
-                                                <i class="ph ph-user-circle" style="color: var(--slate-400);"></i>
-                                                <span
-                                                    style="color: var(--text-secondary);"><?php echo htmlspecialchars($item['tech_name'] ?? '---'); ?></span>
+                <?php if ($show_productivity): ?>
+                    <!-- Tech Productivity Chart -->
+                    <div class="card" style="margin: 0; position: relative; overflow: visible; border-bottom: 4px solid var(--success); display: flex; flex-direction: column; justify-content: space-between; min-height: 350px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div>
+                                <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="ph-fill ph-chart-bar" style="color: var(--success);"></i>
+                                    Productividad por Técnico
+                                </h3>
+                                <p class="text-xs text-muted" style="margin-top: 0.2rem;">Equipos reparados y entregados</p>
+                            </div>
+                            <div style="position: relative;">
+                                <button id="prodFilterBtn" onclick="toggleProdFilter(event)" class="btn btn-sm btn-secondary" title="Filtrar por Fecha" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 10px;">
+                                    <i class="ph ph-funnel" id="prodFilterIcon"></i>
+                                    <span id="prodFilterBadge" style="display: none; font-size: 0.75rem; font-weight: 600; color: var(--primary-500);">Filtrado</span>
+                                </button>
+
+                                <!-- Dropdown de Filtro (Absoluto al botón) -->
+                                <div id="prodFilterModal" class="filter-dropdown-card animate-pop" style="display: none;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                        <h4 style="margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="ph ph-funnel" style="color: var(--primary-500);"></i> Filtros
+                                        </h4>
+                                        <button onclick="toggleProdFilter(event)" class="btn-icon" style="width: 24px; height: 24px;"><i class="ph ph-x"></i></button>
+                                    </div>
+                                    <div id="prodFilterForm">
+                                        <div style="margin-bottom: 1.25rem;">
+                                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;">Técnico</label>
+                                            <div class="input-group-premium">
+                                                <i class="ph ph-user-focus"></i>
+                                                <select id="f_tech" class="form-control-premium">
+                                                    <option value="all">Todos los Técnicos</option>
+                                                    <?php foreach ($techs_for_filter as $tf): ?>
+                                                        <option value="<?php echo $tf['id']; ?>">
+                                                            <?php echo htmlspecialchars($tf['username']); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
                                             </div>
+                                        </div>
+                                        <div style="margin-bottom: 1.5rem;">
+                                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;">Rango de Fecha</label>
+                                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                                <div class="input-group-premium">
+                                                    <i class="ph ph-calendar-plus"></i>
+                                                    <input type="date" id="f_start" class="form-control-premium">
+                                                </div>
+                                                <div class="input-group-premium">
+                                                    <i class="ph ph-calendar-check"></i>
+                                                    <input type="date" id="f_end" class="form-control-premium">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; gap: 0.75rem;">
+                                            <button onclick="applyProductivityFilter()" class="btn-premium-primary" style="flex: 2;">
+                                                <i class="ph ph-check"></i> Aplicar
+                                            </button>
+                                            <button onclick="clearProductivityFilter()" class="btn-premium-secondary" style="flex: 1;">
+                                                <i class="ph ph-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary Stats Row -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="prod-summary-card">
+                                <div class="prod-summary-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
+                                    <i class="ph ph-check-circle"></i>
+                                </div>
+                                <div>
+                                    <div class="prod-summary-label">Total Hechos</div>
+                                    <div class="prod-summary-value" id="prodTotalCount">--</div>
+                                </div>
+                            </div>
+                            <div class="prod-summary-card">
+                                <div class="prod-summary-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary-500);">
+                                    <i class="ph ph-medal"></i>
+                                </div>
+                                <div>
+                                    <div class="prod-summary-label">Top Técnico</div>
+                                    <div class="prod-summary-value" id="prodTopTech" style="font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px;">---</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="prodActiveFilters" style="display: none; margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-secondary); flex-direction: column; gap: 0.25rem;">
+                            <!-- JS Dynamic Content -->
+                        </div>
+                        <div style="position: relative; height: 200px; width: 100%;">
+                            <canvas id="techProductivityChart"></canvas>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- TABLE SECTION (Full Width) -->
+        <div style="margin-bottom: 2rem;">
+            <!-- Proyectos Recientes -->
+            <div class="card" style="margin: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="ph-fill ph-kanban" style="color: var(--primary);"></i>
+                        Proyectos Recientes
+                    </h3>
+                    <a href="../proyectos/index.php" class="btn btn-sm btn-secondary">Ver Todo</a>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="padding: 0.75rem;">Fecha</th>
+                                <th style="padding: 0.75rem;">Proyecto</th>
+                                <th style="padding: 0.75rem;">Cliente</th>
+                                <th style="padding: 0.75rem;">Estado</th>
+                                <th style="padding: 0.75rem;">Pago</th>
+                                <th style="padding: 0.75rem; width: 1%; text-align: right;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (count($gerenciaProjects) > 0): ?>
+                                <?php foreach ($gerenciaProjects as $proj): ?>
+                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                        <td style="padding: 0.75rem; white-space: nowrap;">
+                                            <?php echo date('d/m/Y', strtotime($proj['created_at'])); ?>
+                                        </td>
+                                        <td style="padding: 0.75rem; font-weight: 600;">
+                                            <?php echo htmlspecialchars($proj['title']); ?>
+                                        </td>
+                                        <td style="padding: 0.75rem;">
+                                            <?php echo htmlspecialchars($proj['client_name']); ?>
                                         </td>
                                         <td style="padding: 0.75rem;">
                                             <?php
-                                            $s = $item['status'];
-                                            $col = 'gray'; // default
-                                            $label2 = $s; // default
-                                            $is_delayed = isset($item['days_in_shop']) && $item['days_in_shop'] > 7 && !in_array($s, ['ready', 'delivered', 'cancelled']);
-
-                                            $statusMapDA = [
-                                                'received' => ['Recibido', 'blue'],
-                                                'diagnosing' => ['Diagnóstico', 'yellow'],
-                                                'in_repair' => ['Reparación', 'purple'],
-                                                'ready' => ['Listo', 'green'],
-                                                'delivered' => ['Entregado', 'gray'],
-                                                'pending_approval' => ['En Espera', 'orange'],
-                                                'cancelled' => ['Cancelado', 'red']
-                                            ];
-
-                                            if (isset($statusMapDA[$s])) {
-                                                $label2 = $statusMapDA[$s][0];
-                                                $col = $statusMapDA[$s][1];
-                                            } else {
-                                                $label2 = ucfirst($s);
+                                            $status = $proj['status'];
+                                            $badgeClass = 'gray';
+                                            $statusLabel = $status;
+                                            
+                                            switch ($status) {
+                                                case 'draft':
+                                                    $badgeClass = 'gray';
+                                                    $statusLabel = 'Borrador';
+                                                    break;
+                                                case 'submitted':
+                                                    $badgeClass = 'orange';
+                                                    $statusLabel = 'Enviado';
+                                                    break;
+                                                case 'approved':
+                                                    $badgeClass = 'blue';
+                                                    $statusLabel = 'Aprobado';
+                                                    break;
+                                                case 'in_progress':
+                                                    $badgeClass = 'purple';
+                                                    $statusLabel = 'En Progreso';
+                                                    break;
+                                                case 'completed':
+                                                    $badgeClass = 'green';
+                                                    $statusLabel = 'Completado';
+                                                    break;
                                             }
                                             ?>
-                                            <div style="display: flex; gap: 0.6rem; align-items: center; white-space: nowrap;">
-                                                <span class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
-                                                
-                                                <?php if ($is_delayed && ($is_admin || $is_reception)): ?>
-                                                    <div class="premium-tooltip-wrapper">
-                                                        <span class="alert-pulse" style="color: var(--danger); font-size: 1.1rem; display: flex; align-items: center; cursor: help;">
-                                                            <i class="ph-fill ph-warning-circle"></i>
-                                                        </span>
-                                                        <div class="premium-tooltip">
-                                                            Lleva <strong style="color: var(--danger);"><?php echo $item['days_in_shop']; ?> días</strong> en taller
-                                                        </div>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
+                                            <span class="status-badge status-<?php echo $badgeClass; ?>"><?php echo strtoupper($statusLabel); ?></span>
                                         </td>
-                                        <td style="padding: 0.75rem; width: 1%; white-space: nowrap; text-align: right;">
-                                            <?php 
-                                            $module = ($item['service_type'] == 'warranty') ? 'warranties' : 'services';
+                                        <td style="padding: 0.75rem;">
+                                            <?php
+                                            $p_status = $proj['payment_status'];
+                                            $pBadgeClass = 'gray';
+                                            $pLabel = $p_status;
+                                            
+                                            switch ($p_status) {
+                                                case 'pendiente':
+                                                    $pBadgeClass = 'red';
+                                                    $pLabel = 'Pendiente';
+                                                    break;
+                                                case 'credito':
+                                                    $pBadgeClass = 'yellow';
+                                                    $pLabel = 'Crédito';
+                                                    break;
+                                                case 'contado':
+                                                    $pBadgeClass = 'blue';
+                                                    $pLabel = 'Contado';
+                                                    break;
+                                                case 'pagado':
+                                                    $pBadgeClass = 'green';
+                                                    $pLabel = 'Pagado';
+                                                    break;
+                                            }
                                             ?>
-                                            <a href="../<?php echo $module; ?>/view.php?num=<?php echo urlencode(get_order_number($item)); ?>" class="btn-icon">
+                                            <span class="status-badge status-<?php echo $pBadgeClass; ?>"><?php echo strtoupper($pLabel); ?></span>
+                                        </td>
+                                        <td style="padding: 0.75rem; text-align: right;">
+                                            <a href="../levantamientos/view.php?id=<?php echo $proj['id']; ?>" class="btn-icon">
                                                 <i class="ph ph-caret-right"></i>
                                             </a>
                                         </td>
-                                    <?php endif; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                                        No hay proyectos recientes.
+                                    </td>
                                 </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    <?php else: ?>
+        <!-- ==================== STANDARD LAYOUT (Other Roles) ==================== -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+            <!-- Left Column: Recent Activity Table -->
+            <div class="card" style="margin: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="ph-fill ph-clock-counter-clockwise" style="color: var(--primary);"></i>
+                        <?php echo $recentType == 'tools' ? 'Últimos Préstamos' : 'Actividad Reciente'; ?>
+                    </h3>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <a href="<?php echo $recentType == 'tools' ? '../tools/assignments.php' : '../services/index.php'; ?>"
+                            class="btn btn-sm btn-secondary">Ver Todo</a>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
                             <tr>
-                                <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
-                                    Sin actividad reciente.
-                                </td>
+                                <th style="padding: 0.75rem;">Fecha</th>
+                                <?php if ($recentType == 'tools'): ?>
+                                    <th style="padding: 0.75rem;">Usuario</th>
+                                    <th style="padding: 0.75rem;">Herramienta</th>
+                                    <th style="padding: 0.75rem;">Estado</th>
+                                <?php else: ?>
+                                    <th style="padding: 0.75rem;">Tipo</th>
+                                    <th style="padding: 0.75rem;">Cliente</th>
+                                    <th style="padding: 0.75rem;">Equipo</th>
+                                    <th style="padding: 0.75rem;">
+                                        <a href="?sort=tech&order=<?php echo $nextOrder; ?>"
+                                            style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;">
+                                            Técnico
+                                            <?php if ($sort == 'tech'): ?>
+                                                <i class="ph <?php echo $sortIcon; ?>"
+                                                    style="font-size: 0.8rem; color: var(--primary);"></i>
+                                            <?php else: ?>
+                                                <i class="ph ph-caret-up-down" style="font-size: 0.8rem; opacity: 0.3;"></i>
+                                            <?php endif; ?>
+                                        </a>
+                                    </th>
+                                    <th style="padding: 0.75rem;">Estado</th>
+                                    <th style="padding: 0.75rem; width: 1%; text-align: right;"></th>
+                                <?php endif; ?>
                             </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (count($recentItems) > 0): ?>
+                                <?php foreach ($recentItems as $item): ?>
+                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                        <td style="padding: 0.75rem;">
+                                            <?php
+                                            $d = $recentType == 'tools' ? $item['date'] : $item['entry_date'];
+                                            echo date('d/m', strtotime($d));
+                                            ?>
+                                        </td>
+
+                                        <?php if ($recentType == 'tools'): ?>
+                                            <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['user_name']); ?></td>
+                                            <td style="padding: 0.75rem;"><?php echo htmlspecialchars($item['item_name']); ?></td>
+                                            <td style="padding: 0.75rem;">
+                                                <span class="badge"><?php echo ucfirst($item['status']); ?></span>
+                                            </td>
+                                        <?php else: ?>
+                                            <td style="padding: 0.75rem;">
+                                                <?php if (isset($item['service_type']) && $item['service_type'] == 'warranty'): ?>
+                                                    <span
+                                                        style="background: rgba(249, 115, 22, 0.1); color: #f97316; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">GARANTÍA</span>
+                                                <?php else: ?>
+                                                    <span
+                                                        style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">SERVICIO</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td style="padding: 0.75rem;">
+                                                <?php
+                                                echo htmlspecialchars(!empty($item['owner_name']) ? $item['owner_name'] :
+                                                    (!empty($item['registered_owner_name']) ? $item['registered_owner_name'] :
+                                                        $item['client_name']));
+                                                ?>
+                                            </td>
+                                            <td style="padding: 0.75rem;">
+                                                <span
+                                                    class="text-sm text-muted"><?php echo htmlspecialchars($item['brand'] . ' ' . $item['model']); ?></span>
+                                            </td>
+                                            <td style="padding: 0.75rem;">
+                                                <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
+                                                    <i class="ph ph-user-circle" style="color: var(--slate-400);"></i>
+                                                    <span
+                                                        style="color: var(--text-secondary);"><?php echo htmlspecialchars($item['tech_name'] ?? '---'); ?></span>
+                                                </div>
+                                            </td>
+                                            <td style="padding: 0.75rem;">
+                                                <?php
+                                                $s = $item['status'];
+                                                $col = 'gray'; // default
+                                                $label2 = $s; // default
+                                                $is_delayed = isset($item['days_in_shop']) && $item['days_in_shop'] > 7 && !in_array($s, ['ready', 'delivered', 'cancelled']);
+
+                                                $statusMapDA = [
+                                                    'received' => ['Recibido', 'blue'],
+                                                    'diagnosing' => ['Diagnóstico', 'yellow'],
+                                                    'in_repair' => ['Reparación', 'purple'],
+                                                    'ready' => ['Listo', 'green'],
+                                                    'delivered' => ['Entregado', 'gray'],
+                                                    'pending_approval' => ['En Espera', 'orange'],
+                                                    'cancelled' => ['Cancelado', 'red'],
+                                                    'replaced' => ['Reemplazo', 'pink']
+                                                ];
+
+                                                if (isset($statusMapDA[$s])) {
+                                                    $label2 = $statusMapDA[$s][0];
+                                                    $col = $statusMapDA[$s][1];
+                                                } else {
+                                                    $label2 = ucfirst($s);
+                                                }
+                                                ?>
+                                                <div style="display: flex; gap: 0.6rem; align-items: center; white-space: nowrap;">
+                                                    <span class="status-badge status-<?php echo $col; ?>"><?php echo strtoupper($label2); ?></span>
+                                                    
+                                                    <?php if ($is_delayed && ($is_admin || $is_reception)): ?>
+                                                        <div class="premium-tooltip-wrapper">
+                                                            <span class="alert-pulse" style="color: var(--danger); font-size: 1.1rem; display: flex; align-items: center; cursor: help;">
+                                                                <i class="ph-fill ph-warning-circle"></i>
+                                                            </span>
+                                                            <div class="premium-tooltip">
+                                                                Lleva <strong style="color: var(--danger);"><?php echo $item['days_in_shop']; ?> días</strong> en taller
+                                                            </div>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                            <td style="padding: 0.75rem; width: 1%; white-space: nowrap; text-align: right;">
+                                                <?php 
+                                                $module = ($item['service_type'] == 'warranty') ? 'warranties' : 'services';
+                                                ?>
+                                                <a href="../<?php echo $module; ?>/view.php?num=<?php echo urlencode(get_order_number($item)); ?>" class="btn-icon">
+                                                    <i class="ph ph-caret-right"></i>
+                                                </a>
+                                            </td>
+                                        <?php endif; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                                        Sin actividad reciente.
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <?php if ($recentType != 'tools' && $totalPages >= 1): ?>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding: 0.5rem 0; border-top: 1px solid var(--border-color);">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                            Página <?php echo $currentPage; ?> de <?php echo $totalPages; ?> 
+                            <span style="margin-left: 0.5rem; opacity: 0.5;">(Total: <?php echo $totalRecords; ?> registros)</span>
+                        </div>
+                        <?php if ($totalPages > 1): ?>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <?php if ($currentPage > 1): ?>
+                                    <a href="?page=<?php echo $currentPage - 1; ?><?php echo $sort != 'date' ? '&sort='.$sort : ''; ?><?php echo $order != 'desc' ? '&order='.$order : ''; ?>" 
+                                       class="btn btn-sm btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                                        <i class="ph ph-arrow-left"></i> Anterior
+                                    </a>
+                                <?php else: ?>
+                                    <button class="btn btn-sm btn-secondary" disabled style="opacity: 0.5; padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                                        <i class="ph ph-arrow-left"></i> Anterior
+                                    </button>
+                                <?php endif; ?>
+
+                                <?php if ($currentPage < $totalPages): ?>
+                                    <a href="?page=<?php echo $currentPage + 1; ?><?php echo $sort != 'date' ? '&sort='.$sort : ''; ?><?php echo $order != 'desc' ? '&order='.$order : ''; ?>" 
+                                       class="btn btn-sm btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                                        Siguiente <i class="ph ph-arrow-right"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <button class="btn btn-sm btn-secondary" disabled style="opacity: 0.5; padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
+                                        Siguiente <i class="ph ph-arrow-right"></i>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
-                    </tbody>
-                </table>
+                    </div>
+                <?php endif; ?>
             </div>
 
-            <!-- Pagination Controls -->
-            <?php if ($recentType != 'tools' && $totalPages >= 1): ?>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding: 0.5rem 0; border-top: 1px solid var(--border-color);">
-                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                        Página <?php echo $currentPage; ?> de <?php echo $totalPages; ?> 
-                        <span style="margin-left: 0.5rem; opacity: 0.5;">(Total: <?php echo $totalRecords; ?> registros)</span>
-                    </div>
-                    <?php if ($totalPages > 1): ?>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <?php if ($currentPage > 1): ?>
-                                <a href="?page=<?php echo $currentPage - 1; ?><?php echo $sort != 'date' ? '&sort='.$sort : ''; ?><?php echo $order != 'desc' ? '&order='.$order : ''; ?>" 
-                                   class="btn btn-sm btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
-                                    <i class="ph ph-arrow-left"></i> Anterior
-                                </a>
-                            <?php else: ?>
-                                <button class="btn btn-sm btn-secondary" disabled style="opacity: 0.5; padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
-                                    <i class="ph ph-arrow-left"></i> Anterior
-                                </button>
-                            <?php endif; ?>
-
-                            <?php if ($currentPage < $totalPages): ?>
-                                <a href="?page=<?php echo $currentPage + 1; ?><?php echo $sort != 'date' ? '&sort='.$sort : ''; ?><?php echo $order != 'desc' ? '&order='.$order : ''; ?>" 
-                                   class="btn btn-sm btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
-                                    Siguiente <i class="ph ph-arrow-right"></i>
-                                </a>
-                            <?php else: ?>
-                                <button class="btn btn-sm btn-secondary" disabled style="opacity: 0.5; padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem;">
-                                    Siguiente <i class="ph ph-arrow-right"></i>
-                                </button>
-                            <?php endif; ?>
+            <!-- Right Column: Charts Stack -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <?php if ($show_status): ?>
+                    <!-- Status Chart -->
+                    <div class="card" style="margin: 0;">
+                        <h3 class="mb-4">Estado de Reparaciones</h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="statusChart"></canvas>
                         </div>
-                    <?php endif; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Right Column Wrapper -->
-        <div style="display: flex; flex-direction: column; gap: 2rem;">
-
-            <?php if ($is_tech || $is_admin || $is_reception): ?>
-                <!-- Status Chart (Tech, Admin, Reception) -->
-                <div class="card">
-                    <h3 class="mb-4">Estado de Reparaciones</h3>
-                    <div style="position: relative; height: 250px; width: 100%;">
-                        <canvas id="statusChart"></canvas>
                     </div>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <?php if ($is_admin || $is_reception || $is_tech): ?>
-                <!-- Weekly Chart -->
-                <div class="card">
-                    <h3 class="mb-4"><?php echo $is_tech ? 'Mi Rendimiento (Completados)' : 'Ingresos de la Semana'; ?></h3>
-                    <div style="position: relative; height: 250px; width: 100%;">
-                        <canvas id="weeklyChart"></canvas>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($is_admin || $is_reception): ?>
-                <!-- Tech Workload Chart -->
-                <div class="card">
-                    <h3 class="mb-4">Carga por Técnico (Equipos Activos)</h3>
-                    <div style="position: relative; height: 250px; width: 100%;">
-                        <canvas id="techWorkloadChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Tech Productivity Chart -->
-                <div class="card" style="position: relative; overflow: visible; border-bottom: 4px solid var(--success);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <div>
-                            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="ph-fill ph-chart-bar" style="color: var(--success);"></i>
-                                Productividad por Técnico
-                            </h3>
-                            <p class="text-xs text-muted" style="margin-top: 0.2rem;">Equipos reparados y entregados</p>
+                <?php if ($show_weekly): ?>
+                    <!-- Weekly Chart -->
+                    <div class="card" style="margin: 0;">
+                        <h3 class="mb-4"><?php echo $is_tech ? 'Mi Rendimiento (Completados)' : 'Ingresos de la Semana'; ?></h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="weeklyChart"></canvas>
                         </div>
-                        <div style="position: relative;">
-                            <button id="prodFilterBtn" onclick="toggleProdFilter(event)" class="btn btn-sm btn-secondary" title="Filtrar por Fecha" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 10px;">
-                                <i class="ph ph-funnel" id="prodFilterIcon"></i>
-                                <span id="prodFilterBadge" style="display: none; font-size: 0.75rem; font-weight: 600; color: var(--primary-500);">Filtrado</span>
-                            </button>
+                    </div>
+                <?php endif; ?>
 
-                            <!-- Dropdown de Filtro (Absoluto al botón) -->
-                            <div id="prodFilterModal" class="filter-dropdown-card animate-pop" style="display: none;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                    <h4 style="margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="ph ph-funnel" style="color: var(--primary-500);"></i> Filtros
-                                    </h4>
-                                    <button onclick="toggleProdFilter(event)" class="btn-icon" style="width: 24px; height: 24px;"><i class="ph ph-x"></i></button>
-                                </div>
-                                <div id="prodFilterForm">
-                                    <div style="margin-bottom: 1.25rem;">
-                                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;">Técnico</label>
-                                        <div class="input-group-premium">
-                                            <i class="ph ph-user-focus"></i>
-                                            <select id="f_tech" class="form-control-premium">
-                                                <option value="all">Todos los Técnicos</option>
-                                                <?php foreach ($techs_for_filter as $tf): ?>
-                                                    <option value="<?php echo $tf['id']; ?>">
-                                                        <?php echo htmlspecialchars($tf['username']); ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
+                <?php if ($show_workload): ?>
+                    <!-- Tech Workload Chart -->
+                    <div class="card" style="margin: 0;">
+                        <h3 class="mb-4">Carga por Técnico (Equipos Activos)</h3>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="techWorkloadChart"></canvas>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($show_productivity): ?>
+                    <!-- Tech Productivity Chart -->
+                    <div class="card" style="margin: 0; position: relative; overflow: visible; border-bottom: 4px solid var(--success);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <div>
+                                <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="ph-fill ph-chart-bar" style="color: var(--success);"></i>
+                                    Productividad por Técnico
+                                </h3>
+                                <p class="text-xs text-muted" style="margin-top: 0.2rem;">Equipos reparados y entregados</p>
+                            </div>
+                            <div style="position: relative;">
+                                <button id="prodFilterBtn" onclick="toggleProdFilter(event)" class="btn btn-sm btn-secondary" title="Filtrar por Fecha" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 10px;">
+                                    <i class="ph ph-funnel" id="prodFilterIcon"></i>
+                                    <span id="prodFilterBadge" style="display: none; font-size: 0.75rem; font-weight: 600; color: var(--primary-500);">Filtrado</span>
+                                </button>
+
+                                <!-- Dropdown de Filtro (Absoluto al botón) -->
+                                <div id="prodFilterModal" class="filter-dropdown-card animate-pop" style="display: none;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                        <h4 style="margin: 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="ph ph-funnel" style="color: var(--primary-500);"></i> Filtros
+                                        </h4>
+                                        <button onclick="toggleProdFilter(event)" class="btn-icon" style="width: 24px; height: 24px;"><i class="ph ph-x"></i></button>
                                     </div>
-                                    <div style="margin-bottom: 1.5rem;">
-                                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;">Rango de Fecha</label>
-                                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <div id="prodFilterForm">
+                                        <div style="margin-bottom: 1.25rem;">
+                                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;">Técnico</label>
                                             <div class="input-group-premium">
-                                                <i class="ph ph-calendar-plus"></i>
-                                                <input type="date" id="f_start" class="form-control-premium">
-                                            </div>
-                                            <div class="input-group-premium">
-                                                <i class="ph ph-calendar-check"></i>
-                                                <input type="date" id="f_end" class="form-control-premium">
+                                                <i class="ph ph-user-focus"></i>
+                                                <select id="f_tech" class="form-control-premium">
+                                                    <option value="all">Todos los Técnicos</option>
+                                                    <?php foreach ($techs_for_filter as $tf): ?>
+                                                        <option value="<?php echo $tf['id']; ?>">
+                                                            <?php echo htmlspecialchars($tf['username']); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div style="display: flex; gap: 0.75rem;">
-                                        <button onclick="applyProductivityFilter()" class="btn-premium-primary" style="flex: 2;">
-                                            <i class="ph ph-check"></i> Aplicar
-                                        </button>
-                                        <button onclick="clearProductivityFilter()" class="btn-premium-secondary" style="flex: 1;">
-                                            <i class="ph ph-trash"></i>
-                                        </button>
+                                        <div style="margin-bottom: 1.5rem;">
+                                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7;">Rango de Fecha</label>
+                                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                                <div class="input-group-premium">
+                                                    <i class="ph ph-calendar-plus"></i>
+                                                    <input type="date" id="f_start" class="form-control-premium">
+                                                </div>
+                                                <div class="input-group-premium">
+                                                    <i class="ph ph-calendar-check"></i>
+                                                    <input type="date" id="f_end" class="form-control-premium">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; gap: 0.75rem;">
+                                            <button onclick="applyProductivityFilter()" class="btn-premium-primary" style="flex: 2;">
+                                                <i class="ph ph-check"></i> Aplicar
+                                            </button>
+                                            <button onclick="clearProductivityFilter()" class="btn-premium-secondary" style="flex: 1;">
+                                                <i class="ph ph-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Summary Stats Row -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div class="prod-summary-card">
-                            <div class="prod-summary-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
-                                <i class="ph ph-check-circle"></i>
+                        <!-- Summary Stats Row -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="prod-summary-card">
+                                <div class="prod-summary-icon" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
+                                    <i class="ph ph-check-circle"></i>
+                                </div>
+                                <div>
+                                    <div class="prod-summary-label">Total Hechos</div>
+                                    <div class="prod-summary-value" id="prodTotalCount">--</div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="prod-summary-label">Total Hechos</div>
-                                <div class="prod-summary-value" id="prodTotalCount">--</div>
+                            <div class="prod-summary-card">
+                                <div class="prod-summary-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary-500);">
+                                    <i class="ph ph-medal"></i>
+                                </div>
+                                <div>
+                                    <div class="prod-summary-label">Top Técnico</div>
+                                    <div class="prod-summary-value" id="prodTopTech" style="font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px;">---</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="prod-summary-card">
-                            <div class="prod-summary-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary-500);">
-                                <i class="ph ph-medal"></i>
-                            </div>
-                            <div>
-                                <div class="prod-summary-label">Top Técnico</div>
-                                <div class="prod-summary-value" id="prodTopTech" style="font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px;">---</div>
-                            </div>
+                        
+                        <div id="prodActiveFilters" style="display: none; margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-secondary); flex-direction: column; gap: 0.25rem;">
+                            <!-- JS Dynamic Content -->
+                        </div>
+                        <div style="position: relative; height: 200px; width: 100%;">
+                            <canvas id="techProductivityChart"></canvas>
                         </div>
                     </div>
-                    
-                    <div id="prodActiveFilters" style="display: none; margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-secondary); flex-direction: column; gap: 0.25rem;">
-                        <!-- JS Dynamic Content -->
-                    </div>
-                    <div style="position: relative; height: 200px; width: 100%;">
-                        <canvas id="techProductivityChart"></canvas>
-                    </div>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 <?php endif; // End !$is_warehouse check ?>
 
 <script>
@@ -1026,7 +1336,7 @@ if (!$is_warehouse) {
     const gridColor = isLight ? '#e2e8f0' : 'rgba(255, 255, 255, 0.1)';
 
     // Status Chart
-    <?php if (!$is_warehouse): ?>
+    <?php if ($show_status): ?>
     const ctxStatus = document.getElementById('statusChart').getContext('2d');
     new Chart(ctxStatus, {
         type: 'doughnut',
@@ -1060,9 +1370,8 @@ if (!$is_warehouse) {
     });
     <?php endif; ?>
 
-    <?php if (!$is_warehouse): ?>
     // Weekly Chart (Total entries or Tech productivity)
-    <?php if ($is_reception || $is_admin || $is_tech): ?>
+    <?php if ($show_weekly): ?>
     const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
     new Chart(ctxWeekly, {
         type: 'bar',
@@ -1097,7 +1406,7 @@ if (!$is_warehouse) {
     <?php endif; ?>
 
     // Tech Workload Chart (Admin/Reception only)
-    <?php if ($is_reception || $is_admin): ?>
+    <?php if ($show_workload): ?>
     const ctxTech = document.getElementById('techWorkloadChart').getContext('2d');
     
     // Create Gradient
@@ -1169,9 +1478,7 @@ if (!$is_warehouse) {
             }
         }
     });
-
     <?php endif; ?>
-    <?php endif; // End !$is_warehouse ?>
 </script>
 
 <style>
@@ -1335,6 +1642,18 @@ if (!$is_warehouse) {
     background: rgba(239, 68, 68, 0.1);
     color: var(--danger);
     border-color: rgba(239, 68, 68, 0.2);
+}
+.dashboard-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 2rem;
+    align-items: stretch;
+}
+@media (max-width: 1024px) {
+    .dashboard-charts-grid {
+        grid-template-columns: 1fr !important;
+    }
 }
 </style>
 

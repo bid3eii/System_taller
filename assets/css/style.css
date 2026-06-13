@@ -836,6 +836,8 @@ body.light-mode .form-control:focus {
   --gray-500: #64748b;
   --red-glow: rgba(239, 68, 68, 0.2);
   --red-500: #ef4444;
+  --pink-glow: rgba(236, 72, 153, 0.2);
+  --pink-500: #ec4899;
 }
 
 /* Status Badge */
@@ -891,6 +893,12 @@ body.light-mode .form-control:focus {
   background: var(--red-glow);
   color: var(--red-500);
   border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-pink {
+  background: var(--pink-glow);
+  color: var(--pink-500);
+  border: 1px solid rgba(236, 72, 153, 0.3);
 }
 
 .table-actions {
@@ -1577,4 +1585,379 @@ body.light-mode .premium-tooltip::after {
   align-items: center;
   justify-content: center;
   line-height: normal;
+}
+
+/* Sidebar Layout for Gerencia - Premium Design */
+body.role-gerencia-layout .wrapper {
+  flex-direction: row;
+}
+
+body.role-gerencia-layout .navbar {
+  width: 280px;
+  height: 100vh;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 1.5rem 1rem;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  border-bottom: none;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 1000;
+}
+
+body.role-gerencia-layout .navbar-menu {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* Custom Scrollbar for navbar-menu */
+body.role-gerencia-layout .navbar-menu::-webkit-scrollbar {
+  width: 4px;
+}
+body.role-gerencia-layout .navbar-menu::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+/* Base text properties for smooth animation */
+body.role-gerencia-layout .brand-text,
+body.role-gerencia-layout .nav-text,
+body.role-gerencia-layout .user-info,
+body.role-gerencia-layout .nav-caret,
+body.role-gerencia-layout .user-caret {
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.2s ease, width 0.3s ease, margin 0.3s ease;
+}
+body.role-gerencia-layout .nav-text {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+body.role-gerencia-layout .navbar-brand {
+  margin-bottom: 2rem;
+  width: 100%;
+  padding: 0 0.5rem;
+}
+
+/* Hide vertical separators */
+body.role-gerencia-layout .navbar-menu > div[style*="width: 1px"] {
+  display: none !important;
+}
+
+body.role-gerencia-layout .navbar-menu {
+  flex-direction: column;
+  width: 100%;
+  gap: 0.25rem;
+  align-items: stretch;
+}
+
+body.role-gerencia-layout .nav-link {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  margin-bottom: 0.25rem;
+}
+
+body.role-gerencia-layout .nav-link:hover,
+body.role-gerencia-layout .nav-link.active {
+  background-color: var(--bg-hover);
+  color: var(--primary-500);
+}
+
+body.role-gerencia-layout .nav-link.active {
+  font-weight: 600;
+}
+
+body.role-gerencia-layout .dropdown {
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  height: auto;
+}
+
+body.role-gerencia-layout .dropdown > .nav-link {
+  justify-content: space-between;
+}
+
+body.role-gerencia-layout .dropdown > .nav-link > i.ph-caret-down {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+body.role-gerencia-layout .dropdown.open > .nav-link > i.ph-caret-down {
+  transform: rotate(180deg);
+}
+
+body.role-gerencia-layout .dropdown-content {
+  position: static;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  padding: 0 0 0 1.5rem;
+  width: calc(100% - 1.5rem);
+  margin-top: 0;
+  margin-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  backdrop-filter: none;
+  border-left: 2px solid var(--border-color);
+}
+
+body.role-gerencia-layout .dropdown.open .dropdown-content {
+  opacity: 1;
+  padding-top: 0.25rem;
+  padding-bottom: 0.5rem;
+}
+
+body.role-gerencia-layout .dropdown-item {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+body.role-gerencia-layout .dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: translateX(4px);
+}
+
+body.role-gerencia-layout .navbar-user {
+  margin-top: auto;
+  width: 100%;
+  padding: 1.5rem 1rem 1rem 0.5rem !important;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+body.role-gerencia-layout .navbar-user:hover {
+  background: transparent;
+}
+
+body.role-gerencia-layout .navbar-user .user-avatar-sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+  box-shadow: 0 0 10px var(--primary-glow);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+body.role-gerencia-layout .navbar-user > div:nth-child(2) {
+  flex: 1;
+}
+
+body.role-gerencia-layout .navbar-user > i.ph-caret-down {
+  margin-left: 0;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+body.role-gerencia-layout .navbar-user .dropdown-content {
+  position: absolute !important;
+  top: auto !important;
+  bottom: calc(100% + 10px) !important;
+  left: 0 !important;
+  right: auto !important;
+  width: calc(100% - 1rem) !important;
+  background: var(--slate-900);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  padding: 0.5rem !important;
+  margin: 0;
+  z-index: 9999;
+  display: none !important;
+  opacity: 1 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body.role-gerencia-layout .navbar-user.open .dropdown-content {
+  display: flex !important;
+  flex-direction: column;
+}
+
+body.role-gerencia-layout .scroll-wrapper {
+  flex: 1;
+  height: 100vh;
+}
+
+/* Sidebar Collapsed State (Gerencia) */
+body.role-gerencia-layout .sidebar-toggle-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+body.role-gerencia-layout .sidebar-toggle-btn:hover {
+  color: var(--primary-500);
+  border-color: var(--primary-500);
+}
+body.role-gerencia-layout.sidebar-collapsed .sidebar-toggle-btn {
+  transform: rotate(180deg);
+}
+
+body.role-gerencia-layout .navbar,
+body.role-gerencia-layout .wrapper {
+  transition: width 0.3s ease, margin 0.3s ease;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .navbar {
+  width: 80px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  align-items: center !important;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .navbar-menu {
+  overflow: visible; /* Allows flyouts to escape */
+  width: 100%;
+  scrollbar-width: none; /* Hide scrollbar in collapsed state to fix alignment */
+  margin-top: 80px !important;
+  margin-bottom: 80px !important;
+}
+body.role-gerencia-layout.sidebar-collapsed .navbar-menu::-webkit-scrollbar {
+  display: none;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .brand-text,
+body.role-gerencia-layout.sidebar-collapsed .navbar-menu > a > .nav-text,
+body.role-gerencia-layout.sidebar-collapsed .navbar-menu .dropdown > a > .nav-text,
+body.role-gerencia-layout.sidebar-collapsed .nav-caret,
+body.role-gerencia-layout.sidebar-collapsed .user-info,
+body.role-gerencia-layout.sidebar-collapsed .user-caret {
+  display: none !important; /* Completely remove from flex layout to prevent min-content pushing */
+}
+
+/* Extreme Bulletproof horizontal centering using absolute positioning */
+body.role-gerencia-layout.sidebar-collapsed .navbar-brand {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 80px !important;
+  height: 80px !important;
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .navbar-user {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 80px !important;
+  height: 80px !important;
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .brand-logo-small {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  margin: 0 !important;
+  margin-left: -16px !important;
+  margin-top: -16px !important;
+  transform: none !important;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .user-avatar-sm {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  margin: 0 !important;
+  margin-left: -20px !important;
+  margin-top: -20px !important;
+  transform: none !important;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .nav-link {
+  display: flex !important;
+  justify-content: center !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 100% !important;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .nav-link i.ph {
+  margin: 0 auto !important;
+  font-size: 1.4rem;
+  width: auto !important;
+  text-align: center;
+}
+
+/* Flyouts for Collapsed Sidebar */
+body.role-gerencia-layout.sidebar-collapsed .dropdown {
+  position: relative;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .dropdown-content {
+  position: absolute !important;
+  left: 70px !important; /* Overlaps sidebar perfectly to eliminate gap */
+  top: 0 !important;
+  width: 200px !important;
+  margin-left: 0 !important;
+  background: var(--bg-sidebar) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+  display: none !important;
+  max-height: none !important;
+  z-index: 1000;
+  padding: 0.5rem !important;
+}
+
+body.role-gerencia-layout.sidebar-collapsed .dropdown:hover .dropdown-content {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* User profile flyout in collapsed mode */
+body.role-gerencia-layout.sidebar-collapsed .navbar-user .dropdown-content {
+  top: auto !important;
+  bottom: 0 !important;
+  left: 100% !important;
+  width: 200px !important;
 }

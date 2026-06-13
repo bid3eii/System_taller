@@ -22,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($name)) {
         $error = "El nombre es obligatorio.";
+    } elseif (strcasecmp($name, 'Bodega - Inventario') === 0) {
+        $error = "No puedes crear manualmente el cliente reservado 'Bodega - Inventario'.";
     } else {
         try {
             $stmt = $pdo->prepare("INSERT INTO clients (name, tax_id, phone, email, address, created_at) VALUES (?, ?, ?, ?, ?, ?)");

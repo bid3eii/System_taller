@@ -2,13 +2,20 @@
 // includes/sidebar.php (Now actually a Navbar)
 ?>
 <header class="navbar">
+    <!-- Toggle Button (Gerencia Only) -->
+    <?php if (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 9): ?>
+        <button id="sidebarToggle" class="sidebar-toggle-btn" title="Alternar Menú">
+            <i class="ph ph-caret-left"></i>
+        </button>
+    <?php endif; ?>
+
     <!-- Brand -->
     <a href="<?php echo BASE_URL; ?>modules/dashboard/index.php" class="navbar-brand"
         style="text-decoration: none; color: inherit;">
         <div class="brand-logo-small">
             <i class="ph-bold ph-wrench"></i>
         </div>
-        <div>
+        <div class="brand-text">
             <h3 style="margin:0; font-size: 1.1rem;">System<span style="color: var(--primary-500);">Taller</span></h3>
         </div>
     </a>
@@ -297,17 +304,17 @@
 
             if ($item['type'] === 'link') {
                 echo "<a href=\"{$item['url']}\" class=\"nav-link {$activeClass}\">";
-                echo "<i class=\"ph {$item['icon']}\"></i> {$item['label']}";
+                echo "<i class=\"ph {$item['icon']}\"></i> <span class=\"nav-text\">{$item['label']}</span>";
                 echo "</a>";
             } elseif ($item['type'] === 'dropdown') {
                 echo "<div class=\"dropdown\">";
                 echo "<a href=\"#\" class=\"nav-link {$activeClass}\">";
-                echo "<i class=\"ph {$item['icon']}\"></i> {$item['label']} <i class=\"ph-bold ph-caret-down\" style=\"font-size: 0.8rem;\"></i>";
+                echo "<i class=\"ph {$item['icon']}\"></i> <span class=\"nav-text\">{$item['label']}</span> <i class=\"ph-bold ph-caret-down nav-caret\" style=\"font-size: 0.8rem; margin-left: auto;\"></i>";
                 echo "</a>";
                 echo "<div class=\"dropdown-content\">";
                 foreach ($item['children'] as $child) {
                     echo "<a href=\"{$child['url']}\" class=\"dropdown-item\">";
-                    echo "<i class=\"ph {$child['icon']}\"></i> {$child['label']}";
+                    echo "<i class=\"ph {$child['icon']}\"></i> <span class=\"nav-text\">{$child['label']}</span>";
                     echo "</a>";
                 }
                 echo "</div>";
@@ -322,11 +329,11 @@
         <div class="user-avatar-sm">
             <?php echo strtoupper(substr($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'U', 0, 1)); ?>
         </div>
-        <div style="line-height: 1.2;">
+        <div class="user-info" style="line-height: 1.2;">
             <p class="text-sm font-medium"><?php echo htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username'] ?? 'User'); ?></p>
             <p class="text-xs text-muted"><?php echo htmlspecialchars($_SESSION['role_name'] ?? 'Role'); ?></p>
         </div>
-        <i class="ph-bold ph-caret-down"
+        <i class="ph-bold ph-caret-down user-caret"
             style="font-size: 0.8rem; margin-left: 0.5rem; color: var(--text-secondary);"></i>
 
         <div class="dropdown-content" style="left: auto; right: 0; min-width: 180px; top: 100%;">

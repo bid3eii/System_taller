@@ -6,7 +6,7 @@
  */
 function clean($data)
 {
-    return htmlspecialchars(stripslashes(trim($data)));
+    return stripslashes(trim($data));
 }
 
 /**

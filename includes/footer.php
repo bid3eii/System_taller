@@ -3,6 +3,69 @@
 </div> <!-- End wrapper -->
 
 <script>
+// Sidebar Accordion for Gerencia
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.body.classList.contains('role-gerencia-layout')) {
+        // Sidebar Toggle Logic
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                document.body.classList.add('sidebar-collapsed');
+            }
+            sidebarToggle.addEventListener('click', function() {
+                document.body.classList.toggle('sidebar-collapsed');
+                localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+            });
+        }
+
+        const dropdownLinks = document.querySelectorAll('.navbar-menu .dropdown > a');
+        
+        dropdownLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const parent = this.parentElement;
+                if (parent.classList.contains('open')) {
+                    parent.classList.remove('open');
+                    const content = parent.querySelector('.dropdown-content');
+                    if (content) content.style.maxHeight = null;
+                } else {
+                    dropdownLinks.forEach(other => {
+                        if (other !== link) {
+                            other.parentElement.classList.remove('open');
+                            const otherContent = other.parentElement.querySelector('.dropdown-content');
+                            if (otherContent) otherContent.style.maxHeight = null;
+                        }
+                    });
+                    parent.classList.add('open');
+                    const content = parent.querySelector('.dropdown-content');
+                    if (content) content.style.maxHeight = content.scrollHeight + 'px';
+                }
+            });
+        });
+
+        // User Profile Dropdown Logic (Click instead of Hover)
+        const userDropdown = document.querySelector('.navbar-user');
+        if (userDropdown) {
+            userDropdown.addEventListener('click', function(e) {
+                // If clicking an actual link inside, let it navigate normally
+                if (e.target.closest('.dropdown-item')) {
+                    return;
+                }
+                
+                e.preventDefault();
+                this.classList.toggle('open');
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userDropdown.contains(e.target) && userDropdown.classList.contains('open')) {
+                    userDropdown.classList.remove('open');
+                }
+            });
+        }
+    }
+});
+
 // Global Search Input with Clear Button
 document.addEventListener('DOMContentLoaded', function() {
     const searchInputs = document.querySelectorAll('.input-group input[type="text"], .input-group input[type="search"]');

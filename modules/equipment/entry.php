@@ -18,6 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
         echo json_encode(['success' => false, 'message' => 'El nombre es obligatorio']);
         exit;
     }
+    if (strcasecmp($name, 'Bodega - Inventario') === 0) {
+        echo json_encode(['success' => false, 'message' => 'No puedes crear el cliente reservado Bodega - Inventario']);
+        exit;
+    }
 
     try {
         $stmt = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, created_at) VALUES (?, ?, ?, ?, ?)");
@@ -175,11 +179,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $client_id = $pdo->lastInsertId();
         }
     } elseif (empty($client_id) && !empty($c_name)) {
-        // Create New Client / Third Party ALWAYS if no client_id was explicitly selected
-        // (Desactivada la búsqueda automática por nombre a petición del usuario para respetar los datos ingresados)
-        $stmtNewC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, is_third_party, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmtNewC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, $is_third, get_local_datetime()]);
-        $client_id = $pdo->lastInsertId();
+        if (strcasecmp($c_name, 'Bodega - Inventario') === 0) {
+            $error = "No puedes registrar manualmente el cliente reservado 'Bodega - Inventario'.";
+        } else {
+            // Create New Client / Third Party ALWAYS if no client_id was explicitly selected
+            // (Desactivada la búsqueda automática por nombre a petición del usuario para respetar los datos ingresados)
+            $stmtNewC = $pdo->prepare("INSERT INTO clients (name, phone, email, tax_id, address, is_third_party, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtNewC->execute([$c_name, $c_phone, $c_email, $c_tax, $c_address, $is_third, get_local_datetime()]);
+            $client_id = $pdo->lastInsertId();
+        }
     } elseif (!empty($client_id)) {
         // Update existing client info
         // User might have edited the phone number. Let's update it to keep data fresh.
@@ -194,7 +202,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($client_id)) {
-        $error = "Por favor seleccione o registre un cliente.";
+        if (empty($error)) {
+            $error = "Por favor seleccione o registre un cliente.";
+        }
     } else {
         try {
             $pdo->beginTransaction();

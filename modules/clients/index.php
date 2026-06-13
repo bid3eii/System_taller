@@ -37,6 +37,7 @@ $countStmt = $pdo->prepare("
     WHERE $where 
       AND c.is_third_party = 0
       AND c.name IS NOT NULL AND c.name != ''
+      AND c.name != 'Bodega - Inventario'
 ");
 $countStmt->execute($params);
 $totalRecords = $countStmt->fetchColumn();
@@ -48,6 +49,7 @@ $stmt = $pdo->prepare("
     WHERE $where 
       AND c.is_third_party = 0
       AND c.name IS NOT NULL AND c.name != ''
+      AND c.name != 'Bodega - Inventario'
     ORDER BY c.created_at DESC
     LIMIT $limit OFFSET $offset
 ");

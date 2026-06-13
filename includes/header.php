@@ -24,5 +24,14 @@ if (!isset($page_title)) $page_title = 'System Taller';
     <!-- Chart.js for Reports -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="<?php echo isset($_COOKIE['theme']) && $_COOKIE['theme'] == 'light' ? 'light-mode' : ''; ?>">
+<?php
+$gerencia_class = (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 9) ? ' role-gerencia-layout' : '';
+?>
+<body class="<?php echo isset($_COOKIE['theme']) && $_COOKIE['theme'] == 'light' ? 'light-mode' : ''; echo $gerencia_class; ?>">
+    <script>
+        // Aplicar estado del sidebar antes de que el navegador dibuje la pantalla para evitar el efecto de "abrir y cerrar"
+        if (localStorage.getItem('sidebarCollapsed') === 'true' && document.body.classList.contains('role-gerencia-layout')) {
+            document.body.classList.add('sidebar-collapsed');
+        }
+    </script>
     <div class="wrapper">
