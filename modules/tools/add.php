@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // modules/tools/add.php
 require_once '../../config/db.php';
 safe_session_start();

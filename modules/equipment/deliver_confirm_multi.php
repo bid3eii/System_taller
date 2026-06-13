@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // modules/equipment/deliver_confirm_multi.php
 require_once '../../config/db.php';
 safe_session_start();

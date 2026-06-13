@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // modules/comisiones/export.php — Exports as a styled Excel XML (SpreadsheetML)
 require_once '../../config/db.php';
 safe_session_start();

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // modules/admin/audit_logs.php
 require_once '../../config/db.php';
 safe_session_start();

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // modules/comisiones/index.php
 require_once '../../config/db.php';
 safe_session_start();

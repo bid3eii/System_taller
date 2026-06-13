@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // includes/header.php
 if (!isset($page_title)) $page_title = 'System Taller';
 ?>

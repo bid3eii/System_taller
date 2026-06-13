@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // includes/sidebar.php (Now actually a Navbar)
 ?>
 <header class="navbar">

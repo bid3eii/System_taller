@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // modules/warranties/report_expiring.php
 require_once '../../config/db.php';
 safe_session_start();

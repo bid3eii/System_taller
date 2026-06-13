@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // modules/dashboard/index.php
 require_once dirname(__DIR__, 2) . '/config/db.php';
 safe_session_start();

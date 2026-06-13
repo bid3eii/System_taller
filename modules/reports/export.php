@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // modules/reports/export.php
 require_once '../../config/db.php';
 safe_session_start();

@@ -1,4 +1,4 @@
-﻿<style>
+<style>
     /* Premium Warehouse Dashboard Aesthetics */
     .wh-premium-card {
         background: var(--bg-card);
