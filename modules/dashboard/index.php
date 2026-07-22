@@ -135,6 +135,7 @@ if ($is_warehouse) {
     // --- WORKSHOP VIEW (Admin, Reception, Tech) ---
     $recentType = 'services';
     $can_view_all = has_permission('module_view_all_entries', $pdo) || $role_id == 9;
+    $filter_by_tech = !$can_view_all || $is_tech;
 
     // KPIs Logic
     // Active Services
@@ -149,7 +150,7 @@ if ($is_warehouse) {
         AND so.status NOT IN ('delivered', 'cancelled')
         AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
     ";
-    if (!$can_view_all)
+    if ($filter_by_tech)
         $awSql .= " AND so.assigned_tech_id = " . intval($user_id);
     $stmt = $pdo->query($awSql);
     $active_warranties = $stmt->fetchColumn();
@@ -199,7 +200,7 @@ if ($is_warehouse) {
         $gerenciaProjects = $stmtGProj->fetchAll(PDO::FETCH_ASSOC);
 
     } else {
-        if (!$can_view_all) {
+        if ($filter_by_tech) {
             // --- TECH NEW KPIs ---
             // KPI 1: Pendientes de Diagnóstico
             $stmt = $pdo->prepare("
@@ -225,7 +226,7 @@ if ($is_warehouse) {
             $kpi1_bg = "rgba(99, 102, 241, 0.1)";
         }
 
-        if (!$can_view_all) {
+        if ($filter_by_tech) {
             // KPI 2: En Reparación
             $stmt = $pdo->prepare("
                 SELECT COUNT(*) FROM service_orders so
@@ -319,7 +320,7 @@ if ($is_warehouse) {
         AND (w.product_code IS NULL OR w.product_code = '') 
         AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
     ";
-    if (!$can_view_all) {
+    if ($filter_by_tech) {
         // Users without view_all_entries only see their assigned orders
         $statusSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
@@ -343,7 +344,7 @@ if ($is_warehouse) {
         AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
         AND so.status != 'delivered'
     ";
-    if (!$can_view_all) {
+    if ($filter_by_tech) {
         $countSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
     $totalRecords = $pdo->query($countSql)->fetchColumn();
@@ -368,7 +369,7 @@ if ($is_warehouse) {
         AND so.status != 'delivered'
     ";
 
-    if (!$can_view_all) {
+    if ($filter_by_tech) {
         $recentSql .= " AND so.assigned_tech_id = " . intval($user_id);
     }
 
@@ -462,7 +463,7 @@ if (!$is_warehouse) {
                 AND (w.product_code IS NULL OR w.product_code = '') 
                 AND (so.problem_reported NOT LIKE 'Garant%a Registrada' OR so.problem_reported IS NULL)
             ";
-            if (!$can_view_all) {
+            if ($filter_by_tech) {
                 $wSql .= " AND so.assigned_tech_id = " . intval($user_id);
             }
             $stmtDaily = $pdo->prepare($wSql);

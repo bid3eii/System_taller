@@ -142,9 +142,9 @@ require_once '../../includes/sidebar.php';
             </div>
         </div>
 
-        <button onclick="exportToExcel()" class="premium-btn-success" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; white-space: nowrap;">
-            <i class="ph ph-microsoft-excel-logo" style="font-size: 1.2rem;"></i>
-            <span>Exportar Excel</span>
+        <button onclick="exportToExcel()" class="premium-btn-success" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; white-space: nowrap; background: #10b981 !important; color: white !important; border: none; padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+            <i class="ph ph-microsoft-excel-logo" style="font-size: 1.2rem; color: white !important;"></i>
+            <span style="color: white !important;">Exportar Excel</span>
         </button>
     </div>
 
@@ -185,7 +185,12 @@ require_once '../../includes/sidebar.php';
                                     data-type="<?php echo strtolower($order['service_type']); ?>" 
                                     data-date="<?php echo date('Y-m-d', strtotime($order['entry_date'])); ?>"
                                     data-tech="<?php echo $order['assigned_tech_id'] ?? 'none'; ?>"
-                                    data-serial="<?php echo strtolower($order['serial_number'] ?? ''); ?>">
+                                    data-diagnosis="<?php echo !empty($order['diagnosis_number']) ? '#'.str_pad($order['diagnosis_number'], 5, '0', STR_PAD_LEFT) : '-'; ?>"
+                                    data-serial="<?php echo esc($order['serial_number'] ?? ''); ?>"
+                                    data-client="<?php echo esc(!empty($order['owner_name']) ? $order['owner_name'] : (!empty($order['registered_owner_name']) ? $order['registered_owner_name'] : $order['contact_name'])); ?>"
+                                    data-phone="<?php echo esc($order['client_phone']); ?>"
+                                    data-equipment="<?php echo esc($order['brand'] . ' ' . $order['model']); ?>"
+                                    data-tech-name="<?php echo esc(($order['tech_name_full'] || $order['tech_username']) ? ($order['tech_name_full'] ?: $order['tech_username']) : '-'); ?>">
                                     <td class="text-center"><span class="badge-tag"><?php echo get_order_number($order); ?></span></td>
                                     <td class="text-center"><?php echo date('d/m/Y', strtotime($order['entry_date'])); ?></td>
                                 <td style="max-width: 180px;">
@@ -252,7 +257,7 @@ require_once '../../includes/sidebar.php';
                                             </a>
                                             <?php endif; ?>
 
-                                            <?php if (in_array($order['status'], ['repaired', 'delivered', 'ready'])): ?>
+                                            <?php if ($order['status'] === 'delivered' || !empty($order['exit_doc_number'])): ?>
                                             <a href="../equipment/print_delivery.php?num=<?php echo urlencode(get_order_number($order)); ?>" class="dropdown-item">
                                                 <i class="ph-fill ph-check-circle" style="color: #10b981;"></i> Hoja de Salida
                                             </a>
@@ -280,6 +285,9 @@ require_once '../../includes/sidebar.php';
                             <td colspan="8" class="text-center py-5 text-muted">No se encontraron registros.</td>
                         </tr>
                         <?php endif; ?>
+                        <tr id="noResultsJS" style="display: none;">
+                            <td colspan="8" class="text-center py-5 text-muted">No se encontraron registros que coincidan con los filtros.</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -738,6 +746,10 @@ body.light-mode .premium-action-btn:hover i {
 }
 </style>
 
+<!-- EXCELJS & FILESAVER FOR HIGHLY STYLED MODERN XLSX EXPORTS -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
 <script>
 // Table Sorting and Filtering Functionality
 const searchInput = document.getElementById('searchInput');
@@ -889,8 +901,18 @@ function filterTable() {
             row.style.display = 'none';
         }
     });
-    // Assuming updateCounter() is defined elsewhere or will be added.
-    // updateCounter(); 
+
+    let visibleRowsCount = 0;
+    originalRows.forEach(row => {
+        if (row.style.display !== 'none') {
+            visibleRowsCount++;
+        }
+    });
+
+    const noResultsRow = document.getElementById('noResultsJS');
+    if (noResultsRow) {
+        noResultsRow.style.display = (visibleRowsCount === 0) ? '' : 'none';
+    }
 }
 
 searchInput.addEventListener('input', filterTable); // Changed to 'input' for real-time
@@ -898,7 +920,9 @@ statusFilter.addEventListener('change', filterTable);
 typeFilter.addEventListener('change', filterTable);
 techFilter.addEventListener('change', filterTable); // Added techFilter listener
 startDate.addEventListener('change', filterTable);
+startDate.addEventListener('input', filterTable);
 endDate.addEventListener('change', filterTable);
+endDate.addEventListener('input', filterTable);
 
 // Dropdown Handler with Smart Positioning
 function toggleReportDropdown(btn) {
@@ -988,17 +1012,170 @@ setInterval(function() {
         .catch(err => console.error('Error refreshing reports:', err));
 }, 10000); // 10 seconds
 
-// Export to Excel Function
+// Export to Excel Function using ExcelJS for beautifully styled tables with custom cell coloring
 window.exportToExcel = function() {
-    const search = searchInput.value;
-    const status = statusFilter.value;
-    const type = typeFilter.value;
-    const tech = techFilter.value; // Added tech
-    const start = startDate.value;
-    const end = endDate.value;
+    const table = document.getElementById('reportsTable');
+    if (!table) return;
+
+    // 1. Create workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
     
-    let url = `export.php?search=${encodeURIComponent(search)}&status=${status}&type=${type}&tech_id=${tech}&start=${start}&end=${end}`;
-    window.location.href = url;
+    let sheetName = "Reporte General";
+    const typeValue = typeFilter.value;
+    if (typeValue === 'service') sheetName = "Servicios";
+    if (typeValue === 'warranty') sheetName = "Garantias";
+    
+    const worksheet = workbook.addWorksheet(sheetName, {
+        views: [{ showGridLines: true }] // Ensure gridlines are visible in Excel
+    });
+
+    // 2. Define columns structure
+    worksheet.columns = [
+        { header: 'ID', key: 'id', width: 12 },
+        { header: 'Fecha', key: 'date', width: 15 },
+        { header: 'Cliente', key: 'client', width: 30 },
+        { header: 'Teléfono', key: 'phone', width: 15 },
+        { header: 'Equipo', key: 'equipment', width: 35 },
+        { header: 'Serie', key: 'serial', width: 22 },
+        { header: 'Tipo', key: 'type', width: 15 },
+        { header: 'Estado', key: 'status', width: 18 },
+        { header: 'Diagnóstico', key: 'diagnosis', width: 15 },
+        { header: 'Técnico', key: 'tech', width: 22 }
+    ];
+
+    // Style the header row (solid slate background with bold white text)
+    const headerRow = worksheet.getRow(1);
+    headerRow.height = 28;
+    headerRow.eachCell(cell => {
+        cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FFFFFF' } };
+        cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: '1E293B' } // Slate color
+        };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.border = {
+            top: { style: 'thin', color: { argb: '475569' } },
+            left: { style: 'thin', color: { argb: '475569' } },
+            bottom: { style: 'medium', color: { argb: '0F172A' } },
+            right: { style: 'thin', color: { argb: '475569' } }
+        };
+    });
+
+    // 3. Process the table body rows
+    const bodyRows = table.querySelectorAll('tbody tr');
+    bodyRows.forEach(row => {
+        // Skip noResults rows, empty PHP rows, or hidden rows
+        if (row.id === 'noResultsJS' || row.querySelector('td[colspan]') || row.style.display === 'none') {
+            return;
+        }
+
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 7) return;
+
+        // Parse fields directly from clean data-attributes to prevent data merging
+        const idText = cells[0].textContent.trim();
+        const dateText = cells[1].textContent.trim();
+        const clientName = row.getAttribute('data-client') || '';
+        const clientPhone = row.getAttribute('data-phone') || '';
+        const eqName = row.getAttribute('data-equipment') || '';
+        const eqSerial = row.getAttribute('data-serial') || '';
+        const techText = row.getAttribute('data-tech-name') || '';
+
+        const typeText = cells[4].textContent.trim();
+        const statusText = cells[5].textContent.trim();
+        const statusRaw = row.getAttribute('data-status') || '';
+        const diagnosisText = row.getAttribute('data-diagnosis') || '-';
+
+        // Add to spreadsheet
+        const newRow = worksheet.addRow({
+            id: idText,
+            date: dateText,
+            client: clientName,
+            phone: clientPhone,
+            equipment: eqName,
+            serial: eqSerial,
+            type: typeText,
+            status: statusText,
+            diagnosis: diagnosisText,
+            tech: techText
+        });
+
+        // Set row heights and borders
+        newRow.height = 24;
+        newRow.eachCell((cell, colNumber) => {
+            cell.font = { name: 'Segoe UI', size: 9 };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.border = {
+                top: { style: 'thin', color: { argb: 'E2E8F0' } },
+                left: { style: 'thin', color: { argb: 'E2E8F0' } },
+                bottom: { style: 'thin', color: { argb: 'E2E8F0' } },
+                right: { style: 'thin', color: { argb: 'E2E8F0' } }
+            };
+
+            // Left align text heavy columns (Client, Equipment)
+            if (colNumber === 3 || colNumber === 5) {
+                cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+            }
+
+            // Apply custom pill colors to "Estado" Column (Col 8)
+            if (colNumber === 8) {
+                let fillBg = 'F1F5F9'; // Delivered / Default Grey
+                let fontColor = '475569';
+
+                if (statusRaw === 'ready' || statusRaw === 'approved') {
+                    fillBg = 'DCFCE7'; // Light green
+                    fontColor = '166534';
+                } else if (statusRaw === 'pending' || statusRaw === 'pending_approval' || statusRaw === 'received') {
+                    fillBg = 'FEF9C3'; // Light yellow
+                    fontColor = '854D0E';
+                } else if (statusRaw === 'in_repair') {
+                    fillBg = 'F3E8FF'; // Light purple
+                    fontColor = '6B21A8';
+                } else if (statusRaw === 'diagnosing') {
+                    fillBg = 'DBEAFE'; // Light blue
+                    fontColor = '1E40AF';
+                } else if (statusRaw === 'replaced') {
+                    fillBg = 'FCE7F3'; // Light pink
+                    fontColor = '9D174D';
+                }
+
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: fillBg }
+                };
+                cell.font = { name: 'Segoe UI', size: 9, bold: true, color: { argb: fontColor } };
+            }
+
+            // Colorize "Tipo" Column (Col 7)
+            if (colNumber === 7) {
+                const isWarranty = (cell.value || '').toString().toLowerCase().includes('garant');
+                cell.font = { 
+                    name: 'Segoe UI', 
+                    size: 9, 
+                    bold: true, 
+                    color: { argb: isWarranty ? 'C2410C' : '0284C7' } 
+                };
+            }
+        });
+    });
+
+    // 4. File save dialog triggering
+    const date = new Date();
+    const formattedDate = date.getFullYear() + '-' + 
+                          String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(date.getDate()).padStart(2, '0') + '_' + 
+                          String(date.getHours()).padStart(2, '0') + '-' + 
+                          String(date.getMinutes()).padStart(2, '0');
+    
+    let filename = `reporte_general_${formattedDate}.xlsx`;
+    if (typeValue === 'service') filename = `reporte_servicios_${formattedDate}.xlsx`;
+    if (typeValue === 'warranty') filename = `reporte_garantias_${formattedDate}.xlsx`;
+
+    workbook.xlsx.writeBuffer().then(buffer => {
+        saveAs(new Blob([buffer], { type: 'application/octet-stream' }), filename);
+    });
 };
 </script>
 

@@ -380,25 +380,25 @@ if (empty($order['exit_doc_number'])) {
 
         @media print {
             @page { size: letter; margin: 0; }
-            html, body { background: white !important; height: auto; overflow: visible; margin: 0 !important; padding: 0 !important; }
+            html, body { background: white !important; height: 100% !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
             .actions { display: none; }
-            body { background: white; padding: 0; margin: 0; overflow: visible; }
             .paper { 
                 box-shadow: none; 
                 margin: 0 !important; 
                 width: 100% !important; 
-                min-height: 279mm;
+                height: 100% !important;
                 box-sizing: border-box;
                 padding: 10mm 15mm; 
                 page-break-after: auto; 
                 page-break-inside: auto;
-                display: block;
-                overflow: visible; 
+                display: flex;
+                flex-direction: column;
+                overflow: hidden !important; 
             }
             .section-header, .section-box, .equip-table, .comments-box, .signatures-area, .legal-footer {
                 page-break-inside: avoid;
             }
-            .bottom-section { margin-top: 20px; }
+            .bottom-section { margin-top: auto; }
             a[href]:after { content: none !important; }
         }
     </style>

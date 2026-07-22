@@ -359,18 +359,19 @@ if (empty($exit_doc_number)) {
                 box-shadow: none; 
                 margin: 0 !important; 
                 width: 100% !important; 
-                min-height: 279mm;
+                height: 250mm; /* Conservative print height to completely avoid extra blank pages in multi-page batch layouts */
                 box-sizing: border-box;
                 padding: 10mm 15mm; 
                 page-break-after: auto; 
                 page-break-inside: auto;
-                display: block;
+                display: flex;
+                flex-direction: column;
                 overflow: visible; 
             }
             .section-header, .section-box, .equip-table, .comments-box, .signatures-area, .legal-footer {
                 page-break-inside: avoid;
             }
-            .bottom-section { margin-top: 20px; }
+            .bottom-section { margin-top: auto; }
             a[href]:after { content: none !important; }
         }
     </style>
