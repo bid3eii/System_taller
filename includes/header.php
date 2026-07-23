@@ -25,7 +25,7 @@ if (!isset($page_title)) $page_title = 'System Taller';
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <?php
-$gerencia_class = (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 9) ? ' role-gerencia-layout' : '';
+$gerencia_class = isset($_SESSION['role_id']) ? ' role-gerencia-layout' : '';
 ?>
 <body class="<?php echo isset($_COOKIE['theme']) && $_COOKIE['theme'] == 'light' ? 'light-mode' : ''; echo $gerencia_class; ?>">
     <script>

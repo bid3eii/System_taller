@@ -238,7 +238,7 @@ if ($is_warehouse) {
             $stmt->execute([$user_id]);
             $kpi2_val = $stmt->fetchColumn();
             $kpi2_label = "En Reparación (Activos)";
-            $kpi2_icon = "ph-tools";
+            $kpi2_icon = "ph-wrench";
             $kpi2_color = "var(--primary-500)";
             $kpi2_bg = "rgba(99, 102, 241, 0.1)";
 
@@ -403,33 +403,37 @@ if ($is_warehouse) {
 
 
 // --- COMPILE CHART DATA (Universal Logic) ---
+$chartLabels = [];
+$chartCounts = [];
+$chartColors = [];
 
 // Status Chart (Doughnut)
 if ($is_warehouse) {
     // Tool Status Mapping
-    $labelsMap = [
-        'available' => 'Disponible',
-        'assigned' => 'Prestado',
-        'maintenance' => 'Mantenimiento',
-        'lost' => 'Perdido/Baja'
+    $statusMapInfo = [
+        'available' => ['label' => 'Disponible', 'color' => '#22c55e'],
+        'assigned' => ['label' => 'Prestado', 'color' => '#3b82f6'],
+        'maintenance' => ['label' => 'Mantenimiento', 'color' => '#eab308'],
+        'lost' => ['label' => 'Perdido/Baja', 'color' => '#ef4444']
     ];
 } else {
     // Service Status Mapping
-    $labelsMap = [
-        'received' => 'Recibido',
-        'diagnosing' => 'Diagnóstico',
-        'pending_approval' => 'En Espera',
-        'in_repair' => 'Reparación',
-        'ready' => 'Listo',
-        'delivered' => 'Entregado',
-        'cancelled' => 'Cancelado'
+    $statusMapInfo = [
+        'received' => ['label' => 'Recibido', 'color' => '#3b82f6'],          // Blue
+        'diagnosing' => ['label' => 'Diagnóstico', 'color' => '#eab308'],    // Yellow
+        'pending_approval' => ['label' => 'En Espera', 'color' => '#f97316'],// Orange
+        'in_repair' => ['label' => 'Reparación', 'color' => '#a855f7'],      // Purple
+        'ready' => ['label' => 'Listo', 'color' => '#22c55e'],               // Green
+        'delivered' => ['label' => 'Entregado', 'color' => '#64748b'],       // Gray/Slate
+        'cancelled' => ['label' => 'Cancelado', 'color' => '#ef4444']        // Red
     ];
 }
 
-foreach ($labelsMap as $key => $label) {
-    if (isset($statusData[$key])) {
-        $chartLabels[] = $label;
+foreach ($statusMapInfo as $key => $info) {
+    if (isset($statusData[$key]) && $statusData[$key] > 0) {
+        $chartLabels[] = $info['label'];
         $chartCounts[] = $statusData[$key];
+        $chartColors[] = $info['color'];
     }
 }
 
@@ -1345,14 +1349,7 @@ if (!$is_warehouse) {
             labels: <?php echo json_encode($chartLabels); ?>,
             datasets: [{
                 data: <?php echo json_encode($chartCounts); ?>,
-                backgroundColor: [
-                    '#3b82f6', // Blue
-                    '#eab308', // Yellow
-                    '#f97316', // Orange
-                    '#a855f7', // Purple
-                    '#22c55e', // Green
-                    '#ef4444'  // Red
-                ],
+                backgroundColor: <?php echo json_encode($chartColors); ?>,
                 borderWidth: 0,
                 hoverOffset: 4
             }]

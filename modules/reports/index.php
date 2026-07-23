@@ -223,17 +223,18 @@ require_once '../../includes/sidebar.php';
                                 <td>
                                     <?php 
                                     $statusLabels = [
-                                        'pending' => ['Pendiente', 'warning'],
-                                        'received' => ['Recibido', 'warning'],
-                                        'diagnosing' => ['Diagnosticado', 'info'],
+                                        'pending' => ['Pendiente', 'yellow'],
+                                        'received' => ['Recibido', 'blue'],
+                                        'diagnosing' => ['Diagnosticado', 'yellow'],
                                         'pending_approval' => ['En Espera', 'orange'],
-                                        'approved' => ['Aprobado', 'primary'],
+                                        'approved' => ['Aprobado', 'blue'],
                                         'in_repair' => ['En Proceso', 'purple'],
-                                        'ready' => ['Listo', 'success'],
+                                        'ready' => ['Listo', 'green'],
                                         'replaced' => ['Reemplazo', 'pink'],
-                                        'delivered' => ['Entregado', 'secondary'],
+                                        'delivered' => ['Entregado', 'gray'],
+                                        'cancelled' => ['Cancelado', 'red'],
                                     ];
-                                    $st = $statusLabels[$order['status']] ?? [$order['status'], 'secondary'];
+                                    $st = $statusLabels[$order['status']] ?? [strtoupper($order['status']), 'gray'];
                                     ?>
                                     <span class="status-badge status-<?php echo $st[1]; ?>">
                                         <?php echo $st[0]; ?>

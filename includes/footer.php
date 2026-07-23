@@ -125,6 +125,80 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Smooth text scroll effect on hover for truncated sidebar/dropdown items
+(function() {
+    let scrollTasks = new WeakMap();
+
+    document.addEventListener('mouseover', function(e) {
+        const item = e.target.closest('.nav-link, .dropdown-item');
+        if (!item) return;
+
+        const textSpan = item.querySelector('.nav-text');
+        if (!textSpan) return;
+
+        const maxScroll = textSpan.scrollWidth - textSpan.clientWidth;
+        if (maxScroll <= 2 || scrollTasks.has(textSpan)) return;
+
+        let direction = 1;
+        let delayTimer = setTimeout(() => {
+            let currentScroll = textSpan.scrollLeft;
+            let step = () => {
+                if (!scrollTasks.has(textSpan)) return;
+                
+                if (direction === 1) {
+                    currentScroll += 0.8;
+                    if (currentScroll >= maxScroll) {
+                        currentScroll = maxScroll;
+                        textSpan.scrollLeft = currentScroll;
+                        let pause = setTimeout(() => {
+                            direction = -1;
+                            if (scrollTasks.has(textSpan)) {
+                                scrollTasks.set(textSpan, requestAnimationFrame(step));
+                            }
+                        }, 1200);
+                        scrollTasks.set(textSpan, pause);
+                        return;
+                    }
+                } else {
+                    currentScroll -= 0.8;
+                    if (currentScroll <= 0) {
+                        currentScroll = 0;
+                        textSpan.scrollLeft = currentScroll;
+                        let pause = setTimeout(() => {
+                            direction = 1;
+                            if (scrollTasks.has(textSpan)) {
+                                scrollTasks.set(textSpan, requestAnimationFrame(step));
+                            }
+                        }, 1200);
+                        scrollTasks.set(textSpan, pause);
+                        return;
+                    }
+                }
+                textSpan.scrollLeft = currentScroll;
+                scrollTasks.set(textSpan, requestAnimationFrame(step));
+            };
+            scrollTasks.set(textSpan, requestAnimationFrame(step));
+        }, 300);
+
+        scrollTasks.set(textSpan, delayTimer);
+    });
+
+    document.addEventListener('mouseout', function(e) {
+        const item = e.target.closest('.nav-link, .dropdown-item');
+        if (!item) return;
+
+        const textSpan = item.querySelector('.nav-text');
+        if (!textSpan) return;
+
+        if (scrollTasks.has(textSpan)) {
+            clearTimeout(scrollTasks.get(textSpan));
+            cancelAnimationFrame(scrollTasks.get(textSpan));
+            scrollTasks.delete(textSpan);
+            textSpan.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+    });
+})();
 </script>
 </body>
 </html>

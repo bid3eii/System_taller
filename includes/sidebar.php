@@ -2,8 +2,8 @@
 // includes/sidebar.php (Now actually a Navbar)
 ?>
 <header class="navbar">
-    <!-- Toggle Button (Gerencia Only) -->
-    <?php if (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 9): ?>
+    <!-- Toggle Button -->
+    <?php if (isset($_SESSION['role_id'])): ?>
         <button id="sidebarToggle" class="sidebar-toggle-btn" title="Alternar Menú">
             <i class="ph ph-caret-left"></i>
         </button>
@@ -153,7 +153,7 @@
                 'url' => '#',
                 'icon' => 'ph-clipboard-text',
                 'label' => 'Servicios',
-                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/services/') !== false || (strpos($_SERVER['REQUEST_URI'], 'modules/warranties/') !== false && strpos($_SERVER['REQUEST_URI'], 'database.php') === false) || strpos($_SERVER['REQUEST_URI'], 'modules/history/') !== false),
+                'active' => (strpos($_SERVER['REQUEST_URI'], 'modules/services/') !== false || (strpos($_SERVER['REQUEST_URI'], 'modules/warranties/') !== false && strpos($_SERVER['REQUEST_URI'], 'database.php') === false && strpos($_SERVER['REQUEST_URI'], 'history.php') === false) || strpos($_SERVER['REQUEST_URI'], 'modules/history/') !== false),
                 'children' => $srv_children
             ];
         }
@@ -307,13 +307,25 @@
                 echo "<i class=\"ph {$item['icon']}\"></i> <span class=\"nav-text\">{$item['label']}</span>";
                 echo "</a>";
             } elseif ($item['type'] === 'dropdown') {
-                echo "<div class=\"dropdown\">";
+                $openClass = $item['active'] ? ' open' : '';
+                $openStyle = $item['active'] ? ' style="max-height: 500px;"' : '';
+                echo "<div class=\"dropdown{$openClass}\">";
                 echo "<a href=\"#\" class=\"nav-link {$activeClass}\">";
                 echo "<i class=\"ph {$item['icon']}\"></i> <span class=\"nav-text\">{$item['label']}</span> <i class=\"ph-bold ph-caret-down nav-caret\" style=\"font-size: 0.8rem; margin-left: auto;\"></i>";
                 echo "</a>";
-                echo "<div class=\"dropdown-content\">";
+                echo "<div class=\"dropdown-content\"{$openStyle}>";
                 foreach ($item['children'] as $child) {
-                    echo "<a href=\"{$child['url']}\" class=\"dropdown-item\">";
+                    $childActive = false;
+                    $parsedChild = parse_url($child['url'], PHP_URL_PATH);
+                    $parsedUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+                    if ($parsedChild && $parsedUri && strpos($parsedUri, $parsedChild) !== false) {
+                        $childQuery = parse_url($child['url'], PHP_URL_QUERY);
+                        if (!$childQuery || (isset($_SERVER['QUERY_STRING']) && strpos($_SERVER['QUERY_STRING'], $childQuery) !== false)) {
+                            $childActive = true;
+                        }
+                    }
+                    $cActiveClass = $childActive ? ' active' : '';
+                    echo "<a href=\"{$child['url']}\" class=\"dropdown-item{$cActiveClass}\">";
                     echo "<i class=\"ph {$child['icon']}\"></i> <span class=\"nav-text\">{$child['label']}</span>";
                     echo "</a>";
                 }
